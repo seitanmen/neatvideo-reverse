@@ -1,13 +1,10 @@
-"""v5 パイプラインに AutoFineTune を統合する (2026-10-24)。
+"""v5 パイプラインに AutoFineTune を統合する (2026-10-24、2026-10-25 に厳密化)。
 
-nv_aft (静的移植) を使い、v5 の prof["curve"] に AFT の輝度別係数を反映する。
-nv_profile.build_profile (生 0xc300 バイト) を経由するため低速 (~15 秒) だが、
-本家と同じメカニズムで曲線を調整する。
-
-使い方:
-  from nv_aft_v5 import apply_aft
-  prof = build_profile_v5(planes, ...)   # 通常の v5 プロファイル
-  prof = apply_aft(prof, rgb)            # AFT 適用後の prof (curve が更新される)
+本家 FUN_009aae90 (σ マップ) と同じカラーマトリクス結合を使用:
+  AFT は RGB 面 (face 0=R, 1=G, 2=B) の相対乗数を返す。
+  Y/Cb/Cr の合成乗数は色行列の重みで RGB 面を結合する:
+    c_cj = a_j²·m_cj / Σ_j(a_j²·m_cj)   (a_j = モデル q99、m_cj = BT.601 係数の二乗)
+    f_c(lum) = √(Σ_j c_cj · f_j(lum))   (f_j = AFT の RGB 面乗数)
 """
 import os
 import sys
@@ -23,14 +20,53 @@ for _p in (_ROOT, _AFT):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+# BT.601 係数の二乗 (DAT_0147df80[mode 1]、行 = 出力成分 Y/Cb/Cr、列 = 入力面 R/G/B)
+_COLOR_MATRIX_SQ = [
+    [0.299 ** 2, 0.587 ** 2, 0.114 ** 2],   # Y
+    [0.169 ** 2, 0.331 ** 2, 0.500 ** 2],   # Cb
+    [0.500 ** 2, 0.419 ** 2, 0.081 ** 2],   # Cr
+]
 
-def apply_aft(prof, rgb, mode=0, area=None, matrix="bt709"):
-    """v5 の prof dict に AFT を適用する。
+# モデル面のオフセット (nv_aft.py と同じ)
+_FACE_OFFSETS = (0x4C, 0x1FA0, 0x3EF4)  # R, G, B
+
+
+def _read_model_q99(raw_bytes, band=0):
+    """生プロファイルから各 RGB 面 (R, G, B) のモデル q99 (語 5+band) を読む。"""
+    f32 = np.frombuffer(raw_bytes, np.float32)
+    return [float(f32[_FACE_OFFSETS[j] // 4 + 5 + band]) for j in range(3)]
+
+
+def _color_weights(q99, band=0):
+    """FUN_009aae90 の c_cj = a_j²·m_cj / Σ(a_j²·m_cj) を計算する。
+
+    q99: モデル q99 値 (a_j) のリスト (R, G, B)
+    戻り値: 3×3 の重み [成分 Y/Cb/Cr][面 R/G/B]
+    """
+    a_sq = [q99[j] ** 2 for j in range(3)]
+    weights = []
+    for ci in range(3):  # Y, Cb, Cr
+        denom = sum(a_sq[j] * _COLOR_MATRIX_SQ[ci][j] for j in range(3))
+        if denom <= 0:
+            weights.append([1.0 / 3.0] * 3)
+        else:
+            weights.append([a_sq[j] * _COLOR_MATRIX_SQ[ci][j] / denom for j in range(3)])
+    return weights
+
+
+def apply_aft(prof, rgb, mode=0, area=None, matrix="bt709", band=0):
+    """v5 の prof dict に AFT を適用する (厳密版: カラーマトリクス結合)。
+
+    本家 FUN_009aae90 と同じ式で RGB 面 (R, G, B) の AFT 乗数を
+    Y/Cb/Cr の合成乗数に変換してから v5 の曲線に乗算する:
+      c_cj = a_j²·m_cj / Σ(a_j²·m_cj)     (a_j = モデル q99、m_cj = BT.601²)
+      f_c(lum) = √(Σ_j c_cj · f_j(lum))   (f_j = AFT の RGB 面乗数曲線)
 
     prof: build_profile_v5() の戻り値 (dict)
-    rgb:  (H, W, 3) float32 0..255 (プロファイル用フレームの RGB)
-    mode: AFT モード (0=通常, 1=第2画像使用, 2=モード2)
+    rgb:  (H, W, 3) float32 0..255
+    mode: AFT モード (0=通常)
     area: (y0, x0, size) — None なら prof["area"] を使う
+    band: 重みの計算に使う帯域 (0 = 最細帯域、既定)
 
     戻り値: AFT 適用後の prof (dict、curve が更新される)
     """
@@ -44,33 +80,54 @@ def apply_aft(prof, rgb, mode=0, area=None, matrix="bt709"):
         ay, ax, asz = area[:3]
     area4 = (ax, ay, asz, asz)
 
-    # 1. BuildNoiseModel の生プロファイルを生成
-    result = npr.build_profile(rgb, 1, area4)  # mode 1 = YCrCb
+    # 1. BuildNoiseModel の生プロファイルを生成 (RGB 面のモデル q99 を含む)
+    result = npr.build_profile(rgb, 1, area4)
     raw = result[0] if isinstance(result, tuple) else result
 
-    # 2. AFT 適用
+    # 2. AFT 適用 → RGB 面 (R, G, B) の相対乗数曲線 3 本が得られる
     aft_bytes = nv_aft.auto_fine_tune(rgb, raw, mode=mode)
-
-    # 3. AFT 調整後の曲線を読み取り、v5 の prof dict に反映
-    #    AFT は相対スケーリング係数を返す (生プロファイルの曲線は 1.0 基準)。
-    #    v5 の曲線は絶対 σ 値なので、AFT の係数を「乗算」する (上書きではない)。
     aft_f32 = np.frombuffer(aft_bytes, np.float32)
+
+    # 3. モデル q99 からカラーマトリクス重みを計算
+    q99 = _read_model_q99(raw, band=band)
+    cw = _color_weights(q99, band=band)
+    # cw[0] = Y の重み (R, G, B)
+    # cw[1] = Cb の重み
+    # cw[2] = Cr の重み
+
+    # 4. AFT の RGB 面乗数曲線を読む (9 ビン、各面)
     n_v5 = len(prof["curve_centers"])
     raw_centers = np.linspace(0, 256, 9)
     v5_centers = np.array(prof["curve_centers"])
-    for c, name in enumerate(("Y", "Cb", "Cr")):
-        curve_off = 0xbf44 + 0x120 * c
-        raw_vals = [float(aft_f32[(curve_off + 0x20 * k) // 4]) for k in range(9)]
-        # 9 点 → v5 の 8 中心で線形補間 = AFT の相対スケーリング係数
-        aft_factor = np.interp(v5_centers, raw_centers, raw_vals)
-        # v5 の絶対 curve に AFT の相対係数を乗算
-        original = np.array(prof["curve"][name], F32)
-        prof["curve"][name] = (original * aft_factor).astype(F32).tolist()
+    face_curves = []  # face_curves[j] = np.interp の結果 (face j = R/G/B)
+    for j in range(3):  # R, G, B
+        curve_off = 0xbf44 + 0x120 * j
+        raw_vals = np.array([float(aft_f32[(curve_off + 0x20 * k) // 4]) for k in range(9)])
+        interp = np.interp(v5_centers, raw_centers, raw_vals)
+        face_curves.append(interp)
 
-    # sigma 概算値も更新
+    # 5. カラーマトリクス結合: f_c = √(Σ_j c_cj · f_j)
+    #    (本家 σ_c = √(Σ_j c_cj·T_j) と同じ式。T_j = AFT 乗数)
+    combined = []
+    for ci in range(3):  # Y, Cb, Cr
+        weighted_sum = sum(cw[ci][j] * face_curves[j] for j in range(3))
+        f_combined = np.sqrt(np.maximum(weighted_sum, F32(0)))
+        combined.append(f_combined)
+
+    # 6. v5 の曲線に乗算
+    for ci, name in enumerate(("Y", "Cb", "Cr")):
+        original = np.array(prof["curve"][name], F32)
+        prof["curve"][name] = (original * combined[ci]).astype(F32).tolist()
+
+    # 7. sigma 概算値も更新
     lvl = prof.get("area_level", 128.0)
     centers = prof["curve_centers"]
     prof["sigma"] = {n: float(np.interp(lvl, centers, prof["curve"][n]) * prof["tot_ratio"][n])
                      for n in ("Y", "Cb", "Cr")}
+
+    # デバッグ情報を保存
     prof["aft_applied"] = True
+    prof["aft_face_curves"] = [fc.tolist() for fc in face_curves]
+    prof["aft_color_weights"] = cw
+    prof["aft_band"] = band
     return prof
