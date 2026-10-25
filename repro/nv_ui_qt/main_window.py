@@ -207,6 +207,7 @@ class MainWindow(QMainWindow):
         fp.editedMany.connect(lambda d: self.state.set_params(d, "Change filter settings"))
         fp.editStarted.connect(self.state.new_edit)
         fp.assistToggled.connect(self.set_assist)
+        fp.noiseLevelCheck.connect(self.noise_level_check)
         fp.resetSpatial.connect(self.reset_spatial)
         fp.checkSpeed.connect(self.check_speed)
         fp.preferences.connect(self.preferences)
@@ -742,6 +743,20 @@ class MainWindow(QMainWindow):
             a.blockSignals(True)
             a.setChecked(on)
             a.blockSignals(False)
+
+    def noise_level_check(self, on):
+        """Genuine: Begin → shows the noise-reduced frame in the preview (mask mode).
+        The user adjusts Noise Level while watching the result in real time."""
+        on = bool(on)
+        if on:
+            # process the current frame and show the filtered result
+            self.say("Noise Level Check: adjusting Noise Level updates the preview in real time")
+            self.invalidate()
+            self.schedule()
+        else:
+            self.say("Noise Level Check: off")
+        # reuse the assist pipeline for the preview update on every slider change
+        self._nlc_active = on
 
     def _update_performance(self):
         P = self.state.params
