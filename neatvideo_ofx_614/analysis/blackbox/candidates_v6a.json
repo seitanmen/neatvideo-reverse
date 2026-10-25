@@ -1,0 +1,6 @@
+[
+ {"name": "v5 auto (default)", "mode": "auto", "params": {}},
+ {"name": "spatial, v5 area", "mode": "spatial", "params": {}},
+ {"name": "spatial, genuine area", "mode": "spatial", "params": {}, "area": {"296": [0, 832, 128], "560": [864, 520, 64]}},
+ {"name": "auto, genuine area", "mode": "auto", "params": {}, "area": {"296": [0, 832, 128], "560": [864, 520, 64]}}
+]

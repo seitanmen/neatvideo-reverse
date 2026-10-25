@@ -1,0 +1,17 @@
+needle [OfxImageEffectActionRender] hits=1
+  [OfxImageEffectActionRender] ref from 0000af2c in func 0000ae2c size=3328
+needle [OfxImageEffectActionBeginSequenceRender] hits=1
+  [OfxImageEffectActionBeginSequenceRender] ref from 0000af54 in func 0000ae2c size=3328
+  [OfxImageEffectActionBeginSequenceRender] ref from 0000af40 in func 0000ae2c size=3328
+needle [OfxImageEffectActionEndSequenceRender] hits=1
+  [OfxImageEffectActionEndSequenceRender] ref from 0000af68 in func 0000ae2c size=3328
+needle [OfxActionCreateInstance] hits=1
+  [OfxActionCreateInstance] ref from 0000ae8c in func 0000ae2c size=3328
+  [OfxActionCreateInstance] ref from 0000ae78 in func 0000ae2c size=3328
+needle [OfxImageEffectActionGetClipPreferences] hits=0
+needle [OfxImageEffectPropRenderScale] hits=0
+needle [OfxPropTime] hits=1
+  [OfxPropTime] ref from 000080f8 in func 000080a8 size=2836
+  [OfxPropTime] ref from 00007258 in func 00007104 size=420
+  [OfxPropTime] ref from 00007274 in func 00007104 size=420
+  [OfxPropTime] ref from 0000730c in func 000072a8 size=624

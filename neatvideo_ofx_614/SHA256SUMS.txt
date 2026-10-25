@@ -1,0 +1,2 @@
+95bef55fef1f7de370fce74c6517840791c7a2dc11475696cdc9ee6093488430  NeatVideo6.arm64.ofx
+6f0e93164e89f09a453f92a281d2cd23f358b71b3b82a041ef991ed629e134e1  NeatVideo6.ofx.bundle/Contents/MacOS/NeatVideo6.ofx

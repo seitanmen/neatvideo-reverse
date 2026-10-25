@@ -1,0 +1,44 @@
+差分案 (WP aft, COMMON §4)。`nvh.c` の `interp` ブロック終了直後と usage 行への 2 hunk。
+文脈行は 2026-10-17 17:27 版の nvh.c から採った (統括が再適用時に調整可)。
+
+--- a/neatvideo_ofx_614/analysis/harness/nvh.c
++++ b/neatvideo_ofx_614/analysis/harness/nvh.c
+@@ -279,6 +279,39 @@ (interp の閉じの直後)
+     return 0;
+   }
++  if (argc > 2 && !strcmp(argv[1], "aftshuffle")) {   // FUN_009d39ec: AutoFineTune mode-2 tile order
++    long n = atol(argv[2]);
++    if (n < 0 || n > 4096) { fprintf(stderr, "aftshuffle: 0 <= N <= 4096\n"); return 1; }
++    long *out = calloc(n ? n : 1, 8);
++    ((void (*)(long *, long))FN(0x9d39ec))(out, n);
++    for (long i = 0; i < n; i++) printf("%ld %ld\n", i, out[i]);
++    free(out);
++    return 0;
++  }
++  if (argc > 4 && !strcmp(argv[1], "aftpoly")) {   // FUN_009d3e8c fit + FUN_009d4890 eval (AFT curve)
++    long npts = atol(argv[2]), ncoef = atol(argv[3]);
++    if (npts < 1 || npts > 16 || ncoef < 1 || ncoef > 5 || ncoef > npts || argc < 4 + 2 * (int)npts) {
++      fprintf(stderr, "aftpoly npts ncoef x_1..x_npts y_1..y_npts [q...]\n");
++      return 1;
++    }
++    double xs[16], ys[16], coef[5];
++    for (long i = 0; i < npts; i++) { xs[i] = atof(argv[4 + i]); ys[i] = atof(argv[4 + npts + i]); }
++    ((void (*)(double *, double *, long, double *, long))FN(0x9d3e8c))(xs, ys, npts, coef, ncoef);
++    for (long i = 0; i < ncoef; i++) printf("coef %ld %.17g\n", i, coef[i]);
++    for (int a = 4 + 2 * (int)npts; a < argc; a++) {
++      double q = atof(argv[a]);
++      printf("eval %.17g %.17g\n", q, ((double (*)(double, double *, long))FN(0x9d4890))(q, coef, ncoef));
++    }
++    return 0;
++  }
+   if (argc > 3 && !strcmp(argv[1], "tiles")) {
+     long W = atol(argv[2]), H = atol(argv[3]);
+     long tile = argc > 4 ? atol(argv[4]) : 96, margin = argc > 5 ? atol(argv[5]) : 12;
+     unsigned char *sch = calloc(1, 0x8000);
+
+(挿入のみ。既存行の変更なし。hunk 位置は目安 — 適用位置は「interp ブロックの閉じ `}` の後、`tiles` ブロックの前」。)
+
+@@ -472,7 +505,7 @@ (usage 文字列)
+-            "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr\n");
++            "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr | "
++            "aftshuffle N | aftpoly npts ncoef x.. y.. [q..]\n");

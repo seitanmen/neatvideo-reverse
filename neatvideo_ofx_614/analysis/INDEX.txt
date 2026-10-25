@@ -1,0 +1,32 @@
+functions: 39734
+needle [following limitations] hits=1
+  data@012f3172
+  (no code refs found)
+needle [Neat Video Demo" label] hits=1
+  data@012f3209
+  (no code refs found)
+needle [Only one GPU will be used] hits=1
+  data@0130761f
+  ref from 00107264 in func 00106858
+needle [Registering Neat Video] hits=1
+  data@0130b4e9
+  ref from 0011d2c0 in func 0011c920
+needle [This copy is licensed to] hits=1
+  data@0131080e
+  ref from 0012ec9c in func 0012e94c
+needle [limitation of the Demo] hits=3
+  data@01306c0e
+  (no code refs found)
+  data@01307644
+  (no code refs found)
+  data@01307ebc
+  (no code refs found)
+needle [ParamsHash3] hits=1
+  data@012f313e
+  ref from 0000aa8c in func 0000a22c
+  ref from 0000aaac in func 0000a22c
+  ref from 0000ab3c in func 0000a22c
+  ref from 00009c5c in func 00008dd4
+needle [Where can I find the license] hits=1
+  data@0130b88c
+  ref from 0011fdf0 in func 0011fa48

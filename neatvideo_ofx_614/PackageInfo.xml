@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<pkg-info overwrite-permissions="true" relocatable="false" identifier="com.absoft.NeatVideo6-OFX" postinstall-action="none" version="6.1.4, Neat Video OpenFX plug-in" format-version="2" generator-version="InstallCmds-720 (19H15)" install-location="/Applications" auth="root">
+    <payload numberOfFiles="84" installKBytes="47912"/>
+    <atomic-update-bundle/>
+    <strict-identifier/>
+    <relocate/>
+    <scripts>
+        <postinstall file="./postinstall"/>
+    </scripts>
+</pkg-info>

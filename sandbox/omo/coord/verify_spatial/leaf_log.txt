@@ -1,0 +1,36 @@
+cases 520
+ramp runs 520 elem_mismatch(bits) 23930 non-NaN-pair mismatch 23930
+ramp_np runs 520 elem_mismatch(bits) 39209 non-NaN-pair mismatch 39209
+wmul runs 520 elem_mismatch(bits) 21955 non-NaN-pair mismatch 21955
+wmul_np runs 520 elem_mismatch(bits) 37795 non-NaN-pair mismatch 37795
+down2 mismatch 4 4 0 (1, 1)
+down2 mismatch 5 7 1 (1, 1)
+down2 mismatch 8 6 0 (5, 5)
+down2 mismatch 8 6 1 (1, 1)
+down2 mismatch 8 6 2 (3, 3)
+down2 mismatch 9 9 0 (8, 8)
+down2 mismatch 9 9 1 (4, 4)
+down2 mismatch 9 9 2 (4, 4)
+down2 mismatch 16 16 0 (27, 27)
+down2 mismatch 16 16 1 (26, 26)
+down2 mismatch 16 16 2 (14, 14)
+down2 mismatch 33 17 0 (53, 53)
+down2 mismatch 33 17 1 (40, 40)
+down2 mismatch 33 17 2 (34, 34)
+down2 mismatch 100 57 0 (562, 562)
+down2 mismatch 100 57 1 (535, 535)
+down2 mismatch 100 57 2 (352, 352)
+down2 mismatch 257 129 0 (3297, 3297)
+down2 mismatch 257 129 1 (3346, 3346)
+down2 mismatch 257 129 2 (2012, 2012)
+down2 mismatch 64 3 0 (12, 12)
+down2 mismatch 64 3 1 (11, 11)
+down2 mismatch 64 3 2 (11, 11)
+down2 mismatch 3 64 0 (5, 5)
+down2 mismatch 3 64 1 (11, 11)
+down2 mismatch 3 64 2 (6, 6)
+down2 mismatch 2 9 0 (1, 1)
+down2 mismatch 11 2 0 (2, 2)
+down2 mismatch 11 2 1 (1, 1)
+down2 mismatch 11 2 2 (1, 1)
+down2 runs 56 mismatching 10386

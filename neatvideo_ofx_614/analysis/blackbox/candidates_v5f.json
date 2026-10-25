@@ -1,0 +1,9 @@
+[
+ {"name": "v5 default (exp, thr4)", "mode": "auto", "params": {}},
+ {"name": "v5 exp thr2", "mode": "auto", "params": {"threshold": 2.0}},
+ {"name": "v5 exp thr8", "mode": "auto", "params": {"threshold": 8.0}},
+ {"name": "pyramid s1.25", "mode": "auto", "params": {"similarity": "pyramid", "threshold": 1.25}},
+ {"name": "pyramid s1.5", "mode": "auto", "params": {"similarity": "pyramid", "threshold": 1.5}},
+ {"name": "pyramid s2.0", "mode": "auto", "params": {"similarity": "pyramid", "threshold": 2.0}},
+ {"name": "pyramid s3.0", "mode": "auto", "params": {"similarity": "pyramid", "threshold": 3.0}}
+]

@@ -1,0 +1,12 @@
+[
+ {"name": "C0 defaults", "mode": "temporal", "params": {}},
+ {"name": "C1 A-best temporal", "mode": "temporal", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 4.0, "Cr": 4.0}}},
+ {"name": "C2 thr4 luma1 sp1 cn4", "mode": "temporal", "params": {"threshold": 4.0, "luma": 1.0, "spatial": 1.0, "chroma": 1.0, "channel_noise": {"Cb": 4.0, "Cr": 4.0}}},
+ {"name": "C3 A-best spatial", "mode": "spatial", "params": {"threshold": 0.25, "luma": 1.0, "spatial": 1.0, "chroma": 0.5, "channel_noise": {"Cb": 2.0, "Cr": 2.0}}},
+ {"name": "C4 C1 + cn6", "mode": "temporal", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 6.0, "Cr": 6.0}}},
+ {"name": "C5 C1 + cn8", "mode": "temporal", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 8.0, "Cr": 8.0}}},
+ {"name": "C6 C1 luma0.4 (manual)", "mode": "temporal", "params": {"threshold": 4.0, "luma": 0.4, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 4.0, "Cr": 4.0}}},
+ {"name": "C7 C1 ultra-low 1.0", "mode": "temporal", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 4.0, "Cr": 4.0}, "band_amounts": {"ultra-low": 1.0}}},
+ {"name": "C8 C1 spatial-only", "mode": "temporal", "params": {"temporal": 0.0, "threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 4.0, "Cr": 4.0}}},
+ {"name": "C9 C1 temporal-only", "mode": "temporal", "params": {"threshold": 4.0, "luma": 0.0, "chroma": 0.0}}
+]

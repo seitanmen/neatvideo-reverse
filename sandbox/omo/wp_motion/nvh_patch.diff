@@ -1,0 +1,60 @@
+--- a/nvh.c
++++ b/nvh.c
+@@ (dispatch 追加位置: 既存サブコマンド群の後ろ)
++  if (argc > 9 && !strcmp(argv[1], "sad")) {          /* WP motion 申請 1: SAD カーネル */
++    long W = atol(argv[2]), H = atol(argv[3]);
++    float *a = load(argv[4], W * H), *b = load(argv[5], W * H);
++    long ax = atol(argv[6]), ay = atol(argv[7]), bx = atol(argv[8]), by = atol(argv[9]);
++    int elem = argc > 10 ? atoi(argv[10]) : 1;        /* 1 = byte 面, 2 = int16 面 */
++    /* margin 8 込みの作業面 (FUN_0097f020 と同じ端複製) を作り、位置は画像座標で受ける */
++    long Wp = W + 16, Hp = H + 16, stride = elem * Wp;
++    unsigned char *pa = calloc(1, stride * Hp), *pb = calloc(1, stride * Hp);
++    for (long y = 0; y < H; y++) for (long x = 0; x < W; x++) {
++      long s = (y + 8) * stride + (x + 8) * elem;
++      if (elem == 1) { pa[s] = (unsigned char)(int)(a[y * W + x] + 0.5f); pb[s] = (unsigned char)(int)(b[y * W + x] + 0.5f); }
++      else { short va = (short)(int)(a[y * W + x] + 0.5f), vb = (short)(int)(b[y * W + x] + 0.5f);
++             memcpy(pa + s, &va, 2); memcpy(pb + s, &vb, 2); }
++    }
++    /* 端 8 を複製 (左右の列、上下の行、四隅) */
++    for (long y = 0; y < Hp; y++) for (long m = 0; m < 8; m++) {
++      memcpy(pa + y * stride + m * elem, pa + y * stride + 8 * elem, elem);
++      memcpy(pa + y * stride + (Wp - 1 - m) * elem, pa + y * stride + (W + 7) * elem, elem);
++      memcpy(pb + y * stride + m * elem, pb + y * stride + 8 * elem, elem);
++      memcpy(pb + y * stride + (Wp - 1 - m) * elem, pb + y * stride + (W + 7) * elem, elem);
++    }
++    for (long m = 0; m < 8; m++) { memcpy(pa + m * stride, pa + 8 * stride, stride); memcpy(pa + (Hp - 1 - m) * stride, pa + (H + 7) * stride, stride);
++                                   memcpy(pb + m * stride, pb + 8 * stride, stride); memcpy(pb + (Hp - 1 - m) * stride, pb + (H + 7) * stride, stride); }
++    unsigned s16 = ((unsigned (*)(void *, void *, long))FN(0x9f862c))(pa + (ay + 8) * stride + (ax + 8) * elem, pb + (by + 8) * stride + (bx + 8) * elem, stride);
++    unsigned s32 = ((unsigned (*)(void *, void *, long))FN(0x9f9290))(pa + (ay + 8) * stride + (ax + 8) * elem, pb + (by + 8) * stride + (bx + 8) * elem, stride);
++    printf("sad16=%u sad32=%u\n", s16, s32);
++    return 0;
++  }
++  if (argc > 7 && !strcmp(argv[1], "b32")) {          /* WP motion 申請 2: 32x32 + サブピクセル重心 */
++    long W = atol(argv[2]), H = atol(argv[3]);
++    float *ref = load(argv[4], W * H), *cur = load(argv[5], W * H);
++    long cx = atol(argv[6]), cy = atol(argv[7]);
++    float thr = argc > 8 ? (float)atof(argv[8]) : 1.1f;
++    /* FUN_0097eebc(desc, W, H, margin=8, sub=1, align=16): 葉。byte 面 (sub=1)。 */
++    long desc[16]; ((void (*)(long *, long, long, long, long, long))FN(0x97eebc))(desc, W, H, 8, 1, 16);
++    /* pad 済み byte 面 (sad と同じ構築) を ref/cur 両方に作り、desc に data/stride を設定 */
++    /* (FUN_0097eef8(desc, ptr) が data を設定する; stride は 97eebc が書く) */
++    unsigned char *pa = calloc(1, desc[6] * (H + 16)), *pb = calloc(1, desc[6] * (H + 16));
++    for (long y = 0; y < H; y++) for (long x = 0; x < W; x++) {
++      pa[(y + 8) * desc[6] + x + 8] = (unsigned char)(int)(ref[y * W + x] + 0.5f);
++      pb[(y + 8) * desc[6] + x + 8] = (unsigned char)(int)(cur[y * W + x] + 0.5f);
++    }
++    for (long y = 0; y < H + 16; y++) for (long m = 0; m < 8; m++) {
++      pa[y * desc[6] + m] = pa[y * desc[6] + 8]; pa[y * desc[6] + W + 8 + m] = pa[y * desc[6] + W + 7];
++      pb[y * desc[6] + m] = pb[y * desc[6] + 8]; pb[y * desc[6] + W + 8 + m] = pb[y * desc[6] + W + 7];
++    }
++    for (long m = 0; m < 8; m++) { memcpy(pa + m * desc[6], pa + 8 * desc[6], desc[6]); memcpy(pa + (H + 8 + m) * desc[6], pa + (H + 7) * desc[6], desc[6]);
++                                   memcpy(pb + m * desc[6], pb + 8 * desc[6], desc[6]); memcpy(pb + (H + 8 + m) * desc[6], pb + (H + 7) * desc[6], desc[6]); }
++    ((void (*)(long *, void *))FN(0x97eef8))(desc, pa);   /* 中心側 (cur) の data を設定 */
++    /* 第 2 引数 (未使用と観測) は NULL で試す。offs = DAT_014877f8 の 8 近傍 (dx,dy,int 対) */
++    int offs[16] = {-1,-1, 0,-1, 1,-1, -1,0, 1,0, -1,1, 0,1, 1,1};
++    float ox, oy; unsigned osad, ret;
++    ret = ((unsigned (*)(float, void *, long *, void *, long, long, long, int *, float *, float *, unsigned *))FN(0x98bf18))
++            (thr, NULL, desc, pb + (cy + 8) * desc[6] + cx + 8, 0x20, cx, cy, offs, &ox, &oy, &osad);
++    printf("out_x=%.17g out_y=%.17g best_sad=%u ret=%u\n", ox, oy, osad, ret);
++    return 0;
++  }

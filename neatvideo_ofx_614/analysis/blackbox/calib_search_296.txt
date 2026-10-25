@@ -1,0 +1,56 @@
+input  vs genuine: {"Y": 37.86278638283917, "U": 49.364188878956455, "V": 48.76540934426447, "band_err": [2.235, 1.107, 0.547, 0.404], "fd_out": 4.785978317260742, "fd_gen": 1.0741502046585083}
+profile[spatial] mode=spatial sigma={"Y": 5.05, "Cb": 2.781, "Cr": 2.494}
+profile[temporal] mode=temporal sigma={"Y": 3.015, "Cb": 0.135, "Cr": 0.101}
+profile[auto] mode=temporal sigma={"Y": 3.015, "Cb": 0.135, "Cr": 0.101}
+[spatial] {"threshold": 0.5} -> Y=46.939 U=50.334 V=49.679 band_err=[0.86, 0.355, 0.205, 0.212] fd=1.016/1.074
+[spatial] {"threshold": 1.0} -> Y=46.932 U=50.334 V=49.679 band_err=[0.86, 0.356, 0.205, 0.213] fd=1.015/1.074
+[spatial] {"threshold": 2.0} -> Y=46.922 U=50.334 V=49.679 band_err=[0.86, 0.356, 0.206, 0.214] fd=1.015/1.074
+[spatial] {"threshold": 4.0} -> Y=46.909 U=50.333 V=49.680 band_err=[0.861, 0.357, 0.207, 0.215] fd=1.015/1.074
+[spatial] {"threshold": 8.0} -> Y=46.892 U=50.333 V=49.680 band_err=[0.861, 0.358, 0.207, 0.216] fd=1.012/1.074
+[spatial] {"threshold": 0.5, "luma": 0.4, "spatial": 0.5} -> Y=45.899 U=50.242 V=49.501 band_err=[0.985, 0.408, 0.203, 0.183] fd=1.334/1.074
+[spatial] {"threshold": 0.5, "luma": 0.4, "spatial": 1.0} -> Y=46.344 U=50.334 V=49.679 band_err=[0.941, 0.385, 0.197, 0.186] fd=1.239/1.074
+[spatial] {"threshold": 0.5, "luma": 0.4, "spatial": 2.0} -> Y=46.690 U=50.380 V=49.905 band_err=[0.898, 0.368, 0.199, 0.197] fd=1.153/1.074
+[spatial] {"threshold": 0.5, "luma": 0.7, "spatial": 0.5} -> Y=46.271 U=50.242 V=49.501 band_err=[0.949, 0.388, 0.198, 0.185] fd=1.254/1.074
+[spatial] {"threshold": 0.5, "luma": 0.7, "spatial": 1.0} -> Y=46.822 U=50.334 V=49.679 band_err=[0.89, 0.361, 0.196, 0.196] fd=1.110/1.074
+[spatial] {"threshold": 0.5, "luma": 0.7, "spatial": 2.0} -> Y=46.910 U=50.380 V=49.905 band_err=[0.847, 0.358, 0.216, 0.229] fd=0.985/1.074
+[spatial] {"threshold": 0.5, "luma": 1.0, "spatial": 0.5} -> Y=46.567 U=50.242 V=49.501 band_err=[0.919, 0.373, 0.195, 0.189] fd=1.183/1.074
+[spatial] {"threshold": 0.5, "luma": 1.0, "spatial": 1.0} -> Y=46.939 U=50.334 V=49.679 band_err=[0.86, 0.355, 0.205, 0.212] fd=1.016/1.074
+[spatial] {"threshold": 0.5, "luma": 1.0, "spatial": 2.0} -> Y=46.322 U=50.380 V=49.905 band_err=[0.85, 0.39, 0.254, 0.275] fd=0.887/1.074
+[spatial] {"threshold": 0.5, "luma": 1.0, "spatial": 1.0, "chroma": 0.5, "channel_noise": {"Cb": 0.5, "Cr": 0.5}} -> Y=46.939 U=50.089 V=49.295 band_err=[0.86, 0.355, 0.205, 0.212] fd=1.016/1.074
+[spatial] {"threshold": 0.5, "luma": 1.0, "spatial": 1.0, "chroma": 0.5, "channel_noise": {"Cb": 1.0, "Cr": 1.0}} -> Y=46.939 U=50.240 V=49.472 band_err=[0.86, 0.355, 0.205, 0.212] fd=1.016/1.074
+[spatial] {"threshold": 0.5, "luma": 1.0, "spatial": 1.0, "chroma": 0.5, "channel_noise": {"Cb": 2.0, "Cr": 2.0}} -> Y=46.939 U=50.514 V=49.923 band_err=[0.86, 0.355, 0.205, 0.212] fd=1.016/1.074
+[spatial] {"threshold": 0.5, "luma": 1.0, "spatial": 1.0, "chroma": 0.5, "channel_noise": {"Cb": 4.0, "Cr": 4.0}} -> Y=46.939 U=49.874 V=50.319 band_err=[0.86, 0.355, 0.205, 0.212] fd=1.016/1.074
+[spatial] {"threshold": 0.5, "luma": 1.0, "spatial": 1.0, "chroma": 1.0, "channel_noise": {"Cb": 0.5, "Cr": 0.5}} -> Y=46.939 U=50.158 V=49.379 band_err=[0.86, 0.355, 0.205, 0.212] fd=1.016/1.074
+[spatial] {"threshold": 0.5, "luma": 1.0, "spatial": 1.0, "chroma": 1.0, "channel_noise": {"Cb": 1.0, "Cr": 1.0}} -> Y=46.939 U=50.334 V=49.679 band_err=[0.86, 0.355, 0.205, 0.212] fd=1.016/1.074
+[spatial] {"threshold": 0.5, "luma": 1.0, "spatial": 1.0, "chroma": 1.0, "channel_noise": {"Cb": 2.0, "Cr": 2.0}} -> Y=46.939 U=50.080 V=50.152 band_err=[0.86, 0.355, 0.205, 0.212] fd=1.016/1.074
+[spatial] {"threshold": 0.5, "luma": 1.0, "spatial": 1.0, "chroma": 1.0, "channel_noise": {"Cb": 4.0, "Cr": 4.0}} -> Y=46.939 U=46.772 V=47.927 band_err=[0.86, 0.355, 0.205, 0.212] fd=1.016/1.074
+[spatial] {"threshold": 0.25, "luma": 1.0, "spatial": 1.0, "chroma": 0.5, "channel_noise": {"Cb": 2.0, "Cr": 2.0}} -> Y=46.942 U=50.514 V=49.923 band_err=[0.86, 0.355, 0.205, 0.211] fd=1.018/1.074
+[spatial] {"threshold": 1.0, "luma": 1.0, "spatial": 1.0, "chroma": 0.5, "channel_noise": {"Cb": 2.0, "Cr": 2.0}} -> Y=46.932 U=50.514 V=49.923 band_err=[0.86, 0.356, 0.205, 0.213] fd=1.015/1.074
+[spatial] {"threshold": 0.5, "luma": 1.0, "spatial": 1.0, "chroma": 0.5, "channel_noise": {"Cb": 2.0, "Cr": 2.0}} -> Y=46.939 U=50.514 V=49.923 band_err=[0.86, 0.355, 0.205, 0.212] fd=1.016/1.074
+BEST[spatial] {"threshold": 0.25, "luma": 1.0, "spatial": 1.0, "chroma": 0.5, "channel_noise": {"Cb": 2.0, "Cr": 2.0}} -> {"Y": 46.941807053068686, "U": 50.51360493356654, "V": 49.922951293827744, "band_err": [0.86, 0.355, 0.205, 0.211], "fd_out": 1.0176081657409668, "fd_gen": 1.0741502046585083}
+[temporal] {"threshold": 0.5} -> Y=46.266 U=50.029 V=49.228 band_err=[0.916, 0.407, 0.23, 0.21] fd=1.346/1.074
+[temporal] {"threshold": 1.0} -> Y=46.809 U=50.048 V=49.241 band_err=[0.88, 0.372, 0.207, 0.194] fd=1.155/1.074
+[temporal] {"threshold": 2.0} -> Y=47.025 U=50.053 V=49.244 band_err=[0.865, 0.358, 0.198, 0.19] fd=1.070/1.074
+[temporal] {"threshold": 4.0} -> Y=47.062 U=50.054 V=49.245 band_err=[0.861, 0.354, 0.196, 0.191] fd=1.045/1.074
+[temporal] {"threshold": 8.0} -> Y=47.046 U=50.054 V=49.246 band_err=[0.86, 0.355, 0.197, 0.193] fd=1.041/1.074
+[temporal] {"threshold": 4.0, "luma": 0.4, "spatial": 0.5} -> Y=45.846 U=50.036 V=49.234 band_err=[0.989, 0.413, 0.205, 0.181] fd=1.351/1.074
+[temporal] {"threshold": 4.0, "luma": 0.4, "spatial": 1.0} -> Y=46.292 U=50.054 V=49.245 band_err=[0.945, 0.391, 0.199, 0.181] fd=1.260/1.074
+[temporal] {"threshold": 4.0, "luma": 0.4, "spatial": 2.0} -> Y=46.711 U=50.090 V=49.272 band_err=[0.9, 0.371, 0.197, 0.185] fd=1.168/1.074
+[temporal] {"threshold": 4.0, "luma": 0.7, "spatial": 0.5} -> Y=46.200 U=50.036 V=49.234 band_err=[0.954, 0.396, 0.2, 0.181] fd=1.279/1.074
+[temporal] {"threshold": 4.0, "luma": 0.7, "spatial": 1.0} -> Y=46.814 U=50.054 V=49.245 band_err=[0.893, 0.367, 0.195, 0.185] fd=1.139/1.074
+[temporal] {"threshold": 4.0, "luma": 0.7, "spatial": 2.0} -> Y=47.104 U=50.090 V=49.272 band_err=[0.847, 0.353, 0.202, 0.199] fd=1.004/1.074
+[temporal] {"threshold": 4.0, "luma": 1.0, "spatial": 0.5} -> Y=46.507 U=50.036 V=49.234 band_err=[0.924, 0.381, 0.197, 0.182] fd=1.213/1.074
+[temporal] {"threshold": 4.0, "luma": 1.0, "spatial": 1.0} -> Y=47.062 U=50.054 V=49.245 band_err=[0.861, 0.354, 0.196, 0.191] fd=1.045/1.074
+[temporal] {"threshold": 4.0, "luma": 1.0, "spatial": 2.0} -> Y=46.762 U=50.090 V=49.272 band_err=[0.846, 0.371, 0.222, 0.22] fd=0.907/1.074
+[temporal] {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 0.5, "channel_noise": {"Cb": 0.5, "Cr": 0.5}} -> Y=47.104 U=50.028 V=49.229 band_err=[0.847, 0.353, 0.202, 0.199] fd=1.004/1.074
+[temporal] {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 0.5, "channel_noise": {"Cb": 1.0, "Cr": 1.0}} -> Y=47.104 U=50.052 V=49.244 band_err=[0.847, 0.353, 0.202, 0.199] fd=1.004/1.074
+[temporal] {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 0.5, "channel_noise": {"Cb": 2.0, "Cr": 2.0}} -> Y=47.104 U=50.148 V=49.320 band_err=[0.847, 0.353, 0.202, 0.199] fd=1.004/1.074
+[temporal] {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 0.5, "channel_noise": {"Cb": 4.0, "Cr": 4.0}} -> Y=47.104 U=50.402 V=49.551 band_err=[0.847, 0.353, 0.202, 0.199] fd=1.004/1.074
+[temporal] {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 0.5, "Cr": 0.5}} -> Y=47.104 U=50.036 V=49.234 band_err=[0.847, 0.353, 0.202, 0.199] fd=1.004/1.074
+[temporal] {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 1.0, "Cr": 1.0}} -> Y=47.104 U=50.090 V=49.272 band_err=[0.847, 0.353, 0.202, 0.199] fd=1.004/1.074
+[temporal] {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 2.0, "Cr": 2.0}} -> Y=47.104 U=50.268 V=49.426 band_err=[0.847, 0.353, 0.202, 0.199] fd=1.004/1.074
+[temporal] {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 4.0, "Cr": 4.0}} -> Y=47.104 U=50.691 V=49.875 band_err=[0.847, 0.353, 0.202, 0.199] fd=1.004/1.074
+[temporal] {"threshold": 2.0, "luma": 0.7, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 4.0, "Cr": 4.0}} -> Y=47.079 U=50.693 V=49.877 band_err=[0.85, 0.356, 0.203, 0.198] fd=1.025/1.074
+[temporal] {"threshold": 8.0, "luma": 0.7, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 4.0, "Cr": 4.0}} -> Y=47.084 U=50.690 V=49.874 band_err=[0.847, 0.353, 0.203, 0.201] fd=1.001/1.074
+[temporal] {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 4.0, "Cr": 4.0}} -> Y=47.104 U=50.691 V=49.875 band_err=[0.847, 0.353, 0.202, 0.199] fd=1.004/1.074
+BEST[temporal] {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 1.0, "channel_noise": {"Cb": 4.0, "Cr": 4.0}} -> {"Y": 47.1039200684581, "U": 50.69125334678664, "V": 49.87451869208694, "band_err": [0.847, 0.353, 0.202, 0.199], "fd_out": 1.0041719675064087, "fd_gen": 1.0741502046585083}

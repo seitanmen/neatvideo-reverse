@@ -1,0 +1,6 @@
+[
+ {"name": "final defaults", "mode": "auto", "params": {}},
+ {"name": "luma 0.4 (manual 40%)", "mode": "auto", "params": {"luma": 0.4}},
+ {"name": "mode spatial", "mode": "spatial", "params": {}},
+ {"name": "mode temporal", "mode": "temporal", "params": {}}
+]

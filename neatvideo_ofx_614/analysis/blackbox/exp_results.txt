@@ -1,0 +1,981 @@
+[input] PSNR vs genuine Y=37.86 U=49.36 V=48.77 | band rmsErr L1=2.235 L2=1.107 L3=0.547 low=0.404 | frame-diff rms out=4.786 genuine=1.074
+  proposed: Y noise curve [2.62 2.73 3.01 3.26 3.23 2.81 2.09 1.33] U~0.40 V~0.35
+  proposed took 48s
+[proposed temporal-only] PSNR vs genuine Y=44.41 U=50.33 V=49.49 | band rmsErr L1=1.148 L2=0.501 L3=0.237 low=0.181 | frame-diff rms out=1.693 genuine=1.074
+  proposed: Y noise curve [2.62 2.73 3.01 3.26 3.23 2.81 2.09 1.33] U~0.40 V~0.35
+  proposed took 51s
+[proposed temporal+spatial] PSNR vs genuine Y=46.45 U=50.75 V=49.86 | band rmsErr L1=0.840 L2=0.404 L3=0.252 low=0.241 | frame-diff rms out=0.901 genuine=1.074
+  current took 54s
+[current v4c] PSNR vs genuine Y=41.79 U=50.02 V=49.27 | band rmsErr L1=1.532 L2=0.689 L3=0.351 low=0.279 | frame-diff rms out=2.409 genuine=1.074
+
+== 2026-10-15 v5 (nvfilter v5 / denoise_video_v5.py) ==========================================
+-- calibrate_v5.py DIR 296 --params '{}' --mode auto   (final V5_DEFAULTS, segment A = tuning)
+input  vs genuine: {"Y": 37.86278638283917, "U": 49.364188878956455, "V": 48.76540934426447, "band_err": [2.235, 1.107, 0.547, 0.404], "fd_out": 4.785978317260742, "fd_gen": 1.0741502046585083}
+[auto] {} -> {"Y": 47.11666218247536, "U": 50.984968813112374, "V": 51.179044446082116, "band_err": [0.85, 0.353, 0.199, 0.195], "fd_out": 1.022072672843933, "fd_gen": 1.0741502046585083}
+-- calibrate_v5.py DIR 560 --params '{}' --mode auto   (segment B = held-out)
+input  vs genuine: {"Y": 37.94339921016295, "U": 49.33031731240628, "V": 48.777228993562346, "band_err": [2.193, 1.076, 0.531, 0.392], "fd_out": 4.750985622406006, "fd_gen": 1.0065648555755615}
+[auto] {} -> {"Y": 47.221864224756075, "U": 50.920371148171895, "V": 51.18944310635564, "band_err": [0.825, 0.334, 0.192, 0.193], "fd_out": 0.9142352938652039, "fd_gen": 1.0065648555755615}
+-- compare_full.py test_v02_reduce.mov ... (whole videos, 30 frames n=12+24k, x264-encoded outputs)
+30 frames (n = 12 + k*24) vs test_v02_reduce.mov
+test_v02.mp4: PSNR vs genuine Y=38.35 U=49.47 V=48.82 | mean shift Y=+0.005 U=-0.032 V=-0.035 (frames 30)
+repro/out/test_v02_denoised_v4c.mp4: PSNR vs genuine Y=38.44 U=43.14 V=44.19 | mean shift Y=-1.731 U=-0.994 V=+0.791 (frames 30)
+repro/out/test_v02_denoised_v5.mp4: PSNR vs genuine Y=45.63 U=49.72 V=50.04 | mean shift Y=+0.117 U=+0.023 V=+0.028 (frames 30)
+-- validate_v5.py (synthetic, sigma15, manual 32x32 profile area)
+profile sigma: {'Y': 11.48, 'Cb': 30.2, 'Cr': 43.59} Y band ratio [1.0, 0.235, 0.123, 0.077, 0.038]
+noisy 24.54
+v5 temporal-only 32.52
+v5 spatial-only 34.14
+v5 full 38.69
+v5 full + flicker(r=12) 39.05
+-- validate_v4.py (same synthetic clip, for reference)
+profile: {'Y': 10.84, 'Cb': 9.53, 'Cr': 9.98}
+noisy 24.54
+temporal 31.46
+full 35.83
+final 36.13
+-- candidate grids: candidates_v5c_results.txt (final code, CHROMA_GAIN scalar 3 at that time;
+   'D3 cn1.33' == Cr gain 4), earlier exploratory runs: calib_search_296.txt (pre-final code)
+-- candidates_v5d.json on final code (profile modes / manual luma 40%)
+## segment 296
+final defaults               [auto] Y=47.117 U=50.985 V=51.179 band_err=[0.85, 0.353, 0.199, 0.195] fd=1.022/1.074
+luma 0.4 (manual 40%)        [auto] Y=46.670 U=50.985 V=51.179 band_err=[0.905, 0.374, 0.197, 0.184] fd=1.183/1.074
+mode spatial                 [spatial] Y=46.915 U=48.275 V=47.599 band_err=[0.851, 0.358, 0.213, 0.226] fd=0.994/1.074
+mode temporal                [temporal] Y=47.086 U=50.855 V=50.762 band_err=[0.842, 0.354, 0.205, 0.203] fd=0.987/1.074
+## segment 560
+final defaults               [auto] Y=47.222 U=50.920 V=51.189 band_err=[0.825, 0.334, 0.192, 0.193] fd=0.914/1.007
+luma 0.4 (manual 40%)        [auto] Y=46.919 U=50.920 V=51.189 band_err=[0.874, 0.345, 0.182, 0.176] fd=1.089/1.007
+mode spatial                 [spatial] Y=46.850 U=50.377 V=49.724 band_err=[0.828, 0.345, 0.218, 0.255] fd=0.900/1.007
+mode temporal                [temporal] Y=47.275 U=50.748 V=50.675 band_err=[0.832, 0.331, 0.185, 0.184] fd=0.952/1.007
+
+== 2026-10-15 post-review code (RGB IsClip, dead-pixel exclusion, band-shape prior, CLI rotation/VFR/odd-size fixes)
+-- calibrate_v5.py DIR 296|560 --params '{}' --mode auto  (identical to the pre-review build)
+[auto] {} -> {"Y": 47.11666218247536, "U": 50.984968813112374, "V": 51.179044446082116, "band_err": [0.85, 0.353, 0.199, 0.195], "fd_out": 1.022072672843933, "fd_gen": 1.0741502046585083}
+[auto] {} -> {"Y": 47.221864224756075, "U": 50.920371148171895, "V": 51.18944310635564, "band_err": [0.825, 0.334, 0.192, 0.193], "fd_out": 0.9142352938652039, "fd_gen": 1.0065648555755615}
+-- profile used for out/test_v02_denoised_v5.mp4 (frames 240-242): curve/band_ratio/tot_ratio/levels identical
+   with the post-review code (only area_sigma, unused in auto mode, differs) -> whole-video numbers above still apply
+-- validate_v5.py
+profile sigma: {'Y': 11.48, 'Cb': 30.2, 'Cr': 43.59} Y band ratio [1.0, 0.235, 0.123, 0.074, 0.038]
+noisy 24.54
+v5 temporal-only 32.52
+v5 spatial-only 34.15
+v5 full 38.7
+v5 full + flicker(r=12) 39.06
+-- reviewer letterbox case (synthetic 640x360, 46px exact-black bars, sigma Y3/C2; Y/Cb rmse vs clean)
+   pre-review : spatial Y 3.42->3.42 Cb 2.04->2.04 (sigma 0) | auto Y 3.42->1.97 Cb 2.04->9.94
+   post-review: spatial Y 3.42->1.95 Cb 2.04->2.23          | auto (falls back to spatial, <10% static) same
+
+== 2026-10-15 follow-ups after re-review (APPROVE): CFR-timeline decode + noise-free safeguard
+-- read_frames(fps=r_frame_rate): test_v02 all 721 frames hash-identical to the passthrough decode (1dc42f27b556)
+   -> out/test_v02_denoised_v5.mp4 and every number above are unaffected
+-- reviewer vfr.mp4 (13 coded frames, 0.733 s): 22 frames on the 30 fps timeline, sub-range 6..9 == full[6:10],
+   output duration 0.733 s (passthrough build: 0.433 s)
+-- reviewer lossless sliding-window check (short.mkv): full / --start 5 --frames 6 / --start 0 --frames 3 /
+   --radius 1 --start 2 --frames 5 -> 0 mismatching frames each
+-- testsrc2 (graphics, no noise): dead fraction 0.80 -> mode spatial+noise-free, sigma 0, output vs input PSNR 168.1/88.7/88.7
+   (pre-safeguard: 33.9/33.5/27.9). test_v02 / test.mp4 dead fraction 0.000 -> unaffected
+-- validate_v5.py: v5 full 38.7, + flicker 39.06 (unchanged)
+
+== 2026-10-15 similarity decode (FUN_0099a76c/FUN_0099afb4) -> nvfilter similarity='pyramid'
+-- candidates_v5e.json
+## segment 296
+v5 default (exp, thr4)       [auto] Y=47.117 U=50.985 V=51.179 band_err=[0.85, 0.353, 0.199, 0.195] fd=1.022/1.074
+pyramid s1.0                 [auto] Y=45.450 U=50.860 V=50.993 band_err=[0.965, 0.465, 0.284, 0.235] fd=1.613/1.074
+pyramid s1.25                [auto] Y=46.742 U=50.968 V=51.159 band_err=[0.875, 0.378, 0.219, 0.201] fd=1.179/1.074
+pyramid s1.5                 [auto] Y=47.077 U=50.982 V=51.176 band_err=[0.853, 0.356, 0.201, 0.195] fd=1.050/1.074
+pyramid s2.0                 [auto] Y=47.095 U=50.984 V=51.177 band_err=[0.849, 0.353, 0.2, 0.197] fd=1.022/1.074
+pyramid s3.0                 [auto] Y=47.057 U=50.984 V=51.177 band_err=[0.85, 0.355, 0.202, 0.2] fd=1.024/1.074
+pyramid s1.5 luma1 sp1       [auto] Y=46.972 U=50.792 V=50.769 band_err=[0.872, 0.36, 0.198, 0.188] fd=1.104/1.074
+pyramid s2.0 luma1 sp1       [auto] Y=47.008 U=50.787 V=50.758 band_err=[0.866, 0.357, 0.196, 0.19] fd=1.071/1.074
+## segment 560
+v5 default (exp, thr4)       [auto] Y=47.222 U=50.920 V=51.189 band_err=[0.825, 0.334, 0.192, 0.193] fd=0.914/1.007
+pyramid s1.0                 [auto] Y=46.369 U=50.861 V=51.116 band_err=[0.875, 0.385, 0.234, 0.211] fd=1.252/1.007
+pyramid s1.25                [auto] Y=47.124 U=50.913 V=51.181 band_err=[0.833, 0.34, 0.197, 0.194] fd=0.976/1.007
+pyramid s1.5                 [auto] Y=47.222 U=50.920 V=51.187 band_err=[0.826, 0.334, 0.192, 0.193] fd=0.921/1.007
+pyramid s2.0                 [auto] Y=47.184 U=50.921 V=51.188 band_err=[0.825, 0.335, 0.193, 0.196] fd=0.917/1.007
+pyramid s3.0                 [auto] Y=47.155 U=50.920 V=51.188 band_err=[0.826, 0.336, 0.195, 0.199] fd=0.923/1.007
+pyramid s1.5 luma1 sp1       [auto] Y=47.243 U=50.744 V=50.779 band_err=[0.834, 0.331, 0.184, 0.183] fd=0.951/1.007
+pyramid s2.0 luma1 sp1       [auto] Y=47.210 U=50.742 V=50.774 band_err=[0.833, 0.332, 0.185, 0.187] fd=0.945/1.007
+-- candidates_v5f.json (+ Ymov = Y PSNR on moving pixels, 15x15-mean |dt| > 1.0)
+## segment 296
+input  vs genuine: {"Y": 37.86278638283917, "U": 49.364188878956455, "V": 48.76540934426447, "Ymov": 37.307867362481375, "band_err": [2.235, 1.107, 0.547, 0.404], "fd_out": 4.785978317260742, "fd_gen": 1.0741502046585083}
+moving-pixel fraction: 0.237
+v5 default (exp, thr4)       [auto] Y=47.117 Ymov=46.983 U=50.985 V=51.179 band_err=[0.85, 0.353, 0.199, 0.195] fd=1.022/1.074
+v5 exp thr2                  [auto] Y=47.052 Ymov=46.919 U=50.983 V=51.178 band_err=[0.855, 0.358, 0.202, 0.195] fd=1.057/1.074
+v5 exp thr8                  [auto] Y=47.104 Ymov=46.961 U=50.985 V=51.178 band_err=[0.849, 0.353, 0.2, 0.197] fd=1.016/1.074
+pyramid s1.25                [auto] Y=46.742 Ymov=46.591 U=50.968 V=51.159 band_err=[0.875, 0.378, 0.219, 0.201] fd=1.179/1.074
+pyramid s1.5                 [auto] Y=47.077 Ymov=46.944 U=50.982 V=51.176 band_err=[0.853, 0.356, 0.201, 0.195] fd=1.050/1.074
+pyramid s2.0                 [auto] Y=47.095 Ymov=46.946 U=50.984 V=51.177 band_err=[0.849, 0.353, 0.2, 0.197] fd=1.022/1.074
+pyramid s3.0                 [auto] Y=47.057 Ymov=46.901 U=50.984 V=51.177 band_err=[0.85, 0.355, 0.202, 0.2] fd=1.024/1.074
+## segment 560
+input  vs genuine: {"Y": 37.94339921016295, "U": 49.33031731240628, "V": 48.777228993562346, "Ymov": 37.37564202369416, "band_err": [2.193, 1.076, 0.531, 0.392], "fd_out": 4.750985622406006, "fd_gen": 1.0065648555755615}
+moving-pixel fraction: 0.235
+v5 default (exp, thr4)       [auto] Y=47.222 Ymov=47.050 U=50.920 V=51.189 band_err=[0.825, 0.334, 0.192, 0.193] fd=0.914/1.007
+v5 exp thr2                  [auto] Y=47.217 Ymov=47.053 U=50.919 V=51.189 band_err=[0.827, 0.335, 0.192, 0.192] fd=0.927/1.007
+v5 exp thr8                  [auto] Y=47.198 Ymov=47.019 U=50.920 V=51.189 band_err=[0.825, 0.334, 0.193, 0.196] fd=0.916/1.007
+pyramid s1.25                [auto] Y=47.124 Ymov=46.966 U=50.913 V=51.181 band_err=[0.833, 0.34, 0.197, 0.194] fd=0.976/1.007
+pyramid s1.5                 [auto] Y=47.222 Ymov=47.051 U=50.920 V=51.187 band_err=[0.826, 0.334, 0.192, 0.193] fd=0.921/1.007
+pyramid s2.0                 [auto] Y=47.184 Ymov=46.996 U=50.921 V=51.188 band_err=[0.825, 0.335, 0.193, 0.196] fd=0.917/1.007
+pyramid s3.0                 [auto] Y=47.155 Ymov=46.965 U=50.920 V=51.188 band_err=[0.826, 0.336, 0.195, 0.199] fd=0.923/1.007
+-- measurement floor: genuine segment 296 re-encoded with x264, PSNR vs the genuine itself (frames 8..23)
+   28M: Y 49.69 U 54.15 V 54.67 | 38M: Y 51.97 U 56.80 V 57.29 | crf16: Y 46.71 U 51.48 V 52.12
+
+== 2026-10-15 audio copy (denoise_video_v5.py --audio), A/V offset as one ffmpeg run sees it (signalstats + silencedetect)
+-- sources
+av_src.mp4       flash t=1.0 beep t=1.000021 -> beep-flash = 0.0 ms
+av_off.mp4       flash t=1.0 beep t=1.249354 -> beep-flash = 249.4 ms
+av_pcm.mov       flash t=1.0 beep t=1.000021 -> beep-flash = 0.0 ms
+av_wma2.mkv      flash t=1.043 beep t=1.043167 -> beep-flash = 0.2 ms
+-- outputs (full / part = --start 12 --frames 48)
+full.mp4         flash t=1.0 beep t=1.000021 -> beep-flash = 0.0 ms
+part.mp4         flash t=0.5 beep t=0.500021 -> beep-flash = 0.0 ms
+off.mp4          flash t=1.0 beep t=1.249354 -> beep-flash = 249.4 ms
+off_part.mp4     flash t=0.5 beep t=0.749021 -> beep-flash = 249.0 ms
+pcm.mov          flash t=1.0 beep t=1.000021 -> beep-flash = 0.0 ms
+wma.mp4          flash t=1.0 beep t=0.9995 -> beep-flash = -0.5 ms
+wma.mkv          flash t=1.043 beep t=1.043167 -> beep-flash = 0.2 ms
+wma_part.mkv     flash t=0.5 beep t=0.499833 -> beep-flash = -0.2 ms
+aac.mp4          flash t=1.0 beep t=1.000021 -> beep-flash = 0.0 ms
+none.mp4         flash t=1.0 beep t=None -> beep-flash = None ms
+   (wmav2 -> .mp4 falls back to AAC; ffmpeg 8 muxes PCM into .mp4, so pcm stays 'copy')
+
+== 2026-10-15 encode quality (compare_full.py, whole video, 30 frames)
+30 frames (n = 12 + k*24) vs test_v02_reduce.mov
+repro/out/test_v02_denoised_v5.mp4: PSNR vs genuine Y=45.63 U=49.72 V=50.04 | mean shift Y=+0.117 U=+0.023 V=+0.028 (frames 30)
+repro/out/test_v02_denoised_v5_crf12.mp4: PSNR vs genuine Y=46.70 U=50.20 V=50.41 | mean shift Y=+0.108 U=+0.031 V=+0.040 (frames 30)
+   sizes: v5 crf16 26.1 MB, v5 crf12 54.9 MB, genuine 105.8 MB
+
+== 2026-10-15 audio review fixes (per-track sync, rv5 edge-case media; sync3.py)
+-- before the fixes (reviewer): ts_vfirst -228.6 ms (--start 2: -145.3), ps_vfirst -240.0, ts_midgop +291.7, unk.mkv -> crash,
+   lead1 --frames 48 --audio aac -> audio 0.984 s of 2.0, multi_wma -> both tracks re-encoded
+-- after:
+ts_full.mp4              fmt_start=0.000000 dur=4.004000 [v0:h264@0.000000 a1:aac@0.228000]
+    a:0 aac flashes=[1.0, 3.0] beeps=[0.9994, 2.9994, 4.004] -> beep-flash(ms)=[-0.6, -0.6]
+ts_part.mp4              fmt_start=0.000000 dur=2.000000 [v0:h264@0.000000 a1:aac@0.145000]
+    a:0 aac flashes=[0.916667] beeps=[0.9164, 1.873] -> beep-flash(ms)=[-0.3]
+ts_frames.mp4            fmt_start=0.000000 dur=2.000000 [v0:h264@0.000000 a1:aac@0.228000]
+    a:0 aac flashes=[1.0] beeps=[0.9994, 1.7853] -> beep-flash(ms)=[-0.6]
+ps_full.mp4              fmt_start=0.000000 dur=4.007333 [v0:h264@0.000000 a1:aac@0.218000]
+    a:0 aac flashes=[1.0, 3.0] beeps=[0.9994, 2.9994, 4.0153] -> beep-flash(ms)=[-0.6, -0.6]
+ps_full.mkv              fmt_start=0.000000 dur=4.008000 [v0:h264@0.000000 a1:mp2@0.240000]
+    a:0 mp2 flashes=[1.0, 3.0] beeps=[1.0, 3.0, 4.008] -> beep-flash(ms)=[0.0, 0.0]
+midgop.mp4               fmt_start=0.000000 dur=3.552000 [v0:h264@0.000000 a1:aac@0.000000]
+    a:0 aac flashes=[0.541667, 2.541667] beeps=[0.5417, 2.5417, 3.5523] -> beep-flash(ms)=[0.0, 0.0]
+midgop_part.mp4          fmt_start=0.000000 dur=1.256333 [v0:h264@0.000000 a1:aac@0.019000]
+    a:0 aac flashes=[0.208333] beeps=[0.2084, 1.2563] -> beep-flash(ms)=[0.0]
+tslead.mp4               fmt_start=0.000000 dur=4.001000 [v0:h264@0.000000 a1:aac@0.000000]
+    a:0 aac flashes=[1.0, 3.0] beeps=[1.0, 3.0, 4.0013] -> beep-flash(ms)=[0.0, 0.0]
+lead_aac.mp4             fmt_start=0.000000 dur=2.000000 [v0:h264@0.000000 a1:aac@0.000000]
+    a:0 aac flashes=[1.0] beeps=[0.9984, 2.0082] -> beep-flash(ms)=[-1.6]
+lead_copy.mp4            fmt_start=0.000000 dur=2.007833 [v0:h264@0.000000 a1:aac@0.003000]
+    a:0 aac flashes=[1.0] beeps=[1.0002, 2.0082] -> beep-flash(ms)=[0.2]
+multi_wma.mp4            fmt_start=0.000000 dur=4.011000 [v0:h264@0.000000 a1:aac@0.000000 a2:aac@0.271000]
+    a:0 aac flashes=[1.0, 3.0] beeps=[1.0002, 3.0002, 4.0108] -> beep-flash(ms)=[0.2, 0.2]
+    a:1 aac flashes=[1.0, 3.0] beeps=[0.9995, 2.9995, 4.0042] -> beep-flash(ms)=[-0.5, -0.5]
+multi.mov                fmt_start=0.000000 dur=4.000000 [v0:h264@0.000000 a1:aac@0.000000 a2:pcm_s16le@0.250000]
+    a:0 aac flashes=[1.0, 3.0] beeps=[1.0, 3.0, 4.0107] -> beep-flash(ms)=[0.0, 0.0]
+    a:1 pcm_s16le flashes=[1.0, 3.0] beeps=[1.0, 3.0, 4.0] -> beep-flash(ms)=[0.0, 0.0]
+flv.mp4                  fmt_start=0.000000 dur=4.004500 [v0:h264@0.000000 a1:aac@0.229000]
+    a:0 aac flashes=[1.0, 3.0] beeps=[1.0002, 3.0002, 4.0048] -> beep-flash(ms)=[0.2, 0.2]
+   unk.mkv -> warning, stream dropped, video-only output (exit 0); short_audio --start 72 --frames 12 -> warning, video only
+-- pyramid fixes: own pyramid_scale (default 1.5), t = max(scale,1e-3)*c*K (scale 0 -> no NaN), unknown similarity -> ValueError
+-- read_frames fps=R:eof_action=pass: lead1.mkv / multi_wma.mkv 96 frames (was 95), vfr.mp4 22, test_v02 hash unchanged (721, 1dc42f27b556)
+
+== 2026-10-15 re-review follow-ups (verdict COMMENT: 10/10 fixed) -> -t dur, setpts=PTS-STARTPTS,fps=R, 1-frame v0 probe
+-- probe test_v02 0.23 s (10 s ffprobe decode: 4.4 s per reviewer); test_v02 timeline 721 frames hash 1dc42f27b556 (= passthrough)
+-- frame counts timeline/passthrough: av_wma 96/96, av_wma2 96/96, lead1 96/96, multi_wma 96/96, short 13/13, ts_midgop 85/85, vfr 22 (conformed)/13
+-- TS/PS sub-range audio now reaches the range end: ts_vfirst --frames 48 audio [0.228, 2.020), --start 2 [0.145, 2.001) (aac [0.124, 2.000))
+ts_frames.mp4            fmt_start=0.000000 dur=2.020000 [v0:h264@0.000000 a1:aac@0.228000]
+    a:0 aac -> beep-flash(ms)=[-0.6]
+ts_part.mp4              fmt_start=0.000000 dur=2.001000 [v0:h264@0.000000 a1:aac@0.145000]
+    a:0 aac -> beep-flash(ms)=[-0.3]
+ts_part_aac.mp4          fmt_start=0.000000 dur=2.000000 [v0:h264@0.000000 a1:aac@0.124000]
+    a:0 aac -> beep-flash(ms)=[0.0]
+ps_part.mkv              fmt_start=0.000000 dur=2.005000 [v0:h264@0.000000 a1:mp2@0.157000]
+    a:0 mp2 -> beep-flash(ms)=[0.0]
+ts_full.mp4              fmt_start=0.000000 dur=4.004000 [v0:h264@0.000000 a1:aac@0.228000]
+    a:0 aac -> beep-flash(ms)=[-0.6, -0.6]
+ps_full.mp4              fmt_start=0.000000 dur=4.007333 [v0:h264@0.000000 a1:aac@0.218000]
+    a:0 aac -> beep-flash(ms)=[-0.6, -0.6]
+midgop.mp4               fmt_start=0.000000 dur=3.552000 [v0:h264@0.000000 a1:aac@0.000000]
+    a:0 aac -> beep-flash(ms)=[0.0, 0.0]
+midgop_part.mp4          fmt_start=0.000000 dur=1.256333 [v0:h264@0.000000 a1:aac@0.019000]
+    a:0 aac -> beep-flash(ms)=[0.0]
+lead_aac.mp4             fmt_start=0.000000 dur=2.000000 [v0:h264@0.000000 a1:aac@0.000000]
+    a:0 aac -> beep-flash(ms)=[-1.6]
+multi_wma.mp4            fmt_start=0.000000 dur=4.011000 [v0:h264@0.000000 a1:aac@0.000000 a2:aac@0.271000]
+    a:0 aac -> beep-flash(ms)=[0.2, 0.2]
+    a:1 aac -> beep-flash(ms)=[-0.5, -0.5]
+flv.mp4                  fmt_start=0.000000 dur=4.004500 [v0:h264@0.000000 a1:aac@0.229000]
+    a:0 aac -> beep-flash(ms)=[0.2, 0.2]
+full.mp4                 fmt_start=0.000000 dur=4.000000 [v0:h264@0.000000 a1:aac@0.000000]
+    a:0 aac -> beep-flash(ms)=[0.0]
+part.mp4                 fmt_start=0.000000 dur=2.017333 [v0:h264@0.000000 a1:aac@0.012000]
+    a:0 aac -> beep-flash(ms)=[0.0]
+off_part.mp4             fmt_start=0.000000 dur=2.010333 [v0:h264@0.000000 a1:aac@0.005000]
+    a:0 aac -> beep-flash(ms)=[249.0]
+wma.mkv                  fmt_start=-0.043000 dur=4.010000 [v0:h264@0.000000 a1:wmav2@-0.043000]
+    a:0 wmav2 -> beep-flash(ms)=[0.2]
+wma_part.mkv             fmt_start=0.000000 dur=2.060000 [v0:h264@0.000000 a1:wmav2@0.012000]
+    a:0 wmav2 -> beep-flash(ms)=[-0.2]
+-- validate_v5 38.7 / 39.06, validate_v4 36.13; lossless sliding-window (short.mkv, raw dump): full / --start 5 --frames 6 / --radius 1 --start 2 --frames 5 -> 0 mismatching frames
+
+== 2026-10-15 noise-estimation decode (Agents.md §6.5) ==
+-- harness: analysis/harness/nvh (dlopen of the genuine bundle; alert guard, see §5). verify_levels.py:
+   nvfilter.band_model vs FUN_009980e8 (border 2) and FUN_00995250 level part (border 4), 5 inputs x 2:
+   mean local RMS rel.err <= 1.8e-5, CV rel.err <= 5.4e-5, valid octaves identical -> 10/10
+   (q99 / median abs.err <= 0.17 / 0.013: the genuine quantile is an iterative search)
+-- white noise sigma 10 (256x256), genuine FUN_009980e8 mean per level: 9.0665 2.1973 0.9653 0.4520 0.2234
+-- FindFlatArea, Auto Profile path (param_3 = 0), genuine (nvh flat .. 1 0) vs port (verify_flat.py):
+   test_v02 n=0,100,200,312,400,500,576,700: 8/8 identical; e.g. n=312 (832,0) 128x128 st 0,
+   n=576 (520,864) 64x64 st 2.  test.mp4 n=0..900 step 150: 7/7 (48 / 64 px squares, st 2);
+   synthetic (gradient+patch, texture, blown highlight, letterbox, coloured RGB noise): 5/5
+   18%-width path (param_3 = 1) on n=0 / 312: (908,364) 345x345 st 3 (cat face + bokeh)
+-- genuine BuildNoiseModel on test_v02 n=312, area (832,0,128), colour mode 1, mean local RMS per level
+   (RGB 0..255 scale): R 3.2167 1.6621 0.8762 0.5774 (-0.3441)  G 3.2068 1.6498 0.8448 0.4947
+   B 3.2220 1.6616 0.8860 0.5458  Y 3.2063 1.6470 0.8391 0.4838 (-0.2419)  Cr' 0.0968 0.1067 0.1389 0.1721
+   Cb' 0.1285 0.1433 0.1818 0.2053   (level 4 extrapolated); port reproduces Y exactly.
+   same area, temporal difference (f313-f312)/sqrt2: 3.7775 1.9439 0.9649 0.5890 -> level ratios
+   0.515 0.496 0.610 vs area 0.514 0.510 0.577 (white noise 0.25 0.458 0.449); level +15..22%
+-- genuine EstimateNoiseLevelCurve, test_v02 n=312 (full-range luma bins 16..240):
+   2.3839 2.5597 2.7485 2.8578 2.8228 2.5533 2.0492 1.4962
+   v5 noise_curve_spatial (Y code bins): 1.680 1.936 2.207 2.376 2.335 1.977 1.399 0.881
+   genuine/v5 after mapping axis+units to Y code (x/1.164+16, /1.164): 1.15 1.09 1.06 1.03 1.04 1.06 1.07 1.10
+-- AutoFineTune (FUN_009a775c) returns 0 in the harness: obfuscated entry check on a token table
+   (image+0x1566b80, null unless the plugin is initialised by a host) -> not run, not bypassed
+-- calibrate_v5.py --candidates candidates_v6a.json (profiling square; Y / Ymov / U / V):
+   seg 296: auto 47.117/46.983/50.985/51.179 | spatial v5 area 47.011/46.851/50.998/51.202
+            | spatial genuine area (0,832,128) 47.111/46.972/50.998/51.203 | auto genuine area = auto
+   seg 560: auto 47.222/47.050/50.920/51.189 | spatial v5 area 47.071/46.873/50.924/51.202
+            | spatial genuine area (864,520,64) 47.189/47.006/50.924/51.203 | auto genuine area = auto
+-- after switching nvfilter.find_flat_area to the port (candidates_v6b.json):
+   seg 296: auto 47.117/46.983/50.985/51.179  spatial 47.111/46.972/50.998/51.203  temporal 47.086/46.936/50.855/50.762
+   seg 560: auto 47.222/47.050/50.920/51.189  spatial 47.189/47.006/50.924/51.203  temporal 47.275/47.116/50.748/50.675
+   (auto output identical to before -> test_v02 v5 outputs / full-clip numbers unchanged)
+-- validate_v5 38.7 / 39.06 (unchanged); CLI test_v02 --start 300 --frames 8: area [0, 824, 128], 9.3 s;
+   UI headless: test.mp4 load 901 f, auto_profile 0.9 s area [288, 416, 48], process_frame (360,640,3)
+-- port runtime (yuv_to_rgb + noise_curve_spatial + find_flat_area_genuine), test_v02 1080p frames above:
+   2.4-3.1 s per frame (M2 Max, single process)
+-- IsClip on test_v02 n=312 full frame (RGB clipped to 0..255): genuine R/G/B 0.004095 / 0 / 0,
+   nvfilter.is_clip 0.004080 / 0 / 0 (count of R >= 254.9375 = 0.004095; the genuine top bin holds a few
+   more pixels than the replica: 31 of 2073600)
+-- review fixes (code-reviewer: COMMENT, 0 CRITICAL/HIGH, 3 MEDIUM, 9 LOW), 2026-10-16:
+   harness: unguarded nvh_probe/nvh_globals (and separate gate/tables tools) removed; guard now installed in a dyld
+   add-image callback before the bundle's initialisers (LC_UUID A9DF3875-...-543A30F21C9F checked): `nvh order`
+   -> 6540 bytes of the bundle's __DATA changed after the callback; `nvh selftest` exit 3
+   nvfilter.gquantile = FUN_00997bcc (stepping search, n <= 49 interpolation, small-sample normal bound;
+   tables from the binary: probit 101 entries and factors 12 entries identical). verify_levels.py, 8 inputs x 2:
+   mean / q99 / q50 rel.err <= 6.0e-5 (was up to 6.6e-2 for q99 of small squares), CV <= 6.7e-4 (coarse levels of a
+   150 +- 2 plane: running-sum box filter rounding; e.g. 0.136706 vs 0.136614) -> 16/16 with CV tolerance 1e-3
+   verify_flat.py through nvfilter.find_flat_area (with status): test_v02 n=0..700 8/8; test.mp4 6/7;
+   synthetic 5/5 -> 19/20. test.mp4 n=450: genuine (400,288) vs port (176,208), both 48 px status 2, both in the
+   port's candidates (window brightness 102.39 / 100.91); with the genuine's own band models the two scores differ by
+   0.5% -> decided by the normalisation curve (port: v5 curve instead of EstimateNoiseLevelCurve). Before the quantile
+   port this frame matched.
+   calibrate (candidates_v6b): unchanged, seg 296 auto/spatial/temporal 47.117/47.111/47.086, seg 560 47.222/47.189/47.275
+   edge cases: 8x8, 7x100, 63x63, 100x7 -> gradient fallback (status 1), 64x64 status 2, NaN/inf frame runs,
+   is_clip(constant) = is_clip(inf) = 1.0; validate_v5 38.7 / 39.06; CLI --start 300 --frames 8 area [0,824,128] (ok) 8.9 s;
+   UI test.mp4: auto_profile 0.1 s area [288,416,48] status 2, spatial re-profile from cache 0.0 s
+   find_flat_area timing (synthetic 4K from test_v02 n=312 upscaled + noise): 6.3 s; 1080p 2.7 s
+-- re-review (2026-10-16): APPROVE, 0 CRITICAL/HIGH/MEDIUM, 6 LOW. Reviewer measurements:
+   nvh order: 6592 changed __DATA bytes (6540 in our run; first change = __objc_const class_ro_t flag set by the
+   objc runtime's map_images, which dyld runs before the bundle's initialisers); gquantile vs genuine on 12 reviewer
+   planes: 10 identical, 2 differ by one search step (coloured 96 L1 q50 +0.31%, coloured 48 L2 q99 -0.13%);
+   test.mp4 n=450: score ratio of the two 48 px squares before the curve 0.99881 with the genuine band models and with
+   the port (identical), after the v5 curve 5.4295 (176,208) vs 5.4319 (400,288), after the genuine curve
+   6.9480 vs 6.9452 -> the port given the genuine curve picks (400,288) = genuine; curve ratio genuine/v5:
+   test_v02 n=312 1.04-1.20, test.mp4 n=0/300/450/750 0.73-1.01; find_flat_area with cache: synthetic 1080p
+   5.1 -> 3.1 s, 4K 12.2 -> 8.3 s
+
+== EstimateNoiseLevelCurve exact port ==
+-- 2026-10-16: repro/nv_lines.py (FUN_00990448 / FUN_009944c0) + repro/nv_pixnoise.py (FUN_00998d98) + repro/nv_curve.py
+   (FUN_009b6c8c / FUN_009b76b0 / tiles / polyfit / interpolator) wired as nv_curve.genuine_noise_curve(rgb) -> (xs, ys);
+   genuine = analysis/harness/nvh (selftest exit 3 confirmed first; `nvh info`: threads DAT_014a67c0=1, simd DAT_014a67a8=1,
+   bins 8). All numbers below from runs on 2026-10-16 (M2 Max, 1 process), logs in the session scratchpad (curve_p4/).
+-- verify_curve.py (end to end vs `nvh curve W H rgb.f32`, which prints %.6f -> the comparison is limited to the display
+   rounding, 5e-7 absolute): 20/20 cases within 1e-6 relative, worst max_rel 3.07e-7 (max_abs <= 5.0e-7); total 93 s
+   test_v02.mp4 (1920x1080, bt709, host RGB) n=0: 1.13e-7 | n=312: 2.57e-7 | n=576: 3.07e-7; test.mp4 n=300 (640x360): 2.23e-8
+   synthetic 1920x1080 gradient+gauss 2.58e-7 / letterbox (140 rows of 0) 2.44e-7 / highlights (64 px aligned + 50x43) 2.53e-7 /
+   flat 128: 0 (all blocks clipped -> no counts -> curve 1.0); 640x360: 2.43e-7 / 2.68e-7 / 2.07e-7 / 0;
+   100x70: 2.45e-7 / 2.74e-7 / 2.63e-7 / 0; 97x61 (odd, 48 px second tile, n%4 luma tail): 2.67e-7 / 2.55e-7 / 2.30e-7 / 0
+   bin counts identical to the genuine's validity decisions (e.g. n=312: 0 50780 155886 130140 108791 127168 74522 56726)
+   genuine curves: test_v02 n=312 2.383856 2.559666 2.748498 2.857779 2.822830 2.553341 2.049236 1.496170;
+   n=576 2.2132 2.3690 2.5311 2.6356 2.6020 2.3588 1.9163 1.3886; test.mp4 n=300 24.131695 23.894911 23.620035 23.204956
+   22.525951 21.340495 18.848249 15.211813 (x = 16, 48, .., 240)
+   timing per case: genuine 0.44 s (1080p) / 0.21 s (640x360) / 0.18 s (<= 100x70); port 11.0-11.8 s / 1.2-1.4 s / 0.05 s
+   [superseded later on 2026-10-16: `nvh curve` prints %.17g since the review fixes and these cases are bit-identical
+   (23/23, 184/184 ys; see 'review fixes' and 'low-severity fixes'); the logs of this section are kept in
+   blackbox/logs_20261016/curve_p4/]
+-- verify_curve.py --diagnose (per tile: the port's luma through `nvh pixnoise` vs nv_pixnoise, 16x16 IsClip through
+   `nvh clip`, per-tile (sums, counts) from the genuine maps vs the port maps): test_v02 n=312 240/240 tiles with
+   noise/weight/bright bit-identical, test.mp4 n=300 28/28, 640x360 x4 28/28 each, 97x61 x4 2/2 each; IsClip blocks checked
+   400+400+238+400+299+400+13+27+20+40 = 2237, mismatches 0; (sums, counts) identical for every tile in every case; the
+   curve shell fed with the genuine maps gives the same max_rel vs `nvh curve` as the port (2.57e-7 / 2.23e-8 / ...).
+   (first run flagged 11 blocks of test.mp4 n=300 because localise read the weight plane at the corner of the shifted last
+   row / column blocks, which overlap their neighbours; the rule now compares the block's own decision -> 0 mismatches)
+-- module tests re-run: verify_lines.py kernels 184/184 exact, linefilt 2272/2272 bit-exact (2048 single + 96 two-pass +
+   128 fast-vs-tiny), batch 0 mismatches, max_rel 0, 130 s; verify_pixnoise.py --sensitivity 19 tiles bit-exact
+   (exact fraction 1.0, max_rel 0), 51 ms per 120x120 tile, refmodel normalisers bit-identical to REF_NORM, fma32 4400/4400;
+   sensitivity (dropping one NEON trait breaks the match): true division -> weight 8007 px differ (120x108), ramp without
+   FMA 4738 px, 2x2 mean in scalar order noise 11511 px, _gup2-style up-sampling noise 11972 px;
+   verify_curve_shell.py --clip test_v02.mp4 --frames 312,576: 48/48
+-- runtime genuine_noise_curve, test_v02 n=312 1080p: 11.59 / 11.62 / 11.48 s (3 runs); 240 tiles (180 of 120x120,
+   20 of 108x120, 18 of 120x108, 18 of 120x48, 2 of 108x108, 2 of 108x48); stage split clip_weight 0.36 s, luma 0.14 s,
+   pixnoise 11.0 s, accumulate 0.02 s, curve_table ~0; cProfile: nv_lines._general 6.8 s (19200 calls, ~0.36 ms each,
+   Python loop over the running sum), _box_lanes 2.7 s (21384 calls), gather_tables 0.4 s -> under the 120 s limit,
+   not optimised (a same-size tile batch through linefilt's (B,H,W) path would cut the loop overhead without changing
+   the numerics; not done)
+-- not verifiable through the harness: digits below the 6th decimal of the curve (display precision), and the order of the
+   per-thread double partial sums when the host runs the genuine with several threads (FUN_009b6c8c merges
+   sums[thread][bin] bin-major in thread order; the harness has 1 thread, the port adds tiles in scheduler order)
+
+== EstimateNoiseLevelCurve port: review fixes ==
+-- 2026-10-16: fixes for the findings of three independent reviews (edge cases outside the 8-bit domain and test quality;
+   the port already matched every 8-bit-derived input). Harness update by the owner: `nvh curve` prints x / y with %.17g and
+   `nvh interp` runs the genuine BaseInterpolator (FUN_00aed9f0 / FUN_00aeda08 set / FUN_00aedb18 eval, %.17g), so curves and
+   interpolator are now compared as exact doubles. `nvh selftest` exit 3 before every run. Logs: session scratchpad fix5/final_*.log.
+-- changes (repro/nv_pixnoise.py, nv_curve.py, nv_lines.py; pyflakes clean; public API unchanged)
+   FRECPS = FPRecipStepFused: op1 negated (a NaN's sign too), inf * 0 in either order -> +2.0 (was the default NaN of a plain
+     fused 2 - a*b), inf * x -> inf. FRECPE re-derived from FPRecipEstimate: NaN -> the operand quieted (was the default NaN),
+     0 < |x| < 2^-128 -> +-inf (the threshold was 2^-131), subnormal operands normalised with exponent 0 / -1 (was -1 / -2:
+     2^-127 gave ~2^128 instead of ~2^127). fma32 = FPMulAdd: NaN order addend, op1, op2 (signalling first), quiet-NaN addend
+     with inf * 0 -> default NaN, the FLT_MAX / 2^128 midpoint after double rounding (exact sum below it -> FLT_MAX).
+     The ramp body's FMIN / FMAX written out (NaN propagation, +-0). None of these paths is reachable from 8-bit input.
+     Ground truth: a scratch CPU oracle (inline-asm NEON FMLA / FRECPE / FRECPS / FMIN / FMAX on the M2 Max, default FPCR; it
+     does not load the plugin): 373,018 operand sets (all pairs / triples of 40 special and subnormal patterns, 200,000 random
+     bit patterns, 100,000 random magnitudes, 5,000 double-rounding ties, 4,000 near-overflow sums, 18 exact midpoints) ->
+     0 differ for each instruction (FMIN / FMAX with the ramp's scalar operand: 23,190 cases each, 0 differ).
+     The arm64 slice never writes FPCR (no msr fpcr, fesetenv or fesetround in the disassembly) -> RN, FZ = 0, DN = 0, AH = 0.
+   ramp FUN_009ee93c (disassembly read): scalar tail 0x9eeb04-0x9eeb20 (ascending branch) / 0x9eebcc-0x9eebe4 (descending,
+     the one FUN_00998d98 uses) and the 4-wide fcmgt / bsl copy at 0x9eead0 / 0x9eeb98: y = icpt + slope*x;
+     y = (y > hi) ? hi : y; y = (y > lo) ? y : lo (fcsel gt) -> a NaN ends as lo (vb = 0 here, va in the ascending branch);
+     NEON body: FMLA, FMIN, FMAX -> NaN propagates; branch by fcmp vb, va / b.le (unordered -> descending).
+   IsClip FUN_009c6f88: min / max as FUN_009efdd4 (start FLT_MAX / -FLT_MAX; SIMD part n & ~7 by fmin / fmax -> a NaN
+     propagates; scalar tail by fcmp + csel gt / mi -> NaN skipped), nb and the bin indices through a saturating fcvtzs
+     (NaN -> 0, +inf -> INT64_MAX, then the 0x4000 clamp), empty plane -> range -inf -> 1.0; no Python exceptions.
+   clip_weight (0x9b7b7c-0x9b7b84 fcmp R, thr / fccmp B, thr, #0, le / b.le keeps the block): zero iff R > 0.33 or B > 0.33.
+   CurveInterp (FUN_00aedb18): segment search with the flag semantics (b.le / b.ls / b.hi / b.gt; no fused ops), n < 2 ->
+     ValueError, the k = n case (the genuine reads past its arrays; only with NaN) -> NaN; polyfit / polyval call libSystem's
+     pow through ctypes (math.pow raised OverflowError for 1e200 knots, the genuine gets inf / NaN).
+   LineKernel: ValueError for sides outside 1..512 (512 offsets / 512 indices / 1024 line triples in the genuine).
+     DAT_01561d58 (count << (v & 63) in the shallow branch) lies in __DATA,__common (zero-fill 0x155b1e0..0x158a914, no value
+     in the file); it is written only at run time by obfuscated integrity code: 0x45114 popcount(word) - 16, 0x9af244 /
+     0x9ebbbc set it to 1 after a failed check. `nvh info` does not print it; every kernel dump matches the unshifted counts
+     -> the port assumes 0.
+   nv_curve imports nv_pixnoise once at module level (sys.path gets the directory only if missing, nv_pixnoise likewise);
+     the luma and fma32 exist only in nv_pixnoise (nv_curve.luma_bt601 / LUMA_RGB kept as aliases); unused imports removed.
+   clip_weight with the emulated IsClip: 0.48 s per 1080p frame (0.36 s before); genuine_noise_curve 11.5-11.7 s per 1080p frame.
+-- reviewer demos, before -> after (vs `nvh curve` / `nvh clip`):
+   160x120 gradient + gauss x1e18: port 2.155581793994735e+18 vs genuine 2.1573189184009152e+18 (all 8 bins, rel 8.05e-4)
+     -> 8/8 bit-identical
+   160x120 with an 8x8 block of 1e20: bin 5 1112852887643258.1 vs 1125263411202605.1 (rel 1.1e-2; 7 bins NaN in both)
+     -> 8/8 bit-identical (NaN = NaN)
+   IsClip 16x16, 100 zeros + 156 uniform(0, 1e38) / (0, 5e37): OverflowError -> 0.390625 (= nvh clip); a NaN pixel:
+     ValueError -> 1.0; an inf pixel: OverflowError -> 1.0
+-- verify_lines.py: kernels 184/184, linefilt 2272/2272 bit-exact (2048 single + 96 two-pass + 128 fast-vs-tiny), batch 0,
+   limits 20/20 (513x8, 8x513, 600x600, 0x8, 8x0 x 4 angles -> ValueError); 107 s
+-- verify_pixnoise.py --sensitivity: frame 312 is now decoded from test_v02.mp4 (read_frames + yuv_to_rgb(planes, 'bt709',
+   False), clipped, float32; 0.9 s; bit-identical to the former scratch dump f312_rgb.f32); no frame -> exit 2, a pass needs
+   >= 1 real tile. refmodel: two runs identical, REF_NORM bit-identical. Helpers vs value-based references (no shared code):
+   fma32 / frecpe32 / frecps32 17,676 operand sets each, 0 differ; FMIN / FMAX 247,464 cases, 0; CPU table 32 x 3, 0.
+   30 tiles (5 real) bit-exact in noise / weight / bright, incl. 11 extreme tiles (x1e18; 1e20 / 1e30 blocks in 51x49, 49x51,
+   50x46; a 1e20 block in 120x120; single 5e19 pixels in 51x49 / 49x51 / 97x61): 43,517 NaN pixels compared bitwise
+   (payloads included); 54 ms per 120x120 tile.
+   Sensitivity on the extreme tiles: FRECPS as a plain fused 2 - a*b -> 849 / 245 / 841 / 239 / 831 / 87 / 1038 px (hot
+   tiles) and 308 / 272 / 272 (spikes) differ; a NaN-propagating ramp tail -> 3 / 3 / 1 px (the spikes: only level 0
+   overflows, the genuine has weight 0.0 at the last n & 3 pixels), 0 on the hot tiles (level 1 is NaN there as well).
+   NEON traits as before: true division 8007 / 3378 / 8442 px, unfused ramp 4738 / 2042 / 6583, scalar 2x2 order 11511 /
+   5161 / 13304 (noise), _gup2-style up-sampling 11972 / 5476 / 13789.
+-- verify_curve_shell.py --clip test_v02.mp4 --frames 312,576: 51/51. Tiles 9 sizes; IsClip 103/103; non-finite / huge planes
+   39/39 vs nvh clip (as %.6f strings; NaN in the SIMD part -> 1.0, NaN in the scalar tail skipped, e.g. 7x13 0.043956,
+   3x5 0.133333; zeros + uniform(0, 1e38) 0.390625 / 0.384615); clip rule (NaN keeps the block); CurveInterp / curve_eval vs
+   nvh interp 2232/2232 queries bit-identical (50 tables of 2..8 knots: monotone, non-monotone, duplicate knots, 1e200 knots
+   (pow overflow -> NaN lines), 1e-300 knots, +-1e308 / inf / NaN values; queries at the knots and +-1 ulp, inside, below,
+   above, +-0, +-1e308, +-inf, NaN, subnormals); shell with the genuine pixnoise: 16 curves 8/8 ys bit-identical (14 synthetic,
+   test_v02 n=312 / 576).
+-- verify_curve.py (exact criterion, no tolerance; xs identical and every ys bit-identical): 23/23 cases, 184/184 ys
+   (test_v02 n=0/312/576, test.mp4 n=300, 16 synthetic, 3 extreme); port 11.5 s per 1080p frame (n=7), total 96 s.
+   test_v02 n=312: 2.3838560428173636 2.559665565683817 2.7484977403185953 2.8577787376781885 2.822829905411403
+   2.5533413539815335 2.0492357081302788 1.496170384649333
+-- verify_curve.py --diagnose (IsClip check uncapped: every block whose port IsClip of R or B is non-zero, every block within
+   0.33 +- 0.05, plus 200 random zero blocks per case; nvh clip prints %.6f, compared as strings, plus the zeroing decision):
+   23/23 cases; 107,800 blocks in the tiles, 26,018 non-zero, 104 within 0.33 +- 0.05, 2,489 sampled -> 28,507 checked,
+   0 value / 0 decision mismatches (e.g. test_v02 n=312: 1,350 non-zero + 7 near + 200 -> 1,550; flat 128 1080p: all 14,220);
+   tile maps 0/1848 differ; per-tile (sums, counts) identical in 23/23; shell with genuine / port maps 184/184 ys. 548 s.
+   (localise now accumulates pixel by pixel into running sums like FUN_009b76b0; adding per-tile partial sums had rounded
+   the finite bin of the 1e20 case differently: 7/8 in its own shell, not in the port)
+-- closed: the digits below the 6th decimal (no residual at all at %.17g). Still not checkable: the per-thread partial-sum
+   order of a multi-threaded genuine run (the harness has 1 thread).
+-- 2026-10-16 speed-up of genuine_noise_curve, no bit changed. The default is now a batch path (batch=True:
+   nv_curve.tile_histogram_batch -> nv_pixnoise.pixnoise_batch -> nv_lines.*_bm); batch=False keeps the reference path
+   (tile_histogram -> pixnoise -> linefilt, the code verified above, unchanged) for comparisons. Public API unchanged
+   (genuine_noise_curve gained only the keyword batch=True; nvfilter.find_flat_area gets the batch path as is).
+   Logs: session scratchpad speed/final_*.log, frozen pre-change modules in speed/orig/.
+   how (the same float32 operations in the same order and with the same operand order; only the form differs):
+   * tiles of one size in batches of <= MAX_BATCH = 96, stacked batch-innermost (H, W, B): each step of each running sum
+     is one numpy call over all B tiles (in-place, ~0.12 ns per element), instead of one call per tile;
+   * oriented (general) line filters: cached LinePlan tables (G (m, L) gather, inv scatter) and a padding row of -0.0
+     instead of the mask: S + (-0.0) == S bit for bit (also S = -0.0 and NaN), and a padded entry is subtracted only after
+     the last valid output of its line (jo = j - r - 1 < count), so no output sees it; padded buffers chain the passes;
+   * the 16 orientations are reduced on the fly with argmax_maps' updates: hit = best <= E_i, S = where(hit, F_i, S);
+     best by fmax (E_i = sqrt(|x|) * c is never -0 and best never NaN -> fmax == where(hit, E_i, best));
+   * FRECPE by a 2^17-entry table (a normal operand's estimate depends only on sign, exponent and fraction<22:15>;
+     exponent 0 / 255 -> the reference helper); FMLA / FRECPS evaluated in float64 (exact product) and rounded once to
+     float32, the reference helper element-wise where that can differ (s outside [2^-126, 2^127), non-finite, or exactly
+     half-way between two float32: the only double-rounding cases); FMIN / FMAX by where() except NaN / signed zeros;
+   * IsClip of all 16x16 blocks of a batch at once (is_clip_blocks: the min / max rules, fcvtzs, int16 sort, run lengths;
+     for the clip decision the exact mode only where a run of >= 85 equal bins exists = the smallest p with
+     (float)p / 256 > 0.33); per-thread scratch buffers (a fresh multi-MB array costs ~0.1 ms of page faults per call);
+   * accumulation: the kept core pixels of all tiles concatenated in scheduler / row-major order and added by one
+     np.add.at (ufunc.at adds sequentially in index order, the same additions as the per-tile np.add.at calls).
+   timing (M2 Max, 1 thread; verify_curve_speed.py): 1080p reference 11.70 s -> batch 0.669 s per frame (x17.5, n=6;
+     genuine 0.44 s); test_v02 n=312 5 runs 0.668-0.685 s; 4096x2160 50.1 -> 2.64 s; 1001x777 4.52 -> 0.46 s;
+     640x360 1.3 -> 0.25 s; 97x61 0.05 -> 0.026 s. verify_curve.py (full) 96 s -> 15 s.
+   profile test_v02 n=312: before (frozen modules, 11.51 s wall, cProfile 12.6 s) nv_lines._general 6.75 s (19,200 calls),
+     _box_lanes 2.65 s (21,384), gather_tables 0.36 s, fma32 0.33 s, is_clip_genuine 0.74 s cum (28,440), frecpe32
+     0.18 s; after (0.68 s wall, cProfile 0.705 s) _lanes_run 0.156 s (672 calls), _general_bm 0.185 s cum (560; np.take
+     0.063 s), pixnoise_bm element-wise 0.085 s (7 batches), _box3_rows_bm 0.053 s, float64 fma / frecps path 0.035 s,
+     IsClip sort 0.017 s. Stage split: crops 0.005, clip_weight_batch 0.037, luma_601_batch 0.021, pixnoise_batch 0.596,
+     core selection 0.007, np.add.at 0.008, curve_table 0.000 s (batches 2 / 18 / 20 / 90 / 90 / 2 / 18 tiles).
+   batch size (1080p): 8 / 16 / 24 / 32 / 48 / 96 / 192 tiles -> 1.29 / 1.06 / 0.80 / 0.76 / 0.75 / 0.71 / 0.69 s; after
+     releasing the loop planes early, 64 / 96 / 128 / 192 -> 0.725 / 0.700 / 0.705 / 0.695 s with traced peaks 128 / 179 /
+     179 / 302 MB -> MAX_BATCH 96 (4096x2160: traced peak 614 MB at 192).
+   threads: an opt-in thread pool over the batches (accumulation afterwards in the genuine order, results identical) was
+     dropped: the GIL serialises the per-call overhead, jobs 2 / 4 / 8 -> 0.70 / 1.36 / 2.35 s against 0.69 s.
+   equivalence, verify_curve_speed.py --orig (new, no harness; 19 images: test_v02 n=0/312/576, test.mp4 n=300, gradient
+     + gauss 1920x1080 / 640x360 / 97x61 / 48x48 / 101x67 / 333x211 / 49x50 / 4096x2160 / 1001x777, letterbox and
+     highlights 1920x1080, flat 128 640x360, x1e18 and 1e20 / 1e25 blocks with 7 / 8 NaN ys): 19/19 with xs, ys, sums
+     (double) and counts bit-identical between batch and reference path and to the frozen modules (separate process).
+   verify_pixnoise.py --sensitivity: unchanged results for the reference (30 tiles bit-exact, 43,517 NaN pixels) plus the
+     batch path: pixnoise_batch 180/180 maps bit-identical to `nvh pixnoise` (13 size batches with 0 / 1 input weights,
+     and each tile alone); _fma32_fast / frecpe32_fast / _frecps32_fast 17,676 operand sets each, 0 differ from the
+     value-based references; FMIN / FMAX 247,464 cases each for _fminmax and _fminmax_fast, 0; all 2^17 FRECPE
+     prefixes x 24 low parts (3,145,728) 0; CPU table 32 x 3, 0.
+   verify_lines.py: kernels 184/184; 4544/4544 vs `nvh linefilt` (port 2048 + 96 + 128 and batch-minor path 2048 + 96 +
+     128, the two planes of a size in one batch); batch-minor vs port 5192/5192 bit-identical (strict; plain / padded
+     destinations, padded inputs, out = input, NaN / inf / -0 planes); limits 20/20; 101 s.
+   verify_curve_shell.py --clip test_v02.mp4 --frames 312,576: 71/71 (51 before): is_clip_blocks 103/103 and 39/39 vs
+     `nvh clip` (%.6f) and bit-identical to is_clip_genuine; clip_weight_batch == clip_weight; batch shell == reference
+     shell with a deterministic stub pixnoise (NaN and 3e38 noise, NaN weights) on 16 images (sums bitwise); the 16
+     end-to-end curves with the genuine pixnoise through both shells: 32/32 with 8/8 ys bit-identical.
+   verify_curve.py (full, %.17g, batch path): 23/23 cases, 184/184 ys bit-identical; port 0.7 s per 1080p frame (n=7).
+
+== 2026-10-16 integration: exact EstimateNoiseLevelCurve in nvfilter.find_flat_area (main session) ==
+-- nvfilter.find_flat_area(curve="genuine", default) normalises the FindFlatArea scores with
+   nv_curve.noise_at(nv_curve.genuine_noise_curve(host RGB)); curve="v5" keeps the former stand-in.
+   nvfilter.is_clip delegates to nv_curve.is_clip_genuine (frintn bins); _GQ_PROBIT is the literal DAT_01248e48 table.
+-- verify_flat.py (production entry, --curve genuine): test_v02 n=0,100,200,312,400,500,576,700 8/8 (36.1 s incl. genuine);
+   test.mp4 n=0..900 step 150 7/7 -- n=450 now (400,288) 48 px st 2 = genuine (was (176,208) with the v5 curve);
+   synthetic 5/5 -> 20/20 identical (region + status). test.mp4 + synthetic run 19.6 s.
+-- IsClip full frame test_v02 n=312: nvfilter.is_clip R/G/B 0.004095 / 0 / 0 = nvh clip (was 0.004080).
+-- verify_levels.py 16/16 within tolerance (unchanged numbers; not bit-exact yet).
+-- calibrate_v5.py --candidates candidates_v6b.json: identical to before (areas unchanged on test_v02):
+   seg 296 auto/spatial/temporal Y 47.117 / 47.111 / 47.086, seg 560 47.222 / 47.189 / 47.275.
+-- validate_v5.py 38.7 / 39.06 (flicker); CLI test_v02 --start 300 --frames 8 --jobs 4: profile f304 area [0,824,128] (ok),
+   11.1 s (other jobs running).
+-- nv_ui: Auto Profile runs in a worker thread (request counter; stale results dropped; the profile is cleared and the
+   preview cache invalidated when a new request starts). Headless smoke (window withdrawn, 40-frame re-encode of
+   test.mp4): load -> profile 1.3 s area [0,312,48] st 2 -> preview 0.2 s; mode switch -> "profile not ready yet";
+   two quick requests (spatial, temporal) -> only temporal applied.
+
+== FindFlatArea exact port (2026-10-16) ==
+-- modules:
+   - repro/nv_band.py: FUN_009980e8, the level part of FUN_00995250, FUN_00997bcc (q >= 1 = own FUN_009efdd4 maximum),
+     FUN_00997f88, FUN_009ef3fc / FUN_009ef520 summation orders, FUN_009979fc + FUN_00aced94 struct init.
+   - repro/nv_flat.py: FUN_009b1a5c Auto Profile path (FUN_009b7e58, FUN_0097bb88, FUN_009999cc, DAT_0147df50 transforms,
+     FUN_009b096c, score, status).
+   - nvfilter band_model / gquantile / _cv_profile / _flatness / _ffa_candidates / profile_planes / find_flat_area_genuine
+     delegate to them. nvfilter.FFA_TABLES / FFA_LUMA_FLAGS removed (unused copies of nv_flat.TABLES / LUMA_FLAGS).
+-- harness (make check: selftest ok, exit 3; clang -Wall -Wextra: no warnings):
+   - read-only subcommands: nvh cand (FUN_009999cc), reduce (FUN_009b7e58 + FUN_0097bb88), xform (DAT_0147df50[mode]),
+     flatness (FUN_009980e8 + FUN_009b096c), quantile n v.f32 qbits flag div (FUN_00997bcc).
+   - nvh levels / model print "index %.9g %08x". The NVH_HEX switch is gone (an exported NVH_HEX broke
+     nvh_common.genuine_struct, which reads column 2).
+-- struct init (static replay of the stores of FUN_009979fc / FUN_00aced94): words 0..1304 -1e6, 1305..1344 -1.0,
+   1345..1984 0xffffffff, 1985..2004 -1.0; words 2005..4095 not written.
+-- verify_levels.py (bit patterns, 8 jobs, 25.6 s):
+   - results: FUN_009980e8 161/161 planes identical in all 4096 words; FUN_00995250 words 0..54 155/155;
+     FUN_00997bcc 933/933; genuine rejected 0.
+   - helper copies agree with their originals: nv_band._round_or_flag == nv_pixnoise._round_or_flag on 20012 float64
+     values; nv_flat._fcvtzs == nv_curve._fcvtzs1 on 2009 values.
+   - planes:
+     - 37 sizes 1x1 .. 1024x768; level-0 crops of 2047 / 2048 / 2049 / 4096 / 4097 values; one-column / one-row crops.
+     - white / coloured / ramp; const 0 / 7 / 255; const + one pixel; const + 1e-3; DC 150 / 1e4 / 1e6.
+     - 1e-30, 1e-41, 1e30; integer, binary; n <= 49 levels; one NaN / +inf / -inf pixel; all-NaN.
+     - 90 crops (48..320 px) of test_v02 n=312 and test.mp4 n=300 as RGB / YCrCb / mean planes.
+   - model skips sides > 512 (5 planes) and single-row / single-column planes (1). Review observation: the genuine
+     ends with SIGBUS on some 1-row planes when nvh runs in parallel.
+   - quantile cases:
+     - n = 0..9000 around n <= 49 and n & ~7.
+     - values: normal, ties 0..3, binary, constant, outlier, 1e30 / 1e-30 / 1e-41, signed zeros, all -inf,
+       NaN payload + sNaN + +-inf.
+     - q 0.99 / 0.5 / 1.0, plus 0.01 / 0.25 / 0.75 / 0.9 / 0.999 / 0 / -0.5 / 1.5 / inf / NaN / 1-2^-24;
+       flag 0..3; div 0 / 1 / 4 / 7 / 100.
+     - 9 q >= 1 cases with NaN / sNaN / -0 / -inf in the SIMD part and in the tail.
+   - legacy port (pre-2026-10-16 nvfilter.band_model), worst rel.err mean/q99/q50/cv:
+     levels 5.3e-2/6.2e-2/9.8e-2/1.8e-1, model 8.7e-1/8.7e-1/8.7e-1/1.9e-1. Exact port: 0.
+   - FUN_00995250 directional words (not ported): 0..702 differing words per plane (512..702 on the 90 real-frame crops,
+     0 on planes below 13 px), 719 distinct positions, first differing word 65 (byte 0x104).
+-- nv_curve._minmax_genuine (its maximum) vs the genuine FUN_009efdd4 (nvh quantile, q = 1, n > 0): 87/97 equal.
+   - signed zeros, n = 7: genuine 80000000, nv_curve 00000000.
+   - NaN payloads: genuine = the quieted last NaN of a lane (7fc00123, 7fc00001, 7fc0abcd, ffc00abc, ffc00002);
+     nv_curve 7fc00000.
+   - nv_band no longer uses it.
+-- verify_flat_exact.py (`nvh flat`, region + status; port with nv_curve.genuine_noise_curve on the same host RGB; one
+   FindFlatArea call per nvh process; --clip PATH:N):
+   - test_v02 :24 x modes 0/1/2: 93/93 (8514 candidates bit-identical).
+   - test.mp4 :30 x 3 modes: 93/93 (4788).
+   - 2560x1440 / 3840x2160 mosaic / 3840x2160 bilinear x2 (table 0x1246da8) and 4480x2520 / 7680x4320 (table 0x1246e20)
+     x 3 modes: 15/15 (1582).
+   - crops 48..300 px + 15 synthetic frames x 3 modes: 81/81 (2695); statuses 0/1/2/3/4 = 27/6/30/12/6.
+   - reduced R/G/B + luma and all candidates of every size bit-identical on every frame (17579 candidates).
+   - production entry nvfilter.find_flat_area: test_v02 :48 + test.mp4 :60 32/32 (port 32/32).
+   - constant 640x360 frame: genuine status 1, production status 1 with its fallback area. When the genuine returns
+     status 1, the script now compares the status only.
+   - verify_flat.py: 8/8 + 12/12.
+-- genuine crash: frames with min(W, H) < 48 end at 0x9b1c38 with FUN_00a22868(NULL, 100) -> [x0 + 4] -> SIGSEGV.
+   - crash report: NeatVideo6.ofx+0xa2287c called from +0x9b1c44, procRole Unspecified.
+   - verify_flat_exact.py no longer runs the genuine on such frames (15 runs skipped); --probe-crash runs one.
+   - the port returns (0, 0, 0, 0, 1).
+-- FUN_009999cc radius / step 0: FUN_009944c0 tail-calls the bitwise copy FUN_009f14e4 when r == 0 (0x9944dc cbz x3).
+   - nv_flat copies there; negative radii raise.
+   - review adv_inter: cand 252/252 (was 229/252), reduce 20/20, xform 44/44, flatness 62/62.
+-- other review sets re-run on the final code (100% identical):
+   - adv_levels: levels 369/369, model 353/353.
+   - fuzz_levels 7000 800: levels 800/800, model 652/652 (148 skipped).
+   - fuzz_flat 8000 300 --small: 900/900 (statuses 47/82/503/224/44).
+   - fuzz_flat 9500 100: 300/300 (131/5/122/30/12).
+   - adv_flat unseen + synth + tables (50 frames x 3 modes): 150/150, intermediates identical on all 50 frames.
+-- memory fix (review MEDIUM). Results are bit-identical to the first version: 1252 structs, 800 adversarial FMLA
+   chains, 18 frames / modes with identical per-candidate traces.
+   - nv_band.Work: named flat scratch buffers, one per FindFlatArea call, shared by all batches and sizes.
+   - band = src - up2(lo) is written in place.
+   - per-plane quantile copies and the bool count buffer are reused.
+   - FUN_009ef520 FMLA chain in chunks of 16 steps: lanes with a non-exact midpoint or an out-of-range sum are redone
+     step by step.
+   - FUN_009b7e58 works on strided views.
+   - BATCH_FLOATS 12M -> 3M values.
+   - measured (3 fresh-process runs, load 5.5-6.7; footprint = interval max phys_footprint, resident = sampled peak RSS,
+     both minus the value before the call):
+     - nvfilter.find_flat_area_genuine (constant curve):
+       - 1080p: legacy 2.47-2.63 s +4-7 / +24-34 MB, first exact version 0.85-0.89 s +308-310 / +580-614,
+         final 0.79-0.86 s +61 / +100-109.
+       - 4K: 4.73-4.75 s +9-10 / +66-73; 1.77-1.92 s +414-415 / +869-889; final 1.81-2.02 s +56-58 / +117-123.
+       - 8K: 5.92-6.03 s +11-15 / +85-91; 2.30-2.41 s +356-359 / +906-964; final 2.39-2.66 s +59-64 / +144-166.
+     - production nvfilter.find_flat_area:
+       - 1080p: legacy 3.19-3.24 s +151-175 / +387-451, first exact version 1.65-1.85 s +342-355 / +901-1076,
+         final 1.62-1.76 s +174-206 / +521-591.
+       - 4K: 7.80-7.93 / 4.83-4.92 / 4.98-5.14 s, footprint +396 MB in all three, resident +1096-1163 / +1708-1878 /
+         +1184-1310 MB.
+-- CLI denoise_video_v5.py test_v02 --start 296 --frames 8 --profile spatial: area [0, 832, 128] (ok), decoded MD5
+   94eef57fd6a43b81f7e5fef644223382 (= the outputs before this change). validate_v5.py 34.15 / 38.7 / 39.06.
+-- independent re-verification of the memory fix (main session's reviewer, fresh processes, 3 runs each, load 4.5-6.9):
+   - verdict: not refuted. levels 161/161, model 155/155, quantile 933/933; unseen frames test_v02 90/90 (8253 candidates),
+     test.mp4 90/90 (4632); port + production entry 16/16 + 16/16 (8 frames each, i.e. production entry 8/8 + 8/8); own frames (table boundaries, s=9, ties, 64x64, 65x481) 39/39;
+     fuzz_levels 600/600 + 483/483, fuzz_flat 720/720 + 270/270; C oracle of the FMLA chain 41/41 (9 built to force
+     double rounding at chunk borders); nvh quantile hazard cases 42/42 + 400/400; BATCH_FLOATS 3M/256K/5M/12M/777777
+     give identical results and per-candidate traces (93 cases, 17100 candidates); 6 concurrent threads = sequential.
+   - ru_maxrss increase of find_flat_area_genuine: 1080p +104-134 MB (first exact version +617-664, legacy +25-31),
+     4K +111-151 (+955-988, +58-104), 8K +123-165 (+1186-1207, +85-102). tracemalloc numpy peak 1080p 70 MB, 4K 72 MB
+     (first version 341-365 / 482-577); after the call +11.8 MB stays (one nv_lines thread-local buffer).
+   - BATCH_FLOATS sweep (1 run): 1M 0.91 s +43 MB / 4K 2.31 s +68; 2M 0.80 / +82, 1.98 / +114; 3M (default) 0.79 / +104,
+     1.94 / +151; 4M 0.91 / +159, 1.87 / +161; 12M 0.90 / +235, 1.85 / +351.
+   - production entry: ru_maxrss 1080p current +498-569 MB vs legacy +479-563 (first version +897-1036); 4K +887-1263 vs
+     +1020-1159 (+1632-1758). tracemalloc peak 1080p current 272 MB = legacy 272 (first 440), 4K 413 = 413 (654); curve
+     alone 224 / 223 MB. The production peak is in the RGB conversion and the curve, not in FindFlatArea.
+   - CORRECTION to the footprint column above: the interval-max phys_footprint does not count memory the allocator reuses
+     inside the same process (400+200 MB freed, then 300 MB allocated -> +0 MB), so "footprint +396 MB in all three" for
+     the 4K production entry does not attribute the peak (the reviewer measured +348 MB). Use ru_maxrss / tracemalloc.
+-- main session after the merge: _FFA_CACHE (nvfilter.find_flat_area) is now guarded by a lock (the UI profiles in worker
+   threads). 96 calls from 8 threads on 24 different frames (eviction at 16): no exception, all results = sequential.
+
+== EstimateNoiseLevelCurve port: low-severity fixes (2026-10-16) ==
+-- LOW / INFO findings of two independent reviews of the exact port, then the findings of an independent verification of
+   those fixes (MEDIUM: the stub pixnoise of the shell test had order-independent bin sums, so the shell test could not
+   see a wrong addition order; LOW: waiting tiles kept their bins as uint8, which broke nbins >= 257 once a tile waited;
+   LOW: timing wording). nbins = 8 (the genuine's) stays bit-identical before / after. Tested files (SHA-256 also in each
+   log header): repro/nv_curve.py ddbc3a3f..., nv_pixnoise.py 10339fdb... (vs pre_lowfix only docstrings: the ASTs
+   without docstrings are identical), nv_lines.py 557efbbf... (unchanged), harness/nvh 617ca3f2...; `nvh selftest` exit 3
+   before every harness run. Logs: blackbox/logs_20261016/lowfix/ (INDEX.txt; the superseded first pass in first_pass/).
+-- memory, nv_curve.tile_histogram_batch: the kept core pixels are added tile by tile in scheduler order (one np.add.at
+   per tile, row-major: the same addition sequence as the former single np.add.at over the concatenation) and dropped. A
+   tile finished before its turn waits as (bins, float32 noise), the bins in np.min_scalar_type(nbins - 1) (uint8 for
+   8 bins). The first pass stored uint8 for any nbins: on a 300x300 crop of test_v02 n=100 with nbins 300, 5,594 of the
+   11,352 counts of bins >= 256 wrapped into low bins. Size batches run in the order of their first tile (at most 19 tiles
+   wait at 1920x1080, 75 at 4096x2160 (840 in group order), 87 at 7680x4320); crops are cut from the input
+   channels per batch (no float32 copy of the frame).
+   verify_curve_speed.py --mem --mem-dirs frozen_20261016/pre_lowfix (fresh processes, test_v02 n=100 and that frame
+   tiled, 3 runs each; before -> after): tracemalloc peak 1920x1080 251 -> 224 MiB, 4096x2160 363 -> 249, 7680x4320
+   889 -> 239 (inputs 24 / 101 / 380 MiB); ru_maxrss increase +466..+529 -> +435..+528, +783..+1006 -> +585..+672,
+   +1805..+2018 -> +989..+1115 MiB; xs, ys, sums, counts bit-identical before / after.
+-- time (interleaved fresh processes, frozen_20261016/pre_lowfix vs the final repro/, best of N calls after a warm-up;
+   lowfix/ab_timing_*.log): 1920x1080 (12 pairs, N 5, load 2.5-4.7) median 0.667 -> 0.680 s, paired median +10.8 ms
+   (+1.6 %; -1.9 .. +21.7 ms, 11 of 12 slower); 4096x2160 (8 pairs, N 3, load 2.5-4.3) 2.644 -> 2.634 s, paired median
+   +10.6 ms (+0.4 %; -82 .. +73 ms, 4 of 8 slower) = no measurable change. (The first pass had reported +4 ms and
+   -97 ms; the independent verification measured +13.5 ms at 1080p (n=14) and -7 / +89 ms at 4096x2160; withdrawn.)
+   Design runs of the first pass at 1080p (first_pass/ab_variants_1080.log, n=8): adopted variant +5 ms vs pre; batch
+   temporaries also freed early +16 ms (dropped); float32 copies of the planes kept +1 ms, but 7680x4320 traced peak
+   621 MiB (dropped).
+   verify_curve_speed.py --orig --profile (default frozen_20261016/): 19/19 images with xs, ys, sums, counts bit-identical
+   (fast == reference == frozen pre-speed-up modules) + the profile replica; 1080p fast 0.732 s, reference 12.52 s per
+   frame (n=6; partly concurrent with the 7680x4320 reference run, load 4-6); stage split 0.736 s: crops 0.008,
+   clip_weight_batch 0.042, luma_601_batch 0.027, pixnoise_batch 0.642, accumulate 0.017; at most 19 tiles (83,479 kept
+   pixels) waiting.
+-- input contract: genuine_noise_curve raises ValueError unless rgb is a channel-last (H, W, C >= 3) array with H, W >= 48,
+   and for nbins < 1; the messages name the shape and, for a (C <= 4, H, W) array, suggest it is channel-first.
+   (100,100), (100,100,2), (47,100,3), (100,47,3), (0,0,3), (3,120,160), nbins 0 -> ValueError (port only, no genuine run).
+   clip_weight_batch(..., G=None): G optional and never read (its per-tile fallback for tiles under 16 px got R in the G
+   slot before; tile_histogram_batch passes G).
+-- docstrings: nv_pixnoise.pixnoise / pixnoise_batch name the return order (noise, weight, bright) in their first line;
+   nv_curve: bit-exact against the single-threaded genuine (DAT_014a67c0 = 1); a multi-threaded host adds per-thread
+   double partial sums per bin in thread order (FUN_009b6c8c), which can differ in the last bits, but only on inputs
+   whose double bin sums round (see the order census; inference for the multi-threaded genuine).
+-- verify_curve.py, new: order census (default; --no-order skips it). Per case the fast path runs once more with its
+   per-tile additions recorded; replayed in order they must give the same sums and counts (part of the pass: 100 % in
+   every run), then replayed with the tiles in reverse order and with each tile's pixels in reverse order. A case whose
+   port ys then change (NaN = NaN, as in the genuine comparison) is order-sensitive; on it the bit-identical ys are
+   consistent with the port's addition order (see the re-verification below for which wrong orders they exclude). No real frame and no ordinary synthetic image is order-sensitive; every
+   order-sensitive input has a few huge pixels among ordinary values (1-5 pixels of 1.8e13 .. 2.4e18 in the fuzz cases,
+   an 8x8 block or one pixel of 1e20 in the others); the x1e18-scaled image and the 1e25 block are not.
+   --sensitivity also injects the two wrong orders into tile_histogram_batch (tiles added in reverse order; each tile's
+   pixels added in reverse order) and requires `nvh curve` to disagree.
+   default: 23/23, 184/184 ys; NaN cases 2/2 (8 tiles, 17,691 NaN map pixels, 24 finite tile-bin sums, 4 blocks);
+     order-sensitive 1/23 (hot block 1e20); port 0.71 s per 1080p frame (n=7); 23 s (alone)
+   --reference: 23/23, reference path bit-identical 23/23; 126 s
+   --extra: 43/43, 344/344 ys (7680x4320 grid genuine 4.68 s, port 11.03 s; unclipped RGB -23.7 .. 280.7; bin-3 count 225
+     valid / 224 invalid at (W*H)>>10 = 225; below bin 0 = -3.154 -> bin 1 copied; above bins 6 / 7 = -3.14 / -7.895 ->
+     copied; interior bins 2..5 = -0.7647 / -2.216 / -2.361 / -1.2 kept; finite huge ys 1.596 .. 3.16e14); NaN cases 3/3
+     (248 tiles, 28,157 NaN px, 263 sums, 5 blocks); order-sensitive 2/43 (hot block 1e20, the finite-huge stripes); 119 s
+   --extra --reference --no-clips --no-synthetic --no-extreme: 20/20, 160/160 ys, reference path 20/20 (7680x4320
+     reference 196 s); 508 s
+   --fuzz 200: 223/223, 1784/1784 ys; the 200 images (48..259 px) bit-identical through the reference path as well; 56
+     with NaN ys (all even = non-finite cases); NaN cases 58/58 (264 tiles, 1,837,458 NaN px, 280 sums, 537 blocks);
+     order-sensitive 29/223 = hot block 1e20 + 28/200 fuzz (tiles reversed 23, pixels reversed 26); 181 s
+   --no-clips --no-synthetic --sensitivity: 12/12. Unfaulted port 8/8 ys on hot block 1e20 and on the finite-huge
+     stripes; tiles reversed -> 1/8 and 6/8 ys differ from `nvh curve`; each tile's pixels reversed -> 1/8 and 6/8;
+     NaN localisation on hot block 1e20 as before (one NaN payload bit -> 1/4 tiles differ, one kept finite value +1 ulp
+     -> 4/4 tiles, IsClip 0.5 on the 2 huge blocks -> 2 value mismatches vs nvh clip 0.875000)
+   --quick --no-clips --no-extreme --no-order --diagnose: 8/8 (per tile: maps 0/28 and 0/2 differ, IsClip blocks 0
+     mismatches, per-tile (sums, counts) identical); 49 s
+   (11:11-11:23 several runs were concurrent; the times above are indicative only)
+-- verify_curve_shell.py --clip ../../../test_v02.mp4 --frames 312,576: 75/75 (73 before). The stub pixnoise now scales
+   its noise by 2^e, e = -40..40 from a hash of each pixel's luma bits, with NaN only at luma >= 224 and 3e38 only below
+   32, so that its double bin sums round: the reversed tile list changes the reference shell's sums on 14/16 images (the
+   2 others are the flat ones, whose 36 kept pixels have zero noise), and both order faults in the batch shell are
+   detected on 14/16 images. batch shell == reference shell with max_batch 96 / 1 / 5 / 10000: 64/64; reversed and
+   shuffled tile lists 2/2 (and both differ from the scheduler order's sums); nbins 256 / 257 / 300: 159/159 (stub on 17
+   images incl. a 320x288 one whose last tile row waits; real pixnoise on a 160x288 crop; at nbins 300, 88 waiting tiles
+   held 82,918 kept pixels in bins >= 256); input checks 7/7 ValueError. Genuine part unchanged: tiles 9 sizes; IsClip
+   103/103 and 39/39 (is_clip_blocks too); clip rule; nvh interp 2232/2232; 16 curves with the genuine pixnoise through
+   both shells 32/32 (8/8 ys each).
+   Against faulty shells (lowfix/demo_faulty_shells.log, scratch code, no clip frames): the first-pass nv_curve (uint8
+   bins) fails the nbins check (3 of 141 comparisons differ); the review's order-buggy shell (group order, all tiles added
+   at the end in reverse) fails 48 of 56 stub comparisons, all of which it had passed with the first-pass stub.
+-- verify_pixnoise.py --sensitivity: OK (30 tiles, batch path True), 19 s. verify_lines.py: kernels 184/184, linefilt
+   4544/4544, batch-minor 5192/5192, limits 20/20, 120 s.
+-- volatile evidence now in the workspace: noise/frozen_20261016/ (scratchpad speed/orig/: nv_curve.py 696a3c6e,
+   nv_pixnoise.py 6e0ca93f, nv_lines.py e94d53c2; SHA-256 in README; pre_lowfix/ = repro/ before these fixes, for --mem;
+   verify_curve_speed.py --orig defaults to it and writes no __pycache__ there); noise/cpu_oracle/ (fix5/cpu_oracle.c
+   verbatim, oracle_test.py with relative paths; links libSystem only, no dlopen; 373,018 / 23,190 operand sets re-run
+   after the copy, 0 differ: lowfix/first_pass/cpu_oracle_test.log); blackbox/logs_20261016/{curve_p4,fix5,speed}/ (the 20
+   logs that the 'exact port', 'review fixes' and speed-up parts cite as scratchpad curve_p4/, fix5/final_*.log,
+   speed/final*.log; none over 5 MB; curve_p4/px_keep/*.f32 not copied).
+-- independent re-verification of these fixes (verdict: not refuted; scratchpad verify_curve-lowfix_re_re/):
+   - the review's order-buggy shell now fails the shell test (main 8/56, nbins 24/141); 9 own faults (column-major pixels,
+     per-tile bincount, per-bin pairwise, first two tiles swapped, no waiting, no waiting with size-ordered batches,
+     waiting tiles flushed before the current tile / in reverse, float32 per-tile sums) were all caught by the test as a
+     whole, but the 4 waiting-tile faults only by the nbins part: no synthetic image of the main comparison had a
+     waiting tile (LOW).
+   - against `nvh curve` (faults_genuine.log): hot block 1e20 catches column-major / per-tile bincount / swap (1/8 ys each);
+     huge stripes catch no-waiting 4/8 and column-major / bincount / pairwise 6/8. Waiting tiles flushed first or in
+     reverse give the genuine's ys on both, so a bit-identical order-sensitive case does not prove the order (LOW,
+     wording); the waiting-tile order rests on the shell-vs-shell comparison.
+   - nbins fix: the failing 300x300 crop with nbins 8/255/256/257/300/65536/65537 x max_batch 96/1/2/5: fast == reference.
+   - test_v02 n=100/312/576: every bin's double sum is exact in any order (all values multiples of 2^q, q = -24..-26,
+     total < 2^20 < 2^(q+53)), so a multi-threaded genuine gives the same sums on these frames.
+   - verify_curve.py 23/23 (order-sensitive 1/23), --sensitivity 12/12, --fuzz 200 200/200 (order-sensitive 28/200),
+     verify_curve_shell --clip test_v02 312,576 75/75; 1080p 0.716-0.731 s vs pre_lowfix 0.705-0.782 s (load ~6).
+-- main session, both LOWs: verify_curve_shell.test_shell_batch's main comparison adds a 320x288 image (last tile row
+   waits) and a 1920x1080 gradient (21 tiles wait, 18 with max_batch 5) and requires waiting tiles > 0 (72 over all
+   runs); 64/64; the comment "1 / 5 wait" is now "96 / 5 / 10000 can wait; 1 never waits". The review's faults.py on the
+   edited test, no clip: all 9 faults fail the main comparison (none: 5/5 OK; e.g. waiting tiles flushed first 61/64,
+   in reverse 61/64, no waiting 58/64; the 320x288 image catches the reversed flush, the 1080p one the early flush).
+   nv_curve / verify_curve docstrings: "consistent with ... excluded: tiles / pixels reversed, column-major, per-tile
+   partial sums, per-bin pairwise, first two swapped, no waiting; the waiting-tile flush order is checked shell vs shell".
+-- main session, documentation review (2026-10-16) follow-ups:
+   - repro/nv_curve.py is now SHA-256 9a1c443c... (11:51, after the logs above): only the docstring on the addition order
+     changed. Reverting that docstring gives ddbc3a3f... exactly, and the ASTs without docstrings are identical.
+   - the "(165)" waiting-tile figure for 7680x4320 in group order had no log behind it and was removed.
+   - FindFlatArea frame counts (the documentation reviewer's tally over all logs): implementer 67 real frames, the three
+     verifiers 120 (105 of them not used by the implementer), union 172. Production entry: implementer 32 frames 32/32,
+     re-verifier 16 other frames 16/16, verifier adv_prod 27/27.
+   - genuine `nvh flat` timing (whole process incl. its curve, 1 thread, measured by the implementer while verification
+     ran in parallel, i.e. under load): 1080p 0.63-0.71 s, 4K 1.8 s, 4480x2520 2.3 s, 8K 5.2-5.4 s.
+   - BATCH_FLOATS 1M: re-verifier 1 run 1080p 0.91 s / +43 MB; implementer's sweep 1.09-1.22 s / footprint +21-27 MB.
+   - FindFlatArea logs copied to blackbox/logs_20261016/ffa/ (impl / verify_integ / verify_exact / reverify) and the main
+     session's final regression logs to logs_20261016/main_final/ (INDEX.txt).
+-- main session, code review (APPROVE, LOW / INFO only) follow-ups:
+   - _FFA_CACHE: evict + insert only if the key is still absent (two threads computing the same key evicted an unrelated
+     entry; reviewer's 20 keys left 15 entries). Re-run of the 8-thread test: no exception, all = sequential, 16 entries.
+   - nv_ui: profiling errors carry the request number; errors of superseded requests are dropped in _poll. ui_smoke OK.
+   - verify_curve_shell: waiting tiles are required on each added image separately (320x288: 12, 1920x1080: 60 over the
+     four max_batch values); --no-genuine 25/25.
+   - verify_pixnoise.py: the label / docstring now say "former nvfilter._gup2" (removed on 2026-10-16).
+
+== FindFlatArea status 5 (cancelled) (2026-10-16) ==
+-- decode: the cancel query is vtable slot 0 of the filter core. EstimateNoiseLevelCurve's worker FUN_009b76b0 asks it before
+   every tile it takes from the scheduler and once more when the scheduler is empty, and returns false on a cancel ->
+   FindFlatArea returns 5 without writing its outputs. FindFlatArea asks it at the start of every size (0x9b1a5c loop) and
+   returns 5 with the outputs written so far (best square of the earlier sizes, before the 512 cut). Auto Profile
+   (FUN_0014e4a4) skips BuildNoiseModel on status 5.
+-- harness: `nvh flat` with NVH_CANCEL_AT=k (the harness's own callback reports a cancel from its k-th query on; the bundle is
+   not changed); nvh 3e82ae2e, `nvh selftest` exit 3. One FindFlatArea call per process.
+   queries without a cancel (1 thread) = tiles + 1 + sizes: 1920x1080 240+1+6 = 247, 640x360 28+1+6 = 35, 200x150 6+1+4 = 11,
+   64x64 1+1+2 = 4, 400x96 5+1+3 = 9, 2560x1440 405+1+7 = 413.
+-- port: nv_curve.genuine_noise_curve / tile_histogram(_batch)(cancel=) query in the same count (batch path: before each batch
+   as many queries as its tiles, then one) and return None; nv_flat.find_flat_area_genuine(cancel=, curve=) runs the curve
+   after the size table (as the genuine) and queries at every size; nvfilter.find_flat_area(cancel=) -> status 5, no fallback,
+   not cached; build_profile_v5(cancel=) raises ProfileCancelled; nv_ui cancels a superseded profile request.
+   Files: repro/nv_curve.py 5d2bb448, nv_flat.py 607b78ec, nvfilter.py a4cf8ffb, nv_ui.py 9737d3c9; noise/verify_cancel.py a2df9194
+   (before the 2nd round below; after it: nvfilter.py b4ec0704, verify_cancel.py cb23a6ff, nvh 35fd0eb8).
+-- verify_cancel.py --all-k (test_v02 n=312, test.mp4 n=0, synthetic 200x150 / 64x64 / 400x96 / 2560x1440, every k from 1 to
+   queries + 1): 739/739 checks: (x, y, w, h, status) and the query count identical for every k; status 5 for every k <= the
+   query count, with a partial square only when the cancel falls on a size after the first; production entry 6/6 and
+   ProfileCancelled 2/2. Default run (sampled k on the large frames): 102/102.
+-- regression (no cancel): verify_curve 23/23 (184/184 ys); verify_curve_shell --no-genuine 25/25; verify_flat test_v02
+   n=0/312/576 3/3; validate_v5 34.15 / 38.7 / 39.06; calibrate_v5 candidates_v6b: 296 auto 47.117 spatial 47.111 temporal
+   47.086, 560 auto 47.222 spatial 47.189 temporal 47.275 (unchanged); UI smoke OK.
+   Logs: blackbox/logs_20261016/status5/.
+-- AutoFineTune entry check (static, 0x9a7828..0x9a79f0; read-only `nvh info`): w = u32 at 0x1488496 (file value 0x822068fe),
+   table pointer at image+0x1566b80 (__DATA,__common, zero-filled). x = w if the pointer is NULL else -table[w & 0xffff];
+   the body runs only if (x + byte2(w))*2 + byte3(w) == 0, i.e. table[0x68fe] == 97; NULL gives 4366324414 -> returns 0.
+   Before the check the address 0x1488494 is stored at image+0x1569fb0. A second check of the same form inside the body
+   (w at 0x148849c = 0x0a8a7a5b, table pointer image+0x15636b8, gated by counter 0x1488318) adds (...)*0x40 to the 32 px tile
+   row count (0 with table[0x7a5b] == 143). The writer of the tables was not identified. Not bypassed.
+   2nd round (review LOW fixes): verify_cancel 104/104 (+ host-style RGB of the production entry == compared RGB, 2/2); nvh warns on stderr when NVH_CANCEL_AT > 0; find_flat_area(cancel=..., with_status=False) -> ValueError; UI smoke OK. Independent code review: APPROVE (LOW/INFO only).
+
+== BuildNoiseModel full port (FUN_00995250 words 55.. and the profile) (2026-10-16) ==
+-- implemented by a separate agent in sandbox/dirfilt (brief: INSTRUCTIONS.md), verified by an independent verifier, merged into
+   repro/ by the coordinator. Copies of the brief, REPORT.md, MERGE_PLAN.md, HANDOVER.md and all logs: logs_20261016/model/
+   (independent/ = the verifier's logs, merged/ = runs after the merge). nvh selftest exit 3 before every harness run.
+   Files: repro/nv_model.py a67e16b8, nv_model_special.py e298bd14, nv_model_bm.py 9c64c729, nv_profile.py cc861819,
+   nv_mcstats.py 525c4323, nv_refnoise.py 874e5a4a (disassembly of FUN_009c3bc4 embedded), nv_cov.py 86497ea3.
+-- `nvh model` (all 4096 words, hex column): implementer 753 cases = 463 planes x set -1 + 290 per-set runs (real crops 120,
+   synthetic 72 incl. NaN / inf / -0 / signalling NaN, boundary sizes 51, fuzz 220), 3,084,288 words, 0 differ
+   (model/model_cases_run3.jsonl). First run: 15 cases differed, all with NaN / inf, only from byte 0x1464 (= word 1305, set-4 special words) on: an unordered fcmp
+   satisfies b.le / b.lt (fixed in nv_model_special and two helpers). Reference path --ref --every 10: 47/47. `nvh refmodel`
+   2005 words identical through nv_refnoise + model_full. Coordinator's own run (verify_model_full.py --fuzz 200): 737/737.
+   Independent verifier, new inputs (12 + 10 other frames, adversarial planes, sizes 2..512 incl. primes, fuzz seed 99001):
+   349 runs (189 planes, 1,429,504 words) + 12 runs of 6 non-finite planes, 0 differ.
+   After the merge (repro/ modules, model_verify/verify_model_cases.py --sets --jobs 6, genuine recomputed): 753/753,
+   3,084,288 words, 0 differ, 299 s (merged/model_cases_merged.out).
+-- `nvh profile W H rgb mode out x y w h` (FindFlatArea not called), all words except 0x00..0x17 (heap pointers) and 0x18..0x23
+   (LZMA SDK compressed sizes, not ported): implementer 76 profiles 947,796 words 0 differ (profile_run1.out 897,912 +
+   profile_synth.jsonl 4 x 12,471; REPORT.md / MERGE_PLAN.md / HANDOVER.md say 945,812, a transcription error). Independent verifier, 33 new cases:
+   first 26 identical, 2 differed (non-finite input: the FUN_009b2f34 floor is `fcsel gt` / `fcmgt + bsl`, a NaN takes the floor;
+   the port kept NaN) and 5 failed in the port (curve bin of a +inf mean: fcvtzs saturates -> bin 8; the port raised
+   OverflowError). Both fixed by the coordinator in nv_profile.py; re-verification 29/29 identical (361,659 words), the 4 others
+   are areas under 32 px, refused on purpose (the genuine reads outside the tile there; the verifier reported that two genuine runs on 24x24 once
+   differed in 70 words, but kept no log of it). curve_bin checked against 0x9b3fbc..0x9b3fcc for all 2^32 float32 values. After the merge: verify_profile.py 76/76
+   (models 914,280, tile_dev 11,628, mc_stats 2,432, curve 16,492, tail 1,748, header 760, means / flags 456 words, 0 differ);
+   independent/run_profile.py 29 ok + 4 refused.
+-- sensitivity (verify_model_cases.py --every 5 --mutate, 93 cases): 13 of 14 injected faults detected (4..64 cases each); the
+   14th (FUN_009ed978 NEON part unfused) is equivalent: its only call has c = 1, d = 0 (verifier: 2e6 bit patterns, 0 differ).
+-- not reached by inputs <= 512 px (verifier, from the geometry): family C level 4, FUN_00ad11b0 without a valid direction bin
+   (port: NotImplementedError), mirror padding >= side.
+-- speed (bench.py --reps 3, M2 Max, load 3.7..16): 128^2 genuine 0.10 s / port 2.82..2.85 s, 320^2 0.30 / 9.08..9.81 s, 512^2
+   0.70 / 20.6..21.0 s; tracemalloc peak 15.8 / 61.7 / 167.5 MiB. A profile: port median 27.6 s (3..4 parallel), genuine 0.91 s.
+-- regressions after the merge (the existing modules are not modified): validate_v5 34.15 / 38.7 / 39.06 (unchanged);
+   verify_levels --quick levels 40/40, model level words 40/40, quantile 273/273; verify_flat_exact --clip test_v02.mp4:6 --modes 1 --production 242/242 identical
+   (merged/verify_levels_quick.out, verify_flat_exact.out).
+
+== BuildNoiseModel LZMA sizes (profile 0x18..0x2b, 0xc2a4) ported (2026-10-16) ==
+-- FUN_009b41c4: crop -> 16-bit image (FUN_009c7318 type 1 -> FUN_009f0554: rint(x*16) ties to even, int16 saturated, NaN -> 0),
+   R, G, B (W*h*2 bytes, no row padding; decoded genuine blobs equal the expected planes for 128x128, 97x71, 49x50) each through
+   FUN_009d61f4 = LzmaCompress(level 5, dict = len rounded up to 4 KiB, lc 3, lp 0, pb 2, fb 32, 1 thread) into a buffer of
+   len + 0x90 bytes; profile word = 16 + stream length. Header bytes 13..15 are not written (heap garbage). Overflow -> -1 ->
+   cleanup FUN_009ba4cc zeroes 0x00..0x2b and 0xc2a4 (observed: "overflow all" / "overflow G only" give 0 sizes, 0 pointers).
+-- SDK version (C oracles, analysis/noise/lzma_oracle/, sources from 7-zip.org / github.com/ip7z/7zip, SHA256 in README.md):
+   test_v02 n=312 128^2 planes, genuine 10079 / 9818 / 9712 bytes: SDK 9.20 and 16.04 byte-identical; 19.00, 21.07, 23.01,
+   24.09, 26.04 give 10072 / 9728 / 9594. Python lzma (xz) differs as well (REPORT.md of the model port).
+-- repro/nv_lzma.py bf849278 (SDK 9.20 encoder port, Bt4 + GetOptimum only), nv_profile.py c2116ae7 (lzma_part, build_profile
+   lzma=True), harness nvh.c 0c99e2ff (`nvh profile` also writes out.bin.lzma0/1/2, read-only copy of the genuine's blobs;
+   make check: selftest exit 3), lzma_oracle/verify_lzma.py 90659f52.
+-- verify_lzma.py --fuzz 300 (logs_20261016/lzma/full.txt): port == SDK 9.20 C on 366/366 inputs (14,660,047 bytes: synthetic
+   incl. 2..17-byte inputs, runs > 273, periods, far repeats, rep mixes, random, 512^2; real int16 planes 48^2..512x300; 300 fuzz);
+   SDK 9.20 == 16.04 on 366/366. Line coverage (stdlib trace, 40 inputs): 862/867 encoder statements; not executed: dict
+   >= 128 MiB, input > dict, hash mask > 2^24, empty input (none reachable from a <= 512 px crop).
+   Genuine: 88/88 profiles (9 frames x 9 sizes 48^2..320^2 incl. 97x71 / 160x90, 2 overflow cases, near-limit B plane 10338 of
+   10384, constant, NaN / inf / +-1e30 / rint ties, 512^2 white, 512x32): the three blobs byte for byte (except bytes 13..15),
+   words 0x18..0x2b and flag 0xc2a4 identical. quick run: 34/34, 11/11 (quick.txt).
+-- verify_profile.py (model_verify, now counts lzma_sizes as ported): 76/76, lzma_sizes 228 words 0 differ, all other regions
+   0 differ, only the 6 pointer words excluded (profile_after_lzma.txt / .jsonl). 353 s with 5 workers.
+-- speed: port about 10 us / byte on noisy planes (128^2 crop: 0.9..1.3 s for the three planes; 320^2: 6.3..7.2 s; 512^2 white
+   13.1 s), 7.8 us / byte averaged over the oracle inputs.
+-- independent verifier (sandbox/lzma_verify, logs copied to logs_20261016/lzma/independent/): APPROVE. Port vs SDK 9.20 C
+   (allocations poisoned) 3,000 fuzz + 600 low-entropy + 16 large (to 3,000,000 bytes, distances > 2^19) inputs, 0 differ;
+   9.20 vs 16.04 2,000, 0 differ. Genuine: 48 output-limit cases (stream n+0x7f / +0x80 / +0x81 on R / G / B, 12 built,
+   36 overflow), 223 crops of 9 frames not used before (28 shapes 32x32..512x512), 21 float->int16 cases (~1.9 M distinct values:
+   all int16 ties +-1 ulp, +-2048, inf, NaN payloads, denormals, 3.4e38), 13 whole profiles: 0 differ. 0x2c..0x2f were 0 in all
+   296 genuine outputs (not written by FUN_009b41c4 / FUN_009ba4cc). Mutants: 36, all non-equivalent ones detected except
+   hash4_mask_minus and extra_lit_rep_cond (no difference found; equivalence not shown). Minor: plane_int16 raised numpy
+   RuntimeWarnings for inf / NaN (fixed: multiply inside errstate; nv_lzma.py ae98863d, output unchanged, quick run 34/34, 11/11).
+
+== LZMA SDK version range, mutant inputs, capacity (2026-10-17, sandbox/omo/wp_lzma + independent verifier) ==
+Worker (omo GLM-5.3, logs in sandbox/omo/wp_lzma/logs/): 28 official SDK versions 9.20..18.06 built (clang -O2 -D_7ZIP_ST) and run on the 228
+   genuine compressed planes (analysis/noise/model_verify/tmp/*.prof.lzma0/1/2, plane bytes 4,608..131,072): 9.20..18.05 228/228 identical,
+   18.06 227/228 differ (first: plane 32,768 B, 3238 vs 3244). Mutant inputs: hash4_mask_minus differs on 8/8 constructed planes;
+   extra_lit_rep_cond differs on 18 of 10,000 low-entropy inputs (all 18: port == C 9.20, mutant != C). blob_size vs C return code:
+   235 inputs x 4 capacities, 0 differ. Dictionary-boundary lengths (87 synthetic): port == C 9.20, 0 differ. nvh profile regions
+   32/45/46/64/512 px at (830,300) of test_v02 n=312: 15 planes, 0 differ ([0:13] and [16:]).
+Independent verifier (sandbox/omo/coord/verify_lzma/VERDICT.md; own downloads checked against official SHA-256, own builds):
+   9.20, 16.04, 17.01, 18.01, 18.03, 18.05: 228/228 identical; 18.06: 227/228 differ. Mutants: hash4 8/8 and extra_lit 5/5 inputs
+   (port == C 9.20, mutant differs); genuine 8,192 B planes do not separate the mutants. Random data with capacity n+0x90:
+   4096/8192 B rc 0, 16384/32768 B rc 7 (port blob None, blob_size -1). nvh profile 32/45/46 px at (700,200) of n=100: 9 planes, 0 differ.
+   Static: LzmaEncProps_Normalize 0xb9c5b4..0xb9c7b8 has no reduceSize loop; LzmaEncProps_Init layout = 9.20 (no UInt64 reduceSize).
+Not confirmed: genuine returning -1 on incompressible planes (static + C oracle only); dictionaries > 128 KiB.
+Inputs kept in analysis/noise/lzma_oracle/sensitivity_inputs/.
+
+== integrate: genuine-exact noise estimates inside v5 (2026-10-17, sandbox/omo/wp_integrate + independent verifier) ==
+Worker (omo GLM-5.3): build_profile_v5(curve_src="genuine" | band_src="model" | chroma_gain=False) in a copy (sandbox/omo/wp_integrate/src/nvfilter.py).
+   Interval A / B (Y / Ymov / U / V, vs test_v02_reduce): baseline 47.117/46.983/50.985/51.179 | 47.222/47.050/50.920/51.189;
+   (a) genuine curve 46.984/46.829/41.346/40.984 | 47.199/47.025/42.005/41.480 (chroma uses the luma curve x CHROMA_GAIN: sigma 13.1/17.3,
+   measured chroma noise ~2.5); (b) model band ratios 46.838/46.691/50.987/51.201 | 47.139/46.978/50.915/51.198 — (b), (c), (d) are invalid, see below.
+   nvh curve 8 values and nvh profile q99 words 6 planes x 5 levels (mode 1, region 792,0,128): 0 differ.
+Independent verifier (sandbox/omo/coord/verify_integrate/VERDICT.md): default arguments bit-identical to repro (profiles for auto/spatial/temporal x
+   area None/(64,64,64), process_frame_v5 output). Interval A re-measured with a copy of calibrate_v5.py: baseline 47.117/50.985/51.179,
+   (a) 46.984/41.346/40.984, (b) 46.838/50.987/51.201 (equal to the worker). (b) divides the a-trous total by the q99-scale sigma[0], which pins
+   tot_ratio to 1.0 (Y sigma 3.211 -> 2.155); with tot_ratio kept from the baseline, (b) gives 47.118 / 50.996 / 51.203 (Ymov 46.983) = baseline.
+   nvh curve / profile re-run on n=312 and n=296: 0 differ. (The worker's "frame 312" is the first frame of the n=296 interval.)
+
+== spatial filter decode + leaf checks (2026-10-17, sandbox/omo/wp_spatial + independent verifier) ==
+Worker (omo GLM-5.3): reference port sandbox/omo/wp_spatial/src/nv_spatial.py (decimated pyramid + genuine shrink, no direction sets),
+   interval A / B vs test_v02_reduce (Y/U/V): v5 default 47.117/50.985/51.179 | 47.222/50.920/51.189; port t=1.0 46.314/50.428/50.042 |
+   46.725/50.394/50.065; port t=1.5 46.997/50.625/50.476 | 47.157/50.578/50.498. Not merged (below v5; also uses a wrong epsilon).
+Independent verifier (sandbox/omo/coord/verify_spatial/VERDICT.md): interval A re-run with a copy of calibrate_v5.py: v5 47.117/50.985/51.179,
+   t=1.5 46.997/50.625/50.476 (0.000 dB difference); with epsilon 1e-4 instead of 9.4433e-4: 46.996/50.624/50.474; t=1.0 46.311/50.426/50.041.
+   Static: epsilon is 0x38d1b717 = 9.99999747e-05 (worker's 9.4433e-4 wrong); output multiplier of the normal path is cfg+0x14+4k
+   ([sp,#0x170] = x7 = cfg, 0x991748..0x991758), not model (worker's "correction" wrong).
+   Leaves vs genuine (new nvh ramp / wmul / down2): ramp formula slope=f32(-1/(2t-t)), ic=f32(1-t*slope), fma on the first n&~3, unfused tail,
+   min 1 / max 0: 468 cases (t 10 values, n 1..9,13,64,1000,4099, random / edge / inf) 0 differ except NaN propagation as expected
+   [2026-10-20 note: the tail is fcsel with NaN -> 0, the NEON part FMIN/FMAX propagates NaN; see 'temporal leaves' below];
+   wmul = prev * ramp: 0 differ; down2 (a+b)+(c+d) x0.25: 0 differ for W = 8, 16, 24, 64 (probe4.py, H 4)
+   [2026-10-20 correction: the 528,297 elements in 15 sizes (probe3.py) compared genuine with nv_spatial.halve and ((a+b)+c)+d, not with
+   (a+b)+(c+d); the tail columns beyond W&~7 are ((a+b)+c)+d, see 'temporal leaves' below]. nv_spatial's np.clip ramp differs in 12.9%
+   of 100k elements (<= 6e-8) and its halve order ((a+c)+b)+d differs in ~40% (a few ulp).
+
+# ---- AutoFineTune static port (2026-10-17, sandbox/omo/wp_aft; verifier sandbox/omo/coord/verify_aft) ----
+# The genuine AutoFineTune was not executed (protection check). Only leaf FUN_009d39ec is called via `nvh aftshuffle`.
+# aftshuffle vs nv_aft.shuffle_order: coordinator 84 n (0..69, 127..129, 255..257, 1000, 1023..1025, 1947, 2048, 4095, 4096)
+#   + verifier 110 n (100 random 1..4096 + 10 edges): 0 mismatches. Seed 0x7b->0x7c mutation detected.
+# Static facts confirmed by verifier + coordinator: R word 490/491, constants (3,2,3)/(4,3,4), Q66 0x3f28f5c3,
+#   gate order G->R->B; FUN_009b4e08 processes bins 0..8 and fills stage coefficients with 1.0f (pattern 0xc962e0).
+# Worker port errors found by verifier (not merged): bin 8 skipped in phase 2; stage coefficients written as 0.
+# v5 variant (AFT curve shapes Y curve), measured with the erroneous port, interval A (verifier re-measured):
+#   base 47.117/50.985/51.179 -> variant 47.125/50.986/51.179 (Y/U/V dB). B (worker only): 47.222/50.920/51.189 -> 47.246/50.921/51.189.
+
+# ---- BuildNoiseModel port speed-up merged (2026-10-17, sandbox/omo/wp_speed; coordinator fix + verifier coord/verify_speed/indep) ----
+# Changed repro/: nv_refnoise (codegen of the instruction loop), nv_band.quantile (sort+searchsorted for n<=4096),
+#   nv_model.kernels (cache), nv_model_bm (int16/int32 sums, batched order statistics), nv_model_special (24-candidate SAD).
+# Worker's final nv_model_special hoisted U8 = image_u8(A) out of the 5-pass loop (A changes via pattern_remove):
+#   vs genuine cache 232/753 cases differed (set 4 special words 1306..1750). Moving it back: 753/753 ok.
+# Final (merged) code: verify_model_cases.py --sets 753/753 ok (3,084,288 words); verify_profile.py 76/76, only the 6 pointer words differ.
+# Independent verifier (no genuine calls): base vs merged, model_full 154 planes / 1,261,568 words 0 diff, build_profile 30/30 bytes equal;
+#   U8-hoist mutation detected 12/12 on periodic planes.
+# data/ref_floor.npy (51 words) == reference implementation with cache=None (bit-exact, coordinator + verifier).
+# Timing (M2 Max, load avg 5-8, 2 runs each, base -> merged): model_full 128^2 2.66-2.72 -> 2.09-2.15 s,
+#   320^2 9.19-9.54 -> 6.64-6.78 s, build_profile 128^2 (floor cached) 20.49-20.98 -> 15.36-15.70 s; floor compute 10.1 -> 7.0 s.
+
+# ---- temporal leaves (2026-10-18, sandbox/omo/wp_temporal; verifier sandbox/omo/coord/verify_temporal) ----
+# nvh ramp/wmul/pairw/down2 vs wp_temporal/src/nv_temporal.py (uint32 bits; NEON byte non-zero path only):
+#   implementer verify/verify_leaves.py: ramp 2,907 calls / 934,065 values, wmul 336 / 46,158, pairw 96 / 9,872, down2 692 / 22,756 -> 0 mismatches.
+#   independent verifier cmp.py (seed 777001): ramp 1449 / 393,576, wmul 1449 / 393,576, pairw 216 / 406,629, down2 72 / 39,396 -> 0 mismatches.
+#   mutations detected: non-fused FMLA, no coefficient adjustment, pairw NaN rule, down2 column split (W&~7) and order, NaN order (6/6 implementer, 4 verifier).
+#   previous GLM port on the same inputs: ramp 107, wmul 20, pairw 12, down2 189 mismatching calls.
+# down2 == repro/nv_pixnoise.down2 on 888 cases (verifier).
+
+# ---- AutoFineTune port fixes (2026-10-18; verifier sandbox/omo/coord/verify_aft2) -> analysis/noise/aft_port/ ----
+# Fixed: phase 2 over bins 0..8, stage coefficients 1.0f (3 write sites), CV-chain NaN continues. Self-test 178 PASS (177 in aft_port; sandbox readonly check dropped).
+# Verifier: before/after output on interval A frames 16/20/24 differs only in coefficient words and channel-0 bin-8 (e.g. 0.7649 -> 0.7047; an AFT-written profile value of one of these frames).
+#   Undetected injected errors: upper extrapolation threshold, phase-2 flag <=, CV tolerance s_lvl.
+# v5 variant re-measured by implementer: A 47.125/50.986/51.179, B 47.246/50.921/51.189 (unchanged from the pre-fix values; AFT bin 8 of the curve used by the v5 variant: A 0.7637->0.7436, B 0.7648->0.7466).
+
+# ---- motion leaves (2026-10-18, sandbox/omo/wp_motion; verifier sandbox/omo/coord/verify_motion) ----
+# nvh sad / nvh b32 vs wp_motion/src/nv_motion.py (sad16, refine32), bits of ret/sad/out:
+#   implementer verify/verify_motion.py v2: sad 1260, b32 13798 -> 0 mismatches (14 input families, sizes 32..512, thresholds incl. boundary).
+#   verifier (own inputs, 38 planes incl. 6 real-frame crop pairs): sad 950, b32 4496 -> 0 mismatches.
+#   Earlier 1-ULP mismatch came from double rounding of w and double accumulation; fixed to single float32 ops.
+#   Mutations detected: w rounded once in double, base weight excluded from den, inv in double (verifier 3/6; the other 3 are output-equivalent).
+# Interval A with nv_motion flow in place of v5's (after the fix): Y/Ymov/U/V 46.609/46.456/50.931/51.136 (v5 47.117/46.983/50.985/51.179).
+# Note: the verifier briefly ran 6 nvh processes (limit 3), stopped them and discarded those results.
+
+# ---- unverified items, static only (2026-10-17, sandbox/omo/wp_unverified; verifier sandbox/omo/coord/verify_unverified/VERDICT.md) ----
+# (Section added 2026-10-20; the facts were merged into Agents.md on 2026-10-17 without an entry here.) Disassembly only, genuine not run.
+# 1 CONFIRMED: profile+0x48 (colour mode) default 1: 0x9b9efc add x0,x19,#0x48 -> bl 0x9ba3d0, which writes 1 at 0x9ba3ec/0x9ba3f0.
+#   Paths that overwrite it later (.nfp load, UI) not checked.
+# 2 CONFIRMED: BuildFreqImage 0x9b0b68 called only at 0x14fa3c; FindFreqLevs 0x9b2814 at 0x14fa9c and 0x14facc (2 calls, worker said 1);
+#   all inside FUN_0014f9a0, whose only caller is 0x14fc94 (FUN_0014fbb0, referenced only from a job table).
+# 3 REFUTED (worker claim "status 5 frees the 7 work buffers"): 0xaed9b4 only delete[]s two arrays at +0x10/+0x18 of the curve object;
+#   the 7 buffers (FUN_009d7200 at 0x9b1cc0..0x9b1d3c) are freed only at 0x9b2620..0x9b2658 (FUN_009d7910), skipped by the
+#   status-5 entries 0x9b1d88 / 0x9b1f5c. Agents.md wording kept.
+# 4 CONFIRMED: no store to the profile in 0x9a775c..0x9a7828 (protection check content not read).
+# 5 REFUTED (proposed SIGBUS mechanism): FUN_009f15b4 has no height argument; caller 0x99576c/0x995770 skips it for < 2 rows. Cause unknown.
+
+# ---- spatial port: halve / shrink ramp made bit-exact (2026-10-21, sandbox/omo/wp_spatial; verifier sandbox/omo/coord/verify_spatial2) ----
+# halve -> FUN_009f15b4 order (first W&~7 cols (a+b)+(c+d), rest ((a+b)+c)+d, x0.25); X = W*ramp -> FUN_009eebf8 (wmul, ramp(t,2t,1,0)*W) once per plane.
+# Disassembly: 0x9916a4 bl 0x9eebf8 (s0=t, s1=t+t at 0x991690, s2=1, s3=0, x0=R, x1=W, x2=X, x3=n [sp+0x1b0]; n written in the
+#   forbidden range 0x991000..0x991080, so n = W_k*H_k is inferred); down2 row loop H>>1 times at 0x98f2bc..0x98f2dc and 0x990d70..0x990d90.
+# vs genuine: implementer down2 1020 cases / 538,536 values, wmul 450 / 20,210,700, ramp 315 / 14,147,490 -> 0 mismatches;
+#   verifier (seed 777123) down2 1560 / 246,400, wmul 924 / 17,460,894 -> 0 mismatches. Old halve detected 625/1020 (impl.), 1273/1560 (verifier).
+# Interval A / B Y/U/V unchanged to 3 decimals: v5 47.117/50.985/51.179 | 47.222/50.920/51.189; port t=1.0 46.311/50.426/50.041 |
+#   46.724/50.393/50.063; t=1.5 46.996/50.624/50.474 | 47.157/50.577/50.496.
+# Not matched yet: whitening (genuine 1/(sigma+1e-4) via FRECPE+FRECPS then a*b), t from profile/cfg, sigma map, planes with H<2 or W=1.
+
+# ---- spatial port: leaf helpers vs genuine (2026-10-21, sandbox/omo/wp_spatial spatial-align; verifier sandbox/omo/coord/verify_spatial3) ----
+# New nvh subcommands elem (17 element-wise helpers) / strip3 (FUN_009ed014 box, FUN_009ed164 squared box + sqrt) / sigfuse (FUN_009f1d8c) /
+#   ixform (FUN_009f1d0c) / sel2 (FUN_009f19cc); coordinator checked all 22 functions: no calls or outside branches, globals only 0x14a67a8
+#   or __TEXT __const 0x12504a0 (0).
+# Implementer: 2,566 cases 0 mismatches (after fixing rstep: fcmp; b.le taken when unordered, returns x0, sNaN not quieted).
+# Verifier (seed 7770021, own inputs incl. sNaN / subnormals): 3,316 cases 0 mismatches; mutants 10/10 detected (rstep old rule 31/231).
+#   Not compared: ixform / sel2 tail (n%4), strip3 with W<4 or H<2.
+# Local RMS pads with 0 (old port replicated edges: 24/54 cases differ); 3x3 box replicates edges.
+# Directional path (sets 1, 2) ported from static reading only; partly checked (constants 4.5, 1.05, ramp args, argmax, call shapes);
+#   Rx / wR (0x9928b8..), dc term (0x993a10..), model word indices, cfg+0x28/+0x78/+0x90 branches not checked. Not compared with genuine.
+# Interval A / B Y (port entry, logs 13:32 before later src changes): t=1.0 46.315 / 46.727, t=1.5 46.998 / 47.158 (v5 47.117 / 47.222).
+
+# ---- protected-region mechanisms read by the lead agent (2026-10-21/22; user delegated this analysis to the lead;
+#      verifier sandbox/omo/coord/verify_protect/VERDICT.md, claims A..J; notes sandbox/omo/wp_spatial/notes/lead_static_20261021.md) ----
+# DAT_01561d58 (line-kernel shift): __DATA __common zero-fill (0x155b1e0+0x2f734; earlier "file value 0x96a78c49" was wrong,
+#   file offsets in __common have no backing). u64 read only at 0x9904c8 (FUN_00990448); used as `lsl x15,x15,x22` for the
+#   count field [0x810] of SHALLOW (flag=1) kernels only (0x9907a0); steep path stores count unshifted (0x990624).
+#   Branch threshold DAT_012436d0 = pi/4. Shallow branch has another token read (image+0x1566b30 byte +0xc3a1 -> w23 ->
+#   0x1487b64; does not affect the kernel tables). Writers of 0x1561d58 (adrp 0x1561000 + str [.,#0xd58]) exactly 3:
+#   0x45114 (BresenhamDrawer vtable slot3, writes popcount(...)-16 = 0 when healthy) / 0x9af244 (FUN_009ae918 chunk tail,
+#   writes 1 when (guarantee word 0x1561dec & 0x3fffff) == 1 AND popcount(global state word w22) != 16) / 0x9ebbbc
+#   (FUN_009eacb0, called by GPU wrapper FUN_009e9940 at 0x9ea2bc; gate = 16-bit word at 0x1561df0 == 1 AND a different
+#   state word's 32-bit popcount != 16). With the guarantee word 0 (fresh process) nothing is written -> port's shift-0
+#   assumption consistent with all harness dumps. If shifted in a real host, shallow kernels read idx[n..511] =
+#   uninitialized stack residue (start+2*count-1 <= 359 <= 511 for <=120px tiles, no SIGSEGV); residue depends on stack
+#   history -> not reproducibly determinable. Lower-bound estimate (residue 0, out-of-plane ignored): test_v02 n=312
+#   dark bin xs=16 ratio +3.1..3.9%, bright bins ~1.000 (verifier re-run [1.031, 1.021, 1.009, 1.002, 1.001, ...];
+#   synthetic white-noise tiles move all bins 0.977..1.008 systematically).
+# FUN_0099afb4 level-coefficient formula corrected (was "17 - popcount(tamper value) = 1 when healthy" - approximation, wrong):
+#   s15 = ((DAT_012445a8[x27] * 1.1f) * s8 * 1.2806249f) * 0.9f * (x22 - (popcount(w19) - 16))  at 0x99b364..0x99b3b8,
+#   multiply order as written. w19 = *(u32*)(*(u64*)0x1488030 + 0x763648) = *(u32*)(image+0x1489E68); static initial value
+#   0xbc5368a5, popcount 16 -> subtrahend 0 (lead's earlier 0x1487c30/0xFCCCC0/pc=18 reading was the wrong adrp slot).
+#   0x3f8ccccd = 1.1f (not 0.25), 0x3fa3eb84 = sqrt(1.64) = 1.2806249 (not 1.27734). s8 = the 1st float arg (v0), which
+#   FUN_0099a76c computes as a 64-bit value from the w22 count-chain + a second lane (w10 raw >> 1) with mvn/add/-0xe
+#   (NOT a popcount(w22) simple function; verified by listing-faithful simulator + native arm64 execution, sim7/native_chain).
+#   0x1487fd8 is a rebase entry (not bind). x22 = FUN_0099afb4's 1st integer arg. Healthy-host value still undetermined.
+# FUN_009ac2088 = key-checked work-plane pool cache (not tile layout; port not needed): 0x9f7c54 dup / 0x9f7c9c compare /
+#   alloc via FUN_00ac2764 -> 0x9d3278; entry init [+8]=100, 100.0f/[x19+0x2c8] per plane, memset_pattern16 0x88 bytes
+#   (pattern 0x1279770) at +0xa8, 0xac1a88 x2. Called from 6 sites (0x9a2600/0x9a2658/0x9a6b00/0x9a6b50/0x9ac87c/0x9ad5a0).
+# FUN_009c06cc = plane-copy dispatch on type/stride combos (8 cases -> FUN_009f14e4 / FUN_009f0554 / FUN_009f0618, row loop
+#   for general); no port impact.
+# sigma-map extra-plane provenance: FUN_009adc8c arg7 -> FUN_009ae918 arg17 ([x29-0xb0] low word); trace = job-descriptor
+#   object (vtable+0x18 return) word [0x18]; for Auto Profile up to StartAdaptive arg3. Default path passes NULL.
+# chroma mix source: FUN_009ee1a4 x0 = FUN_009ae918 args 17..19 = the pre-filter converted planes held by the caller
+#   (plane 2 blends into arg10 instead). Implementer's filter_chunk structure is correct; no port change.
+# ixform caller entry (0x97b76c, 0x97b7a0..0x97b830): counter at 0x147e0e0 (__data, file value 0x228a8d04) update +
+#   0x147ee44/0x147ee4c pointer/low-16-bit byte + `add x24, x24, x10, lsl #10` (x24 = arg6). NEON part (FUN_009f1d0c)
+#   unaffected -> `nvh ixform` checks unaffected. Effect on scalar path undecoded; 1920x1080 (H=1080, n%4=0) never runs it.
+# AutoFineTune gate condition value unchanged (4366324414 via nvh info); token-table writer still unidentified.

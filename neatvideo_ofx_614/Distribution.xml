@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<installer-script minSpecVersion="1">
+    <options customize="never"/>
+    <options hostArchitectures="arm64,i386"/>
+    <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
+    <installation-check script="installation_check('UB')"/>
+    <title>Neat Video v6.1.4 Demo OpenFX plug-in</title>
+    <license file="Legal.txt"/>
+    <choices-outline>
+        <line choice="installer_choice_1"/>
+    </choices-outline>
+    <choice id="installer_choice_1" start_visible="false" start_enabled="false" start_selected="true" title="" description="">
+        <pkg-ref id="com.absoft.NeatVideo6-OFX"/>
+    </choice>
+    <pkg-ref id="com.absoft.NeatVideo6-OFX" version="6.1.4, Neat Video OpenFX plug-in" auth="Root" installKBytes="47912">#NeatVideo6OFX.UB.pkg</pkg-ref>
+    <script>
+        function installation_check(arch)
+        {
+            var result = true;
+            if(arch == 'i386' || arch == 'UB')
+            {
+                var cr = system.compareVersions(system.version.ProductVersion, '10.13.6');
+                if (cr == -1)
+                {
+                    my.result.message = 'Detected macOS version is ' + system.version.ProductVersion + '\n';
+                    my.result.message += 'Please contact support for a version of the installer compatible with systems prior to macOS 10.13.6';
+                    my.result.title = 'Fatal Error';
+                    my.result.type = 'Fatal';
+
+                    result = false;
+                }
+            }
+            else if(arch == 'arm64')
+            {
+                if (system.sysctl('machdep.cpu.brand_string').match('Apple') == null)
+                {
+                    my.result.message = 'This installer is for an Apple Silicon mac. Detected macOS running on an Intel mac\n';
+                    my.result.message += 'Please contact support for a version of the installer compatible with Intel macs';
+                    my.result.title = 'Fatal Error';
+                    my.result.type = 'Fatal';
+
+                    result = false;
+                }
+            }
+            return result;
+        }
+    </script>
+    <pkg-ref id="com.absoft.NeatVideo6-OFX">
+        <bundle-version>
+            <bundle CFBundleShortVersionString="Neat Video v6.1.4 Demo OpenFX plug-in" CFBundleVersion="6.1.4" id="com.absoft.NeatVideo6-OFX" path="Neat Video v6 OpenFX/NeatVideo6.ofx.bundle"/>
+        </bundle-version>
+    </pkg-ref>
+</installer-script>

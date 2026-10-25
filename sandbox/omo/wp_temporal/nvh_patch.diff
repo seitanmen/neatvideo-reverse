@@ -1,0 +1,64 @@
+--- nvh.c.orig	2026-10-17
++++ nvh.c	2026-10-17
+@@ -365,6 +365,84 @@
+   if (argc > 6 && !strcmp(argv[1], "quantile")) {   // FUN_00997bcc: the quantile search of FindFlatArea
+@@
+   }
++  // ---- WP temporal: leaf maths of the temporal filter (0x9a84f8 / 0x99a76c / 0x99afb4) ----
++  // None of these contains a protection check or a token-table read: pure arithmetic
++  // (verified on the arm64 slice; see sandbox/omo/wp_temporal/harness_request.md).
++  if (argc > 5 && !strcmp(argv[1], "ramp")) {       // FUN_009ee93c(t, 2t, 1, 0, out, in, n)
++    float t = strtof(argv[2], NULL);
++    long n = atol(argv[4]);
++    float *in = load(argv[3], n), *out = malloc(n * 4 + 4);
++    ((void (*)(float, float, float, float, float *, const float *, long))FN(0x9ee93c))
++        (t, 2.0f * t, 1.0f, 0.0f, out, in, n);
++    dump_f32(argv[5], "", out, n);
++    for (long i = 0; i < n; i++) printf("%ld %.9g %08x\n", i, out[i], bits32(out[i]));
++    return 0;
++  }
++  if (argc > 6 && !strcmp(argv[1], "wmul")) {       // FUN_009eebf8(out, prev, r, n, t, 2t, 1, 0)
++    float t = strtof(argv[2], NULL);
++    long n = atol(argv[5]);
++    float *prev = load(argv[3], n), *r = load(argv[4], n), *out = malloc(n * 4 + 4);
++    ((void (*)(float *, const float *, const float *, long, float, float, float, float))FN(0x9eebf8))
++        (out, prev, r, n, t, 2.0f * t, 1.0f, 0.0f);
++    dump_f32(argv[6], "", out, n);
++    return 0;
++  }
++  if (argc > 7 && !strcmp(argv[1], "pairw")) {      // FUN_009efb1c(c, a, b, cc, out, n)
++    float c = strtof(argv[2], NULL);
++    long n = atol(argv[6]);
++    float *a = load(argv[3], n), *b = load(argv[4], n), *cc = load(argv[5], n), *out = malloc(n * 4 + 4);
++    ((void (*)(float, const float *, const float *, const float *, float *, long))FN(0x9efb1c))
++        (c, a, b, cc, out, n);
++    dump_f32(argv[7], "", out, n);
++    return 0;
++  }
++  if (argc > 4 && !strcmp(argv[1], "sizes")) {      // FUN_0099c3a4(out[12], W, H)
++    long buf[12];
++    ((void (*)(long *, long, long))FN(0x99c3a4))(buf, atol(argv[2]), atol(argv[3]));
++    for (int i = 0; i < 12; i++) printf("%d %ld\n", i, buf[i]);
++    return 0;
++  }
++  if (argc > 6 && !strcmp(argv[1], "down2")) {      // FUN_009f15b4(dst, src, W) half-resolution
++    long W = atol(argv[2]), H = atol(argv[3]), w2 = W / 2, h2 = H / 2;
++    float *src = load(argv[4], W * H), *dst = calloc(w2 * h2 + 1, 4);
++    ((void (*)(float *, const float *, long))FN(0x9f15b4))(dst, src, W);
++    dump_f32(argv[5], "", dst, w2 * h2);
++    printf("down2 %ld x %ld\n", w2, h2);
++    return 0;
++  }
+   if (argc < 5) {
+     fprintf(stderr, "usage: nvh selftest|order|info | levels|model W H plane.f32 [set] | "
+             "curve|clip W H rgb.f32 | flat W H rgb.f32 [mode] [sel] | profile W H rgb.f32 mode out.bin [x y w h] | "
+-            "tiles W H [tile margin] | refmodel out.bin | kernel W H angle | linefilt W H plane.f32 angle r mode [angle2 r2] | "
+-            "pixnoise W H luma.f32 out | cand W H luma.f32 rx ry step [nb per_bin] | reduce W H rgb.f32 s out | "
+-            "xform W H rgb.f32 mode out | flatness W H plane.f32 | quantile n v.f32 qbits flag div\n");
++            "tiles W H [tile margin] | refmodel out.bin | kernel W H angle | linefilt W H plane.f32 angle r mode [angle2 r2] | "
++            "pixnoise W H luma.f32 out | cand W H luma.f32 rx ry step [nb per_bin] | reduce W H rgb.f32 s out | "
++            "xform W H rgb.f32 mode out | flatness W H plane.f32 | quantile n v.f32 qbits flag div | "
++            "ramp t in.f32 n out.f32 | wmul t prev.f32 r.f32 n out.f32 | pairw c a.f32 b.f32 cc.f32 n out.f32 | "
++            "sizes W H | down2 W H plane.f32 out.f32\n");
+     return 1;
+   }

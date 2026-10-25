@@ -1,0 +1,13 @@
+[
+ {"name": "auto cn1", "mode": "auto", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0}},
+ {"name": "auto cn1.5", "mode": "auto", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "channel_noise": {"Cb": 1.5, "Cr": 1.5}}},
+ {"name": "auto cn2", "mode": "auto", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "channel_noise": {"Cb": 2.0, "Cr": 2.0}}},
+ {"name": "auto cn3", "mode": "auto", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "channel_noise": {"Cb": 3.0, "Cr": 3.0}}},
+ {"name": "auto cn2 luma1 sp1", "mode": "auto", "params": {"threshold": 4.0, "luma": 1.0, "spatial": 1.0, "channel_noise": {"Cb": 2.0, "Cr": 2.0}}},
+ {"name": "auto cn2 thr2", "mode": "auto", "params": {"threshold": 2.0, "luma": 0.7, "spatial": 2.0, "channel_noise": {"Cb": 2.0, "Cr": 2.0}}},
+ {"name": "temporal(rms) cn1", "mode": "temporal", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0}},
+ {"name": "temporal(rms) cn2", "mode": "temporal", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "channel_noise": {"Cb": 2.0, "Cr": 2.0}}},
+ {"name": "temporal(rms) cn3", "mode": "temporal", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "channel_noise": {"Cb": 3.0, "Cr": 3.0}}},
+ {"name": "spatial cn1", "mode": "spatial", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0}},
+ {"name": "spatial cn1.5", "mode": "spatial", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "channel_noise": {"Cb": 1.5, "Cr": 1.5}}}
+]

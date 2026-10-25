@@ -1,0 +1,12 @@
+[
+ {"name": "D0 current V5_DEFAULTS", "mode": "auto", "params": {}},
+ {"name": "D1 thr4 luma.7 sp2", "mode": "auto", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0}},
+ {"name": "D2 D1 cn0.75", "mode": "auto", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "channel_noise": {"Cb": 0.75, "Cr": 0.75}}},
+ {"name": "D3 D1 cn1.33", "mode": "auto", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "channel_noise": {"Cb": 1.33, "Cr": 1.33}}},
+ {"name": "D4 D1 cn1.67", "mode": "auto", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "channel_noise": {"Cb": 1.67, "Cr": 1.67}}},
+ {"name": "D5 thr4 luma.8 sp1.5", "mode": "auto", "params": {"threshold": 4.0, "luma": 0.8, "spatial": 1.5}},
+ {"name": "D6 thr4 luma.6 sp2.5", "mode": "auto", "params": {"threshold": 4.0, "luma": 0.6, "spatial": 2.5}},
+ {"name": "D7 thr8 luma.7 sp2", "mode": "auto", "params": {"threshold": 8.0, "luma": 0.7, "spatial": 2.0}},
+ {"name": "D8 D1 radius3", "mode": "auto", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "radius": 2}},
+ {"name": "D9 D1 chroma0.75", "mode": "auto", "params": {"threshold": 4.0, "luma": 0.7, "spatial": 2.0, "chroma": 0.75}}
+]

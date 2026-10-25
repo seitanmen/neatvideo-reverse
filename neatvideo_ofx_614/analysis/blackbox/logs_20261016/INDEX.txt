@@ -1,0 +1,100 @@
+logs_20261016/ — exp_results.txt が引用する EstimateNoiseLevelCurve 移植の実行ログ (2026-10-16)
+
+元はセッションの scratchpad にあった (揮発性) ものを、ログだけ複製した (ファイル名・内容は元のまま)。
+5 MB を超えるファイルはない (全体で約 0.5 MB)。ログ以外 (画素ノイズの .f32 ダンプ・作業用スクリプト) は複製していない。
+
+curve_p4/  「== EstimateNoiseLevelCurve exact port ==」の節 (scratchpad curve_p4/)
+  verify_curve_full.log            verify_curve.py 全ケース (当時の nvh curve は %.6f 表示: 20/20 が 1e-6 以内)
+  verify_curve_quick_diagnose.log  verify_curve.py --quick --diagnose (タイルごとの nvh pixnoise / nvh clip)
+  verify_curve_diag_test300.log    test.mp4 n=300 の --diagnose
+  verify_curve_shell.log           verify_curve_shell.py --clip test_v02.mp4 --frames 312,576 (48/48)
+  verify_lines_full.log            verify_lines.py
+  verify_pixnoise_full.log         verify_pixnoise.py --sensitivity
+  timing_1080p.log                 1080p の所要時間と段階別の内訳 (参照実装 約 11.6 秒)
+  (scratchpad curve_p4/px_keep/ の .f32 ダンプ 2.1 MB と空の vc_*_keep/ は複製していない)
+
+fix5/      「== EstimateNoiseLevelCurve port: review fixes ==」の節 (scratchpad fix5/final_*.log)
+  final_curve_full.log   verify_curve.py (%.17g、23/23、184/184 ys)
+  final_curve_diag.log   verify_curve.py --diagnose (23/23、IsClip 28,507 ブロック、マップ 0/1848 差)
+  final_shell.log        verify_curve_shell.py --clip test_v02.mp4 --frames 312,576 (51/51)
+  final_pixnoise.log     verify_pixnoise.py --sensitivity
+  final_lines.log        verify_lines.py
+  (CPU の命令による照合 cpu_oracle.c / oracle_test.py は ../../noise/cpu_oracle/ に移した)
+
+speed/     同じ節の「speed-up of genuine_noise_curve」(scratchpad speed/final*.log)
+  final_curve_speed.log  verify_curve_speed.py --orig --profile (19/19。凍結モジュールは ../../noise/frozen_20261016/)
+  final_curve_full.log   verify_curve.py (高速経路で 23/23、184/184 ys)
+  final_shell.log        verify_curve_shell.py --clip ... (71/71)
+  final_pixnoise.log     verify_pixnoise.py --sensitivity (バッチ経路を含む)
+  final_lines.log        verify_lines.py (バッチ経路を含む)
+  final2_*.log           最終確認の再実行 (shell / pixnoise / lines。所要時間の表示以外は final_*.log と同じ)
+
+lowfix/    「== EstimateNoiseLevelCurve port: low-severity fixes (2026-10-16) ==」の節 (scratchpad lowfix2/final/ から複製)。
+           ここ直下のログは、すべて最終版のファイルで 2026-10-16 11:04〜11:31 に実行した (demo_faulty_shells.log だけは
+           わざと誤ったコードの実行、下記)。verify_*.log は先頭 2 行に開始時刻・コマンド・SHA-256 の先頭 16 桁、最終行に
+           終了時刻と終了コードがある (ab_timing_*.log は先頭のコメント行に版と条件):
+             repro/nv_curve.py ddbc3a3f...  nv_pixnoise.py 10339fdb...  nv_lines.py 557efbbf...
+             analysis/noise/verify_curve.py df032bbb...  verify_curve_shell.py ec6a2d7f...  verify_curve_speed.py d134ae0c...
+             analysis/harness/nvh 617ca3f2...
+           11:11〜11:23 は複数の照合を同時に走らせたので、ログの中の所要時間は参考値 (時間の比較は ab_timing_*.log)。
+  selftest.log                     nvh selftest の終了コード (3)。各スクリプトも本家を呼ぶ前に nvh_common.require_guard で確かめる
+  verify_curve_default.log         verify_curve.py (23/23。ys に NaN を含む 2 ケースは自動でタイル別に照合。加算順に敏感なのは 1/23)
+  verify_curve_reference.log       verify_curve.py --reference (参照経路も 23/23 ビット一致)
+  verify_curve_extra.log           verify_curve.py --extra (43/43 = 既定 23 + レビューの入力 20。加算順に敏感なのは 2/43)
+  verify_curve_extra_reference.log verify_curve.py --extra --reference --no-clips --no-synthetic --no-extreme (20/20。
+                                   7680x4320 の参照経路は 196 秒)
+  verify_curve_fuzz200.log         verify_curve.py --fuzz 200 (223/223。乱数 200 ケースは参照経路とも一致。加算順に敏感なのは
+                                   29/223)
+  verify_curve_sensitivity.log     verify_curve.py --no-clips --no-synthetic --sensitivity (12/12。故意の誤りを全て検出: NaN の
+                                   照合の 3 種と、加算順の 2 種 (タイルの逆順・タイル内の画素の逆順) を順序に敏感な 2 ケースで)
+  verify_curve_quick_noorder_diagnose.log  verify_curve.py --quick --no-clips --no-extreme --no-order --diagnose (8/8。
+                                   --no-order で加算順の集計を省けることと、タイルごとの完全な照合 (11:30〜11:31、単独))
+  verify_curve_shell.log           verify_curve_shell.py --clip ../../../test_v02.mp4 --frames 312,576 (75/75)
+  verify_curve_speed_orig.log      verify_curve_speed.py --orig --profile (19 画像 + 段階別の再現、20/20。凍結モジュールは
+                                   ../../noise/frozen_20261016/。前半は verify_curve_extra_reference と同時)
+  verify_curve_speed_mem.log       verify_curve_speed.py --quick --no-clips --mem --mem-dirs frozen_20261016/pre_lowfix
+                                   --mem-runs 3 (tracemalloc・ru_maxrss の前後比較。自分の他の実行がない状態で)
+  verify_pixnoise_sensitivity.log  verify_pixnoise.py --sensitivity
+  verify_lines.log                 verify_lines.py
+  ab_timing_1080.log               前後の時間の交互比較、1920x1080 (test_v02 n=100)。pre = ../../noise/frozen_20261016/pre_lowfix、
+                                   cur = repro/ (最終版)。各行が新しいプロセス 1 つ (1 回目の呼び出し、続く 5 回の最良・中央値、
+                                   結果のハッシュ、負荷)、12 組。最終行が対の差の集計
+  ab_timing_4096x2160.log          同じく 4096x2160 (n=100 を並べた画像、続く 3 回、8 組)
+  demo_faulty_shells.log           verify_curve_shell.py の殻の照合 (本家なし) を、わざと誤った殻に当てた結果。[NG] が出るのが
+                                   正しい (scratchpad のコードで実行): (1) この対応の 1 回目の nv_curve.py (SHA-256 83e817d2...、
+                                   順番待ちのビン番号が uint8) は nbins 300 の照合で 3 か所の不一致、(2) 独立の検証が作った
+                                   「全タイルを最後に逆順で足す」殻は代用 pixnoise の照合 56 件中 48 件で不一致、(3) 比較用:
+                                   同じ殻は 1 回目の verify_curve_shell.py (和が加算順に依らない代用 pixnoise) を全て通っていた
+  first_pass/                      この対応の 1 回目のログ (09:31〜09:55、置き換え済み)。実行したコードは nv_curve.py 83e817d2
+                                   の直前の版で、83e817d2 との差は docstring だけ (1 回目の実装者の申告。独立の検証が 83e817d2 で
+                                   再実行し、時間とヘッダ以外は同じ結果を得た)。verify_pixnoise / verify_lines は 08:37〜08:40 の
+                                   実行。引用しているのは次の 2 つだけ:
+                                   ab_variants_1080.log  設計の比較 (1080p、各行が新しいプロセス 1 つで 5 回の「最良 中央値」):
+                                     pre = pre_lowfix、nodel = 採用した版 (このあとバッチを先頭タイルの順に並べた。1080p では
+                                     順は同じ)、cur = バッチの一時配列も早めに解放する版 (不採用: +16 ms)、planes = 入力を
+                                     面ごとに float32 で複製する版 (速度は pre と同じ、7680x4320 の tracemalloc 最大 621 MiB)。
+                                     cur / planes のコードは採用していない (scratchpad のみ)
+                                   cpu_oracle_test.log   ../../noise/cpu_oracle/ の oracle_test.py (複製後の実行。cpu_oracle は
+                                     その後変えていない)
+
+== ffa/ : FindFlatArea exact port (repro/nv_band.py, nv_flat.py), copied from the scratchpad on 2026-10-16 ==
+  impl/            implementer's final-code runs (scratchpad ffa2/logs): vfe_v02 / vfe_t1 (93/93 each), vfe_small_syn (81/81),
+                   vfe_scales (15/15), vfe_prod (64/64 = 32 frames x {port, production entry}), vflat_*, adv_* / fuzz_*
+                   (review sets re-run), timing.txt (time / memory table), summary.txt
+  verify_integ/    first verifier (integration): levels_extra, ffa_extra, boundary, integ, timing_*, mem*, vlevels_*, xform_flat
+  verify_exact/    first verifier (bit-exactness): tables, fuzz_* (the adv_* outputs were not saved as logs; numbers are in its
+                   report, quoted in exp_results.txt)
+  reverify/        re-verifier of the memory fix: vl_full (verify_levels full run), vfe_v02_off5 / vfe_t1_off11 (unseen frames,
+                   90/90 each), vfe_prod_v02 / vfe_prod_t1 (16/16 each = 8 frames x {port, production entry}), vfe_mine,
+                   fuzz_*, matrix (time / RSS, 3 fresh processes per variant), batch_inv, vflat_*, dv5
+== main_final/ : main session's final regression runs (2026-10-16, after merging both tracks) ==
+  vc_final.log (verify_curve 23/23, 184/184), vcs_final.log (verify_curve_shell --clip test_v02 312,576: 75/75, before the
+  per-image waiting-tile requirement), cal_v6e.log (calibrate_v5 candidates_v6b, segments 296 / 560),
+  validate_v5_final.log, ui_smoke_final.log
+
+model/   BuildNoiseModel full port (FUN_00995250 words 55.., profile), 2026-10-16: copies of the brief (INSTRUCTIONS.md), REPORT.md,
+         MERGE_PLAN.md, HANDOVER.md; the implementer's logs (model_cases_run*.jsonl, mutate_*.jsonl, profile_*.jsonl, bench.out,
+         coord_*.log = the coordinator's run); independent/ = the independent verifier's logs; merged/ = runs on repro/ after the merge.
+status5/ FindFlatArea status 5 (cancel) verification and regressions, 2026-10-16.
+lzma/    BuildNoiseModel LZMA sizes, 2026-10-16: quick.txt / full.txt (verify_lzma.py: oracle 366/366, genuine 88/88),
+         profile_after_lzma.txt / .jsonl (verify_profile 76/76 with the LZMA sizes); independent/ = the independent verifier's report.

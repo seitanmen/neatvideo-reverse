@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+"""Timings of WP_SRC: model_full on 1 plane of 128/320/512, build_profile on 128^2 / 320^2 crops,
+nv_lzma on the 3 int16 planes of a 128^2 crop.  usage: WP_SRC=<dir> bench.py [--only model|profile|lzma]"""
+import os
+import sys
+import time
+
+sys.dont_write_bytecode = True
+HERE = os.path.dirname(os.path.abspath(__file__))
+WP = os.path.abspath(os.path.join(HERE, ".."))
+sys.path.insert(0, os.environ.get("WP_SRC", os.path.join(WP, "src")))
+sys.path.insert(0, os.path.join(WP, "verify", "mv"))
+import numpy as np  # noqa: E402
+
+import common  # noqa: E402
+
+F32 = np.float32
+
+
+def frame():
+    return common.frame_cached("test_v02.mp4", 312).astype(F32)
+
+
+def bench_model(reps):
+    import nv_model as nm
+    fr = frame()
+    out = []
+    for s in (128, 320, 512):
+        p = np.ascontiguousarray(fr[100:100 + s, 300:300 + s, 1])
+        ts = []
+        for _ in range(reps):
+            t = time.perf_counter()
+            nm.model_full(p)
+            ts.append(time.perf_counter() - t)
+        out.append((f"model_full {s}x{s}", ts))
+    return out
+
+
+def bench_profile(reps):
+    import nv_profile as npf

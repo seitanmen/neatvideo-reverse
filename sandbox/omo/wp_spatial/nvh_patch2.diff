@@ -1,0 +1,36 @@
+--- a/neatvideo_ofx_614/analysis/harness/nvh.c
++++ b/neatvideo_ofx_614/analysis/harness/nvh.c
+@@ -571,9 +571,11 @@
+     // sel2 n flag stride a.f32 b.f32 i3.u8 i4.u8 best.f32 src.f32 wt.f32 out: FUN_009f19cc, the NEON part of FUN_0098eba8, with the
+     // arguments FUN_0098eba8 passes (a, b, i3, i4, out, best, src, wt, flag, stride, n); it handles n & ~3 values. src and wt
+     // hold 256 * stride floats (index i + stride * byte), n <= stride. Writes out.out/.best/.b (.f32) and out.i4 (bytes)
++    // 2026-10-21 (wp_spatial): a 13th argument "full" calls FUN_0098eba8 itself (same arguments; it calls only the leaf
++    // FUN_009f19cc and reads only the NEON byte 0x14a67a8), which adds the scalar tail for the last n & 3 values; all n are written
+     long n = atol(argv[2]), stride = atol(argv[4]);
+-    int flag = atoi(argv[3]) & 1;
+-    if (n < 4 || stride < n || stride > (1L << 16)) { fprintf(stderr, "sel2: 4 <= n <= stride <= 65536\n"); return 1; }
++    int flag = atoi(argv[3]) & 1, full = argc > 13 && !strcmp(argv[13], "full");
++    if (n < (full ? 1 : 4) || stride < n || stride > (1L << 16)) { fprintf(stderr, "sel2: 4 (full: 1) <= n <= stride <= 65536\n"); return 1; }
+     float *a = load(argv[5], n), *b = load(argv[6], n), *best = load(argv[9], n);
+     float *src = load(argv[10], 256 * stride), *wt = load(argv[11], 256 * stride), *out = calloc(n + 4, 4);
+     unsigned char *i3 = calloc(n + 4, 1), *i4 = calloc(n + 4, 1);
+@@ -581,8 +583,8 @@
+     if (!f3 || !f4 || fread(i3, 1, n, f3) != (size_t)n || fread(i4, 1, n, f4) != (size_t)n) { fprintf(stderr, "sel2: read u8 failed\n"); return 1; }
+     fclose(f3); fclose(f4);
+     ((void (*)(const float *, float *, const unsigned char *, unsigned char *, float *, float *, const float *, const float *,
+-               unsigned char, long, long))FN(0x9f19cc))(a, b, i3, i4, out, best, src, wt, (unsigned char)flag, stride, n);
+-    long m = n & ~3L;
++               unsigned char, long, long))FN(full ? 0x98eba8 : 0x9f19cc))(a, b, i3, i4, out, best, src, wt, (unsigned char)flag, stride, n);
++    long m = full ? n : n & ~3L;
+     dump_f32(argv[12], ".out.f32", out, m); dump_f32(argv[12], ".best.f32", best, m); dump_f32(argv[12], ".b.f32", b, m);
+     char nm[1024]; snprintf(nm, sizeof nm, "%s.i4", argv[12]);
+     FILE *fo = fopen(nm, "wb"); if (!fo) { perror(nm); return 1; } fwrite(i4, 1, m, fo); fclose(fo);
+@@ -598,7 +600,7 @@
+             "ramp t in.f32 n out | wmul t r.f32 prev.f32 n out | pairw a.f32 b.f32 c.f32 n out | down2 W H plane.f32 out | "
+             "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr | aftshuffle N | interp n x.. y.. q.. | "
+             "elem NAME n out s0 s1 s2 s3 in1 [in2 [in3]] | strip3 W H plane.f32 box|sq mode sbits out | "
+-            "sigfuse n r g b tab coef out | ixform n y a b out | sel2 n flag stride a b i3 i4 best src wt out\n");
++            "sigfuse n r g b tab coef out | ixform n y a b out | sel2 n flag stride a b i3 i4 best src wt out [full]\n");
+     return 1;
+   }
+   long W = atol(argv[2]), H = atol(argv[3]);

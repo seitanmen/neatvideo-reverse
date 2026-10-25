@@ -1,0 +1,153 @@
+PASS pen s=0 x<0 
+PASS pen s=0 x>0 
+PASS pen s=0 x=0 
+PASS pen x=0 s=3 
+PASS pen x=0.75s 
+PASS pen x=1.25s 
+PASS pen x=s 
+PASS pen x=5s/8 
+PASS pen NaN x 
+PASS pen NaN s 
+PASS dev same 
+PASS dev 2:1 
+PASS dev unordered 
+PASS ratio_dev zero 
+PASS ratio_dev NaN 
+PASS cl mid 
+PASS cl hi 
+PASS cl lo 
+PASS cl NaN 
+PASS shuffle n=0 
+PASS shuffle n=1 
+PASS shuffle n=2 perm 
+PASS shuffle n=3 perm 
+PASS shuffle n=3 trace 
+PASS shuffle n=10 perm 
+PASS polyfit 2/2 == genuine 
+PASS polyfit 3/2 == genuine 
+PASS polyfit 3/3 == genuine 
+PASS polyfit 4/3 == genuine 
+PASS polyfit 9/3 == genuine 
+PASS polyfit linear 
+PASS fill singleton 
+PASS fill singleton knot untouched 
+PASS fill singleton flag 
+PASS fill 2 knots 
+PASS fill all knots 
+PASS fill no knots 
+PASS fill flagged bin8 
+PASS fill prefix 1pt 
+PASS post level = q66 
+PASS post count = 1 
+PASS post others untouched 
+PASS post phase2 bin3 level 
+PASS post phase2 bin5 level 
+PASS post bin8 never written 
+PASS post mode1 threshold 
+PASS post mode1 threshold 8 
+PASS post phase3 rescale bin2 
+PASS post phase3 flag bin2 
+PASS post phase3 flagged bin5 untouched by phase3 
+PASS mode2 avg 
+PASS mode2 too few 
+PASS self noise 128x96 mode0 ref==fast 
+PASS curve range noise m0 c0 
+PASS curve filled noise m0 c0 
+PASS curve range noise m0 c1 
+PASS curve filled noise m0 c1 
+PASS curve range noise m0 c2 
+PASS curve filled noise m0 c2 
+PASS injection stats noise 128x96 m0 
+PASS self-accept noise 128x96 
+PASS self noise 128x96 mode1 ref==fast 
+PASS curve range noise m1 c0 
+PASS curve range noise m1 c1 
+PASS curve range noise m1 c2 
+PASS self mode2 noise 128x96 ref==fast 
+PASS image2 zero-diff rejects noise 128x96 
+PASS self flat 128x96 mode0 ref==fast 
+PASS curve range flat m0 c0 
+PASS curve filled flat m0 c0 
+PASS curve range flat m0 c1 
+PASS curve filled flat m0 c1 
+PASS curve range flat m0 c2 
+PASS curve filled flat m0 c2 
+PASS self-accept flat 128x96 
+PASS self flat 128x96 mode1 ref==fast 
+PASS curve range flat m1 c0 
+PASS curve range flat m1 c1 
+PASS curve range flat m1 c2 
+PASS self mode2 flat 128x96 ref==fast 
+PASS image2 zero-diff rejects flat 128x96 
+PASS self grad 128x96 mode0 ref==fast 
+PASS curve range grad m0 c0 
+PASS curve filled grad m0 c0 
+PASS curve range grad m0 c1 
+PASS curve filled grad m0 c1 
+PASS curve range grad m0 c2 
+PASS curve filled grad m0 c2 
+PASS self-accept grad 128x96 
+PASS self grad 128x96 mode1 ref==fast 
+PASS curve range grad m1 c0 
+PASS curve range grad m1 c1 
+PASS curve range grad m1 c2 
+PASS self mode2 grad 128x96 ref==fast 
+PASS image2 zero-diff rejects grad 128x96 
+PASS self noise 192x160 mode0 ref==fast 
+PASS curve range noise m0 c0 
+PASS curve filled noise m0 c0 
+PASS curve range noise m0 c1 
+PASS curve filled noise m0 c1 
+PASS curve range noise m0 c2 
+PASS curve filled noise m0 c2 
+PASS injection stats noise 192x160 m0 
+PASS self-accept noise 192x160 
+PASS self noise 192x160 mode1 ref==fast 
+PASS curve range noise m1 c0 
+PASS curve range noise m1 c1 
+PASS curve range noise m1 c2 
+PASS self mode2 noise 192x160 ref==fast 
+PASS image2 zero-diff rejects noise 192x160 
+PASS self clip 128x128 mode0 ref==fast 
+PASS curve range clip m0 c0 
+PASS curve filled clip m0 c0 
+PASS curve range clip m0 c1 
+PASS curve filled clip m0 c1 
+PASS curve range clip m0 c2 
+PASS curve filled clip m0 c2 
+PASS self clip 128x128 mode1 ref==fast 
+PASS curve range clip m1 c0 
+PASS curve range clip m1 c1 
+PASS curve range clip m1 c2 
+PASS self mode2 clip 128x128 ref==fast 
+PASS image2 zero-diff rejects clip 128x128 
+PASS self flat 64x47 mode0 ref==fast 
+PASS curve range flat m0 c0 
+PASS curve filled flat m0 c0 
+PASS curve range flat m0 c1 
+PASS curve filled flat m0 c1 
+PASS curve range flat m0 c2 
+PASS curve filled flat m0 c2 
+PASS self flat 64x47 mode1 ref==fast 
+PASS curve range flat m1 c0 
+PASS curve range flat m1 c1 
+PASS curve range flat m1 c2 
+PASS self mode2 flat 64x47 ref==fast 
+PASS image2 zero-diff rejects flat 64x47 
+PASS self flat 63x64 mode0 ref==fast 
+PASS curve range flat m0 c0 
+PASS curve filled flat m0 c0 
+PASS curve range flat m0 c1 
+PASS curve filled flat m0 c1 
+PASS curve range flat m0 c2 
+PASS curve filled flat m0 c2 
+PASS self-accept flat 63x64 
+PASS self flat 63x64 mode1 ref==fast 
+PASS curve range flat m1 c0 
+PASS curve range flat m1 c1 
+PASS curve range flat m1 c2 
+PASS self mode2 flat 63x64 ref==fast 
+PASS image2 zero-diff rejects flat 63x64 
+
+ALL PASS
+exit=0

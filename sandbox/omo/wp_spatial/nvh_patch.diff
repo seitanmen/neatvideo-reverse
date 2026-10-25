@@ -1,0 +1,136 @@
+--- a/neatvideo_ofx_614/analysis/harness/nvh.c
++++ b/neatvideo_ofx_614/analysis/harness/nvh.c
+@@ -473,8 +473,122 @@
+     unsigned long ret = ((unsigned long (*)(float, void *, long *, const void *, long, long, long, void *, float *, float *, unsigned long *))
+         FN(0x98bf18))(thr, NULL, desc, pb + cy * stride + cx, 32, cx, cy, offs, &ox, &oy, &osad);
+     printf("b32 ret=%lu out_x=%.9g out_y=%.9g sad=%lu bits=%08x %08x\n", ret, ox, oy, osad, bits32(ox), bits32(oy));
++    return 0;
++  }
++  // ---- 2026-10-21 (sandbox/omo/wp_spatial, align_plan.md): leaf helpers of the spatial filter FUN_0098edb0 / FUN_009aae90 /
++  // FUN_009ae918 and of the directional path of FUN_00990f74. Each was checked on the arm64 slice to call nothing outside itself
++  // and to read no global except the NEON dispatch byte 0x14a67a8 (strip3: the single zero float at __TEXT 0x12504a0 instead;
++  // sigfuse / ixform / sel2: no global at all). No guard, hash or token word is read or written by any of them.
++  if (argc > 4 && !strcmp(argv[1], "elem")) {
++    // elem NAME n out.f32 s0 s1 s2 s3 in1.f32 [in2.f32 [in3.f32]]: one element-wise helper on n values (scalars as float32 hex bits)
++    static const struct { const char *nm; unsigned long off; int ns, ni, u8out; } T[] = {
++      {"recip", 0x9ed5f8, 1, 1, 0}, {"scale", 0x9ee304, 1, 1, 0}, {"affine", 0x9ee3fc, 2, 1, 0}, {"fabs", 0x9ee50c, 0, 1, 0},
++      {"sqr", 0x9ed2f0, 0, 1, 0}, {"sqrtabs", 0x9ed3e0, 0, 1, 0}, {"sqrtk", 0x9ed4e0, 1, 1, 0}, {"u8", 0x9f02b4, 0, 1, 1},
++      {"mul", 0x9edc38, 0, 2, 0}, {"add", 0x9ed844, 0, 2, 0}, {"sub", 0x9ed710, 0, 2, 0}, {"mulk", 0x9edd6c, 1, 2, 0},
++      {"blend", 0x9ee1a4, 2, 2, 0}, {"rstep", 0x9ef260, 1, 2, 0}, {"rinv", 0x9eef5c, 1, 2, 0}, {"clampmul", 0x9ee7bc, 4, 2, 0},
++      {"acc", 0x9edeb8, 1, 3, 0}};
++    int t = -1;
++    for (int i = 0; i < (int)(sizeof T / sizeof T[0]); i++) if (!strcmp(argv[2], T[i].nm)) t = i;
++    long n = atol(argv[3]);
++    if (t < 0 || n < 1 || n > (1L << 22) || argc < 9 + T[t].ni) { fprintf(stderr, "elem: NAME n out s0 s1 s2 s3 in1 [in2 [in3]], 1 <= n <= 4M\n"); return 1; }
++    float s[4];
++    for (int i = 0; i < 4; i++) { unsigned u = (unsigned)strtoul(argv[5 + i], NULL, 16); memcpy(&s[i], &u, 4); }
++    float *in[3] = {0, 0, 0};
++    for (int i = 0; i < T[t].ni; i++) in[i] = load(argv[9 + i], n);
++    float *out = calloc(n + 4, 4);
++    void *f = FN(T[t].off);
++    switch (T[t].ns * 10 + T[t].ni) {
++      case 1: ((void (*)(const float *, void *, long))f)(in[0], out, n); break;
++      case 11: ((void (*)(float, const float *, float *, long))f)(s[0], in[0], out, n); break;
++      case 21: ((void (*)(float, float, const float *, float *, long))f)(s[0], s[1], in[0], out, n); break;
++      case 2: ((void (*)(const float *, const float *, float *, long))f)(in[0], in[1], out, n); break;
++      case 12: ((void (*)(float, const float *, const float *, float *, long))f)(s[0], in[0], in[1], out, n); break;
++      case 22: ((void (*)(float, float, const float *, const float *, float *, long))f)(s[0], s[1], in[0], in[1], out, n); break;
++      case 42: ((void (*)(float, float, float, float, const float *, const float *, float *, long))f)(
++          s[0], s[1], s[2], s[3], in[0], in[1], out, n); break;
++      case 13: ((void (*)(float, const float *, const float *, const float *, float *, long))f)(s[0], in[0], in[1], in[2], out, n); break;
++      default: fprintf(stderr, "elem: bad table entry\n"); return 1;
++    }
++    FILE *fo = fopen(argv[4], "wb");
++    if (!fo) { perror(argv[4]); return 1; }
++    fwrite(out, T[t].u8out ? 1 : 4, n, fo);
++    fclose(fo);
++    printf("elem %s %ld\n", argv[2], n);
++    return 0;
++  }
++  if (argc > 8 && !strcmp(argv[1], "strip3")) {
++    // strip3 W H plane.f32 box|sq mode sbits out.f32: the 4-column strip loop of FUN_0098edb0 (0x98f378, box = FUN_009ed014(src+c, dst+c,
++    // W, H, mode, first, last)) and of FUN_009950f4 (0x995174, sq = FUN_009ed164(s, src+c, dst+c, W, H, mode, first, last)):
++    // c = min(x, W - 4), first = (c == 0), last = (W - 4 <= x), x = c + 4 while x < W
++    long W = atol(argv[2]), H = atol(argv[3]);
++    int sq = !strcmp(argv[5], "sq"), mode = atoi(argv[6]);
++    if (W < 4 || H < 2 || W > 512 || H > 512 || (!sq && strcmp(argv[5], "box")) || (mode != 0 && mode != 1)) {
++      fprintf(stderr, "strip3: 4 <= W <= 512, 2 <= H <= 512, box|sq, mode 0|1\n"); return 1;
++    }
++    unsigned u = (unsigned)strtoul(argv[7], NULL, 16); float sc; memcpy(&sc, &u, 4);
++    float *src = load(argv[4], W * H), *dst = calloc(W * H + 4, 4);
++    for (long x = 0;;) {
++      long c = x < W - 4 ? x : W - 4;
++      if (sq) ((void (*)(float, const float *, float *, long, long, long, long, long))FN(0x9ed164))(
++          sc, src + c, dst + c, W, H, mode, c == 0, W - 4 <= x);
++      else ((void (*)(const float *, float *, long, long, long, long, long))FN(0x9ed014))(
++          src + c, dst + c, W, H, mode, c == 0, W - 4 <= x);
++      x = c + 4;
++      if (x >= W) break;
++    }
++    dump_f32(argv[8], "", dst, W * H);
++    printf("strip3 %ld %ld\n", W, H);
+     return 0;
+   }
++  if (argc > 8 && !strcmp(argv[1], "sigfuse")) {
++    // sigfuse n r.f32 g.f32 b.f32 tab.f32 coef.f32 out: FUN_009f1d8c(R, G, B, T_R, T_G, T_B, o0, o1, o2, coef[9], n) (the NEON
++    // sigma map of FUN_009aae90; it handles 4 values per step up to n rounded up, so every buffer is padded by 4 zeros);
++    // tab.f32 = 3 x 257 floats, coef.f32 = 9 floats; writes out.0/.1/.2 (.f32, n values each)
++    long n = atol(argv[2]);
++    if (n < 1 || n > (1L << 22)) { fprintf(stderr, "sigfuse: 1 <= n <= 4M\n"); return 1; }
++    float *pl[3], *o[3];
++    for (int i = 0; i < 3; i++) { pl[i] = calloc(n + 4, 4); float *t = load(argv[3 + i], n); memcpy(pl[i], t, n * 4); o[i] = calloc(n + 4, 4); }
++    float *tab = load(argv[6], 3 * 257), *coef = load(argv[7], 9);
++    ((void (*)(const float *, const float *, const float *, const float *, const float *, const float *, float *, float *, float *,
++               const float *, long))FN(0x9f1d8c))(pl[0], pl[1], pl[2], tab, tab + 257, tab + 514, o[0], o[1], o[2], coef, n);
++    dump_f32(argv[8], ".0.f32", o[0], n); dump_f32(argv[8], ".1.f32", o[1], n); dump_f32(argv[8], ".2.f32", o[2], n);
++    printf("sigfuse %ld\n", n);
++    return 0;
++  }
++  if (argc > 6 && !strcmp(argv[1], "ixform")) {
++    // ixform n y.f32 a.f32 b.f32 out: FUN_009f1d0c(Y, a, b, o0, o1, o2, n), the NEON part of the inverse YCrCb transform 0x97b76c
++    // (DAT_0147df68[1]); it writes n & ~3 values, which go to out.0/.1/.2 (.f32)
++    long n = atol(argv[2]);
++    if (n < 4 || n > (1L << 22)) { fprintf(stderr, "ixform: 4 <= n <= 4M\n"); return 1; }
++    float *y = load(argv[3], n), *a = load(argv[4], n), *b = load(argv[5], n);
++    float *o0 = calloc(n + 4, 4), *o1 = calloc(n + 4, 4), *o2 = calloc(n + 4, 4);
++    ((void (*)(const float *, const float *, const float *, float *, float *, float *, long))FN(0x9f1d0c))(y, a, b, o0, o1, o2, n);
++    dump_f32(argv[6], ".0.f32", o0, n & ~3L); dump_f32(argv[6], ".1.f32", o1, n & ~3L); dump_f32(argv[6], ".2.f32", o2, n & ~3L);
++    printf("ixform %ld\n", n & ~3L);
++    return 0;
++  }
++  if (argc > 12 && !strcmp(argv[1], "sel2")) {
++    // sel2 n flag stride a.f32 b.f32 i3.u8 i4.u8 best.f32 src.f32 wt.f32 out: FUN_009f19cc, the NEON part of FUN_0098eba8, with the
++    // arguments FUN_0098eba8 passes (a, b, i3, i4, out, best, src, wt, flag, stride, n); it handles n & ~3 values. src and wt
++    // hold 256 * stride floats (index i + stride * byte), n <= stride. Writes out.out/.best/.b (.f32) and out.i4 (bytes)
++    long n = atol(argv[2]), stride = atol(argv[4]);
++    int flag = atoi(argv[3]) & 1;
++    if (n < 4 || stride < n || stride > (1L << 16)) { fprintf(stderr, "sel2: 4 <= n <= stride <= 65536\n"); return 1; }
++    float *a = load(argv[5], n), *b = load(argv[6], n), *best = load(argv[9], n);
++    float *src = load(argv[10], 256 * stride), *wt = load(argv[11], 256 * stride), *out = calloc(n + 4, 4);
++    unsigned char *i3 = calloc(n + 4, 1), *i4 = calloc(n + 4, 1);
++    FILE *f3 = fopen(argv[7], "rb"), *f4 = fopen(argv[8], "rb");
++    if (!f3 || !f4 || fread(i3, 1, n, f3) != (size_t)n || fread(i4, 1, n, f4) != (size_t)n) { fprintf(stderr, "sel2: read u8 failed\n"); return 1; }
++    fclose(f3); fclose(f4);
++    ((void (*)(const float *, float *, const unsigned char *, unsigned char *, float *, float *, const float *, const float *,
++               unsigned char, long, long))FN(0x9f19cc))(a, b, i3, i4, out, best, src, wt, (unsigned char)flag, stride, n);
++    long m = n & ~3L;
++    dump_f32(argv[12], ".out.f32", out, m); dump_f32(argv[12], ".best.f32", best, m); dump_f32(argv[12], ".b.f32", b, m);
++    char nm[1024]; snprintf(nm, sizeof nm, "%s.i4", argv[12]);
++    FILE *fo = fopen(nm, "wb"); if (!fo) { perror(nm); return 1; } fwrite(i4, 1, m, fo); fclose(fo);
++    printf("sel2 %ld\n", m);
++    return 0;
++  }
+   if (argc < 5) {
+     fprintf(stderr, "usage: nvh selftest|order|info | levels|model W H plane.f32 [set] | "
+             "curve|clip W H rgb.f32 | flat W H rgb.f32 [mode] [sel] | profile W H rgb.f32 mode out.bin [x y w h] | "
+@@ -482,7 +596,9 @@
+             "pixnoise W H luma.f32 out | cand W H luma.f32 rx ry step [nb per_bin] | reduce W H rgb.f32 s out | "
+             "xform W H rgb.f32 mode out | flatness W H plane.f32 | quantile n v.f32 qbits flag div | "
+             "ramp t in.f32 n out | wmul t r.f32 prev.f32 n out | pairw a.f32 b.f32 c.f32 n out | down2 W H plane.f32 out | "
+-            "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr | aftshuffle N | interp n x.. y.. q..\n");
++            "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr | aftshuffle N | interp n x.. y.. q.. | "
++            "elem NAME n out s0 s1 s2 s3 in1 [in2 [in3]] | strip3 W H plane.f32 box|sq mode sbits out | "
++            "sigfuse n r g b tab coef out | ixform n y a b out | sel2 n flag stride a b i3 i4 best src wt out\n");
+     return 1;
+   }
+   long W = atol(argv[2]), H = atol(argv[3]);

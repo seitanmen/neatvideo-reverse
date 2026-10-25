@@ -1,0 +1,5 @@
+[
+ {"name": "auto (genuine FindFlatArea)", "mode": "auto", "params": {}},
+ {"name": "spatial (genuine FindFlatArea)", "mode": "spatial", "params": {}},
+ {"name": "temporal", "mode": "temporal", "params": {}}
+]

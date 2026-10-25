@@ -1,0 +1,43 @@
+needle [Neat Video Demo] hits=2
+  [Neat Video Demo] ref from 00009c38 in func 00008dd4
+  [Neat Video Demo] ref from 0011d4d4 in func 0011c920
+needle [Generic noise profile] hits=5
+  [Generic noise profile] ref from 001c55c4 in func 001c55a8
+  [Generic noise profile] ref from 001c55f8 in func 001c55dc
+  [Generic noise profile] ref from 001c5634 in func 001c5610
+  [Generic noise profile] ref from 001c5670 in func 001c5654
+  [Generic noise profile] ref from 000df45c in func 000dec00
+  [Generic noise profile] ref from 000e2d74 in func 000e0b18
+needle [Temporal Radius] hits=1
+  [Temporal Radius] ref from 000b0f28 in func 000b0934
+needle [Noise Reduction Amount] hits=3
+  [Noise Reduction Amount] ref from 000b1b7c in func 000b0934
+  [Noise Reduction Amount] ref from 000b2f14 in func 000b0934
+  [Noise Reduction Amount] ref from 000b1bc8 in func 000b0934
+  [Noise Reduction Amount] ref from 000b1ab0 in func 000b0934
+  [Noise Reduction Amount] ref from 000b372c in func 000b0934
+  [Noise Reduction Amount] ref from 000c7d5c in func 000c74e0
+  [Noise Reduction Amount] ref from 00112eac in func 00112c60
+  [Noise Reduction Amount] ref from 00112ec0 in func 00112c60
+needle [ultra low] hits=7
+  [ultra low] ref from 000b495c in func 000b0934
+  [ultra low] ref from 000b5eb8 in func 000b0934
+  [ultra low] ref from 000e2b10 in func 000e0b18
+  [ultra low] ref from 000b4970 in func 000b0934
+  [ultra low] ref from 000b49a4 in func 000b0934
+  [ultra low] ref from 000b5ecc in func 000b0934
+  [ultra low] ref from 000e2b24 in func 000e0b18
+  [ultra low] ref from 000b5f00 in func 000b0934
+  [ultra low] ref from 000e2b58 in func 000e0b18
+  [ultra low] ref from 000eac44 in func 000ea530
+  [ultra low] ref from 0011c5ac in func 0011ae10
+  [ultra low] ref from 000eaf64 in func 000ea530
+needle [artifact removal threshold] hits=3
+  [artifact removal threshold] ref from 000b6720 in func 000b0934
+  [artifact removal threshold] ref from 000b6960 in func 000b0934
+  [artifact removal threshold] ref from 000b6ba0 in func 000b0934
+needle [Prepare Noise Profile] hits=2
+  [Prepare Noise Profile] ref from 0000a578 in func 0000a22c
+  [Prepare Noise Profile] ref from 000a5e70 in func 000a5d60
+  [Prepare Noise Profile] ref from 0000a52c in func 0000a22c
+  [Prepare Noise Profile] ref from 0009e010 in func 0009df74
