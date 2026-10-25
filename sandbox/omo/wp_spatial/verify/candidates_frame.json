@@ -1,0 +1,4 @@
+[
+  {"name": "port-default"},
+  {"name": "port-luma0.7", "settings": {"0x3c": [0.7, 1.0, 1.0]}}
+]

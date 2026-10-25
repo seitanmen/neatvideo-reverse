@@ -1,0 +1,5 @@
+[
+  {"name": "v5-default", "mode": "auto", "params": {}},
+  {"name": "genuine-default", "mode": "auto", "params": {}, "genuine": true},
+  {"name": "genuine-t1.5", "mode": "auto", "params": {"genuine_t": 1.5}, "genuine": true}
+]
