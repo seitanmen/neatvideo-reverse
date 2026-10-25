@@ -111,3 +111,78 @@ offscreen で Qt の stdin/stdout パイプを扱うのは難しいため、
   ユーザーが画面で確認できるようにすること (起動して即座にスクリーンショットを取るか、
   数秒待ってから終了する)
 - 既存の自己試験 (`nv_ui_qt/selftest.py`) も最後に実行して 55/55 を再確認する
+
+---
+
+## 追加依頼 (ユーザー指示): 本家 (Resolve の有料版) との機能比較・修正
+
+### 前提
+
+- Resolve に Neat Video v6 の**有料版** (NeatVideo6RS) がインストールされている
+  - プラグイン: `/Library/OFX/Plugins/NeatVideo6RS.ofx.bundle/`
+  - アプリ: `/Applications/Neat Video v6 for Resolve/`
+- ライセンスは有効 (ユーザーが登録済み)
+- 再現 UI: `repro/nv_ui_qt/`
+- 比較用動画: `test_v02.mp4` (1920×1080, 721 フレーム)
+
+### 7. 本家の UI を Resolve で開いて比較する
+
+7.1. Resolve を起動し、test_v02.mp4 をメディアプールに読み込む
+7.2. クリップに Neat Video v6 を適用してプラグインの UI を開く
+7.3. 以下を観察してスクリーンショットまたはメモを取る:
+
+- **各ボタンの挙動**:
+  - Auto Profile (Current Frame) → 何が起きるか (AFT も自動で走るか)
+  - Auto Fine-Tune → 曲線グラフの表示、Base Profile と Tuned Profile のオーバーレイ
+  - Profile Check → 何が表示されるか (ノイズグラフ、品質インジケーター)
+  - Noise Level Check → マスクプレビューの見た目
+  - Filter Settings Check → マスクプレビューの見た目
+  - Apply → 何が起きるか
+
+- **ノイズサンプルの選択範囲**:
+  - 長方形の選択ができるか (正方形のみか)
+  - 選択範囲のサイズ制限
+  - 選択範囲のドラッグ操作
+
+- **ビューアの表示モード**:
+  - YCrCb+ の表示内容 (4 ペーンの構成)
+  - YCrCb の表示内容
+  - Composite の表示
+  - Enhanced 表示の違い
+  - Original / Filtered / Split の切替方法
+
+- **スライダーの範囲と刻み**:
+  - Noise Reduction Amount: 0-100% か、刻みは何か
+  - Noise Level: 0-200% か、relative 表示か
+  - Radius: ドロップダウンかスライダーか
+  - Sharpening: 0-100% の範囲か
+
+### 8. 再現 UI との差分を修正する
+
+7 で観察した内容をもとに、`repro/nv_ui_qt/` を修正する:
+
+8.1. **ボタンの挙動**: 本家と同じ動作にする (特に Auto Profile 後の AFT 自動実行、Profile Check の表示内容)
+
+8.2. **ノイズサンプルの選択範囲**: 正方形のみではなく長方形も選択できるようにする
+     - `find_flat_area()` の戻り値を長方形 `(y0, x0, h, w)` に変更
+     - UI のドラッグ選択を長方形に対応
+     - `nv_profile.build_profile()` の crop を長方形で切る
+
+8.3. **YCrCb+ / YCrCb の表示**: 本家の 4 ペーン構成・Enhanced 表示を正確に再現する
+
+8.4. **その他の差分**: 7 で観察した差分をすべて修正
+
+### 9. test_v02.mp4 での比較検証
+
+9.1. Resolve の Neat Video で test_v02.mp4 をデノイズ (デフォルト設定) → 出力を保存
+9.2. 再現 UI で test_v02.mp4 をデノイズ (同じ設定) → 出力を保存
+9.3. フレームごとの PSNR を計算 (Y/U/V)
+9.4. 差分が大きい場合、原因を特定して修正する
+
+### 報告
+
+- 追加の結果も `sandbox/omo/coord/verify_qtui_paths/REPORT.md` に追記する
+- 修正したファイルのリストと変更内容を記録する
+- 処理コア (`nvfilter.py`・`nv_aft_v5.py`・`nv_depth.py`) は変更しない (UI 層のみ)
+  ただし `find_flat_area()` の長方形対応は `nv_flat.py` / `nvfilter.py` の変更が必要な可能性がある
+  (その場合は変更前に backup を取り、変更理由を REPORT に明記する)
