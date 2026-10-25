@@ -3,7 +3,7 @@ from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QWidget
 
-COLORS = {"Y": QColor(230, 230, 230), "Cb": QColor(90, 150, 255), "Cr": QColor(255, 90, 90)}
+COLORS = {"Y": QColor(230, 230, 230), "Cr": QColor(236, 60, 60), "Cb": QColor(150, 90, 240)}   # genuine dots
 
 
 class NoiseGraph(QWidget):
@@ -56,5 +56,5 @@ class NoiseGraph(QWidget):
                 p.drawPath(path)
         p.setPen(QColor(200, 200, 200))
         p.drawText(r.adjusted(4, 2, -4, -2), Qt.AlignTop | Qt.AlignRight,
-                   "Y / Cb / Cr noise sigma vs brightness" + ("  (dashed: before tuning)" if len(curves) > 1 else ""))
+                   "Y / Cr / Cb noise sigma vs brightness" + ("  (dashed: before tuning)" if len(curves) > 1 else ""))
         p.end()

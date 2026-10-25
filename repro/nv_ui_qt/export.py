@@ -6,7 +6,9 @@ Everything else (reading, audio, colour tags, encoding, frame parallelism) is de
 unchanged. Two of its module attributes are replaced in this process only: build_profile_v5
 returns the UI profile (so AFT and Manual Fine-Tune edits are kept), and the frame worker is
 backend._work (per-channel spatial settings; identical to process_frame_v5 when the channels share
-their band settings).
+their band settings). The bit depth (--depth, Preferences > Bit depth) is passed through; a profile
+whose chroma sub-sampling differs from the processing format (e.g. made at 8 bits = 4:2:0 and
+exported at 10 bits from a 4:4:4 source) is refused.
 """
 import json
 import os
@@ -48,7 +50,17 @@ def main(argv):
     with open(path) as fh:
         prof = json.load(fh)
 
-    def ui_profile(*a, **k):
+    def ui_profile(planes, full_range=False, *a, **k):
+        # the profile's chroma sub-sampling must match the processing format (--depth): its chroma
+        # band counts (levels) follow it, e.g. a profile made on 4:2:0 cannot run on 4:4:4 planes
+        sub = 1 if planes[1].shape == planes[0].shape else 2
+        if prof.get("sub") != sub:
+            sys.exit(f"error: the UI profile was made on {'4:4:4' if prof.get('sub') == 1 else '4:2:0'} planes "
+                     f"but this export processes {'4:4:4' if sub == 1 else '4:2:0'} planes (--depth); "
+                     "rebuild the profile with the same bit-depth setting")
+        if bool(prof.get("full_range")) != bool(full_range):
+            print("warning: the UI profile and this export differ in range (limited / full: RGB formats are "
+                  "processed as full range); the noise curve's brightness axis may be off", flush=True)
         return prof
 
     nv.build_profile_v5 = ui_profile

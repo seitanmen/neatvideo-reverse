@@ -9,6 +9,8 @@ save + load, batch profiler, and that the export equals nv.process_frame_v5 bit 
 Layout checks: panel order (Temporal / Spatial / General, Luminance -> Cr -> Cb, High -> Ultra Low),
 common Frequencies rows, Mix with Original Enable, profile Noise Level, hold-for-original, viewer
 panes and splits, thumbnails, Beginner / Advanced Mode, Auto / Build Profile button.
+High bit depth (written into OUTDIR as src10.mkv): Preferences > Bit depth 10 reloads a 10-bit copy,
+frames hold value/4 exactly, status bar, preview, FFV1 export == backend.process_frame bit for bit.
 """
 import json
 import os
@@ -574,6 +576,67 @@ def main(video, outdir):
         exp = [np.clip(np.rint(o), 0, 255).astype(np.uint8) for o in out]
         exact &= all(np.array_equal(a, b) for a, b in zip(exp, got[k]))
     check("export (CRF 0) == backend.process_frame bit for bit", exact, f"{len(got)} frames")
+
+    # high bit depth: the first 12 frames x4 plus random low bits as 10-bit FFV1; Preferences > Bit
+    # depth 10 reloads the video at 10 bits
+    import nv_depth as nd
+    from PySide6.QtWidgets import QComboBox
+    v10 = os.path.join(outdir, "src10.mkv")
+    W, H = sinfo["W"], sinfo["H"]
+    raw8 = subprocess.run(["ffmpeg", "-v", "error", "-i", video, "-frames:v", "12", "-f", "rawvideo",
+                           "-pix_fmt", "yuv420p", "-"], capture_output=True, check=True).stdout
+    a10 = np.frombuffer(raw8, np.uint8).astype("<u2") * 4 + \
+        np.random.default_rng(10).integers(0, 4, len(raw8)).astype("<u2")
+    tags = ["-colorspace", "bt709", "-color_range", "tv"]
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "yuv420p10le", "-s", f"{W}x{H}",
+                    "-r", sinfo["fps"], *tags, "-i", "-", "-c:v", "ffv1", "-pix_fmt", "yuv420p10le", *tags, v10],
+                   input=a10.tobytes(), check=True)
+    win.open_video(v10)
+    wait(app, lambda: win.src == v10 and st.profile.base is not None and idle())
+    dlg = win.preferences()
+    combo = [c for c in dlg.findChildren(QComboBox) if c.findData("10") >= 0][0]
+    combo.setCurrentIndex(combo.findData("10"))
+    dlg.accept()
+    ok = wait(app, lambda: win.fmt is not None and win.fmt.bits == 10 and st.profile.base is not None and idle())
+    f0 = win.frames[0] if win.frames else None
+    check("10-bit: Bit depth 10 reloads as yuv420p10le float32 planes (0..255 scale)",
+          ok and win.fmt.name == "yuv420p10le" and f0[0].dtype == np.float32 and f0[1].shape != f0[0].shape
+          and float(f0[0].max()) <= 256.0, f"{win.fmt and win.fmt.name}")
+    n0 = W * H + 2 * ((W + 1) // 2) * ((H + 1) // 2)
+    check("10-bit: frame 0 = the 10-bit values / 4 exactly (low bits kept)",
+          np.array_equal(np.concatenate([p.ravel() for p in f0]), a10[:n0].astype(np.float32) / 4)
+          and np.mean(a10[:n0] % 4 != 0) > 0.5)
+    lbl = win.depth_lbl.text()
+    check("10-bit: status bar shows source pix_fmt and processing depth",
+          "yuv420p10le (10-bit 4:2:0)" in lbl and "processing 10-bit" in lbl
+          and "10-bit" in win.viewer_bar.size.text()
+          and "Frame Bitdepth:&nbsp;&nbsp;</td><td>10-bit (yuv420p10le)" in win.filter_page.panel.perf.text(), lbl)
+    win.tabs.setCurrentIndex(1)
+    win.invalidate()
+    win.schedule()
+    check("10-bit: preview filtered (8-bit display)", wait(app, lambda: idle() and win.filt_cache and
+                                                         win.viewer.filt is not None and win.viewer.filt.dtype == np.uint8))
+    check("10-bit: export dialog defaults", win._export_filter()[1] == ".mp4")
+    dst = os.path.join(outdir, "export10.mkv")
+    lo, n = 4, 3
+    win.process_video(dst, start=lo, frames=n)
+    ok = wait(app, lambda: win.export is None, 1800)
+    info = probe(dst)
+    P = st.backend()
+    prof = json.load(open(os.path.splitext(dst)[0] + ".ui_profile.json"))
+    R = int(P["radius"])
+    fmt = nd.pixfmt("yuv420p10le")
+    got = [f for _, f in read_frames(dst, info["W"], info["H"], fps=info["fps"], fmt=fmt)]
+    src = {i: f for i, f in read_frames(v10, info["W"], info["H"], lo - R, lo + n + R, info["fps"], fmt)}
+    exact = ok and getattr(win, "export_ok", False) and info["pix_fmt"] == "yuv420p10le" and len(got) == n
+    for k in range(min(n, len(got))):
+        c = lo + k
+        ids = [i for i in sorted(src) if abs(i - c) <= R]
+        out = backend.process_frame([src[i] for i in ids], ids.index(c), prof, P)
+        exp = nd.from_internal(out, fmt)
+        exact &= exp == nd.from_internal(got[k], fmt)
+    check("10-bit: export (FFV1 yuv420p10le) == backend.process_frame bit for bit", exact,
+          f"{len(got)} frames, {info['pix_fmt']}")
 
     win.close()
     app.processEvents()

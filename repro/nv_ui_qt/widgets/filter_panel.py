@@ -142,6 +142,7 @@ class FilterPanel(QWidget):
                       "preview. Adjust Noise Level while watching the result to find the optimal value.",
                       enabled=True)
         nl.toggled.connect(lambda on: self.noiseLevelCheck.emit(on))
+        h.add(nl)
         self._reg(nl, ADV)
         self._row(h, "t_noise", "Noise Level", fmt="rel", steps=(5, 20))
         self._na_begin(h, "Local Flicker Check")

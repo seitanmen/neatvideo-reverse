@@ -180,6 +180,18 @@ def noisiest_frame(frames, samples=32, cancel=None):
     return best
 
 
+def hh1_sigma(Y):
+    """Robust luma noise sigma median(|HH1|)/0.6745 (the noisiest_frame estimator) of a plane; used
+    for the Noise Level labels of the Prepare page (repro display, not a genuine measure)."""
+    Y = np.asarray(Y, np.float32)
+    H, W = Y.shape[0] // 2 * 2, Y.shape[1] // 2 * 2
+    if H < 2 or W < 2:
+        return None
+    a, b = Y[0:H:2, 0:W:2], Y[0:H:2, 1:W:2]
+    c, d = Y[1:H:2, 0:W:2], Y[1:H:2, 1:W:2]
+    return float(np.median(np.abs(a - b - c + d) / 2.0)) / 0.6745
+
+
 def aft_frame(base, frames):
     """Index of the profile frame (clamped: a loaded profile may come from another clip)."""
     return max(0, min(int(base.get("ui_frame", 0)), len(frames) - 1))

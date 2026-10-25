@@ -14,8 +14,9 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, 
                                QMessageBox, QProgressBar, QPushButton, QSpinBox, QSplitter, QStackedWidget,
                                QStyle, QTabBar, QTextEdit, QToolButton, QVBoxLayout, QWidget)
 
+import nv_depth as nd
 import nvfilter as nv
-from denoise_video_v5 import probe, read_frames
+from denoise_video_v5 import probe, read_frames, remove_output, sidecar_stem
 
 from . import backend
 from .menus import build_menus
@@ -33,7 +34,10 @@ PROFILE_FILTER = "Repro noise profile (*.nvprof.json);;JSON (*.json)"
 PRESET_FILTER = "Repro filter preset (*.nvpreset.json);;JSON (*.json)"
 PREFS = {"jobs": max(1, (os.cpu_count() or 2) - 2), "crf": 16, "audio": "copy", "preview_area": 0.5,
          "auto_fine_tune": True,
-         "mem_gb": 4.0, "auto_profile": True}
+         "mem_gb": 4.0, "auto_profile": True, "depth": "8"}
+# Preferences > Bit depth: (label, --depth value); 8-bit = the original yuv420p path
+DEPTHS = (("8-bit (legacy yuv420p)", "8"), ("Source depth", "source"), ("10-bit", "10"), ("12-bit", "12"),
+          ("16-bit", "16"), ("32-bit float (RGB)", "32"))
 SPATIAL_PREFIXES = ("s_", "amt_", "bamt_", "bnoise_", "noise_", "adv_noise_level", "art_", "edge_", "sharp_",
                     "adv_spatial")
 N_A = "Not available in the reproduction"
@@ -94,6 +98,7 @@ class MainWindow(QMainWindow):
         self.runner = TaskRunner(self)
         self.frames = self.info = self.engine = self.src = None
         self.matrix = "bt709"
+        self.fmt, self.full_range, self.depth_used = None, False, "8"   # processing format of the frames
         self.sel_area = None                 # Prepare page: square (y0, x0, size), coded pixels
         self.preview_sel = None              # Adjust page: preview area (y0, x0, h, w), coded pixels
         self.prof_req = 0
@@ -192,6 +197,8 @@ class MainWindow(QMainWindow):
         sb.addPermanentWidget(self.cancel_btn)
         self.video_lbl = QLabel("")
         sb.addPermanentWidget(self.video_lbl)
+        self.depth_lbl = QLabel("")
+        sb.addPermanentWidget(self.depth_lbl)
         self.prof_lbl = QLabel("no profile")
         sb.addPermanentWidget(self.prof_lbl)
 
@@ -415,6 +422,11 @@ class MainWindow(QMainWindow):
                     pass
         return P
 
+    def _depth(self):
+        """Preferences > Bit depth as a --depth value (an unknown stored value falls back to 8)."""
+        d = str(self.prefs["depth"])
+        return d if d in [v for _, v in DEPTHS] else "8"
+
     def _ask_open(self, title, filt):
         return QFileDialog.getOpenFileName(self, title, "", filt)[0] or None
 
@@ -450,7 +462,11 @@ class MainWindow(QMainWindow):
             return
         info = probe(path)
         W, H = info["W"], info["H"]
-        fs = W * H + 2 * ((W + 1) // 2) * ((H + 1) // 2)
+        depth = self._depth()
+        fmt = nd.choose_format(nd.source_format(info["pix_fmt"]), depth)
+        matrix = nv.matrix_from_tags(info["tags"], H)
+        rfmt, vf = (None, None) if fmt.legacy else (fmt, nd.read_filter(info, fmt, matrix))
+        fs = fmt.internal_bytes(W, H)          # bytes of one frame in memory (uint8 or float32 planes)
         cap = max(3, int(self.prefs["mem_gb"] * 2 ** 30 // fs))
         n = info["n"] or 0
         hi = min(n, cap) if n else cap
@@ -459,7 +475,7 @@ class MainWindow(QMainWindow):
 
         def job(task):
             frames = []
-            for i, f in read_frames(path, W, H, 0, hi, fps=info["fps"]):
+            for i, f in read_frames(path, W, H, 0, hi, info["fps"], rfmt, matrix, vf):
                 frames.append(tuple(np.array(p) for p in f))
                 if i % 10 == 0:
                     task.report(100.0 * i / max(hi if not n else min(n, hi), 1), f"loading frame {i}")
@@ -473,9 +489,11 @@ class MainWindow(QMainWindow):
                 self.say("no decodable video frames")
                 return
             self.src, self.info, self.frames = path, info, frames
-            self.matrix = nv.matrix_from_tags(info["tags"], H)
+            self.matrix = matrix
+            self.fmt, self.depth_used = fmt, depth
+            self.full_range = nd.full_range_internal(info, fmt)
             self.viewer.set_matrix(self.matrix)
-            self.engine = backend.PreviewEngine(frames, self.matrix, info["full_range"])
+            self.engine = backend.PreviewEngine(frames, self.matrix, self.full_range)
             self.thumb_cache.clear()
             self.state.undo.clear()
             self.sel_area = self.preview_sel = None
@@ -492,7 +510,8 @@ class MainWindow(QMainWindow):
             capped = n and len(frames) < n
             self.video_lbl.setText(f"{W}x{H} · preview {len(frames)}" + (f"/{n} frames (memory cap)" if capped else " frames"))
             self.video_lbl.setStyleSheet("color:#d08000" if capped else "")
-            self.viewer_bar.set_frame_info(W, H, 8)
+            self.viewer_bar.set_frame_info(W, H, fmt.bits)
+            self.depth_lbl.setText(self._depth_text())
             self.say(f"{os.path.basename(path)}: {W}x{H} {len(frames)}f {fps} fps {self.matrix}"
                      + (f" (preview holds the first {len(frames)} of {n} frames; export uses all)" if capped else ""))
             self.invalidate()
@@ -509,6 +528,15 @@ class MainWindow(QMainWindow):
                 self.auto_profile(False)
 
         self.runner.submit("load", "load", job, done, self._failed, self._progress)
+
+    def _depth_text(self):
+        """Status bar: source pix_fmt / bit depth and the processing depth."""
+        if self.fmt is None:
+            return ""
+        f = self.fmt
+        proc = f"{f.bits}-bit" + (" float RGB" if f.is_float else " RGB" if f.family == "rgb" else "")
+        src = nd.describe_source(self.info.get("pix_fmt")) if self.info.get("pix_fmt") else "OFX host"
+        return f"source {src} · processing {proc}"
 
     def _progress(self, pct, text):
         if pct >= 0:
@@ -636,6 +664,10 @@ class MainWindow(QMainWindow):
         else:
             self.prof_lbl.setText(f"{ps.device} · {eff['mode']} · σ " +
                                   " ".join(f"{k}={v:.2f}" for k, v in eff["sigma"].items()))
+            sub = None if not self.frames else 1 if self.frames[0][1].shape == self.frames[0][0].shape else 2
+            if sub is not None and eff.get("sub", sub) != sub:      # e.g. a 4:2:0 profile on 4:4:4 frames
+                self.prof_lbl.setText(self.prof_lbl.text() + " · chroma format differs: rebuild the profile")
+                self.say("the profile was made at another chroma format (bit-depth setting); export will refuse it")
         self._sync_selection()
         self.invalidate()
         self.display()
@@ -763,7 +795,10 @@ class MainWindow(QMainWindow):
         W, H = (self.info["W"], self.info["H"]) if self.info else ("—", "—")
         bands = [n for b, n in (("high", "High"), ("medium", "Mid"), ("low", "Low"), ("very-low", "Very Low"),
                                 ("ultra-low", "Ultra Low")) if any(P[f"bamt_{c}_{b}"] > 0 for c in ("Y", "Cb", "Cr"))]
-        rows = [("Frame Size:", f"{W}x{H} progressive"), ("Frame Bitdepth:", "8-bit"),
+        f = self.fmt
+        bits = f"{f.bits}-bit" + (" float" if f.is_float else "") + f" ({f.name})" if f is not None else \
+            f"{self.info['ofx_depth']}-bit (OFX host)" if self.info and self.info.get("ofx_depth") else "8-bit"
+        rows = [("Frame Size:", f"{W}x{H} progressive"), ("Frame Bitdepth:", bits),
                 ("Floating Point:", "float32"),
                 ("Temporal Filter:", "Enabled" if P["t_enable"] else "Disabled"),
                 ("&nbsp;&nbsp;Radius:", f"{P['t_radius']} frames"),
@@ -805,9 +840,13 @@ class MainWindow(QMainWindow):
         if self.info is None:
             return None
         i = self.info
-        return self._info_box("Image information", f"{os.path.basename(self.src)}\n{i['W']}x{i['H']}, 8-bit "
-                              f"4:2:0 (read as yuv420p)\nfps {i['fps']}, matrix {self.matrix}, "
-                              f"{'full' if i['full_range'] else 'limited'} range, rotation {i['rotation']}")
+        f = self.fmt or nd.pixfmt("yuv420p")
+        return self._info_box("Image information", f"{os.path.basename(self.src)}\n{i['W']}x{i['H']}, source "
+                              f"{nd.describe_source(i.get('pix_fmt'))}, read as {nd.describe(f)}\n"
+                              f"fps {i['fps']}, matrix {self.matrix}, "
+                              f"{'full' if i['full_range'] else 'limited'} range"
+                              + (" (processed as full-range YCbCr)" if f.family == "rgb" else "")
+                              + f", rotation {i['rotation']}")
 
     def save_frame(self, path=None):
         if self.viewer.orig is None:
@@ -824,7 +863,7 @@ class MainWindow(QMainWindow):
             return
         self.prof_req += 1
         req = self.prof_req
-        frames, full_range, matrix = self.frames, self.info["full_range"], self.matrix
+        frames, full_range, matrix = self.frames, self.full_range, self.matrix
         mode = self.profile_page.panel.mode.currentText()
         cur = self.timeline.frame()
         self._busy("profile", True)
@@ -883,7 +922,7 @@ class MainWindow(QMainWindow):
             self.say("Auto Fine-Tune is already running")
             return
         planes = self.frames[backend.aft_frame(base, self.frames)]
-        full_range, matrix = self.info["full_range"], self.matrix
+        full_range, matrix = self.full_range, self.matrix
         self._busy("aft", True)
         self.say("Auto Fine-Tune (static AFT port, several seconds)…")
 
@@ -1164,17 +1203,20 @@ class MainWindow(QMainWindow):
             return
         if dst is None:
             stem = os.path.splitext(os.path.basename(self.src))[0]
-            dst = self._ask_save("Process full video", "MP4 (*.mp4)",
-                                 os.path.join(os.path.dirname(self.src), f"{stem}_nvqt.mp4"))
+            filt, ext = self._export_filter()
+            dst = self._ask_save("Process full video", filt,
+                                 os.path.join(os.path.dirname(self.src), f"{stem}_nvqt{ext}"))
             if not dst:
                 return
+            if dst.lower().endswith(".exr") and "%" not in os.path.basename(dst):
+                dst = dst[:-4] + "_%05d.exr"    # EXR sequence: frame-number pattern
         dst = os.path.abspath(dst)              # the export runs with repro/ as working directory
-        base = os.path.splitext(dst)[0]
+        base = sidecar_stem(dst)                # without %05d for an EXR sequence
         ppath, fpath = base + ".ui_params.json", base + ".ui_profile.json"
         dump_json(self.state.backend(), ppath)
         dump_json(prof, fpath)
         args = [self.src, dst, "--ui-profile", fpath, "--params", ppath, "--jobs", str(self.prefs["jobs"]),
-                "--crf", str(self.prefs["crf"]), "--audio", self.prefs["audio"]]
+                "--crf", str(self.prefs["crf"]), "--audio", self.prefs["audio"], "--depth", self.depth_used]
         if start is not None:
             args += ["--start", str(int(start))]
         if frames is not None:
@@ -1201,13 +1243,25 @@ class MainWindow(QMainWindow):
         self.export = None
         self.export_ok = ok
         if not ok and self.export_cancelled:      # remove what this export wrote (partial mp4, JSON)
-            for p in self.export_files:
-                try:
-                    os.remove(p)
-                except OSError:
-                    pass
+            self._remove_export_files(self.export_files)
         self.say(f"wrote {self.export_dst}" if ok else
                  "export cancelled" if self.export_cancelled else f"export failed: {text}")
+
+    def _export_filter(self):
+        """Save-dialog filter and default extension for the processing depth (16 / 32 bits: .mkv,
+        32 bits also an EXR sequence; denoise_video_v5.pick_codec)."""
+        f = self.fmt or nd.pixfmt("yuv420p")
+        if f.bits >= 16 or f.family == "rgb":
+            return ("Matroska FFV1 (*.mkv)" + (";;EXR sequence (*.exr)" if f.is_float else ""), ".mkv")
+        if f.legacy:
+            return "MP4 (*.mp4)", ".mp4"
+        return "MP4 (*.mp4);;QuickTime (*.mov);;Matroska FFV1 (*.mkv)", ".mp4"
+
+    @staticmethod
+    def _remove_export_files(files):
+        """Remove a cancelled export's files; an EXR pattern removes the frames it numbers."""
+        for p in files:
+            remove_output(p)
 
     def cancel_export(self):
         if self.export is not None:
@@ -1237,11 +1291,19 @@ class MainWindow(QMainWindow):
         mem.setValue(float(self.prefs["mem_gb"]))
         auto = QCheckBox("Auto Profile when a video is opened")
         auto.setChecked(bool(self.prefs["auto_profile"]))
+        depth = QComboBox()
+        for label, val in DEPTHS:
+            depth.addItem(label, val)
+        depth.setCurrentIndex(max(depth.findData(self._depth()), 0))
+        depth.setToolTip("Bit depth of loading, profiling and export (nv_depth.py). 8-bit = yuv420p as before; "
+                         "10/12/16 keep the source's chroma format (RGB sources: gbrp), 32 = RGB float. "
+                         "Changing it reloads the video")
         f.addRow("Computing: export processes (jobs)", jobs)
         f.addRow("Output: x264 CRF", crf)
         f.addRow("Output: audio", audio)
         f.addRow("Preview Area (fraction of the frame)", area)
         f.addRow("Preview cache: frames in memory (GB)", mem)
+        f.addRow("Bit depth", depth)
         f.addRow(auto)
         bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         bb.accepted.connect(dlg.accept)
@@ -1249,11 +1311,16 @@ class MainWindow(QMainWindow):
         f.addRow(bb)
 
         def accept():
+            reload = str(depth.currentData()) != str(self.prefs["depth"])
             self.prefs.update(jobs=jobs.value(), crf=crf.value(), audio=audio.currentText(),
-                              preview_area=area.value(), mem_gb=mem.value(), auto_profile=auto.isChecked())
+                              preview_area=area.value(), mem_gb=mem.value(), auto_profile=auto.isChecked(),
+                              depth=str(depth.currentData()))
             s = settings()
             for k, v in self.prefs.items():
                 s.setValue(f"prefs/{k}", v)
+            if reload and self.src is not None and self.export is None and self.src != "<OFX host>":
+                self.open_video(self.src)       # frames are held at the processing depth
+                return
             self.invalidate()
             self.schedule()
 
@@ -1296,6 +1363,7 @@ class MainWindow(QMainWindow):
 
     def _run_batch(self, files, outdir, mode):
         self.batch_result = None
+        depth = self._depth()                       # same bit-depth setting as loading / export
 
         def job(task):
             out = []
@@ -1303,11 +1371,14 @@ class MainWindow(QMainWindow):
                 task.report(100.0 * k / max(len(files), 1), f"batch: profiling {os.path.basename(path)}")
                 info = probe(path)
                 W, H = info["W"], info["H"]
+                fmt = nd.choose_format(nd.source_format(info["pix_fmt"]), depth)
+                matrix = nv.matrix_from_tags(info["tags"], H)
+                rd = (None, matrix, None) if fmt.legacy else (fmt, matrix, nd.read_filter(info, fmt, matrix))
                 pf = max(min((info["n"] or 0) // 3, (info["n"] or 0) - 3), 0)
-                fr = [tuple(np.array(p) for p in f) for _, f in read_frames(path, W, H, pf, pf + 3, info["fps"])]
+                fr = [tuple(np.array(p) for p in f) for _, f in read_frames(path, W, H, pf, pf + 3, info["fps"], *rd)]
                 if not fr:
-                    fr = [tuple(np.array(p) for p in f) for _, f in read_frames(path, W, H, 0, 3, info["fps"])]
-                prof = backend.build_profile(fr, 0, info["full_range"], nv.matrix_from_tags(info["tags"], H), mode)
+                    fr = [tuple(np.array(p) for p in f) for _, f in read_frames(path, W, H, 0, 3, info["fps"], *rd)]
+                prof = backend.build_profile(fr, 0, nd.full_range_internal(info, fmt), matrix, mode)
                 prof["ui_frame"] = pf
                 dst = os.path.join(outdir, os.path.splitext(os.path.basename(path))[0] + ".nvprof.json")
                 dump_json(ProfileState(base=prof, device=os.path.basename(path)).to_json(), dst)
@@ -1332,10 +1403,6 @@ class MainWindow(QMainWindow):
             files = list(self.export_files)
             self.cancel_export()
             self.export.p.waitForFinished(5000)
-            for p in files:                 # same clean-up as a cancelled export
-                try:
-                    os.remove(p)
-                except OSError:
-                    pass
+            self._remove_export_files(files)    # same clean-up as a cancelled export
         self.runner.wait_all()
         super().closeEvent(e)
