@@ -427,6 +427,22 @@ class MainWindow(QMainWindow):
         return box
 
     # ---------------- video ----------------
+    def _set_ofx_mode(self, ofx):
+        """Disable standalone-only controls when running as an OFX host plugin backend."""
+        # menu actions
+        for key in ("open", "export"):
+            a = self.actions.get(key)
+            if a:
+                a.setEnabled(not ofx)
+        # toolbar buttons
+        self.load_btn.setEnabled(not ofx)
+        self.generic_btn.setEnabled(not ofx)
+        # apply button tooltip
+        if hasattr(self, "b_apply"):
+            self.b_apply.setToolTip("Apply: process the current frame and emit to the host"
+                                    if ofx else
+                                    "Apply the current filter settings to the preview")
+
     def open_video(self, path=None):
         path = path or self._ask_open("Open video", "Video (*.mp4 *.mov *.mkv *.m4v *.avi *.mts *.ts);;All (*)")
         if not path:
