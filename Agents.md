@@ -85,8 +85,9 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
 - `nv_ui_qt/` — 調整 UI の PySide6 版 (2026-10-25。仕様 `ui_spec/UI_SPEC.md`・タスク `.claude/tasks/ui_qt_migration.md`)。2026-10-25 に配置を本家に寄せた (根拠は公式ユーザーガイド v6.1 の画像と、バイナリの UI 構築順の静的解析。`sandbox/omo/coord/verify_qtui_layout/` の LAYOUT_WEB.md・LAYOUT.md・LAYOUT_PLAN.md): ページ Prepare Noise Profile / Adjust and Preview、メニュー Effect / Edit / View / Profile / Filter / Tools / Help (本家の Task・Variants は省略) と Beginner / Advanced の切り替え、ビューアは既定 YCrCb+ (合成 + Y/Cr/Cb Enhanced。Enhanced と周波数表示は repro の定義)・「Filtered」表示と押している間だけ元画像・範囲を選ぶとその範囲だけ処理、最下段にサムネイル (青 = 現在、オレンジ = 時間窓) と Cancel / Apply (Apply = 全編の書き出し)、Filter Settings は Temporal / Spatial / General タブで成分は Luminance → Cr → Cb、帯域は High → Ultra Low。Frequencies 行は本家同様 3 成分共通 (成分別は「repro」欄)、Mix with Original は Enable 付きで本家の向き (表示 = 100 − 内部 mix)、プロファイルの Noise Level (Overall・成分別) は曲線の倍率 `tune`。Undo/Redo、JSON のプロファイル・プリセット (本家の .dnp / .nfp ではない)。
   バックエンドは変更せず `nvfilter.py` の v5 と `nv_aft_v5.py` (AFT。2026-10-25 に別途追加されたもの。RGB 各面の係数を Y/Cb/Cr の曲線に掛けている点は未確認) を使う。既定値は `V5_DEFAULTS` (UI_SPEC の Luminance 帯域の既定値ではない)。
   本家の Luminance / Cb / Cr 別の帯域スライダーは `nv_ui_qt/backend.py` が `spatial_v5` を成分ごとに呼んで実現し、全成分が同じ設定なら `process_frame_v5` とビット一致。4:2:0 では色差が 4 段なので Cb/Cr の High は無効表示。
-  v5 に対応のない Sharpening・Jitter・Dust and Scratches・Flicker・Edge Smoothing・品質モード・Input Data Gain・Overall Profile Quality は無効表示 (n/a)。Overall Profile Quality の式は、輝度曲線の項 g を除いて静的に読めた (`sandbox/omo/coord/verify_quality/static/QUALITY.md`、独立検証 APPROVE。g は入口が難読化された関数なので読んでおらず、本家の 23% は未再現のため UI には入れていない)。Most Noisy Frame・Auto Complete・Assist・ガイド文は再現側の独自。
-  全編出力は `nv_ui_qt/export.py` が `denoise_video_v5.main` を UI のプロファイル (AFT・手動調整込み) と成分別設定で動かす (CRF 0 で `backend.process_frame` とビット一致)。自己試験 `nv_ui_qt/selftest.py` 77 項目 (2026-10-26 に高ビット深度の 6 項目、本家合わせの 9 項目、Profile Check とパネルの 6 項目、Noise Level Check の 7 項目を追加)。Profile Check (2026-10-26、本家の観測と仕様・検証は `sandbox/omo/coord/genuine_ui2/` の SPEC.md・VERDICT.md で APPROVE): 本家同様ダイアログではなくビューアの Assist Image 表示に切り替える (パネルの Begin/Finish・ツールバー・メニューが 1 つの切り替え)。Assist Image は repro の定義 (現在のフレームに空間段だけを Luminance/Cr/Cb・全帯域 100% で掛けたもの。本家の処理は未解読) で、下段の Enhanced は強調なし。従来のダイアログは Profile Viewer… (⇧⌘I) になり、Repro 欄 (Profile mode など) もそこへ移した。Noise Level Check (2026-10-26、本家の観測・仕様・検証は `sandbox/omo/coord/verify_quality/` の REPORT.md・nlc/SPEC.md・nlc_verify/VERDICT.md で APPROVE): 本家同様、時間フィルタのマスクを Assist Image として出す (パネルの Begin/Finish・ツールバーの Filter Settings Check のメニュー・Tools のメニューが 1 つの切り替え)。色は本家の画面に当てはめた式 (I = (R+G+B)/3、(1 − m)·I·(1, 0.9, 0.75) + m·(I·(0.3, 0.45, 0.5) + (0, 0, 126.5))、残差 0.35〜1.3 階調)。マスク m は repro の定義 (時間段の Y の残留分散 rv から m = clamp((1/rv − 1)/(1/rv_min − 1), 0, 1)。本家の式は未解読で、test_v02 の −60% では本家 0.33 に対し 0.52)。Temporal の Noise Level (`t_noise`) を実装した (`nv_ui_qt/backend.py` が時間段だけ noise_level を ×t_noise。既定 +0% は変更前とビット一致)。`nv_aft_v5.assist_params` (2026-10-26 に別エージェントが処理コアに追加) は UI から使っていない。Device Noise Profile パネルは本家の順でスクロールなし、選択範囲の Noise Level は Main Sample 比の (±n%) 付き。
+  v5 に対応のない Sharpening・Jitter・Dust and Scratches・Flicker・Edge Smoothing・品質モード・Input Data Gain は無効表示 (n/a)。
+  Device Noise Profile パネルの Quality と Completeness は本家の計算式 (`nv_ui_qt/quality.py`、2026-10-26 に統括が g を解読して完成。§4 の Quality 節と `sandbox/omo/coord/verify_quality/static/QUALITY.md`、独立検証 APPROVE)。Most Noisy Frame・Auto Complete・Assist・ガイド文は再現側の独自。
+  全編出力は `nv_ui_qt/export.py` が `denoise_video_v5.main` を UI のプロファイル (AFT・手動調整込み) と成分別設定で動かす (CRF 0 で `backend.process_frame` とビット一致)。自己試験 `nv_ui_qt/selftest.py` 88 項目 (2026-10-26 に高ビット深度の 6 項目、本家合わせの 9 項目、Profile Check とパネルの 6 項目、Noise Level Check の 7 項目、Quality の 11 項目を追加)。Profile Check (2026-10-26、本家の観測と仕様・検証は `sandbox/omo/coord/genuine_ui2/` の SPEC.md・VERDICT.md で APPROVE): 本家同様ダイアログではなくビューアの Assist Image 表示に切り替える (パネルの Begin/Finish・ツールバー・メニューが 1 つの切り替え)。Assist Image は repro の定義 (現在のフレームに空間段だけを Luminance/Cr/Cb・全帯域 100% で掛けたもの。本家の処理は未解読) で、下段の Enhanced は強調なし。従来のダイアログは Profile Viewer… (⇧⌘I) になり、Repro 欄 (Profile mode など) もそこへ移した。Noise Level Check (2026-10-26、本家の観測・仕様・検証は `sandbox/omo/coord/verify_quality/` の REPORT.md・nlc/SPEC.md・nlc_verify/VERDICT.md で APPROVE): 本家同様、時間フィルタのマスクを Assist Image として出す (パネルの Begin/Finish・ツールバーの Filter Settings Check のメニュー・Tools のメニューが 1 つの切り替え)。色は本家の画面に当てはめた式 (I = (R+G+B)/3、(1 − m)·I·(1, 0.9, 0.75) + m·(I·(0.3, 0.45, 0.5) + (0, 0, 126.5))、残差 0.35〜1.3 階調)。マスク m は repro の定義 (時間段の Y の残留分散 rv から m = clamp((1/rv − 1)/(1/rv_min − 1), 0, 1)。本家の式は未解読で、test_v02 の −60% では本家 0.33 に対し 0.52)。Temporal の Noise Level (`t_noise`) を実装した (`nv_ui_qt/backend.py` が時間段だけ noise_level を ×t_noise。既定 +0% は変更前とビット一致)。`nv_aft_v5.assist_params` (2026-10-26 に別エージェントが処理コアに追加) は UI から使っていない。Device Noise Profile パネルは本家の順でスクロールなし、選択範囲の Noise Level は Main Sample 比の (±n%) 付き。
   本家合わせ (2026-10-26、DaVinci Resolve 上の本家 6.1.3 Pro の観測 `sandbox/omo/coord/genuine_ui/OBSERVED.md`・`shots/` と、バイナリの静的解析 `STATIC.md`。仕様 `SPEC.md`、独立検証 `VERDICT.md` で APPROVE):
   ビューアの表示は本家の式 (`nv_ui_qt/display.py`: 色変換 Y = 0.2989R+0.5866G+0.1145B・Cr = (R−Y)·0.71316504・Cb = (B−Y)·0.56465274、ペインごとの色付きの出力範囲、
   明るさ 0〜100 (50 で恒等)、YCrCb+ の Enhanced と Frequencies は BuildFreqImage (5 段の間引きラプラシアン、Prepare だけ強調 b/((Box3Box3 b²)^¼+0.01)・重み 1.25^k) と
@@ -144,6 +145,36 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
 | Noise Reduction Amount (文献: Luma 40%/Chroma 100%/UltraLow 0%) | luma 0.7 / chroma 1.0 / ultra-low 0 (luma は本家出力に較正 §6.3) | 0.4 / 1.0 |
 | Flicker (本家出力に全体補正なし) | 既定オフ (`--flicker R` で移動平均ゲイン) | 120f 区間平均ゲインが既定オン (継ぎ目で不連続) |
 | 色処理 (YCbCr) | ネイティブ YUV、入出力両側に色タグ | rgb24 経由 BT.601・タグなし (Y −1.7 のずれ) |
+
+### Quality (genuine measure) (2026-10-26 統括が g を解読して完成)
+- 式: `q = s11·P·(S/5)·0.5^クリップ数`、表示は `qRound(q·100) + "%"`
+  (Profile Viewer は double・Simple/Advanced パネルは float の qRound。RS 0xa4acf8 / Demo 0x9bb3e0、
+  3 か所 (Simple/Advanced/Profile Viewer) とも同じ関数。解析と検証は `sandbox/omo/coord/verify_quality/static/QUALITY.md`)
+- `s11 = 0.5·g + 0.5`。**g = 輝度曲線の完成度** (RS 0xa4b03c / Demo 0x9bb748。2026-10-26 に統括が解読。
+  入口・出口の難読化ブロックは大域語の記帳だけで浮動小数点の累積 s0 には触れない。RS と Demo は数値経路が
+  命令単位で一致)。27 ビン (3ch × 9) を (ビン, チャンネル) 順に float32 で加算:
+  ビンの旗 +0x1e (レベル > 3.0) → −1/27 / 旗 +0x1d (クリップ) → −1/27 / 段係数の語 (+0x4) が 0 → −1/81 /
+  AFT のマーカー (+0x1c の i32) ≠ 0 → +1/27 / 次のビンの語 0 の下位バイト ≠ 0 → +1/81
+  (ch2 のビン 8 は領域外の 0xc2a4 = LZMA 成功旗を読む) / それ以外 +0。戻り値は max(和, 0)
+- 新規プロファイルはマーカーなし → g = 1/81 (LZMA 旗の経路だけ)。AFT 後は未測定ビンにだけ
+  マーカー (測定ビンは 0 のまま)。Full frame の猫 = 23/27 (完成度 85%)、test.mp4 の auto 領域 = 19/27 (完成度 70%)。
+  完成度 = g×100 の表示も本家にあり (Simple/Advanced パネルと Profile Viewer)、UI に追加した
+- 本家観測と整合: 23% = 全面・AFT 前 (S/5 = 1.0、全面の Y 平坦度 ≈ 2.38) / 43% = 128² で Y 平坦度 ≈ 2.25
+  または ~160² / 65% = 全面 + AFT 後 (g = 23/27、Y 平坦度 ≈ 2.06)。Reset 直後は 35%/完成度 0% (g = 0。
+  新規の 1/81 とは違うので Reset ≠ 新規。機構は未解決で §8.6 に記録)。Reset 後の赤 4 ビン編集は
+  ちょうど +1/81/ビン (手動 Fine-Tune のマーカーなし書き込みが確定。+1/27 型は初段から不整合)
+- 再現側の写像: ビンのレベル語 = factors[k] × tune_all × tune_ch (未編集は 1.0)、
+  AFT 後のマーカー/クリップ/>3.0 旗は AFT ポート自身のバイトから `nv_aft_v5.apply_aft` が
+  prof["aft_bin_flags"] に保存したものを使う (フラグなしの旧保存は全マーカー代替)。
+  AFT 前の filled ビンに +0x18 = 1 と +0x1d = クリップ旗。レベル > 3.0 の手動編集には +0x1e。
+  Reset Fine-Tuning は base["aft_reset"] を立てて 0xc2a4 = 0 にする (構築直後の状態。本家の
+  コンストラクタ RS 0xa49e28 が LZMA 旗を消すため完成度 0%。新規ビルドは旗が立ったまま 1%。
+  機構は QUALITY.md §8.6 で解決済み)。次の AFT で aft_reset は消える
+- UI: `repro/nv_ui_qt/quality.py` (`genuine_g`・`profile_quality`・`profile_completeness`・`profile_numbers`)。Device Noise Profile パネルの
+  Quality / Completeness 欄と Profile Viewer の「Overall Profile Quality:」「Completeness:」行に表示。プロファイル変更 (build/AFT/
+  読み込み/リセット/undo・redo/ファクター・tune) と動画オープンで再計算 (worker で実行、
+  変更がなければキャッシュ)。実装 (`nv_ui_qt/quality.py`) と照合用 (`quality_draft.genuine_g`) は
+  同じ解読の複製なので同期を保つこと
 
 ### 合成ベンチ (PSNR dB, σ15 ノイズ, `validate_*.py`)
 noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** (フリッカ補正込み 39.06)
@@ -510,6 +541,24 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
 - 移植は本家に渡る RGB を「色差を繰り返しで拡大し 0〜255 に収めた値」で模している。実際のホストの補間・クリップとの差は照合の範囲外。
 - ハーネスは本家バイナリを実行する。2026-10-15、安全装置の導入前に本家のダイアログが 2 回画面に出た。現在は初期化子より前に差し替える (§5)。
 - `/tmp` 下の成果物 (disasm・Ghidra プロジェクト・ビルド物) は揮発性。重要物は workspace 側に保存済み。
+
+## 7.5 ネイティブ (C++) 移植 (2026-10-26 開始)
+
+- 計画: `native/MIGRATION.md` (N0 検証パイプライン → N1 コア部品 → N2 .app 梱包 → N3 Qt C++ UI → N4 OFX)。
+- 規約: float32 明示・加算順を Python 版と同じに・fast-math 禁止・FMA 融合禁止 (-ffp-contract=off)。
+  検証は誤差ではなく**ビット一致**で合格判定する。
+- N0 完了: `native/nv_quality.{h,cpp}` (Quality 一式) が `native/verify_quality.py` で
+  Python とビット一致 (20000/20000)。make -C native && python3 native/verify_quality.py [N]。
+- 教訓: float 定数は Python 側のビットパターンから写す (−0.25 = 0xBE800000。手計算の 16 進は誤り)、
+  fmaxnm の NaN は isnan を明示、vector の most vexing parse に注意。
+- N1 進捗 (詳細は native/MIGRATION.md と sandbox/omo/wp_native_*/REPORT.md、独立検証 coord/native_n1/):
+  N1a 帯域測度 5706/5706 (nv_band)、N1b 曲線 1094+IsClip 4000+補間器 20554 (nv_curve、
+  1080p 0.49 秒/4 スレッド 0.13 秒)、N1c LZMA 949/949 + 本家 blob 258/258 (SDK 9.20 無改変ソース
+  を native/lzma/ に同梱)。make -C native verify で通し照合。
+- 重要: clang -O2 は fast-math なしでも可換演算の被演算子順を入れ替えて NaN のビット列を変える。
+  N1a/N1b は AArch64 インラインアセンブラで順固定 (x86 は NaN 入力の一致を保証しない)。
+  FRECPE/FRECPS は真の除算で代用不可。numpy のスカラー演算の NaN 優先は演算と型で違うので明示的に選ぶ。
+- 既知の差: repro/nv_lzma.py は長さ 0 で props が SDK と違う (本家経路では不発生。N1f 照合では除外)。
 
 ## 8. 共同作業ルール (複数エージェント共有)
 
