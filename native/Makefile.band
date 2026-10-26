@@ -1,0 +1,19 @@
+# N1a: nv_band (5-level band noise measure) verified bit-exact against repro/nv_band.py.
+#   make -C native -f Makefile.band && python3 native/verify_band.py
+# Same flags as native/Makefile (no fast-math, no FMA contraction).
+
+CXX ?= clang++
+CXXFLAGS ?= -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra
+
+all: nv_band_test
+
+nv_band_test: nv_band_main.cpp nv_band.cpp nv_band.h
+	$(CXX) $(CXXFLAGS) -o $@ nv_band_main.cpp nv_band.cpp
+
+verify: nv_band_test
+	python3 verify_band.py
+
+clean:
+	rm -f nv_band_test
+
+.PHONY: all verify clean

@@ -57,9 +57,27 @@ N4. OFX プラグイン化
   0xBE800000)、fmaxnm の NaN 経路は C の比較では書き足さない (isnan を明示)、
   most vexing parse に注意。
 
-次 (N1): nv_band.model_levels の C++ 移植とビット一致検証 (同様の verify_*.py 形式)。
-
 N1 の委託分割: `.claude/tasks/native_n1_split.md` (N1a 帯域測度 / N1b ノイズ曲線 /
 N1c LZMA (SDK 9.20 の C ソースを流用) / N1d 領域探索 / N1e モデル / N1f プロファイル /
-N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと共通規約・検証形式つき。
-並列開始は N1a・N1b・N1c)。統括が各ワーカーの REPORT を受領後に verify 再実行・マージ・コミット。
+N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと共通規約・検証形式つき)。
+
+### N1 の進捗 (2026-10-26、N1a/b/c 完了。REPORT は sandbox/omo/wp_native_*/、独立検証は coord/native_n1/)
+
+- **N1a 帯域測度** `native/nv_band.{h,cpp}`: 5706/5706 ビット一致 (乱数 + 実写)。128² で約 22 倍。
+- **N1b ノイズ曲線** `native/nv_curve.{h,cpp}`: 曲線 1094・IsClip 4000・補間器 20554・タイル 25、
+  すべてビット一致。1080p 1 スレッド 0.49 秒 / 4 スレッド 0.13 秒 (Python 0.7 秒)。
+  FRECPE/FRECPS の再現は必須 (真の除算で代用すると感度試験で 454 曲線中 92 が不一致)。
+- **N1c LZMA** `native/nv_lzma.{h,cpp}` + `native/lzma/` (SDK 9.20 無改変、出典と SHA256 は lzma/SOURCE.md):
+  949/949 バイト一致 (本家が保存した圧縮データ 258/258 を含む)。約 100 倍。
+- `make -C native verify` で 4 本を通しで照合できる。
+- **移植の重要な知見** (以降の N1d〜N1i も従う):
+  - clang -O2 は fast-math なしでも可換演算の被演算子順を入れ替える。NaN のビット列が
+    Python と変わるため、N1a/N1b は画素処理の加減乗算をインラインアセンブラで順固定
+    (AArch64 前提。x86 では NaN を含む入力のビット一致は保証しない。`-DNVC_PORTABLE` で
+    ソフトウェア版に落ちる経路あり)
+  - numpy のスカラー演算は NaN の優先被演算子が演算と型で違う (add は配列=第 1/スカラー第 2 など)。
+    Python 側の型を読んで C++ 側で明示的に選ぶ
+  - libm の pow/tan は volatile 関数ポインタ経由 (定数畳み込み防止)
+- **既知の差**: `repro/nv_lzma.py` は長さ 0 の入力で props が SDK と違う (C++ は SDK どおり。
+  本家の経路は 32px 以上なので不発生。N1f の照合では長さ 0 を除外)。
+- **次**: N1d (領域探索)・N1e (モデル) が解放済み。N1g/N1h も N1a 済みなので開始可能。

@@ -1,0 +1,35 @@
+# N1c: LZMA (nv_lzma) over the unmodified LZMA SDK 9.20 C sources in lzma/ (public domain, lzma/SOURCE.md).
+#
+#   make -C native -f Makefile.lzma && python3 native/verify_lzma.py
+#
+# Same C++ flags as Makefile.  The SDK C files are built with clang and the same -O2 -ffp-contract=off
+# -fno-fast-math (the encoder is integer only), single threaded (-D_7ZIP_ST: no LzFindMt, as the genuine's
+# 1-thread call).  The SDK's own five benign warnings (self-assign of unused parameters, a set-but-unused
+# local, an indentation after a commented-out `if`) are silenced by name; the sources are not edited.
+
+CXX ?= clang++
+CC = clang
+CXXFLAGS ?= -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra
+SDK_CFLAGS = -O2 -ffp-contract=off -fno-fast-math -D_7ZIP_ST -Wall -Wextra \
+             -Wno-self-assign -Wno-unused-but-set-variable -Wno-misleading-indentation
+
+SDK_SRC = lzma/LzmaLib.c lzma/LzmaEnc.c lzma/LzmaDec.c lzma/LzFind.c lzma/Alloc.c
+SDK_OBJ = $(SDK_SRC:lzma/%.c=lzma/obj/%.o)
+SDK_HDR = $(wildcard lzma/*.h)
+
+all: nv_lzma_test
+
+lzma/obj/%.o: lzma/%.c $(SDK_HDR)
+	@mkdir -p lzma/obj
+	$(CC) $(SDK_CFLAGS) -c -o $@ $<
+
+nv_lzma_test: nv_lzma_main.cpp nv_lzma.cpp nv_lzma.h $(SDK_OBJ)
+	$(CXX) $(CXXFLAGS) -D_7ZIP_ST -o $@ nv_lzma_main.cpp nv_lzma.cpp $(SDK_OBJ)
+
+verify: nv_lzma_test
+	python3 verify_lzma.py
+
+clean:
+	rm -rf nv_lzma_test lzma/obj
+
+.PHONY: all verify clean

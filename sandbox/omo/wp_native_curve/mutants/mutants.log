@@ -1,0 +1,66 @@
+[DETECTED] ratio_eps NEON part as a true division (no FRECPE/FRECPS)
+    curve: 362/454 curves bit-exact (xs + ys), histograms 340/454 (71 cases with NaN in ys)
+    clip: 1500/1500 IsClip values bit-exact
+    interp: 3435/3435 queries bit-exact (90 tables)
+    tile: 24 plane mismatches over 25 tiles
+    total 29.9 s: 230 MISMATCHES
+[DETECTED] IsClip bin = trunc instead of frintn
+    curve: 454/454 curves bit-exact (xs + ys), histograms 454/454 (71 cases with NaN in ys)
+    clip: 1295/1500 IsClip values bit-exact
+    interp: 3435/3435 queries bit-exact (90 tables)
+    tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright)
+    total 30.2 s: 205 MISMATCHES
+[DETECTED] row box without the NEON prefix-sum groups
+    curve: 188/454 curves bit-exact (xs + ys), histograms 122/454 (71 cases with NaN in ys)
+    clip: 1500/1500 IsClip values bit-exact
+    interp: 3435/3435 queries bit-exact (90 tables)
+    tile: 50 plane mismatches over 25 tiles
+    total 30.7 s: 648 MISMATCHES
+[DETECTED] luma without FMA
+    curve: 190/454 curves bit-exact (xs + ys), histograms 142/454 (71 cases with NaN in ys)
+    clip: 1500/1500 IsClip values bit-exact
+    interp: 3435/3435 queries bit-exact (90 tables)
+    tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright)
+    total 29.9 s: 576 MISMATCHES
+[DETECTED] ramp NEON body unfused
+    curve: 416/454 curves bit-exact (xs + ys), histograms 410/454 (71 cases with NaN in ys)
+    clip: 1500/1500 IsClip values bit-exact
+    interp: 3435/3435 queries bit-exact (90 tables)
+    tile: 24 plane mismatches over 25 tiles
+    total 30.1 s: 106 MISMATCHES
+[missed  ] line padding +0.0 instead of -0.0
+    curve: 454/454 curves bit-exact (xs + ys), histograms 454/454 (71 cases with NaN in ys)
+    clip: 1500/1500 IsClip values bit-exact
+    interp: 3435/3435 queries bit-exact (90 tables)
+    tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright)
+    total 30.0 s: ALL BIT-EXACT
+[DETECTED] smooth with the first-operand NaN rule (numpy scalar rule ignored)
+    curve: 448/454 curves bit-exact (xs + ys), histograms 454/454 (71 cases with NaN in ys)
+    clip: 1500/1500 IsClip values bit-exact
+    interp: 3435/3435 queries bit-exact (90 tables)
+    tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright)
+    total 30.1 s: 6 MISMATCHES
+[DETECTED] est * step commuted (NaN sign of FRECPS)
+    curve: 454/454 curves bit-exact (xs + ys), histograms 454/454 (71 cases with NaN in ys)
+    clip: 1500/1500 IsClip values bit-exact
+    interp: 3435/3435 queries bit-exact (90 tables)
+    tile: 1 plane mismatches over 25 tiles
+    total 30.2 s: 1 MISMATCHES
+[missed  ] F_i = f + g commuted (NaN operand order)
+    curve: 454/454 curves bit-exact (xs + ys), histograms 454/454 (71 cases with NaN in ys)
+    clip: 1500/1500 IsClip values bit-exact
+    interp: 3435/3435 queries bit-exact (90 tables)
+    tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright)
+    total 30.0 s: ALL BIT-EXACT
+[DETECTED] running box S + x commuted (NaN operand order)
+    curve: 452/454 curves bit-exact (xs + ys), histograms 452/454 (71 cases with NaN in ys)
+    clip: 1500/1500 IsClip values bit-exact
+    interp: 3435/3435 queries bit-exact (90 tables)
+    tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright)
+    total 30.4 s: 4 MISMATCHES
+[DETECTED] double sums in float
+    curve: 186/454 curves bit-exact (xs + ys), histograms 166/454 (71 cases with NaN in ys)
+    clip: 1500/1500 IsClip values bit-exact
+    interp: 3435/3435 queries bit-exact (90 tables)
+    tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright)
+    total 30.1 s: 556 MISMATCHES

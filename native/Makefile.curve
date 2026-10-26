@@ -1,0 +1,19 @@
+# N1b: EstimateNoiseLevelCurve port (nv_curve) - separate makefile until the lead merges it
+# into native/Makefile.   make -C native -f Makefile.curve && python3 native/verify_curve.py
+# Same flags as native/Makefile: no fast-math, no FMA contraction.
+
+CXX ?= clang++
+CXXFLAGS ?= -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra
+
+all: nv_curve_test
+
+nv_curve_test: nv_curve_main.cpp nv_curve.cpp nv_curve.h
+	$(CXX) $(CXXFLAGS) -o $@ nv_curve_main.cpp nv_curve.cpp -lpthread
+
+verify: nv_curve_test
+	python3 verify_curve.py
+
+clean:
+	rm -f nv_curve_test tmp_curve_*.bin
+
+.PHONY: all verify clean

@@ -1,0 +1,9 @@
+make: Nothing to be done for `all'.
+[python] 668 inputs (9277926 source bytes); planes 572, byte strings 96
+[python] byte equal: 667/667 (blob fits 651, overflow -1 17); C++ 1.66 s, Python 37.0 s wall (7.9 us/byte over 2 workers)
+[python] around the output limit n + 0x80 (stream length - n, fits): [(126, True), (126, True), (126, True), (127, True), (127, True), (127, True), (128, True), (128, True), (128, True), (129, False), (129, False), (129, False), (130, False), (130, False), (130, False)]
+  known divergence (empty input, not a genuine case; REPORT.md): 0 bytes: props 5d00000001 != 5d00100000; blob bytes differ
+[genuine] 717 saved blob files, 258 distinct (10250646 plane bytes, 2048..524288)
+[genuine] blob byte equal (bytes 13..15 skipped): 258/258; C++ 3.00 s
+[genuine] plane_int16 + blob of known crops: 24/24 (8 areas x 3 planes)
+TOTAL: 949/949 byte equal, 0 mismatches (44.1 s)

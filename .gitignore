@@ -17,6 +17,23 @@ repro/**
 data/**
 !data/ref_floor.npy
 
+# native/ (C++ 移植と検証。ビルド物・キャッシュは除外)
+!native/
+native/**
+!native/*.cpp
+!native/*.h
+!native/*.py
+!native/Makefile
+!native/Makefile.band
+!native/Makefile.curve
+!native/Makefile.lzma
+!native/MIGRATION.md
+!native/lzma/
+native/lzma/**
+!native/lzma/*.c
+!native/lzma/*.h
+!native/lzma/*.md
+
 # analysis (ソースコード・ドキュメントのみ)
 !neatvideo_ofx_614/
 neatvideo_ofx_614/**

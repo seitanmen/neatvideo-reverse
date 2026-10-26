@@ -1,0 +1,9 @@
+make: Nothing to be done for `all'.
+  ms    mean/std     : 1080/1080 bit-exact
+  quant quantile     : 1080/1080 bit-exact
+  rand  model_levels : 1665/1665 bit-exact
+  rand  band_levels  : 1665/1665 bit-exact
+  real  model_levels : 108/108 bit-exact
+  real  band_levels  : 108/108 bit-exact
+5706/5706 bit-exact
+time: Python 30.2 s (2 procs), C++ 0.64 s (one process); nv_band_test: model 0.284 s, band 0.294 s, quantile 0.012 s, mean/std 0.000 s
