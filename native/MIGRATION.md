@@ -98,3 +98,5 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
   pyramid は Y の帯域が 3 段以上を前提 (Python は 3 段未満で IndexError、C++ は 0 埋め)。
 - `make -C native verify` で 8 本 (N0 + N1a〜e・g・h) を通しで照合できる (2026-10-27: クリーンビルド警告 0、全件一致)。
 - **次**: N1f (プロファイル: N1c・N1d・N1e 済み) と N1i (AFT: N1a・N1e 済み) が解放済み。
+  残件 (取り消し未移植・N1e の未到達経路・線カーネル重複・非 AArch64) の解決タスクは
+  `.claude/tasks/native_n1_fixes.md` (F1〜F4)。N1f/N1i と並行で委託してよい。
