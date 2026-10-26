@@ -564,8 +564,8 @@ def area_band_sigma(plane, area, levels, sub=1):
     alone (sub-block size grows with the band scale, see _robust_sigma). Bands with < 16
     effective samples follow the white-noise ratio of the previous band.
     Returns (band sigmas, total detail sigma)."""
-    y0, x0, S = area
-    a = np.asarray(plane, np.float32)[y0 // sub:(y0 + S) // sub, x0 // sub:(x0 + S) // sub]
+    y0, x0, h, w = area if len(area) == 4 else (area[0], area[1], area[2], area[2])   # (y0, x0, h, w) too
+    a = np.asarray(plane, np.float32)[y0 // sub:(y0 + h) // sub, x0 // sub:(x0 + w) // sub]
     b = atrous(a, levels)
     wn = _wn_band_std(levels)
     n = min(a.shape)
@@ -696,7 +696,8 @@ def _median_curves(curves):
 def build_profile_v5(planes, full_range=False, area=None, pair=None, mode="auto", levels=5, more=(),
                      matrix="bt709", cancel=None):
     """Device Noise Profile analogue.
-    planes: (Y, Cb, Cr) of the profiling frame. area=(y0, x0, size) overrides FindFlatArea
+    planes: (Y, Cb, Cr) of the profiling frame. area=(y0, x0, size) or a rectangle (y0, x0, h, w)
+    overrides FindFlatArea (prof["area"]: 3 values for a square, [y0, x0, h, w] for a rectangle)
     (the genuine Auto Profile search, run on the RGB the host would pass: `matrix`).
     more: further frames whose single-frame curves are median-combined with this one (an
     intra-coded frame keeps more noise than its P/B neighbours, e.g. test.mp4 GOP 12).
@@ -717,7 +718,11 @@ def build_profile_v5(planes, full_range=False, area=None, pair=None, mode="auto"
         *area, flat_status = find_flat_area(planes, full_range, matrix, with_status=True, cancel=cancel)
         if flat_status == 5:
             raise ProfileCancelled("profiling cancelled (FindFlatArea status 5)")
-    else:                                   # manual area: keep it inside the frame
+    elif len(area) == 4:                    # manual rectangle (y0, x0, h, w): inside the frame, per side
+        h, w = int(min(max(int(area[2]), 8), H)), int(min(max(int(area[3]), 8), W))
+        area = (int(min(max(int(area[0]), 0), H - h)), int(min(max(int(area[1]), 0), W - w)), h, w)
+        area = area[:3] if h == w else area
+    else:                                   # manual square (y0, x0, size): keep it inside the frame
         S = int(min(max(int(area[2]), 8), H, W))
         area = (int(min(max(int(area[0]), 0), H - S)), int(min(max(int(area[1]), 0), W - S)), S)
     prof = {"version": 5, "sub": sub, "full_range": bool(full_range), "area": [int(v) for v in area],
@@ -753,7 +758,8 @@ def build_profile_v5(planes, full_range=False, area=None, pair=None, mode="auto"
     for name in ("Y", "Cb", "Cr"):
         cv = curves.get(name) or [prof["area_sigma"][name][0]] * CURVE_BINS
         prof["curve"][name] = cv if name == "Y" else [v * CHROMA_GAIN[name] for v in cv]
-    lvl = float(np.mean(np.asarray(planes[0], np.float32)[area[0]:area[0] + area[2], area[1]:area[1] + area[2]]))
+    ah, aw = (area[2], area[3]) if len(area) == 4 else (area[2], area[2])
+    lvl = float(np.mean(np.asarray(planes[0], np.float32)[area[0]:area[0] + ah, area[1]:area[1] + aw]))
     prof["area_level"] = lvl
     prof["sigma"] = {n: float(np.interp(lvl, prof["curve_centers"], prof["curve"][n]) * prof["tot_ratio"][n])
                      for n in ("Y", "Cb", "Cr")}

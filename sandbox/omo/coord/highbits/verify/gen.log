@@ -1,0 +1,10 @@
+y420p10_odd yuv420p10le 259 195 lossless
+y422p10_odd yuv422p10le 323 257 lossless
+y422p12 yuv422p12le 320 240 lossless
+y444p12 yuv444p12le 300 222 lossless
+y444p16 yuv444p16le 288 256 lossless
+y420p16 yuv420p16le 256 256 lossless
+y422p10_even yuv422p10le 320 256 lossless
+gbrp12 gbrp12le 270 210 lossless
+gbrpf32 gbrpf32le 320 240 lossless
+exrseq gbrpf32le 320 240 lossless

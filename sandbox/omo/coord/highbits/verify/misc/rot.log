@@ -1,0 +1,5 @@
+320x256 24/1 frames~8 rotation=90 out=[0,4) tags={'color_space': None, 'color_primaries': None, 'color_transfer': None, 'color_range': None}
+source yuv422p10le (10-bit 4:2:2) -> processing yuv422p10le · 10-bit 4:2:2, codec x264
+profile frame 2: mode=auto area=[0, 48, 64] (small square (< 128 px)) sigma={'Y': 2.713, 'Cb': 6.51, 'Cr': 8.965}
+frame 4/4 2s
+wrote ../sandbox/omo/coord/highbits/verify/misc/rot_out.mov (4 frames, 1.6s)

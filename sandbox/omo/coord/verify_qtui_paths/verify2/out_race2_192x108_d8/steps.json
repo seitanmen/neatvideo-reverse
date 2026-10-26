@@ -1,0 +1,60 @@
+[
+ {
+  "name": "started",
+  "size": 0,
+  "frames": 12,
+  "shape": [
+   [
+    108,
+    192
+   ],
+   [
+    54,
+    96
+   ],
+   [
+    54,
+    96
+   ]
+  ],
+  "open": false,
+  "export": false,
+  "load": false,
+  "generic": false,
+  "frame": 4,
+  "prof": false
+ },
+ {
+  "name": "apply_pre_aft",
+  "size": 31104,
+  "t": 1.07,
+  "frame": 0,
+  "status": "Apply: frame 0 processed and written to the host",
+  "pre_aft": true,
+  "aft_busy": true,
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_race2_192x108_d8/ref_1.npz"
+ },
+ {
+  "name": "aft_done",
+  "size": 31104,
+  "t": 6.17,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_race2_192x108_d8/prev_2.npy"
+ },
+ {
+  "name": "pre_close",
+  "size": 31104,
+  "t": 6.17,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_race2_192x108_d8/ref_3.npz",
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_race2_192x108_d8/prev_3.npy"
+ },
+ {
+  "name": "exit",
+  "rc": 0,
+  "size": 62208,
+  "t": 6.21
+ }
+]

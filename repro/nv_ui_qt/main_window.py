@@ -8,7 +8,15 @@ Prepare toolbar's [Profile Check] and Profile > Profile Check are one toggle of 
 amount at 100% and the effective profile (repro definition of the Assist Image; the genuine's
 processing is not decoded), computed in a worker thread, cached per (frame, profile) and recomputed
 100 ms after a profile Noise Level change. Leaving the Prepare page or removing the profile ends it.
-The profile details dialog is Profile > Profile Viewer… (profile_viewer)."""
+The profile details dialog is Profile > Profile Viewer… (profile_viewer).
+
+Noise Level Check (genuine 6.1.3, sandbox/omo/coord/verify_quality/nlc/SPEC.md): the Temporal tab's
+Begin / Finish, Filter Settings Check > 1. Noise Level Check and Tools > Noise Level Check are one
+toggle (set_noise_level_check) on the Adjust page: the viewer (mode Normal) shows the temporal filter
+mask of the current frame (repro definition, backend.temporal_mask; the genuine formula is not decoded)
+in the colours of display.nlc_image, computed in a worker thread from the preview's temporal stage,
+cached per (frame, video, profile, temporal parameters) and recomputed 100 ms after a temporal setting
+changes. It excludes Filter Tuning Assist and ends on another page, a new video or without a profile."""
 import collections
 import json
 import os
@@ -72,10 +80,6 @@ GUIDES = {
                "or the Noise Level.\n"
                "• Filter Tuning Assist (Spatial tab) shows what is removed: structure (edges, texture) in the "
                "Assist image means the filter is too strong.\n\n(Guide text written for the reproduction.)"),
-    "noise": ("Noise Level Check",
-              "The Noise Level sliders scale the profile's noise estimate (+0% = profile).\n"
-              "Set them where flat areas just become clean in the filtered view; going further treats "
-              "image detail as noise.\n\n(Guide text written for the reproduction.)"),
     "tuning": ("Quick Start Guide",
                "1. Prepare Noise Profile: Auto Profile (a frame with a flat, unclipped area), or drag a rectangle "
                "over a flat area (at least 128 x 128 recommended, 32 x 32 minimum) and Build Profile.\n"
@@ -148,6 +152,10 @@ class MainWindow(QMainWindow):
         self._cur_rgb = None                 # (frame, coded float RGB) of the displayed frame
         self.pcheck = False                  # Profile Check (Assist Image) running
         self._pc_cache = collections.OrderedDict()     # (frame, engine, profile) -> Assist Image RGB
+        self.nlc = False                     # Noise Level Check (temporal filter mask) running
+        self._nlc_cache = collections.OrderedDict()    # _nlc_key -> (mask image RGB, mask mean)
+        self._nlc_shown = None               # key of the mask image in the viewer
+        self._nlc_mode = None                # viewer mode before Noise Level Check
         self.setWindowTitle(f"Neat Video v6 — reproduction UI (export using {self.prefs['jobs']} CPU processes)")
         self.resize(1400, 860)
         st = self.style()
@@ -250,7 +258,7 @@ class MainWindow(QMainWindow):
         fp.editedMany.connect(lambda d: self.state.set_params(d, "Change filter settings"))
         fp.editStarted.connect(self.state.new_edit)
         fp.assistToggled.connect(self.set_assist)
-        fp.noiseLevelCheck.connect(self.noise_level_check)
+        fp.noiseLevelCheck.connect(self.set_noise_level_check)
         fp.resetSpatial.connect(self.reset_spatial)
         fp.checkSpeed.connect(self.check_speed)
         fp.preferences.connect(self.preferences)
@@ -301,6 +309,10 @@ class MainWindow(QMainWindow):
         self.pc_timer.setSingleShot(True)
         self.pc_timer.setInterval(100)
         self.pc_timer.timeout.connect(self.request_pcheck)
+        self.nlc_timer = QTimer(self)            # mask after a temporal setting change (thinned out)
+        self.nlc_timer.setSingleShot(True)
+        self.nlc_timer.setInterval(100)
+        self.nlc_timer.timeout.connect(self.request_nlc)
 
         dp = settings().value("default_preset")
         if dp:
@@ -376,12 +388,17 @@ class MainWindow(QMainWindow):
                                  icon=QStyle.SP_DesktopIcon, style=st)
         self.preview_btn.setChecked(True)
         self.preview_btn.toggled.connect(lambda on: (self.display(), self.schedule()))
-        self.fsc_btn = _tool("Filter Settings Check", "Filter Settings Check tools (repro: only Spatial Filter "
-                             "Tuning = Filter Tuning Assist is available)", icon=QStyle.SP_FileDialogInfoView,
-                             style=st)
+        self.fsc_btn = _tool("Filter Settings Check", "Filter Settings Check tools (repro: Noise Level Check and "
+                             "Spatial Filter Tuning = Filter Tuning Assist are available)", checkable=True,
+                             icon=QStyle.SP_FileDialogInfoView, style=st)
+        self.fsc_btn.setStyleSheet(self.check_btn.styleSheet())     # pressed (blue) while Noise Level Check runs
         self.fsc_btn.setPopupMode(QToolButton.InstantPopup)
+        self.fsc_btn.toggled.connect(lambda _: self._sync_nlc_widgets())   # the state is self.nlc, not a click
         m = QMenu(self.fsc_btn)
-        for i, name in enumerate(("Noise Level Check", "Local Flicker Check", "Repeated Frames Check"), 1):
+        self.fsc_nlc = m.addAction("&1. Noise Level Check")
+        self.fsc_nlc.setCheckable(True)
+        self.fsc_nlc.toggled.connect(self.set_noise_level_check)
+        for i, name in enumerate(("Local Flicker Check", "Repeated Frames Check"), 2):
             a = m.addAction(f"&{i}. {name}")
             a.setEnabled(False)
             a.setToolTip(N_A)
@@ -389,7 +406,7 @@ class MainWindow(QMainWindow):
         self.fsc_assist.setCheckable(True)
         self.fsc_assist.toggled.connect(self.set_assist)
         m.addSeparator()
-        m.addAction("&Finish", lambda: self.set_assist(False))
+        m.addAction("&Finish", lambda: (self.set_assist(False), self.set_noise_level_check(False)))
         self.fsc_btn.setMenu(m)
         for b in (self.area_btn, self.preview_btn, self.play_btn):
             h.addWidget(b)
@@ -451,6 +468,8 @@ class MainWindow(QMainWindow):
     def on_page(self, i):
         if i != 0 and self.pcheck:
             self.set_profile_check(False)       # Profile Check belongs to the Prepare page
+        if i != 1 and self.nlc:
+            self.set_noise_level_check(False)   # Noise Level Check belongs to the Adjust page (restores the mode)
         self._update_radius()
         self.stack.setCurrentIndex(i)
         self.tb_stack.setCurrentIndex(i)
@@ -557,6 +576,8 @@ class MainWindow(QMainWindow):
                 return
             self.set_profile_check(False)
             self._pc_cache.clear()
+            self.set_noise_level_check(False)
+            self._nlc_cache.clear()
             self.src, self.info, self.frames = path, info, frames
             self.matrix = matrix
             self.fmt, self.depth_used = fmt, depth
@@ -682,7 +703,9 @@ class MainWindow(QMainWindow):
         if (t, gen, crop) in self.filt_cache:
             self.display()
             return
-        P = self._nlc_params if getattr(self, "_nlc_params", None) else self.state.backend()
+        if self.nlc:
+            return                              # the viewer shows the mask; Finish schedules the preview
+        P = self.state.backend()
         token = self.prof_token
         self.say(f"filtering frame {t}…")
 
@@ -708,6 +731,7 @@ class MainWindow(QMainWindow):
         self._sync_selection()
         self.schedule()
         self.request_pcheck()
+        self.request_nlc()
 
     def on_params(self, keys):
         P = self.state.params
@@ -720,6 +744,8 @@ class MainWindow(QMainWindow):
             self.invalidate()
             self.display()
             self.schedule()
+            if self.nlc:
+                self.nlc_timer.start()          # temporal settings: new mask (same key = from the cache)
 
     def _profile_sig(self):
         return json.dumps(self.state.profile.to_json(), sort_keys=True, default=str)
@@ -741,6 +767,13 @@ class MainWindow(QMainWindow):
                 self.set_profile_check(False)
             else:
                 self.pc_timer.start()           # new profile / Noise Level: recompute (thinned out)
+        for w in (self.filter_page.panel.nl_check, self.fsc_nlc, self.actions["nlc"]):
+            w.setEnabled(ps.base is not None)
+        if self.nlc:
+            if ps.base is None:
+                self.set_noise_level_check(False)
+            else:
+                self.nlc_timer.start()
         self.filter_page.panel.set_band_availability(None if eff is None else eff.get("levels"))
         if eff is None:
             self.prof_lbl.setText("no profile")
@@ -898,6 +931,8 @@ class MainWindow(QMainWindow):
 
     def set_assist(self, on):
         on = bool(on)
+        if on and self.nlc:
+            self.set_noise_level_check(False)   # one Filter Settings Check tool at a time
         self.viewer.set_assist(on)
         self.filter_page.panel.assist.set_checked(on)
         for a in (self.actions["f_assist"], self.fsc_assist):
@@ -905,21 +940,85 @@ class MainWindow(QMainWindow):
             a.setChecked(on)
             a.blockSignals(False)
 
-    def noise_level_check(self, on):
-        """Genuine: Begin → shows the noise-reduced frame (spatial only, all bands 100%).
-        The user adjusts Noise Level while watching the result in real time."""
-        on = bool(on)
+    # ---------------- Noise Level Check ----------------
+    def set_noise_level_check(self, on):
+        """Begin / Finish of Noise Level Check from the panel, the toolbar menu or Tools (one state, three
+        displays). Needs a profile; switches to the Adjust page and the viewer to Normal (restored on
+        Finish unless the mode was changed meanwhile)."""
+        on = bool(on) and self.state.profile.base is not None and self.frames is not None
+        was, self.nlc = self.nlc, on
         if on:
-            from nv_aft_v5 import assist_params
-            self._nlc_params = assist_params(dict(self.state.params), "profile_check")
-            self.say("Noise Level Check: spatial only, all bands 100% — "
-                     "adjust Noise Level while watching the result")
-            self.invalidate()
+            self.set_assist(False)
+            if self.page() != 1:
+                self.tabs.setCurrentIndex(1)
+        if on and not was:
+            self._nlc_mode = self.viewer.mode()
+            self.viewer.set_mode("Normal")
+        elif was and not on:
+            if self._nlc_mode is not None and self.viewer.mode() == "Normal":
+                self.viewer.set_mode(self._nlc_mode)
+            self._nlc_mode = None
+        self._sync_nlc_widgets()
+        self.viewer.set_nlc(on)
+        if on:
+            self._nlc_shown = None
+            self.say("Noise Level Check: Temporal Filter mask (repro definition) — adjust Noise Level so that "
+                     "the mask sufficiently covers the noisy areas")
+            self.request_nlc()
+        elif was:
+            self.nlc_timer.stop()
+            self.runner.cancel("nlc")
+            self.say("Noise Level Check: finished")
+            self.display()
             self.schedule()
-        else:
-            self._nlc_params = None
-            self.say("Noise Level Check: off")
-        self._nlc_active = on
+
+    def _sync_nlc_widgets(self):
+        self.filter_page.panel.set_nlc_active(self.nlc)
+        for w in (self.fsc_nlc, self.actions["nlc"], self.fsc_btn):
+            w.blockSignals(True)
+            w.setChecked(self.nlc)
+            w.blockSignals(False)
+        self.fsc_btn.setText("Noise Level Check" if self.nlc else "Filter Settings Check")
+
+    def _nlc_key(self):
+        return (self.timeline.frame(), id(self.engine), self.prof_token) + backend.temporal_sig(self.state.backend())
+
+    def request_nlc(self):
+        """Mask image of the current frame (cached; computed in the 'nlc' worker slot, a newer request
+        replaces a queued one). A result is shown only if its key is still the current one; another
+        frame's image is removed at once, a changed setting keeps the image until the new one is ready."""
+        if not self.nlc or self.frames is None:
+            return
+        prof = self.state.effective_profile()
+        if prof is None:
+            return
+        key = self._nlc_key()
+        if key in self._nlc_cache:
+            self._nlc_cache.move_to_end(key)
+            self.viewer.set_nlc(True, self._nlc_cache[key][0])
+            self._nlc_shown = key
+            return
+        if self._nlc_shown is None or self._nlc_shown[:2] != key[:2]:
+            self.viewer.set_nlc(True, None, keep=False)
+            self._nlc_shown = None
+        t, engine, token, P = key[0], self.engine, self.prof_token, self.state.backend()
+        self.say(f"Noise Level Check: computing the mask of frame {t}…")
+
+        def job(task):
+            m = engine.mask(t, prof, token, P)
+            rgb = engine.to_rgb(engine._crop_planes(engine.frames[t], None)).astype(np.float32)
+            return D.nlc_image(rgb, m), float(m.mean())
+
+        def done(tag, res):
+            self._nlc_cache[tag] = res
+            while len(self._nlc_cache) > 4:
+                self._nlc_cache.popitem(last=False)
+            if self.nlc and tag == self._nlc_key():
+                self.viewer.set_nlc(True, res[0])
+                self._nlc_shown = tag
+                self.say(f"Noise Level Check: mask of frame {tag[0]} (mean {res[1]:.3f})")
+
+        self.runner.submit("nlc", key, job, done, lambda tag, msg: self._failed("nlc", msg))
 
     # ---------------- Profile Check ----------------
     def set_profile_check(self, on):

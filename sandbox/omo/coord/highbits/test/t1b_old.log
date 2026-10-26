@@ -1,0 +1,4 @@
+1920x1080 24/1 frames~721 rotation=0 out=[304,310) tags={'color_space': 'bt709', 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+profile frame 307: mode=auto area=[0, 800, 128] (ok) sigma={'Y': 3.658, 'Cb': 1.611, 'Cr': 2.152}
+frame 6/6 9s
+wrote ../sandbox/omo/coord/highbits/test/t1b_old.mp4 (6 frames, 9.4s)

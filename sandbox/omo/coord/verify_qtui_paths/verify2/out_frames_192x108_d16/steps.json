@@ -1,0 +1,94 @@
+[
+ {
+  "name": "started",
+  "size": 0,
+  "frames": 12,
+  "shape": [
+   [
+    108,
+    192
+   ],
+   [
+    54,
+    96
+   ],
+   [
+    54,
+    96
+   ]
+  ],
+  "open": false,
+  "export": false,
+  "load": false,
+  "generic": false,
+  "frame": 4,
+  "prof": false
+ },
+ {
+  "name": "profile+aft",
+  "size": 0,
+  "t": 6.37,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "aft": true,
+  "flat": 2,
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_frames_192x108_d16/prev_1.npy"
+ },
+ {
+  "name": "apply_t0",
+  "size": 62208,
+  "t": 6.71,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_frames_192x108_d16/ref_2.npz",
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_frames_192x108_d16/prev_2.npy"
+ },
+ {
+  "name": "apply_t1",
+  "size": 124416,
+  "t": 7.1,
+  "frame": 2,
+  "status": "frame 2 filtered",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_frames_192x108_d16/ref_3.npz",
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_frames_192x108_d16/prev_3.npy"
+ },
+ {
+  "name": "apply_back_t0",
+  "size": 186624,
+  "t": 7.49,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_frames_192x108_d16/ref_4.npz",
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_frames_192x108_d16/prev_4.npy"
+ },
+ {
+  "name": "apply_back_t0_same",
+  "size": 186624,
+  "t": 7.83,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_frames_192x108_d16/ref_5.npz",
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_frames_192x108_d16/prev_5.npy"
+ },
+ {
+  "name": "moved_t1",
+  "size": 186624,
+  "t": 7.86,
+  "frame": 2,
+  "status": "frame 0 filtered"
+ },
+ {
+  "name": "pre_close",
+  "size": 186624,
+  "t": 7.86,
+  "frame": 2,
+  "status": "frame 0 filtered",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_frames_192x108_d16/ref_7.npz"
+ },
+ {
+  "name": "exit",
+  "rc": 0,
+  "size": 248832,
+  "t": 7.92
+ }
+]

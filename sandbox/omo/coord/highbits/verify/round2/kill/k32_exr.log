@@ -1,0 +1,5 @@
+640x360 30/1 frames~901 rotation=0 out=[0,end) tags={'color_space': 'bt709', 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv420p (8-bit 4:2:0) -> processing gbrpf32le · 32-bit float RGB, codec exr
+profile frame 300: mode=auto area=[288, 416, 48] (small square (< 128 px)) sigma={'Y': 24.851, 'Cb': 1.423, 'Cr': 1.724}
+frame 6/6 3s
+error: the encoder failed (ffmpeg exit -9, message above); the incomplete /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/round2/kill/exr/cx_%05d.exr was removed

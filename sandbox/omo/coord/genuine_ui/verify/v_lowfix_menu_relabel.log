@@ -1,0 +1,10 @@
+qt.qpa.fonts: Populating font family aliases took 271 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost. 
+[PASS] load + profile 
+[PASS] Profile menu groups / shortcuts as the genuine (menu_profile.png) 
+[PASS] Undo / Redo always 'Undo/Redo Last Change' (step name in the tooltip), also in Filter ('Undo Last Change', 'Change Luminance', 'Redo Last Change', False) ('Undo Last Change', 'Redo Last Change', 'Change Luminance', True) ('Undo Last Change', 'Auto Fine-Tune') ['Undo Last Change', 'Redo Last Change']
+[PASS] Cmd-C / Cmd-V in the Device name field act on the field (not the profile) focus=True clipboard 'hello world' pasted ('XYZ', True)
+  spin boxes in the window: 51 visible: 0 visible line edits: []
+  value box shown by clicking the value: False focus is spin/lineEdit: True
+[PASS] Cmd-C in a slider's value box copies the value text focus=<PySide6.QtWidgets.QDoubleSpinBox(0x12ad36f50) at 0x11af8fe00> clipboard '55' box '55'
+[PASS] control: with the viewer focused Cmd-C copies the profile JSON and Cmd-V pastes it clipboard starts '{"format": "nv_repro' pasted=True
+6/6 passed

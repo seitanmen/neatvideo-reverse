@@ -1,0 +1,111 @@
+qt.qpa.fonts: Populating font family aliases took 273 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] load + auto profile 901 frames, area [288, 416, 48]
+[PASS] preview filtered 
+[PASS] UI defaults map to nv.V5_DEFAULTS 
+[PASS] backend.process_frame == nv.process_frame_v5 (defaults) 
+[PASS] per-channel band: Y and Cr unchanged, Cb changed 
+[PASS] chroma 'High' band sliders follow the profile's band count 
+[PASS] slider edits state 
+[PASS] preview recomputed after slider 
+[PASS] every implemented control changes the backend parameters []
+[PASS] unimplemented controls are disabled 40 controls
+[PASS] undo restores value and widget 
+[PASS] redo 
+[PASS] reset filter 
+[PASS] preset save/load 
+[PASS] reset uses assigned default preset 
+[PASS] Auto Fine-Tune runs and curve is AFT-adjusted 
+[PASS] undo AFT 
+[PASS] Auto Fine-Tune twice == once (no squared factors) 
+[PASS] stale AFT result discarded 
+[PASS] AFT buttons re-enabled 
+[PASS] AFT cancellable (child process terminated) 0.1s
+[PASS] malformed profile / preset files rejected 
+[PASS] manual fine-tune + auto complete [1.5, 1.5, 1.5, 1.25, 1.0, 0.75, 0.5, 0.5, 0.5]
+[PASS] fine-tune changes the effective curve 
+[PASS] reset profile 
+[PASS] profile save/load 
+This plugin does not support propagateSizeHints()
+[PASS] Build Profile (Current Frame), small-area confirmation 
+[PASS] Auto Profile (Most Noisy Frame) frame 0
+[PASS] preview modes + save frame 
+This plugin does not support propagateSizeHints()
+[PASS] Preview Area (crop) filtering 
+[PASS] preview area off -> whole frame 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] (a) panel order: Temporal / Spatial / General, Luminance -> Cr -> Cb, High -> Ultra Low ['Spatial Filter', 'Noise Reduction Amount', 'Noise Level', 'Artifact Removal', 'Edge Smoothing', 'Sharpening', 'Per-component bands (repro)', 'Advanced (repro)']
+[PASS] (b) Frequencies row writes Y / Cr / Cb in one undo step 
+[PASS] (c) mix_enable: off by default, Enable -> 75%, old presets True True True True True []
+[PASS] (d) profile Noise Level scales the curve, undo, saved in JSON 
+This plugin does not support propagateSizeHints()
+[PASS] (e) press-and-hold shows the original ('Filtered' label off) 
+[PASS] (f) YCrCb+ draws 4 panes; split changes the arrangement 
+[PASS] (g) thumbnails: blue = current, orange = Radius window, click = go to frame 
+[PASS] (h) Beginner / Advanced Mode hides rows and keeps values 
+[PASS] slider drag = one undo step, page steps = separate steps [True, True]
+[PASS] wheel: drag = 1, drag + wheel = 2, two wheel gestures = 2 undo steps True True True True
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] side panels fit at the minimum window width (all sections expanded, both modes) min width 1131 []
+[PASS] profile JSON with NaN / inf tune, factors or curve rejected [True, True, True]
+[PASS] non-implemented controls show 'n/a' []
+[PASS] Noise Level track -100..+150, Mix off shows 75%, Radius '2', no orange frames on Prepare 
+[PASS] (i) Auto Profile <-> Build Profile with the selection 
+[PASS] display: Normal identity at 50, Y / Cr / R pane formulas, brightness, Enhanced / Freq images True True True True True True
+[PASS] display: frame colours by min(w, h) (<= 15 red, 16..127 yellow, >= 128 green) 
+[PASS] menus Effect View Profile Filter Variants Tools Help; toolbars in the genuine order ['Effect', 'View', 'Profile', 'Filter', 'Variants', 'Tools', 'Help'] ['Auto Profile', 'Generic Profile', 'Load Profile', 'Profile Check', 'Variants'] ['⛶', 'Preview', 'Play All', 'Filter Settings Check', 'Variants']
+[PASS] viewer mode kept per page (defaults Prepare YCrCb+, Adjust Normal), Split disabled in Normal ['YCrCb +', 'Normal'] True True True True
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] free rectangle by mouse (corner = press point), Noise Level label, move inside, click clears, <= 512 px (119, 170, 50, 200) 'Noise Level: 62.7' 62.73 (139, 200, 50, 200) (9, 10, 351, 512)
+This plugin does not support propagateSizeHints()
+This plugin does not support raise()
+This plugin does not support grabbing the keyboard
+[PASS] Build Profile disabled / error under 32 px, Not Uniform label, triangle menu True True [] ['Y'] []
+    viewer mode YCrCb +: panes ready in 0.10 s
+    viewer mode YCrCb: panes ready in 0.10 s
+    viewer mode RGB: panes ready in 0.11 s
+This plugin does not support propagateSizeHints()
+    viewer mode Y Freq: panes ready in 0.17 s
+[PASS] component panes computed for every mode 
+[PASS] batch profiler 
+This plugin does not support propagateSizeHints()
+[PASS] rectangular Build Profile: area [y0, x0, h, w] kept [40, 60, 216, 512]
+This plugin does not support propagateSizeHints()
+[PASS] export finished 
+[PASS] export used the rectangular profile 
+[PASS] export (CRF 0) == backend.process_frame bit for bit 4 frames
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] 10-bit: Bit depth 10 reloads as yuv420p10le float32 planes (0..255 scale) yuv420p10le
+[PASS] 10-bit: frame 0 = the 10-bit values / 4 exactly (low bits kept) 
+[PASS] 10-bit: status bar shows source pix_fmt and processing depth source yuv420p10le (10-bit 4:2:0) · processing 10-bit
+[PASS] 10-bit: preview filtered (8-bit display) 
+[PASS] 10-bit: export dialog defaults 
+[PASS] 10-bit: export (FFV1 yuv420p10le) == backend.process_frame bit for bit 3 frames, yuv420p10le
+64/64 passed

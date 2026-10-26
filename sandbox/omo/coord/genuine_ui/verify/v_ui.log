@@ -1,0 +1,89 @@
+qt.qpa.fonts: Populating font family aliases took 252 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] load frames=40 profile=[0, 792, 128]
+menubar: ['Effect', 'View', 'Profile', 'Filter', 'Variants', 'Tools', 'Help']
+  menu Effect: ['Copy Profile and Preset [Ctrl+Shift+C]', 'Paste Profile and Preset [Ctrl+Shift+V]', 'Skip Neat Video Processing (disabled)', 'Apply\tReturn', 'Cancel', '---', '---', 'Open Input Video… [Ctrl+O]', 'Save Output Image As…', 'Export Full Video... [Ctrl+E]']
+  menu View: ['Zoom', 'Viewer Mode', '---', 'Show Preview [Alt+H]', 'Toggle Panning Mode [Ctrl+D]', 'Start Playback [Ctrl+P]']
+  menu Profile: ['Undo Last Change Auto Fine-Tune [Ctrl+Z]', 'Redo Last Change [Ctrl+Shift+Z] (disabled)', '---', 'Load Profile…', 'Save As…', 'Reset Profile', 'Copy Profile', 'Paste Profile', '---', 'Save As Default Profile… (disabled)', 'Assign As Default Profile', 'Reset Default Profile', 'Change Default Profile…', '---', 'Auto Profile (Most Noisy Frame) [F2]', 'Auto Profile (Current Frame) [Shift+F2]', 'Generic Profile [F6]', '---', 'Profile Viewer… [Ctrl+Shift+I]', '---', '---', 'Build Profile (Most Noisy Frame)', 'Build Profile (Current Frame)', 'Auto Fine-Tune [Ctrl+F]', 'Auto Complete', 'Reset Fine-Tuning Results', 'Profile Check [Ctrl+K]', 'Auto Match (n/a) [Ctrl+M] (disabled)', 'Profile Converter… (disabled)']
+  menu Filter: ['Undo Last Change Auto Fine-Tune [Ctrl+Z]', 'Redo Last Change [Ctrl+Shift+Z] (disabled)', '---', 'Load Filter Preset…', 'Save As Filter Preset…', 'Reset Filter Settings', 'Copy Filter Settings', 'Paste Filter Settings', '---', 'Assign As Default Preset', 'Reset Default Preset', 'Change Default Preset…', 'Preset Description…', '---', 'Filter Tuning Assist', 'Filter Settings Check']
+  menu Variants: ['Variants (alternative filter settings) (disabled)']
+  menu Tools: ['Batch Profiler…', '---', 'Preferences… [F10]', 'Performance tab [Ctrl+Shift+P]', '---', 'Noise Level Check']
+  menu Help: ['Help [F1]', 'Read Me (disabled)', "What's New (disabled)", 'Quick Start Guide', 'How to Use Neat Video (disabled)', '---', 'Web Page (disabled)', 'Community Forum (disabled)', 'Report a Bug Online (disabled)', 'Support via E-mail (disabled)', '---', 'About… [Alt+F1]']
+prepare toolbar: ['Auto Profile', 'Generic Profile', 'Load Profile', '<stretch>', 'Profile Check', 'Variants(disabled)']
+adjust toolbar: ['⛶(hidden)', 'Preview(hidden)', 'Play All(hidden)', '<stretch>', 'Filter Settings Check(hidden)', 'Variants(hidden)(disabled)']
+mode menu: ['§Primary Modes', 'Normal', 'YCrCb + Enhanced Contrast (Default)', '§Channel Components', 'RGB  (Red, Green, Blue)', 'YCrCb  (Luminance, Chrominance)', '§Frequency Components', 'Y Channel Frequencies', 'Cr Channel Frequencies', 'Cb Channel Frequencies', '§Viewer Split', '2 x 2', '1+3 Bottom', '1+3 Right']
+zoom text: 49% ▾ frame: Frame: 1920x1080, 8-bit
+prepare default mode YCrCb + emphasis True
+[PASS] no selection -> 'Auto Profile' Auto Profile
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] forward drag: corner = press point (199, 300, 120, 400)
+This plugin does not support propagateSizeHints()
+  bar W/H: W: 400  H: 120
+[PASS] backward drag: press point = lower-right corner (399, 500, 200, 400)
+This plugin does not support propagateSizeHints()
+[PASS] forward limit 512 (99, 100, 512, 512)
+[PASS] backward limit 512 (487, 1288, 512, 512)
+[PASS] clamped inside the image (568, 1408, 512, 512) W=1920 H=1080
+This plugin does not support propagateSizeHints()
+[PASS] move inside keeps size, shifts (199, 300, 120, 400) -> (239, 400, 120, 400)
+[PASS] move clamps at the image edge (960, 1520, 120, 400)
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] click (inside / outside) clears the selection True True
+This plugin does not support propagateSizeHints()
+[PASS] rect (40, 1000, 15, 200): colour (255, 15, 15) (exp (255, 15, 15), drawn px 9), label '', warn [] indep NL 7.8759 exp_warn [] panel -
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] rect (40, 1000, 16, 16): colour (255, 208, 15) (exp (255, 208, 15), drawn px 11), label 'Noise Level: 7.6', warn [] indep NL 7.6265 exp_warn [] panel 7.6
+[PASS] rect (40, 1000, 127, 300): colour (255, 208, 15) (exp (255, 208, 15), drawn px 291), label 'Noise Level: 8.8', warn ['Not Uniform: Y, Cr, Cb'] indep NL 8.7725 exp_warn ['Not Uniform: Y, Cr, Cb'] panel 8.8
+This plugin does not support propagateSizeHints()
+[PASS] rect (40, 1000, 128, 128): colour (15, 192, 15) (exp (15, 192, 15), drawn px 291), label 'Noise Level: 8.5', warn ['Not Uniform: Y, Cr, Cb'] indep NL 8.4655 exp_warn ['Not Uniform: Y, Cr, Cb'] panel 8.5
+This plugin does not support propagateSizeHints()
+[PASS] rect (0, 0, 216, 512): colour (15, 192, 15) (exp (15, 192, 15), drawn px 467), label 'Noise Level: 30.2', warn ['Not Uniform: Y, Cb'] indep NL 30.2328 exp_warn ['Not Uniform: Y, Cb'] panel 30.2
+This plugin does not support propagateSizeHints()
+[PASS] rect (500, 600, 300, 300): colour (15, 192, 15) (exp (15, 192, 15), drawn px 635), label 'Noise Level: 29.3', warn ['Not Uniform: Y, Cr, Cb'] indep NL 29.3168 exp_warn ['Not Uniform: Y, Cr, Cb'] panel 29.3
+This plugin does not support propagateSizeHints()
+[PASS] rect (100, 1500, 64, 40): colour (255, 208, 15) (exp (255, 208, 15), drawn px 74), label 'Noise Level: 7.7', warn ['Not Uniform: Y, Cb'] indep NL 7.7169 exp_warn ['Not Uniform: Y, Cb'] panel 7.7
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support raise()
+This plugin does not support grabbing the keyboard
+[PASS] triangle click opens Build Profile (Most Noisy Frame) / (Current Frame); selection kept ['Build Profile (Most Noisy Frame)', 'Build Profile (Current Frame)'] (300, 400, 200, 300)
+This plugin does not support propagateSizeHints()
+[PASS] < 32: button disabled, error box from the menu path True True
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] 32..127: confirm (Use the small area / Cancel); Cancel builds nothing; Use builds the rect ['Use the small area', 'Cancel'] True [800, 1200, 40, 100]
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+  216x512 drag -> (99, 300, 216, 512) W: 512  H: 216
+  profile+AFT 118.5 s
+[PASS] 216x512 profile built (with AFT); Main Sample NL = indep [100, 300, 216, 512] main 37.1 indep 37.12 name 'Noise profile (1920x1080p) *'
+This plugin does not support propagateSizeHints()
+  Prepare mode switch s: {'YCrCb +': [0.007, 0.007], 'RGB': [0.178], 'YCrCb': [0.268], 'Y Freq': [0.343], 'Cr Freq': [0.368], 'Cb Freq': [0.402], 'Normal': [0.006]}
+[PASS] Adjust: default Normal, YCrCb+ without emphasis Normal False keys [(1, 'Y+', True), (1, 'Y+', False)] (0.46 s)
+[PASS] Prepare keeps its mode YCrCb +
+[PASS] export CRF 0 of the 216x512 profile == backend.process_frame 3 frames area [100, 300, 216, 512]
+24/24 passed
+PYTHONPATH=. python3 $V/v_ui.py $V/clip_v02.mp4 $V/ui  225.35s user 39.14s system 117% cpu 3:45.09 total

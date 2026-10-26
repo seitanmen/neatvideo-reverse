@@ -99,9 +99,11 @@ def _specs():
                            tip="Off: the filtered result only (backend mix 0)")
     # genuine controls without a v5 counterpart (shown disabled, kept in presets)
     na = dict(implemented=False, tip=NOT_IMPLEMENTED)
-    S["t_noise"] = Spec("pct", 100.0, 0, 250, "Temporal Noise Level", implemented=False,
-                        tip="The v5 temporal stage has no noise level of its own; the Spatial Noise Level "
-                        "(Overall / Luminance) also scales the temporal similarity.\n" + NOT_IMPLEMENTED)
+    S["t_noise"] = Spec("pct", 100.0, 0, 250, "Temporal Noise Level",
+                        tip="Estimation of noise level for the Temporal filter (relative to noise profile) - "
+                        "higher values -> more image elements are treated as noise.\n(repro: multiplies the "
+                        "noise level of the temporal similarity only, on top of the Overall / Luminance Noise "
+                        "Level; the Spatial filter is not affected)")
     S["rep_rate"] = Spec("pct", 0.0, 0, 100, "Repeat Rate", **na)
     S["dust_amount"] = Spec("pct", 100.0, 0, 100, "Amount", **na)
     S["adapt_enable"] = Spec("bool", False, label="Adapt to Changing Noise", **na)
@@ -164,6 +166,7 @@ def backend_params(ui):
         similarity=ui["adv_similarity"], mix=ui["mix"] / 100.0 if ui.get("mix_enable") else 0.0)
     P["ui_channels"] = chans
     P["ui_spatial"] = bool(ui["s_enable"])
+    P["t_noise"] = ui["t_noise"] / 100.0        # Temporal Noise Level (backend.temporal)
     return P
 
 
@@ -222,7 +225,7 @@ class ProfileState:
     base: dict = None                     # build_profile_v5 / apply_aft result
     factors: list = field(default_factory=unit_factors)
     pinned: list = field(default_factory=lambda: [set() for _ in CHANNELS])
-    device: str = "Unnamed device"
+    device: str = "Unspecified device"
     tune: dict = field(default_factory=dict)     # profile Noise Level: "all", "Y", "Cb", "Cr" (missing = 1.0)
 
     def clone(self):
@@ -260,7 +263,7 @@ class ProfileState:
             raise ValueError("profile tune must be a dict of all / Y / Cb / Cr with finite values")
         tune = {k: float(min(max(float(v), TUNE_MIN), TUNE_MAX)) for k, v in tune.items()}
         return ProfileState(d["base"], [list(map(float, f)) for f in d.get("factors", unit_factors())],
-                            [set(p) for p in d.get("pinned", [[], [], []])], d.get("device", "Unnamed device"),
+                            [set(p) for p in d.get("pinned", [[], [], []])], d.get("device", "Unspecified device"),
                             tune)
 
 

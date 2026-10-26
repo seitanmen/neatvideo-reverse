@@ -1,0 +1,46 @@
+qt.qpa.fonts: Populating font family aliases took 196 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] 16-bit 4:4:4 load yuv444p16le prefs depth='16' mem=0.004
+[PASS] memory cap uses real bytes frames 4 expected 4 (internal 884736 B/frame; 8-bit formula would give 38)
+[PASS] frame dtype/shape [(256, 288), (256, 288), (256, 288)]
+[PASS] internal_bytes == actual nbytes 884736
+[PASS] status bar source yuv444p16le (16-bit 4:4:4) · processing 16-bit
+[PASS] export dialog default .mkv for 16-bit ('Matroska FFV1 (*.mkv)', '.mkv')
+[PASS] profile sub 1 at 4:4:4 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] switch to 8-bit reloads as yuv420p uint8 yuv420p frames 8
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] mismatched profile flagged in status Unnamed device · auto · σ Y=2.68 Cb=3.61 Cr=4.68 · chroma format differs: rebuild the profile
+[PASS] UI alive after preview with mismatched profile viewer.filt None; msgs: ['Auto Fine-Tune applied', 'the profile was made at another chroma format (bit-depth setting); export will refuse it', 'profile loaded: /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/ui/prof8.nvprof.json']
+[PASS] export with mismatched profile refused, no video file export_ok=False files=['mismatch.ui_params.json', 'mismatch.ui_profile.json'] msgs=['error: the UI profile was made on 4:2:0 planes but this export processes 4:4:4 planes (--depth); rebuild the profile with the same bit-depth setting', '> processing yuv444p16le · 16-bit 4:4:4, codec ffv1\nerror: the UI profile was made on 4:2:0 planes but this export processes 4:4:4 planes (--depth); rebuild the profile with the same bit-depth setting']
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] 32-bit load of 8-bit yuv source source yuv420p (8-bit 4:2:0) · processing 32-bit float RGB frames 97
+[PASS] export dialog for 32-bit offers EXR Matroska FFV1 (*.mkv);;EXR sequence (*.exr)
+[PASS] EXR export cancel removes its frames and json frames before cancel 3; left ['unrelated_00001.exr']

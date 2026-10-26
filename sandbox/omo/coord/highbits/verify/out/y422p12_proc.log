@@ -1,0 +1,6 @@
+--depth source
+320x240 24/1 frames~8 rotation=0 out=[0,end) tags={'color_space': None, 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv422p12le (12-bit 4:2:2) -> processing yuv422p12le · 12-bit 4:2:2, codec ffv1
+profile frame 2: mode=auto area=[0, 72, 64] (small square (< 128 px)) sigma={'Y': 2.709, 'Cb': 6.488, 'Cr': 8.887}
+frame 8/8 2s
+wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/out/y422p12_proc.mkv (8 frames, 2.1s)

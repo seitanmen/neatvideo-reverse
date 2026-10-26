@@ -1,0 +1,17 @@
+case apply_close:192:108:8:12 (rc 0)
+  [PASS] 4.1 frames received from stdin 12 frames, Y [[108, 192], [54, 96], [54, 96]] uint8, src <OFX host>, n 12
+  [PASS] 4.2 Open / Export / Load / Generic disabled open False export False load False generic False; triggering them: no export True
+  [PASS] 4.4 Auto Profile -> AFT flat_status 2 area [32, 96, 48] frame 0 0.14s; AFT True 4.79s
+  [FAIL] 4.3 Apply writes the processed frame to stdout frames written by Apply: 0; status 'filter settings applied to preview'
+  [FAIL] close writes a frame only when it differs from the last one frames written on close: 1 (expected 0)
+  [PASS] stdout size == emitted frames x frame_size 31104 bytes = 1 x 31104; emits 1 (expected 1); exit rc 0
+Traceback (most recent call last):
+  File "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/test4_ofx.py", line 105, in <module>
+    ok = [run_case(outdir, c) for c in cases]
+          ~~~~~~~~^^^^^^^^^^^
+  File "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/test4_ofx.py", line 83, in run_case
+    z = np.load(f"{d}/emit_{k}.npz")
+  File "/opt/anaconda3/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 459, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'pre_fix/apply_close_192_108_8_12/emit_0.npz'

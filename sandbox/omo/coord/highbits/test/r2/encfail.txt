@@ -1,0 +1,3 @@
+8-bit mp4: exit 1, traceback False, files left [], message: error: the encoder failed (ffmpeg exit 3, message above); the incomplete /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/test/r2/fail8.mp4 was removed
+10-bit mkv: exit 1, traceback False, files left [], message: error: the encoder failed (ffmpeg exit 3, message above); the incomplete /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/test/r2/fail10.mkv was removed
+EXR sequence: exit 1, traceback False, files left [], message: error: the encoder failed (ffmpeg exit 3, message above); the incomplete /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/test/r2/failexr/out_%05d.exr was removed

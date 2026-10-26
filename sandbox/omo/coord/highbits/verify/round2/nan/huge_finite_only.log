@@ -1,0 +1,27 @@
+256x192 24/1 frames~8 rotation=0 out=[0,end) tags={'color_space': 'gbr', 'color_primaries': None, 'color_transfer': None, 'color_range': None}
+source gbrpf32le (32-bit float RGB) -> processing gbrpf32le · 32-bit float RGB, codec ffv1
+profile frame 2: mode=auto area=[64, 48, 128] (ok) sigma={'Y': 2.101, 'Cb': 5.851, 'Cr': 8.161}
+frame 8/8 2s
+wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/round2/nan/huge_finite_only_out.mkv (8 frames, 1.6s)
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:630: RuntimeWarning: invalid value encountered in cast
+  bins = np.clip((_blocks(Y, blk).mean(-1) * CURVE_BINS / 256.0).astype(int), 0, CURVE_BINS - 1)
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:410: RuntimeWarning: overflow encountered in multiply
+  return uniform_filter(b1 * b1, 5) < 1e-6
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:916: RuntimeWarning: overflow encountered in square
+  w = np.exp(-np.maximum(uniform_filter((wy - Y) ** 2, 5) / den - 1.0, 0.0) / max(P["threshold"], 1e-3))
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:916: RuntimeWarning: overflow encountered in square
+  w = np.exp(-np.maximum(uniform_filter((wy - Y) ** 2, 5) / den - 1.0, 0.0) / max(P["threshold"], 1e-3))
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:801: RuntimeWarning: overflow encountered in multiply
+  cost[i, j] = (d * d).sum((2, 3))
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:824: RuntimeWarning: invalid value encountered in subtract
+  dny = c[0, 1] - 2 * c[1, 1] + c[2, 1]
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:825: RuntimeWarning: invalid value encountered in subtract
+  dnx = c[1, 0] - 2 * c[1, 1] + c[1, 2]
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:826: RuntimeWarning: invalid value encountered in subtract
+  fy += np.where(centred & (dny > 0), np.clip(0.5 * (c[0, 1] - c[2, 1]) / np.maximum(dny, 1e-6), -0.5, 0.5), 0)
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:827: RuntimeWarning: invalid value encountered in subtract
+  fx += np.where(centred & (dnx > 0), np.clip(0.5 * (c[1, 0] - c[1, 2]) / np.maximum(dnx, 1e-6), -0.5, 0.5), 0)
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:953: RuntimeWarning: overflow encountered in multiply
+  e = uniform_filter(b[j] * b[j], 7)
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:954: RuntimeWarning: invalid value encountered in divide
+  g = np.maximum(e - P["spatial"] * s * s, 0.0) / (e + 1e-6)

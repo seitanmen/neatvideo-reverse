@@ -1,0 +1,40 @@
+[
+ {
+  "name": "started",
+  "size": 0,
+  "frames": 12,
+  "shape": [
+   [
+    108,
+    192
+   ],
+   [
+    54,
+    96
+   ],
+   [
+    54,
+    96
+   ]
+  ],
+  "open": false,
+  "export": false,
+  "load": false,
+  "generic": false,
+  "frame": 4,
+  "prof": false
+ },
+ {
+  "name": "pre_close",
+  "size": 0,
+  "t": 1.01,
+  "frame": 4,
+  "status": "OFX host: Auto Profile (Prepare Noise Profile), adjust, then Apply to return the frame to the host"
+ },
+ {
+  "name": "exit",
+  "rc": 0,
+  "size": 31104,
+  "t": 1.17
+ }
+]

@@ -1,0 +1,191 @@
+[PASS] test.mp4 f123 auto fr=False area=None -> [288, 376, 48] []
+[PASS] test.mp4 f123 auto fr=True area=None -> [0, 288, 48] []
+[PASS] test.mp4 f123 auto fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test.mp4 f123 auto fr=False area=(310, 590, 200) -> [160, 440, 200] []
+[PASS] test.mp4 f123 auto fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test.mp4 f123 auto fr=False area=(180, 1, 257) -> [103, 1, 257] []
+[PASS] test.mp4 f123 auto fr=False area=(0, 0, 9999) -> [0, 0, 360] []
+[PASS] test.mp4 f123 auto fr=False area=(-3, 640, 64) -> [0, 576, 64] []
+[PASS] test.mp4 f123 spatial fr=False area=None -> [288, 376, 48] []
+[PASS] test.mp4 f123 spatial fr=True area=None -> [0, 288, 48] []
+[PASS] test.mp4 f123 spatial fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test.mp4 f123 spatial fr=False area=(310, 590, 200) -> [160, 440, 200] []
+[PASS] test.mp4 f123 spatial fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test.mp4 f123 spatial fr=False area=(180, 1, 257) -> [103, 1, 257] []
+[PASS] test.mp4 f123 spatial fr=False area=(0, 0, 9999) -> [0, 0, 360] []
+[PASS] test.mp4 f123 spatial fr=False area=(-3, 640, 64) -> [0, 576, 64] []
+[PASS] test.mp4 f123 temporal fr=False area=None -> [288, 376, 48] []
+[PASS] test.mp4 f123 temporal fr=True area=None -> [0, 288, 48] []
+[PASS] test.mp4 f123 temporal fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test.mp4 f123 temporal fr=False area=(310, 590, 200) -> [160, 440, 200] []
+[PASS] test.mp4 f123 temporal fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test.mp4 f123 temporal fr=False area=(180, 1, 257) -> [103, 1, 257] []
+[PASS] test.mp4 f123 temporal fr=False area=(0, 0, 9999) -> [0, 0, 360] []
+[PASS] test.mp4 f123 temporal fr=False area=(-3, 640, 64) -> [0, 576, 64] []
+[PASS] test.mp4 f640 auto fr=False area=None -> [272, 120, 48] []
+[PASS] test.mp4 f640 auto fr=True area=None -> [0, 264, 48] []
+[PASS] test.mp4 f640 auto fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test.mp4 f640 auto fr=False area=(310, 590, 200) -> [160, 440, 200] []
+[PASS] test.mp4 f640 auto fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test.mp4 f640 auto fr=False area=(180, 1, 257) -> [103, 1, 257] []
+[PASS] test.mp4 f640 auto fr=False area=(0, 0, 9999) -> [0, 0, 360] []
+[PASS] test.mp4 f640 auto fr=False area=(-3, 640, 64) -> [0, 576, 64] []
+[PASS] test.mp4 f640 spatial fr=False area=None -> [272, 120, 48] []
+[PASS] test.mp4 f640 spatial fr=True area=None -> [0, 264, 48] []
+[PASS] test.mp4 f640 spatial fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test.mp4 f640 spatial fr=False area=(310, 590, 200) -> [160, 440, 200] []
+[PASS] test.mp4 f640 spatial fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test.mp4 f640 spatial fr=False area=(180, 1, 257) -> [103, 1, 257] []
+[PASS] test.mp4 f640 spatial fr=False area=(0, 0, 9999) -> [0, 0, 360] []
+[PASS] test.mp4 f640 spatial fr=False area=(-3, 640, 64) -> [0, 576, 64] []
+[PASS] test.mp4 f640 temporal fr=False area=None -> [272, 120, 48] []
+[PASS] test.mp4 f640 temporal fr=True area=None -> [0, 264, 48] []
+[PASS] test.mp4 f640 temporal fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test.mp4 f640 temporal fr=False area=(310, 590, 200) -> [160, 440, 200] []
+[PASS] test.mp4 f640 temporal fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test.mp4 f640 temporal fr=False area=(180, 1, 257) -> [103, 1, 257] []
+[PASS] test.mp4 f640 temporal fr=False area=(0, 0, 9999) -> [0, 0, 360] []
+[PASS] test.mp4 f640 temporal fr=False area=(-3, 640, 64) -> [0, 576, 64] []
+[PASS] test_v02.mp4 f37 auto fr=False area=None -> [0, 792, 128] []
+[PASS] test_v02.mp4 f37 auto fr=True area=None -> [0, 792, 128] []
+[PASS] test_v02.mp4 f37 auto fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test_v02.mp4 f37 auto fr=False area=(1030, 1870, 200) -> [880, 1720, 200] []
+[PASS] test_v02.mp4 f37 auto fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test_v02.mp4 f37 auto fr=False area=(540, 1, 257) -> [540, 1, 257] []
+[PASS] test_v02.mp4 f37 auto fr=False area=(0, 0, 9999) -> [0, 0, 1080] []
+[PASS] test_v02.mp4 f37 auto fr=False area=(-3, 1920, 64) -> [0, 1856, 64] []
+[PASS] test_v02.mp4 f37 spatial fr=False area=None -> [0, 792, 128] []
+[PASS] test_v02.mp4 f37 spatial fr=True area=None -> [0, 792, 128] []
+[PASS] test_v02.mp4 f37 spatial fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test_v02.mp4 f37 spatial fr=False area=(1030, 1870, 200) -> [880, 1720, 200] []
+[PASS] test_v02.mp4 f37 spatial fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test_v02.mp4 f37 spatial fr=False area=(540, 1, 257) -> [540, 1, 257] []
+[PASS] test_v02.mp4 f37 spatial fr=False area=(0, 0, 9999) -> [0, 0, 1080] []
+[PASS] test_v02.mp4 f37 spatial fr=False area=(-3, 1920, 64) -> [0, 1856, 64] []
+[PASS] test_v02.mp4 f37 temporal fr=False area=None -> [0, 792, 128] []
+[PASS] test_v02.mp4 f37 temporal fr=True area=None -> [0, 792, 128] []
+[PASS] test_v02.mp4 f37 temporal fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test_v02.mp4 f37 temporal fr=False area=(1030, 1870, 200) -> [880, 1720, 200] []
+[PASS] test_v02.mp4 f37 temporal fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test_v02.mp4 f37 temporal fr=False area=(540, 1, 257) -> [540, 1, 257] []
+[PASS] test_v02.mp4 f37 temporal fr=False area=(0, 0, 9999) -> [0, 0, 1080] []
+[PASS] test_v02.mp4 f37 temporal fr=False area=(-3, 1920, 64) -> [0, 1856, 64] []
+[PASS] test_v02.mp4 f455 auto fr=False area=None -> [0, 880, 128] []
+[PASS] test_v02.mp4 f455 auto fr=True area=None -> [0, 880, 128] []
+[PASS] test_v02.mp4 f455 auto fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test_v02.mp4 f455 auto fr=False area=(1030, 1870, 200) -> [880, 1720, 200] []
+[PASS] test_v02.mp4 f455 auto fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test_v02.mp4 f455 auto fr=False area=(540, 1, 257) -> [540, 1, 257] []
+[PASS] test_v02.mp4 f455 auto fr=False area=(0, 0, 9999) -> [0, 0, 1080] []
+[PASS] test_v02.mp4 f455 auto fr=False area=(-3, 1920, 64) -> [0, 1856, 64] []
+[PASS] test_v02.mp4 f455 spatial fr=False area=None -> [0, 880, 128] []
+[PASS] test_v02.mp4 f455 spatial fr=True area=None -> [0, 880, 128] []
+[PASS] test_v02.mp4 f455 spatial fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test_v02.mp4 f455 spatial fr=False area=(1030, 1870, 200) -> [880, 1720, 200] []
+[PASS] test_v02.mp4 f455 spatial fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test_v02.mp4 f455 spatial fr=False area=(540, 1, 257) -> [540, 1, 257] []
+[PASS] test_v02.mp4 f455 spatial fr=False area=(0, 0, 9999) -> [0, 0, 1080] []
+[PASS] test_v02.mp4 f455 spatial fr=False area=(-3, 1920, 64) -> [0, 1856, 64] []
+[PASS] test_v02.mp4 f455 temporal fr=False area=None -> [0, 880, 128] []
+[PASS] test_v02.mp4 f455 temporal fr=True area=None -> [0, 880, 128] []
+[PASS] test_v02.mp4 f455 temporal fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test_v02.mp4 f455 temporal fr=False area=(1030, 1870, 200) -> [880, 1720, 200] []
+[PASS] test_v02.mp4 f455 temporal fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test_v02.mp4 f455 temporal fr=False area=(540, 1, 257) -> [540, 1, 257] []
+[PASS] test_v02.mp4 f455 temporal fr=False area=(0, 0, 9999) -> [0, 0, 1080] []
+[PASS] test_v02.mp4 f455 temporal fr=False area=(-3, 1920, 64) -> [0, 1856, 64] []
+[PASS] test_v02.mp4 f700 auto fr=False area=None -> [0, 800, 128] []
+[PASS] test_v02.mp4 f700 auto fr=True area=None -> [0, 800, 128] []
+[PASS] test_v02.mp4 f700 auto fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test_v02.mp4 f700 auto fr=False area=(1030, 1870, 200) -> [880, 1720, 200] []
+[PASS] test_v02.mp4 f700 auto fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test_v02.mp4 f700 auto fr=False area=(540, 1, 257) -> [540, 1, 257] []
+[PASS] test_v02.mp4 f700 auto fr=False area=(0, 0, 9999) -> [0, 0, 1080] []
+[PASS] test_v02.mp4 f700 auto fr=False area=(-3, 1920, 64) -> [0, 1856, 64] []
+[PASS] test_v02.mp4 f700 spatial fr=False area=None -> [0, 800, 128] []
+[PASS] test_v02.mp4 f700 spatial fr=True area=None -> [0, 800, 128] []
+[PASS] test_v02.mp4 f700 spatial fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test_v02.mp4 f700 spatial fr=False area=(1030, 1870, 200) -> [880, 1720, 200] []
+[PASS] test_v02.mp4 f700 spatial fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test_v02.mp4 f700 spatial fr=False area=(540, 1, 257) -> [540, 1, 257] []
+[PASS] test_v02.mp4 f700 spatial fr=False area=(0, 0, 9999) -> [0, 0, 1080] []
+[PASS] test_v02.mp4 f700 spatial fr=False area=(-3, 1920, 64) -> [0, 1856, 64] []
+[PASS] test_v02.mp4 f700 temporal fr=False area=None -> [0, 800, 128] []
+[PASS] test_v02.mp4 f700 temporal fr=True area=None -> [0, 800, 128] []
+[PASS] test_v02.mp4 f700 temporal fr=False area=(17, 29, 96) -> [17, 29, 96] []
+[PASS] test_v02.mp4 f700 temporal fr=False area=(1030, 1870, 200) -> [880, 1720, 200] []
+[PASS] test_v02.mp4 f700 temporal fr=False area=(3, 5, 48) -> [3, 5, 48] []
+[PASS] test_v02.mp4 f700 temporal fr=False area=(540, 1, 257) -> [540, 1, 257] []
+[PASS] test_v02.mp4 f700 temporal fr=False area=(0, 0, 9999) -> [0, 0, 1080] []
+[PASS] test_v02.mp4 f700 temporal fr=False area=(-3, 1920, 64) -> [0, 1856, 64] []
+--- rectangles
+[PASS] test.mp4 f123 rect=(0, 0, 216, 512) -> [0, 0, 216, 512] exp=[0, 0, 216, 512] lvl=True band=True sigma=True σ={'Y': 32.887, 'Cb': 4.323, 'Cr': 4.833}
+[PASS] test.mp4 f123 rect=(350, 630, 216, 512) -> [144, 128, 216, 512] exp=[144, 128, 216, 512] lvl=True band=True sigma=True σ={'Y': 32.037, 'Cb': 3.929, 'Cr': 4.7}
+[PASS] test.mp4 f123 rect=(11, 23, 33, 47) -> [11, 23, 33, 47] exp=[11, 23, 33, 47] lvl=True band=True sigma=True σ={'Y': 28.841, 'Cb': 3.637, 'Cr': 5.705}
+[PASS] test.mp4 f123 rect=(-20, -30, 70, 40) -> [0, 0, 70, 40] exp=[0, 0, 70, 40] lvl=True band=True sigma=True σ={'Y': 33.869, 'Cb': 3.718, 'Cr': 4.973}
+[PASS] test.mp4 f123 rect=(5, 7, 2000, 77) -> [0, 7, 360, 77] exp=[0, 7, 360, 77] lvl=True band=True sigma=True σ={'Y': 32.508, 'Cb': 3.754, 'Cr': 4.766}
+[PASS] test.mp4 f123 rect=(5, 7, 3, 3000) -> [5, 0, 8, 640] exp=[5, 0, 8, 640] lvl=True band=True sigma=True σ={'Y': 35.336, 'Cb': 35.671, 'Cr': 4.941}
+[PASS] test.mp4 f123 rect=(40, 60, 100, 101) -> [40, 60, 100, 101] exp=[40, 60, 100, 101] lvl=True band=True sigma=True σ={'Y': 40.569, 'Cb': 4.364, 'Cr': 4.806}
+[PASS] test.mp4 f123 rect=(0, 0, 2000, 2000) -> [0, 0, 360, 640] exp=[0, 0, 360, 640] lvl=True band=True sigma=True σ={'Y': 31.952, 'Cb': 4.05, 'Cr': 4.751}
+[PASS] test.mp4 f123 rect=(-5, 3, 64, 64) -> [0, 3, 64] exp=[0, 3, 64] lvl=True band=True sigma=True σ={'Y': 29.916, 'Cb': 3.715, 'Cr': 5.124}
+[PASS] test.mp4 f640 rect=(0, 0, 216, 512) -> [0, 0, 216, 512] exp=[0, 0, 216, 512] lvl=True band=True sigma=True σ={'Y': 31.404, 'Cb': 4.069, 'Cr': 5.205}
+[PASS] test.mp4 f640 rect=(350, 630, 216, 512) -> [144, 128, 216, 512] exp=[144, 128, 216, 512] lvl=True band=True sigma=True σ={'Y': 30.684, 'Cb': 3.581, 'Cr': 4.761}
+[PASS] test.mp4 f640 rect=(11, 23, 33, 47) -> [11, 23, 33, 47] exp=[11, 23, 33, 47] lvl=True band=True sigma=True σ={'Y': 28.501, 'Cb': 3.806, 'Cr': 6.476}
+[PASS] test.mp4 f640 rect=(-20, -30, 70, 40) -> [0, 0, 70, 40] exp=[0, 0, 70, 40] lvl=True band=True sigma=True σ={'Y': 36.365, 'Cb': 3.604, 'Cr': 5.174}
+[PASS] test.mp4 f640 rect=(5, 7, 2000, 77) -> [0, 7, 360, 77] exp=[0, 7, 360, 77] lvl=True band=True sigma=True σ={'Y': 31.034, 'Cb': 3.522, 'Cr': 4.83}
+[PASS] test.mp4 f640 rect=(5, 7, 3, 3000) -> [5, 0, 8, 640] exp=[5, 0, 8, 640] lvl=True band=True sigma=True σ={'Y': 35.135, 'Cb': 5.386, 'Cr': 8.052}
+[PASS] test.mp4 f640 rect=(40, 60, 100, 101) -> [40, 60, 100, 101] exp=[40, 60, 100, 101] lvl=True band=True sigma=True σ={'Y': 38.283, 'Cb': 3.891, 'Cr': 4.931}
+[PASS] test.mp4 f640 rect=(0, 0, 2000, 2000) -> [0, 0, 360, 640] exp=[0, 0, 360, 640] lvl=True band=True sigma=True σ={'Y': 30.859, 'Cb': 3.709, 'Cr': 4.884}
+[PASS] test.mp4 f640 rect=(-5, 3, 64, 64) -> [0, 3, 64] exp=[0, 3, 64] lvl=True band=True sigma=True σ={'Y': 30.793, 'Cb': 3.707, 'Cr': 5.473}
+[PASS] test_v02.mp4 f37 rect=(0, 0, 216, 512) -> [0, 0, 216, 512] exp=[0, 0, 216, 512] lvl=True band=True sigma=True σ={'Y': 6.156, 'Cb': 2.524, 'Cr': 3.232}
+[PASS] test_v02.mp4 f37 rect=(1070, 1910, 216, 512) -> [864, 1408, 216, 512] exp=[864, 1408, 216, 512] lvl=True band=True sigma=True σ={'Y': 5.545, 'Cb': 2.498, 'Cr': 3.255}
+[PASS] test_v02.mp4 f37 rect=(11, 23, 33, 47) -> [11, 23, 33, 47] exp=[11, 23, 33, 47] lvl=True band=True sigma=True σ={'Y': 6.336, 'Cb': 2.517, 'Cr': 3.234}
+[PASS] test_v02.mp4 f37 rect=(-20, -30, 70, 40) -> [0, 0, 70, 40] exp=[0, 0, 70, 40] lvl=True band=True sigma=True σ={'Y': 5.349, 'Cb': 1.176, 'Cr': 1.643}
+[PASS] test_v02.mp4 f37 rect=(5, 7, 2000, 77) -> [0, 7, 1080, 77] exp=[0, 7, 1080, 77] lvl=True band=True sigma=True σ={'Y': 6.116, 'Cb': 2.526, 'Cr': 3.232}
+[PASS] test_v02.mp4 f37 rect=(5, 7, 3, 3000) -> [5, 0, 8, 1920] exp=[5, 0, 8, 1920] lvl=True band=True sigma=True σ={'Y': 6.059, 'Cb': 2.352, 'Cr': 3.356}
+[PASS] test_v02.mp4 f37 rect=(40, 60, 100, 101) -> [40, 60, 100, 101] exp=[40, 60, 100, 101] lvl=True band=True sigma=True σ={'Y': 5.363, 'Cb': 2.541, 'Cr': 3.383}
+[PASS] test_v02.mp4 f37 rect=(0, 0, 2000, 2000) -> [0, 0, 1080, 1920] exp=[0, 0, 1080, 1920] lvl=True band=True sigma=True σ={'Y': 6.213, 'Cb': 2.495, 'Cr': 3.258}
+[PASS] test_v02.mp4 f37 rect=(-5, 3, 64, 64) -> [0, 3, 64] exp=[0, 3, 64] lvl=True band=True sigma=True σ={'Y': 5.131, 'Cb': 2.516, 'Cr': 1.374}
+[PASS] test_v02.mp4 f455 rect=(0, 0, 216, 512) -> [0, 0, 216, 512] exp=[0, 0, 216, 512] lvl=True band=True sigma=True σ={'Y': 5.946, 'Cb': 2.569, 'Cr': 3.353}
+[PASS] test_v02.mp4 f455 rect=(1070, 1910, 216, 512) -> [864, 1408, 216, 512] exp=[864, 1408, 216, 512] lvl=True band=True sigma=True σ={'Y': 5.087, 'Cb': 2.536, 'Cr': 3.317}
+[PASS] test_v02.mp4 f455 rect=(11, 23, 33, 47) -> [11, 23, 33, 47] exp=[11, 23, 33, 47] lvl=True band=True sigma=True σ={'Y': 5.696, 'Cb': 2.567, 'Cr': 3.344}
+[PASS] test_v02.mp4 f455 rect=(-20, -30, 70, 40) -> [0, 0, 70, 40] exp=[0, 0, 70, 40] lvl=True band=True sigma=True σ={'Y': 4.344, 'Cb': 2.203, 'Cr': 1.635}
+[PASS] test_v02.mp4 f455 rect=(5, 7, 2000, 77) -> [0, 7, 1080, 77] exp=[0, 7, 1080, 77] lvl=True band=True sigma=True σ={'Y': 5.915, 'Cb': 2.569, 'Cr': 3.354}
+[PASS] test_v02.mp4 f455 rect=(5, 7, 3, 3000) -> [5, 0, 8, 1920] exp=[5, 0, 8, 1920] lvl=True band=True sigma=True σ={'Y': 5.792, 'Cb': 2.452, 'Cr': 3.168}
+[PASS] test_v02.mp4 f455 rect=(40, 60, 100, 101) -> [40, 60, 100, 101] exp=[40, 60, 100, 101] lvl=True band=True sigma=True σ={'Y': 5.223, 'Cb': 2.563, 'Cr': 3.437}
+[PASS] test_v02.mp4 f455 rect=(0, 0, 2000, 2000) -> [0, 0, 1080, 1920] exp=[0, 0, 1080, 1920] lvl=True band=True sigma=True σ={'Y': 5.981, 'Cb': 2.531, 'Cr': 3.324}
+[PASS] test_v02.mp4 f455 rect=(-5, 3, 64, 64) -> [0, 3, 64] exp=[0, 3, 64] lvl=True band=True sigma=True σ={'Y': 4.167, 'Cb': 2.571, 'Cr': 1.541}
+[PASS] test_v02.mp4 f700 rect=(0, 0, 216, 512) -> [0, 0, 216, 512] exp=[0, 0, 216, 512] lvl=True band=True sigma=True σ={'Y': 5.751, 'Cb': 2.538, 'Cr': 3.316}
+[PASS] test_v02.mp4 f700 rect=(1070, 1910, 216, 512) -> [864, 1408, 216, 512] exp=[864, 1408, 216, 512] lvl=True band=True sigma=True σ={'Y': 5.209, 'Cb': 2.52, 'Cr': 3.298}
+[PASS] test_v02.mp4 f700 rect=(11, 23, 33, 47) -> [11, 23, 33, 47] exp=[11, 23, 33, 47] lvl=True band=True sigma=True σ={'Y': 5.373, 'Cb': 2.52, 'Cr': 3.283}
+[PASS] test_v02.mp4 f700 rect=(-20, -30, 70, 40) -> [0, 0, 70, 40] exp=[0, 0, 70, 40] lvl=True band=True sigma=True σ={'Y': 4.153, 'Cb': 1.135, 'Cr': 1.554}
+[PASS] test_v02.mp4 f700 rect=(5, 7, 2000, 77) -> [0, 7, 1080, 77] exp=[0, 7, 1080, 77] lvl=True band=True sigma=True σ={'Y': 5.716, 'Cb': 2.539, 'Cr': 3.319}
+[PASS] test_v02.mp4 f700 rect=(5, 7, 3, 3000) -> [5, 0, 8, 1920] exp=[5, 0, 8, 1920] lvl=True band=True sigma=True σ={'Y': 5.637, 'Cb': 2.218, 'Cr': 3.179}
+[PASS] test_v02.mp4 f700 rect=(40, 60, 100, 101) -> [40, 60, 100, 101] exp=[40, 60, 100, 101] lvl=True band=True sigma=True σ={'Y': 4.867, 'Cb': 2.554, 'Cr': 3.359}
+[PASS] test_v02.mp4 f700 rect=(0, 0, 2000, 2000) -> [0, 0, 1080, 1920] exp=[0, 0, 1080, 1920] lvl=True band=True sigma=True σ={'Y': 5.811, 'Cb': 2.518, 'Cr': 3.298}
+[PASS] test_v02.mp4 f700 rect=(-5, 3, 64, 64) -> [0, 3, 64] exp=[0, 3, 64] lvl=True band=True sigma=True σ={'Y': 4.301, 'Cb': 1.082, 'Cr': 1.376}
+--- 4-tuple squares == old 3-tuple
+[PASS] test.mp4 f123 new(8, 8, 64, 64) == old(8, 8, 64) -> [8, 8, 64] []
+[PASS] test.mp4 f123 new(17, 29, 96, 96) == old(17, 29, 96) -> [17, 29, 96] []
+[PASS] test.mp4 f123 new(0, 0, 300, 300) == old(0, 0, 300) -> [0, 0, 300] []
+[PASS] test.mp4 f640 new(8, 8, 64, 64) == old(8, 8, 64) -> [8, 8, 64] []
+[PASS] test.mp4 f640 new(17, 29, 96, 96) == old(17, 29, 96) -> [17, 29, 96] []
+[PASS] test.mp4 f640 new(0, 0, 300, 300) == old(0, 0, 300) -> [0, 0, 300] []
+[PASS] test_v02.mp4 f37 new(8, 8, 64, 64) == old(8, 8, 64) -> [8, 8, 64] []
+[PASS] test_v02.mp4 f37 new(17, 29, 96, 96) == old(17, 29, 96) -> [17, 29, 96] []
+[PASS] test_v02.mp4 f37 new(0, 0, 300, 300) == old(0, 0, 300) -> [0, 0, 300] []
+[PASS] test_v02.mp4 f455 new(8, 8, 64, 64) == old(8, 8, 64) -> [8, 8, 64] []
+[PASS] test_v02.mp4 f455 new(17, 29, 96, 96) == old(17, 29, 96) -> [17, 29, 96] []
+[PASS] test_v02.mp4 f455 new(0, 0, 300, 300) == old(0, 0, 300) -> [0, 0, 300] []
+[PASS] test_v02.mp4 f700 new(8, 8, 64, 64) == old(8, 8, 64) -> [8, 8, 64] []
+[PASS] test_v02.mp4 f700 new(17, 29, 96, 96) == old(17, 29, 96) -> [17, 29, 96] []
+[PASS] test_v02.mp4 f700 new(0, 0, 300, 300) == old(0, 0, 300) -> [0, 0, 300] []
+rgb fn None
+[PASS] apply_aft ('test.mp4', 123) area=[20, 30, 96] []
+[PASS] apply_aft ('test.mp4', 123) area=[288, 376, 48] []
+[PASS] apply_aft rect ('test.mp4', 123) area=[20, 30, 64, 160] Y=[23.517, 23.744, 23.854, 23.013, 21.573, 18.779, 13.261, 8.209]
+rgb fn None
+[PASS] apply_aft ('test_v02.mp4', 455) area=[20, 30, 96] []
+[PASS] apply_aft ('test_v02.mp4', 455) area=[0, 880, 128] []
+[PASS] apply_aft rect ('test_v02.mp4', 455) area=[20, 30, 64, 160] Y=[1.476, 1.881, 2.319, 2.608, 2.502, 2.023, 1.327, 0.72]
+186/186 passed

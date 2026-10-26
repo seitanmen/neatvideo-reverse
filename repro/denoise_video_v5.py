@@ -6,7 +6,7 @@ removes the v4c colour shift), streaming decode, frames processed in parallel pr
 Per frame: Temporal (motion-compensated, per-pixel weights) -> Spatial (5-band a-trous
 against the residual noise) -> Mix. No global deflicker unless --flicker is given.
 
-  python3 denoise_video_v5.py IN OUT [--profile auto|spatial|temporal] [--area Y,X,SIZE]
+  python3 denoise_video_v5.py IN OUT [--profile auto|spatial|temporal] [--area Y,X,SIZE|Y,X,H,W]
       [--radius 2] [--temporal A] [--threshold T] [--luma A] [--chroma A] [--spatial K]
       [--noise-level N] [--chroma-noise N] [--start S --frames M] [--jobs J] [--crf 16]
       [--flicker R] [--params P.json] [--audio copy|aac|none] [--depth 8|10|12|16|32|source]
@@ -403,7 +403,8 @@ def main():
     ap.add_argument("--search", type=int)
     ap.add_argument("--profile", default="auto", choices=["auto", "spatial", "temporal"])
     ap.add_argument("--profile-frame", type=int, help="frame used for the noise profile (default N//3)")
-    ap.add_argument("--area", help="profiling square Y,X,SIZE on the luma grid (default: FindFlatArea)")
+    ap.add_argument("--area", help="profiling square Y,X,SIZE or rectangle Y,X,H,W on the luma grid "
+                    "(default: FindFlatArea)")
     ap.add_argument("--start", type=int, default=0)
     ap.add_argument("--frames", type=int, help="number of output frames (default: to the end)")
     ap.add_argument("--flicker", type=int, default=0, help="whole-frame flicker reduction radius (0 = off)")
@@ -415,6 +416,12 @@ def main():
                     help="processing / output bit depth (8 = yuv420p as before; 32 = RGB float)")
     ap.add_argument("--codec", default="auto", choices=CODECS, help="video encoder (auto: see above)")
     A = ap.parse_args()
+    try:
+        area = tuple(int(v) for v in A.area.split(",")) if A.area else None
+    except ValueError:
+        area = ()
+    if area is not None and len(area) not in (3, 4):
+        ap.error("--area takes Y,X,SIZE or Y,X,H,W (integers)")
     t0 = time.time()
     os.makedirs(os.path.dirname(os.path.abspath(A.dst)), exist_ok=True)
     info = probe(A.src)
@@ -453,7 +460,6 @@ def main():
         pr = [tuple(p.astype(np.float32) for p in f) for _, f in frames(0, 3)]
     if not pr:
         sys.exit("no decodable video frames")
-    area = tuple(int(v) for v in A.area.split(",")) if A.area else None
     prof = nv.build_profile_v5(pr[0], full_range, area=area, pair=pr[1] if len(pr) > 1 else None,
                                mode=A.profile, more=pr[1:], matrix=matrix)
     st = prof.get("flat_status")

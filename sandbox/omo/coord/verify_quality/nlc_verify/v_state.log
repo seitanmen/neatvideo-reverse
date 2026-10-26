@@ -1,0 +1,39 @@
+qt.qpa.fonts: Populating font family aliases took 201 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] profile 124 frames
+[PASS] begin from Prepare -> Adjust page, Normal 
+[PASS] mask = independent expected 
+[PASS] rapid frames: final frame shown, equals expected 
+[PASS] never showed another frame's mask {'frame': 0, 'setting': 0, 'samples': 12}
+[PASS] rapid settings: final equals expected (t_noise 40) 
+stale counts (setting stale = old-settings image shown while recomputing): {'frame': 0, 'setting': 35, 'samples': 53}
+[PASS] setting+frame change -> correct 
+[PASS] t_radius=0: m = 0 image 
+[PASS] t_amount=0.0: m = 0 image 
+[PASS] mode change / hold during NLC: no exception src YCrCb=nlc hold=orig
+[PASS] beginner/advanced toggle keeps state 
+[PASS] quick Begin/Finish: no mask after, filtered preview for current settings 
+[PASS] after Finish: filtered preview == fresh process at t_noise 30 
+[PASS] exclusive with Filter Tuning Assist 
+[PASS] Profile Check ends when NLC begins (page change) 
+[PASS] toolbar menu Finish ends NLC 
+[PASS] reload video ends NLC, panel restored loaded True
+[PASS] no profile: ends and cannot start 
+[PASS] no exceptions in slots 
+19/19 stale {'frame': 0, 'setting': 126, 'samples': 232}

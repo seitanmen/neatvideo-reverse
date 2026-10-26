@@ -15,12 +15,13 @@ Limited range, BT.709 (the host converts).
 
 The host (DCC tool) launches this process with:
   python3 -m nv_ui_qt.main --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]
-and writes frames to stdin. The UI displays them, the user adjusts settings,
-and closing the window processes the current frame and writes it to stdout.
-
-A separate "--ofx-serve" mode reads all frames from stdin, shows the UI, and
-writes the processed result of every frame to stdout when the user closes the
-window (batch mode). This is simpler for hosts that can wait for the process.
+and writes frames to stdin, then closes it (the UI starts after EOF, or after MAX_FRAMES frames).
+The UI displays them and the user adjusts settings. Frames written to stdout (main.py):
+  - Apply: the current frame, processed with the current settings;
+  - window closed (also Cancel): the same, unless an identical frame (same frame index, settings and
+    profile) was already written; an unchanged Apply writes nothing either.
+stdout therefore holds k >= 1 whole frames (k x frame_size bytes; k = 0 only when processing failed,
+reported on stderr). The host waits for the process to exit and keeps the last complete frame.
 """
 import os
 import sys

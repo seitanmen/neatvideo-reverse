@@ -1,0 +1,9 @@
+DEFAULT_IDENTICAL_TO_BACKUP
+SQ_IDENTICAL
+f801eab325ea3803c1c3d4bedcd6ec64d6d6b695  -
+f801eab325ea3803c1c3d4bedcd6ec64d6d6b695  -
+profile frame 304: mode=auto area=[0, 288, 48] (small square (< 128 px)) sigma={'Y': 19.66, 'Cb': 4.193, 'Cr': 3.025}
+profile frame 301: mode=auto area=[0, 0, 360, 640] (manual) sigma={'Y': 20.945, 'Cb': 2.726, 'Cr': 2.808}
+profile frame 304: mode=spatial area=[40, 60, 96] (manual) sigma={'Y': 37.19, 'Cb': 4.358, 'Cr': 5.04}
+profile frame 304: mode=spatial area=[40, 60, 96] (manual) sigma={'Y': 37.19, 'Cb': 4.358, 'Cr': 5.04}
+profile frame 304: mode=spatial area=[40, 60, 96] (manual) sigma={'Y': 37.19, 'Cb': 4.358, 'Cr': 5.04}

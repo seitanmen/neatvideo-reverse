@@ -1,0 +1,33 @@
+[
+ {
+  "name": "started",
+  "size": 0,
+  "frames": 12,
+  "shape": [
+   [
+    108,
+    192
+   ],
+   [
+    54,
+    96
+   ],
+   [
+    54,
+    96
+   ]
+  ],
+  "open": false,
+  "export": false,
+  "load": false,
+  "generic": false,
+  "frame": 4,
+  "prof": false
+ },
+ {
+  "name": "exit",
+  "rc": 0,
+  "size": 0,
+  "t": 0.89
+ }
+]

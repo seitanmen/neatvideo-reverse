@@ -1,0 +1,7 @@
+259x195 24/1 frames~9 rotation=0 out=[0,end) tags={'color_space': None, 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv420p10le (10-bit 4:2:0) -> processing yuv420p10le · 10-bit 4:2:0, codec x264
+profile frame 3: mode=auto area=[0, 24, 64] (small square (< 128 px)) sigma={'Y': 2.755, 'Cb': 7.938, 'Cr': 10.688}
+note: odd frame size - the last row/column is dropped on encode
+audio: aac -> copy
+frame 8/8 2s
+wrote ../sandbox/omo/coord/highbits/verify/misc/aud10_out.mp4 (8 frames, 1.6s)

@@ -1,0 +1,31 @@
+qt.qpa.fonts: Populating font family aliases took 194 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+DRV {"ev": "started", "frames": 12, "shape": [[360, 640], [180, 320], [180, 320]], "dtype": "uint8", "info": {"W": 640, "H": 360, "fps": "24.0", "n": 12, "tags": {}, "full_range": false, "rotation": 0, "pix_fmt": null, "ofx_depth": 8}, "src": "<OFX host>", "open_enabled": false, "export_enabled": false, "load_profile_enabled": false, "generic_enabled": false, "apply_tip": "Apply: process the current frame and emit to the host", "status": "OFX host: Auto Profile (Prepare Noise Profile), adjust, then Apply to return the frame to the host", "prof": false, "frame": 4, "t": 0.81}
+DRV {"ev": "disabled_triggered", "export": true, "src": "<OFX host>", "t": 0.81}
+DRV {"ev": "profile", "ok": true, "flat_status": 2, "area": [296, 376, 64], "frame": 0, "secs": 0.72, "t": 1.57}
+DRV {"ev": "aft", "ok": true, "aft_applied": true, "secs": 12.09, "status": "Auto Fine-Tune applied", "t": 13.66}
+DRV {"ev": "preview", "ok": true, "keys": [[0, 4, null]], "t": 14.04}
+DRV {"ev": "emit", "k": 0, "index": 0, "frame": 0, "preview_cached": false, "equals_preview": null, "amt_Y": 70.0, "aft": true, "t": 14.16}
+DRV {"ev": "after_apply", "emitted": 1, "status": "Apply: frame 0 processed and written to the host", "t": 14.16}
+DRV {"ev": "apply_preview", "ok": true, "equals_last_emit": true, "t": 14.37}
+DRV {"ev": "after_close", "emitted": 0, "t": 14.37}
+DRV {"ev": "exit", "rc": 0, "emits": [0], "t": 14.37}

@@ -1,0 +1,6 @@
+--depth 32 --mix 1
+300x222 24/1 frames~8 rotation=0 out=[0,4) tags={'color_space': 'bt709', 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv444p12le (12-bit 4:4:4) -> processing gbrpf32le · 32-bit float RGB, codec ffv1
+profile frame 2: mode=auto area=[0, 24, 64] (small square (< 128 px)) sigma={'Y': 3.268, 'Cb': 9.679, 'Cr': 12.74}
+frame 4/4 2s
+wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/tag_444tv_f32_mix1.mkv (4 frames, 1.7s)

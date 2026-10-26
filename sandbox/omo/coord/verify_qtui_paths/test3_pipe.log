@@ -1,0 +1,3 @@
+frames: 5
+OFX bridge: stdin → frames OK
+exit 0

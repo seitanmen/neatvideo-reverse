@@ -1,0 +1,5 @@
+640x360 30/1 frames~24 rotation=0 out=[4,16) tags={'color_space': None, 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv420p10le (10-bit 4:2:0) -> processing yuv420p10le · 10-bit 4:2:0, codec ffv1
+profile frame 10: mode=auto area=[272, 120, 48] (small square (< 128 px)) sigma={'Y': 23.203, 'Cb': 2.208, 'Cr': 2.796}
+frame 12/12 2s
+wrote ../sandbox/omo/coord/highbits/verify/exp/e10.mkv (12 frames, 1.9s)

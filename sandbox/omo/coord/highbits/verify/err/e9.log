@@ -1,0 +1,1 @@
+error: --codec x265 cannot write yuv444p16le: it needs 8, 10 or 12-bit yuv

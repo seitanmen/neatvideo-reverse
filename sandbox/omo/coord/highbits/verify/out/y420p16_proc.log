@@ -1,0 +1,6 @@
+--depth source
+256x256 24/1 frames~8 rotation=0 out=[0,end) tags={'color_space': None, 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv420p16le (16-bit 4:2:0) -> processing yuv420p16le · 16-bit 4:2:0, codec ffv1
+profile frame 2: mode=auto area=[0, 128, 128] (ok) sigma={'Y': 2.679, 'Cb': 7.933, 'Cr': 10.515}
+frame 8/8 1s
+wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/out/y420p16_proc.mkv (8 frames, 1.5s)

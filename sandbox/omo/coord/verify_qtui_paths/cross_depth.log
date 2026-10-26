@@ -1,0 +1,5 @@
+depth 8 frame 0: RMS(out - in) Y 4.8199, CbCr 3.9227  (code values)
+emitted planes (0..255 scale) depth 16 vs 8: max |diff| 0
+emitted planes (0..255 scale) depth 32 vs 8: max |diff| 0
+stdout depth16/256 vs depth8: max |diff| 0.5000
+stdout depth32*255 vs depth8: max |diff| 0.4999

@@ -1,0 +1,5 @@
+640x360 30/1 frames~901 rotation=0 out=[300,308) tags={'color_space': 'bt709', 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv420p (8-bit 4:2:0) -> processing yuv420p · 8-bit 4:2:0, codec x264
+profile frame 304: mode=auto area=[0, 288, 48] (small square (< 128 px)) sigma={'Y': 19.66, 'Cb': 4.193, 'Cr': 3.025}
+frame 8/8 3s
+wrote ../sandbox/omo/coord/highbits/verify/r1/a_new.mp4 (8 frames, 3.0s)

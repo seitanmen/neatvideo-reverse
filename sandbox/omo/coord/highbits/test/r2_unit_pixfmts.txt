@@ -1,0 +1,17 @@
+267 pix_fmts (16 hardware surfaces): mismatches 8
+   ('bayer_bggr16le', 3, 8, SrcFmt(family='rgb', bits=16, is_float=False, chroma='444'))
+   ('bayer_bggr16be', 3, 8, SrcFmt(family='rgb', bits=16, is_float=False, chroma='444'))
+   ('bayer_rggb16le', 3, 8, SrcFmt(family='rgb', bits=16, is_float=False, chroma='444'))
+   ('bayer_rggb16be', 3, 8, SrcFmt(family='rgb', bits=16, is_float=False, chroma='444'))
+   ('bayer_gbrg16le', 3, 8, SrcFmt(family='rgb', bits=16, is_float=False, chroma='444'))
+   ('bayer_gbrg16be', 3, 8, SrcFmt(family='rgb', bits=16, is_float=False, chroma='444'))
+   ('bayer_grbg16le', 3, 8, SrcFmt(family='rgb', bits=16, is_float=False, chroma='444'))
+   ('bayer_grbg16be', 3, 8, SrcFmt(family='rgb', bits=16, is_float=False, chroma='444'))
+yuv444p10msble ('yuv', 10, False, '444') -> depth 10 / source / 32: ['yuv444p10le', 'yuv444p10le', 'gbrpf32le']
+yuv444p10msbbe ('yuv', 10, False, '444') -> depth 10 / source / 32: ['yuv444p10le', 'yuv444p10le', 'gbrpf32le']
+yuv444p12msble ('yuv', 12, False, '444') -> depth 10 / source / 32: ['yuv444p10le', 'yuv444p12le', 'gbrpf32le']
+yuv444p12msbbe ('yuv', 12, False, '444') -> depth 10 / source / 32: ['yuv444p10le', 'yuv444p12le', 'gbrpf32le']
+gbrp10msble ('rgb', 10, False, '444') -> depth 10 / source / 32: ['gbrp10le', 'gbrp10le', 'gbrpf32le']
+gbrp10msbbe ('rgb', 10, False, '444') -> depth 10 / source / 32: ['gbrp10le', 'gbrp10le', 'gbrpf32le']
+gbrp12msble ('rgb', 12, False, '444') -> depth 10 / source / 32: ['gbrp10le', 'gbrp12le', 'gbrpf32le']
+gbrp12msbbe ('rgb', 12, False, '444') -> depth 10 / source / 32: ['gbrp10le', 'gbrp12le', 'gbrpf32le']

@@ -1,0 +1,12 @@
+=== race2 192 108 8
+pipeline exit 0
+=== seq 192 108 16
+pipeline exit 0
+=== seq 192 108 32
+pipeline exit 0
+=== seq 640 360 8
+pipeline exit 0
+=== frames 192 108 16
+pipeline exit 0
+=== tune 192 108 32
+pipeline exit 0

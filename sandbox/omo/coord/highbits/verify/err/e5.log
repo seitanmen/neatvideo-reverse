@@ -1,0 +1,1 @@
+error: --codec exr needs an image-sequence pattern such as out_%05d.exr

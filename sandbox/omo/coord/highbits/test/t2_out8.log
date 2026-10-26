@@ -1,0 +1,5 @@
+640x360 24/1 frames~20 rotation=0 out=[4,12) tags={'color_space': 'bt709', 'color_primaries': 'bt709', 'color_transfer': 'bt709', 'color_range': 'tv'}
+source yuv420p (8-bit 4:2:0) -> processing yuv420p · 8-bit 4:2:0, codec x264
+profile frame 8: mode=auto area=[0, 288, 48] (small square (< 128 px)) sigma={'Y': 19.66, 'Cb': 4.193, 'Cr': 3.025}
+frame 8/8 2s
+wrote ../sandbox/omo/coord/highbits/test/t2_out8.mp4 (8 frames, 2.0s)

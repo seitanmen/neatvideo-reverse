@@ -1,0 +1,30 @@
+qt.qpa.fonts: Populating font family aliases took 196 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+Traceback (most recent call last):
+  File "/Users/seitan/Desktop/work/reverse/repro/nv_ui_qt/menus.py", line 64, in <lambda>
+    win.state.undo.undoTextChanged.connect(lambda t: (u.setText("Undo Last Change"), u.setToolTip(t)))
+                                                      ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+RuntimeError: libshiboken: Internal C++ object (PySide6.QtGui.QAction) already deleted.
+Traceback (most recent call last):
+  File "/Users/seitan/Desktop/work/reverse/repro/nv_ui_qt/menus.py", line 65, in <lambda>
+    win.state.undo.redoTextChanged.connect(lambda t: (r.setText("Redo Last Change"), r.setToolTip(t)))
+                                                      ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+RuntimeError: libshiboken: Internal C++ object (PySide6.QtGui.QAction) already deleted.

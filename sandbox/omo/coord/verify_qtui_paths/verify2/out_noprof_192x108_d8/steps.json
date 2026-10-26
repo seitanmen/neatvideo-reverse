@@ -1,0 +1,76 @@
+[
+ {
+  "name": "started",
+  "size": 0,
+  "frames": 12,
+  "shape": [
+   [
+    108,
+    192
+   ],
+   [
+    54,
+    96
+   ],
+   [
+    54,
+    96
+   ]
+  ],
+  "open": false,
+  "export": false,
+  "load": false,
+  "generic": false,
+  "frame": 4,
+  "prof": false
+ },
+ {
+  "name": "apply_noprof",
+  "size": 31104,
+  "t": 0.95,
+  "frame": 4,
+  "status": "Apply: frame 4 processed and written to the host",
+  "prof": false
+ },
+ {
+  "name": "apply_noprof_same",
+  "size": 31104,
+  "t": 0.95,
+  "frame": 4,
+  "status": "Apply: frame 4 and the settings are unchanged since the last Apply (not written again)"
+ },
+ {
+  "name": "profile+aft",
+  "size": 31104,
+  "t": 6.24,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "aft": true,
+  "flat": 2,
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_noprof_192x108_d8/prev_3.npy"
+ },
+ {
+  "name": "apply_after_profile",
+  "size": 62208,
+  "t": 6.59,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_noprof_192x108_d8/ref_4.npz",
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_noprof_192x108_d8/prev_4.npy"
+ },
+ {
+  "name": "pre_close",
+  "size": 62208,
+  "t": 6.61,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_noprof_192x108_d8/ref_5.npz",
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_noprof_192x108_d8/prev_5.npy"
+ },
+ {
+  "name": "exit",
+  "rc": 0,
+  "size": 62208,
+  "t": 6.62
+ }
+]

@@ -1,0 +1,13 @@
+640x360 30/1 frames~901 rotation=0 out=[300,302) tags={'color_space': 'bt709', 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv420p (8-bit 4:2:0) -> processing yuv420p · 8-bit 4:2:0, codec x264
+Traceback (most recent call last):
+  File "/Users/seitan/Desktop/work/reverse/repro/denoise_video_v5.py", line 561, in <module>
+    main()
+    ~~~~^^
+  File "/Users/seitan/Desktop/work/reverse/repro/denoise_video_v5.py", line 457, in main
+    area = tuple(int(v) for v in A.area.split(",")) if A.area else None
+           ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/seitan/Desktop/work/reverse/repro/denoise_video_v5.py", line 457, in <genexpr>
+    area = tuple(int(v) for v in A.area.split(",")) if A.area else None
+                 ~~~^^^
+ValueError: invalid literal for int() with base 10: 'a'

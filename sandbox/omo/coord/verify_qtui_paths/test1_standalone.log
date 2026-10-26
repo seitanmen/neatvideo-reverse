@@ -1,0 +1,32 @@
+qt.qpa.fonts: Populating font family aliases took 188 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+[PASS] 1.1 video loaded frames 901, W 640, H 360, 1.4s
+This plugin does not support propagateSizeHints()
+[PASS] 1.2 Auto Profile builds a profile with flat_status flat_status 2, area [288, 416, 48], frame 300, 0.7s
+[PASS] 1.3 AFT runs automatically after Auto Profile aft_applied True, 8.2s; status 'Auto Fine-Tune applied'
+[PASS] 1.2/1.3 Auto Profile button -> profile -> AFT undo entries 2 -> 4, frame 0, aft_applied True
+[PASS] 1.4a filtered preview shown on Adjust and Preview 
+[PASS] 1.4 slider change recomputes the preview gen 8 -> 9, amt_Y 20.0, mean |filtered change| 5.153274016203704
+[PASS] 1.5 Apply recomputes the preview with the current settings gen 9 -> 10; preview == engine.process(current params, amt_Y 20): True; status 'frame 0 filtered'
+[PASS] 1.6 Effect > Export Full Video writes an mp4 (5 frames) in Effect menu True; {'codec_name': 'h264', 'width': 640, 'height': 360, 'pix_fmt': 'yuv420p', 'nb_read_frames': '5'}; 779659 bytes, 1.7s; status 'wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/t1/export5.mp4'
+[PASS] 1.6b exported frames 0 and 4 == backend.process_frame (CRF 0) [True, True]
+9/9 PASS

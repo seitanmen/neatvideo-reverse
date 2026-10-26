@@ -1,0 +1,5 @@
+320x256 24/1 frames~8 rotation=0 out=[0,end) tags={'color_space': 'bt709', 'color_primaries': 'bt709', 'color_transfer': 'bt709', 'color_range': 'tv'}
+source yuv420p10le (10-bit 4:2:0) -> processing yuv420p10le · 10-bit 4:2:0, codec ffv1
+profile frame 2: mode=auto area=[56, 96, 64] (small square (< 128 px)) sigma={'Y': 2.601, 'Cb': 4.587, 'Cr': 5.984}
+frame 8/8 1s
+wrote ../sandbox/omo/coord/highbits/test/t3_out_yuv420p10le.mkv (8 frames, 1.3s)

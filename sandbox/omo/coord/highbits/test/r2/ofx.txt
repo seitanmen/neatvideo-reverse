@@ -1,0 +1,5 @@
+depth 8: exit 0, stdout 345600 bytes (expected 1 frame = 345600), min 35 max 235
+depth 16: exit 0, stdout 691200 bytes (expected 1 frame = 691200), min 9029 max 60150
+depth 32: exit 0, stdout 1382400 bytes (expected 1 frame = 1382400), min 0.13830552995204926 max 0.9214131832122803
+|out16/256 - out8| max 0.5000, |out32*255 - out8| max 0.5000, out16 values not multiple of 256: 0.9962, out32 values off the 8-bit grid (|x*255 - rint| > 1e-3): 0.9981
+depth 32 with 13 non-finite samples in frame 1: exit 0, 345600 samples, non-finite restored and the rest finite: True

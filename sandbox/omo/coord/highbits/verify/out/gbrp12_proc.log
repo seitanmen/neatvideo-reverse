@@ -1,0 +1,6 @@
+--depth source
+270x210 24/1 frames~8 rotation=0 out=[0,end) tags={'color_space': 'gbr', 'color_primaries': None, 'color_transfer': None, 'color_range': 'pc'}
+source gbrp12le (12-bit RGB) -> processing gbrp12le · 12-bit RGB, codec ffv1
+profile frame 2: mode=auto area=[0, 152, 96] (small square (< 128 px)) sigma={'Y': 2.139, 'Cb': 5.87, 'Cr': 8.22}
+frame 8/8 2s
+wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/out/gbrp12_proc.mkv (8 frames, 1.7s)

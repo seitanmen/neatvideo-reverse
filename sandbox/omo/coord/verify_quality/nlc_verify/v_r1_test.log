@@ -1,0 +1,26 @@
+../test.mp4 640 360 9
+100% default: done
+100% nonuniform: done
+100% radius3_thr: done
+100% amount50: done
+100% toff: done
+100% pyr: done
+100% noise180_mix: done
+100% radius0: done
+t_noise 0.0: done
+t_noise 40.0: done
+t_noise 137.0: done
+t_noise 250.0: done
+cache: 40 != 100 True 40 == fresh True 100 again same True mask40 == fresh True mask40 != mask100 True
+temporal cache keys: [((2, 1.0, 4.0, 1.0, 'v5', 1.5, 16, 16, 1.0), 1.0), ((2, 1.0, 4.0, 1.0, 'v5', 1.5, 16, 16, 0.4), 1.0)]
+mask t_noise   0.0: mean m(t=4) 0.0000
+mask t_noise  40.0: mean m(t=4) 0.6963
+mask t_noise 100.0: mean m(t=4) 0.9989
+mask t_noise 250.0: mean m(t=4) 1.0000
+repeat n=5 a=1.0: min m 1.000000
+repeat n=3 a=1.0: min m 1.000000
+repeat n=5 a=0.5: min m 1.000000
+repeat n=11 a=0.8: min m 1.000000
+repeat n=2 a=1.0: min m 1.000000
+FAILS: [('tn', 137.0, 'noise180_mix', (True, True, True, False)), ('tn', 250.0, 'noise180_mix', (True, True, True, False)), ('repeat', 5, 1.0, 0.0, 0.0), ('repeat', 3, 1.0, 0.0, 0.0), ('repeat', 5, 0.5, 0.0, 0.0), ('repeat', 11, 0.8, 0.0, 0.0), ('repeat', 2, 1.0, 0.0, 0.0)]
+RESULT FAIL

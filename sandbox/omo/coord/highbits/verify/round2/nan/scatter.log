@@ -1,0 +1,6 @@
+256x192 24/1 frames~8 rotation=0 out=[0,end) tags={'color_space': 'gbr', 'color_primaries': None, 'color_transfer': None, 'color_range': None}
+source gbrpf32le (32-bit float RGB) -> processing gbrpf32le · 32-bit float RGB, codec ffv1
+profile frame 2: mode=auto area=[64, 48, 128] (not flat (details in the square)) sigma={'Y': 2.095, 'Cb': 5.846, 'Cr': 8.089}
+warning: profiling square: not flat (details in the square) - consider --area Y,X,SIZE
+frame 8/8 2s
+wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/round2/nan/scatter_out.mkv (8 frames, 1.7s)

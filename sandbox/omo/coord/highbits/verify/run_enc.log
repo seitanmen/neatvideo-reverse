@@ -1,0 +1,42 @@
+x264_420_10odd rc=0 wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/x264_420_10odd.mp4 (4 frames, 1.6s)
+   src: codec_name=ffv1|profile=unknown|width=259|height=195|pix_fmt=yuv420p10le|color_range=tv|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+   out: codec_name=h264|profile=High 10|width=258|height=194|pix_fmt=yuv420p10le|color_range=unknown|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=4
+x264_422_10odd rc=0 wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/x264_422_10odd.mp4 (4 frames, 2.0s)
+   src: codec_name=ffv1|profile=unknown|width=323|height=257|pix_fmt=yuv422p10le|color_range=tv|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+   out: codec_name=h264|profile=High 4:2:2|width=322|height=256|pix_fmt=yuv422p10le|color_range=unknown|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=4
+x264_444_10odd rc=0 wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/x264_444_10odd.mp4 (4 frames, 2.0s)
+   src: codec_name=ffv1|profile=unknown|width=299|height=221|pix_fmt=yuv444p12le|color_range=tv|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+   out: codec_name=h264|profile=High 4:4:4 Predictive|width=299|height=221|pix_fmt=yuv444p10le|color_range=unknown|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=4
+x265_420_12 rc=0 wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/x265_420_12.mp4 (4 frames, 1.4s)
+   src: codec_name=ffv1|profile=unknown|width=259|height=195|pix_fmt=yuv420p10le|color_range=tv|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+   out: codec_name=hevc|profile=Rext|width=258|height=194|pix_fmt=yuv420p12le|color_range=tv|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=4
+x265_422_12 rc=0 wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/x265_422_12.mov (4 frames, 1.9s)
+   src: codec_name=ffv1|profile=unknown|width=320|height=240|pix_fmt=yuv422p12le|color_range=tv|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+   out: codec_name=hevc|profile=Rext|width=320|height=240|pix_fmt=yuv422p12le|color_range=tv|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=4
+x265_444_12odd rc=1 BrokenPipeError: [Errno 32] Broken pipe
+   src: codec_name=ffv1|profile=unknown|width=299|height=221|pix_fmt=yuv444p12le|color_range=tv|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+prores_422odd rc=0 wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/prores_422odd.mov (4 frames, 1.8s)
+   src: codec_name=ffv1|profile=unknown|width=323|height=257|pix_fmt=yuv422p10le|color_range=tv|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+   out: codec_name=prores|profile=HQ|width=322|height=256|pix_fmt=yuv422p10le|color_range=unknown|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=4
+prores_444odd rc=0 wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/prores_444odd.mov (4 frames, 2.0s)
+   src: codec_name=ffv1|profile=unknown|width=299|height=221|pix_fmt=yuv444p12le|color_range=tv|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+   out: codec_name=prores|profile=4444|width=299|height=221|pix_fmt=yuv444p12le|color_range=unknown|color_space=unknown|color_transfer=unknown|color_primaries=unknown|nb_frames=4
+tag_420pc_mix1 rc=0 wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/tag_420pc_mix1.mkv (4 frames, 1.7s)
+   src: codec_name=ffv1|profile=unknown|width=259|height=195|pix_fmt=yuv420p10le|color_range=pc|color_space=bt2020nc|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+   out: codec_name=ffv1|profile=unknown|width=259|height=195|pix_fmt=yuv420p10le|color_range=pc|color_space=bt2020nc|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+tag_444tv_mix1 rc=0 wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/tag_444tv_mix1.mkv (4 frames, 1.8s)
+   src: codec_name=ffv1|profile=unknown|width=300|height=222|pix_fmt=yuv444p12le|color_range=tv|color_space=bt709|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+   out: codec_name=ffv1|profile=unknown|width=300|height=222|pix_fmt=yuv444p12le|color_range=tv|color_space=bt709|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+tag_gbr_mix1 rc=0 wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/tag_gbr_mix1.mkv (4 frames, 1.9s)
+   src: codec_name=ffv1|profile=unknown|width=270|height=210|pix_fmt=gbrp12le|color_range=pc|color_space=gbr|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+   out: codec_name=ffv1|profile=unknown|width=270|height=210|pix_fmt=gbrp12le|color_range=pc|color_space=gbr|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+tag_444tv_f32_mix1 rc=0 wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/tag_444tv_f32_mix1.mkv (4 frames, 1.7s)
+   src: codec_name=ffv1|profile=unknown|width=300|height=222|pix_fmt=yuv444p12le|color_range=tv|color_space=bt709|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+   out: codec_name=ffv1|profile=unknown|width=300|height=222|pix_fmt=gbrpf32le|color_range=unknown|color_space=gbr|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+tag_420pc_x264 rc=0 wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/tag_420pc_x264.mp4 (4 frames, 1.1s)
+   src: codec_name=ffv1|profile=unknown|width=259|height=195|pix_fmt=yuv420p10le|color_range=pc|color_space=bt2020nc|color_transfer=unknown|color_primaries=unknown|nb_frames=N/A
+   out: codec_name=h264|profile=High 10|width=258|height=194|pix_fmt=yuv420p10le|color_range=pc|color_space=bt2020nc|color_transfer=unknown|color_primaries=unknown|nb_frames=4
+mix1 bitexact tag_420pc_mix1.mkv 607880 607880 True
+mix1 bitexact tag_444tv_mix1.mkv 1598400 1598400 True
+mix1 bitexact tag_gbr_mix1.mkv 1360800 1360800 True
+yuv444p12 tv bt709 -> gbrpf32 mix1 vs independent bt709 conversion: max abs 0.0037566284483270262

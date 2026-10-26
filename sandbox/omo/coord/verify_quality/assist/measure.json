@@ -1,0 +1,83 @@
+{
+ "frame": 312,
+ "profile_mode": "auto",
+ "aft": false,
+ "t_normal": 11.428416967391968,
+ "t_assist_ui": 1.0941381454467773,
+ "assist_ui_deterministic": true,
+ "assist_ui_eq_spatial_v5": true,
+ "ui_assist_params": {
+  "temporal": 0.0,
+  "luma": 1.0,
+  "chroma": 1.0,
+  "band_amounts": {
+   "high": 1.0,
+   "medium": 1.0,
+   "low": 1.0,
+   "very-low": 1.0,
+   "ultra-low": 1.0
+  },
+  "mix": 0.0,
+  "ui_spatial": true
+ },
+ "aft_assist_with_ui_params": "KeyError: 'band_amounts'",
+ "aft_assist_params": {
+  "temporal": 0.0,
+  "luma": 0.7,
+  "chroma": 1.0,
+  "band_amounts": {
+   "high": 1.0,
+   "medium": 1.0,
+   "low": 1.0,
+   "very-low": 1.0,
+   "ultra-low": 1.0
+  },
+  "mix": 0.0
+ },
+ "aft_assist_uniform": true,
+ "normal_vs_orig": {
+  "mae": 2.678514882318461,
+  "max": 22.483673095703125,
+  "psnr": 37.291759616525965,
+  "identical": false
+ },
+ "assist_ui_vs_orig": {
+  "mae": 3.0743710801436146,
+  "max": 24.19329833984375,
+  "psnr": 36.22645901563596,
+  "identical": false
+ },
+ "assist_ui_vs_normal": {
+  "mae": 1.6532671488228219,
+  "max": 21.40741729736328,
+  "psnr": 40.90796000395896,
+  "identical": false
+ },
+ "aft_pc_vs_normal": {
+  "mae": 1.6788880594714004,
+  "max": 21.913131713867188,
+  "psnr": 41.06567647808349,
+  "identical": false
+ },
+ "aft_pc_vs_assist_ui": {
+  "mae": 0.7951038567960999,
+  "max": 5.8162078857421875,
+  "psnr": 47.784960754704954,
+  "identical": false
+ },
+ "aft_nlc_vs_normal": {
+  "mae": 0.045123137722841995,
+  "max": 1.0938873291015625,
+  "psnr": 71.03314697745338,
+  "identical": false
+ },
+ "removed_std_sky_normal": 3.9271321296691895,
+ "residual_std_sky_normal": 7.1368303298950195,
+ "removed_std_sky_assist_ui": 4.116030216217041,
+ "residual_std_sky_assist_ui": 7.064616680145264,
+ "removed_std_sky_aft_pc": 2.8816640377044678,
+ "residual_std_sky_aft_pc": 7.203644275665283,
+ "removed_std_sky_aft_nlc": 3.9271225929260254,
+ "residual_std_sky_aft_nlc": 7.140646934509277,
+ "residual_std_sky_orig": 8.242788314819336
+}

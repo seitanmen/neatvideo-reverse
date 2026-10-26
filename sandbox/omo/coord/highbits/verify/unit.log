@@ -1,0 +1,90 @@
+yuv420p          SrcFmt(family='yuv', bits=8, is_float=False, chroma='420')  source->yuv420p      10->yuv420p10le  16->yuv420p16le
+yuvj420p         SrcFmt(family='yuv', bits=8, is_float=False, chroma='420')  source->yuv420p      10->yuv420p10le  16->yuv420p16le
+yuv420p10le      SrcFmt(family='yuv', bits=10, is_float=False, chroma='420')  source->yuv420p10le  10->yuv420p10le  16->yuv420p16le
+yuv420p10be      SrcFmt(family='yuv', bits=10, is_float=False, chroma='420')  source->yuv420p10le  10->yuv420p10le  16->yuv420p16le
+yuv422p10le      SrcFmt(family='yuv', bits=10, is_float=False, chroma='422')  source->yuv422p10le  10->yuv422p10le  16->yuv422p16le
+yuv444p12le      SrcFmt(family='yuv', bits=12, is_float=False, chroma='444')  source->yuv444p12le  10->yuv444p10le  16->yuv444p16le
+yuv444p16le      SrcFmt(family='yuv', bits=16, is_float=False, chroma='444')  source->yuv444p16le  10->yuv444p10le  16->yuv444p16le
+yuv420p9le       SrcFmt(family='yuv', bits=9, is_float=False, chroma='420')  source->yuv420p10le  10->yuv420p10le  16->yuv420p16le
+yuv444p14le      SrcFmt(family='yuv', bits=14, is_float=False, chroma='444')  source->yuv444p16le  10->yuv444p10le  16->yuv444p16le
+yuv440p          SrcFmt(family='yuv', bits=8, is_float=False, chroma='444')  source->yuv420p      10->yuv444p10le  16->yuv444p16le
+yuv411p          SrcFmt(family='yuv', bits=8, is_float=False, chroma='444')  source->yuv420p      10->yuv444p10le  16->yuv444p16le
+yuv410p          SrcFmt(family='yuv', bits=8, is_float=False, chroma='444')  source->yuv420p      10->yuv444p10le  16->yuv444p16le
+yuv440p10le      SrcFmt(family='yuv', bits=10, is_float=False, chroma='444')  source->yuv444p10le  10->yuv444p10le  16->yuv444p16le
+yuva420p         SrcFmt(family='yuv', bits=8, is_float=False, chroma='420')  source->yuv420p      10->yuv420p10le  16->yuv420p16le
+yuva444p16le     SrcFmt(family='yuv', bits=16, is_float=False, chroma='444')  source->yuv444p16le  10->yuv444p10le  16->yuv444p16le
+nv12             SrcFmt(family='yuv', bits=8, is_float=False, chroma='420')  source->yuv420p      10->yuv420p10le  16->yuv420p16le
+p010le           SrcFmt(family='yuv', bits=10, is_float=False, chroma='420')  source->yuv420p10le  10->yuv420p10le  16->yuv420p16le
+p016le           SrcFmt(family='yuv', bits=16, is_float=False, chroma='420')  source->yuv420p16le  10->yuv420p10le  16->yuv420p16le
+p210le           SrcFmt(family='yuv', bits=10, is_float=False, chroma='422')  source->yuv422p10le  10->yuv422p10le  16->yuv422p16le
+y210le           SrcFmt(family='yuv', bits=10, is_float=False, chroma='422')  source->yuv422p10le  10->yuv422p10le  16->yuv422p16le
+v210             SrcFmt(family='yuv', bits=10, is_float=False, chroma='422')  source->yuv422p10le  10->yuv422p10le  16->yuv422p16le
+gbrp             SrcFmt(family='rgb', bits=8, is_float=False, chroma='444')  source->yuv420p      10->gbrp10le     16->gbrp16le
+gbrp10le         SrcFmt(family='rgb', bits=10, is_float=False, chroma='444')  source->gbrp10le     10->gbrp10le     16->gbrp16le
+gbrp9le          SrcFmt(family='rgb', bits=9, is_float=False, chroma='444')  source->gbrp10le     10->gbrp10le     16->gbrp16le
+gbrp14le         SrcFmt(family='rgb', bits=14, is_float=False, chroma='444')  source->gbrp16le     10->gbrp10le     16->gbrp16le
+gbrap12le        SrcFmt(family='rgb', bits=12, is_float=False, chroma='444')  source->gbrp12le     10->gbrp10le     16->gbrp16le
+gbrpf32le        SrcFmt(family='rgb', bits=32, is_float=True, chroma='444')  source->gbrpf32le    10->gbrp10le     16->gbrp16le
+gbrapf32le       SrcFmt(family='rgb', bits=32, is_float=True, chroma='444')  source->gbrpf32le    10->gbrp10le     16->gbrp16le
+gbrpf16le        SrcFmt(family='rgb', bits=16, is_float=True, chroma='444')  source->gbrpf32le    10->gbrp10le     16->gbrp16le
+rgb24            SrcFmt(family='rgb', bits=8, is_float=False, chroma='444')  source->yuv420p      10->gbrp10le     16->gbrp16le
+bgr24            SrcFmt(family='rgb', bits=8, is_float=False, chroma='444')  source->yuv420p      10->gbrp10le     16->gbrp16le
+rgba             SrcFmt(family='rgb', bits=8, is_float=False, chroma='444')  source->yuv420p      10->gbrp10le     16->gbrp16le
+rgb48le          SrcFmt(family='rgb', bits=16, is_float=False, chroma='444')  source->gbrp16le     10->gbrp10le     16->gbrp16le
+rgba64le         SrcFmt(family='rgb', bits=16, is_float=False, chroma='444')  source->gbrp16le     10->gbrp10le     16->gbrp16le
+bgr48be          SrcFmt(family='rgb', bits=16, is_float=False, chroma='444')  source->gbrp16le     10->gbrp10le     16->gbrp16le
+rgbf32le         SrcFmt(family='rgb', bits=32, is_float=True, chroma='444')  source->gbrpf32le    10->gbrp10le     16->gbrp16le
+rgbaf16le        SrcFmt(family='rgb', bits=16, is_float=True, chroma='444')  source->gbrpf32le    10->gbrp10le     16->gbrp16le
+rgbaf32le        SrcFmt(family='rgb', bits=32, is_float=True, chroma='444')  source->gbrpf32le    10->gbrp10le     16->gbrp16le
+gray             SrcFmt(family='yuv', bits=8, is_float=False, chroma='420')  source->yuv420p      10->yuv420p10le  16->yuv420p16le
+gray10le         SrcFmt(family='yuv', bits=10, is_float=False, chroma='420')  source->yuv420p10le  10->yuv420p10le  16->yuv420p16le
+gray16le         SrcFmt(family='yuv', bits=16, is_float=False, chroma='420')  source->yuv420p16le  10->yuv420p10le  16->yuv420p16le
+grayf32le        SrcFmt(family='yuv', bits=32, is_float=True, chroma='420')  source->gbrpf32le    10->yuv420p10le  16->yuv420p16le
+ya8              SrcFmt(family='yuv', bits=8, is_float=False, chroma='420')  source->yuv420p      10->yuv420p10le  16->yuv420p16le
+ya16le           SrcFmt(family='yuv', bits=16, is_float=False, chroma='420')  source->yuv420p16le  10->yuv420p10le  16->yuv420p16le
+pal8             SrcFmt(family='rgb', bits=8, is_float=False, chroma='444')  source->yuv420p      10->gbrp10le     16->gbrp16le
+x2rgb10le        SrcFmt(family='rgb', bits=10, is_float=False, chroma='444')  source->gbrp10le     10->gbrp10le     16->gbrp16le
+xyz12le          SrcFmt(family='rgb', bits=12, is_float=False, chroma='444')  source->gbrp12le     10->gbrp10le     16->gbrp16le
+bayer_rggb8      SrcFmt(family='rgb', bits=8, is_float=False, chroma='444')  source->yuv420p      10->gbrp10le     16->gbrp16le
+bayer_rggb16le   SrcFmt(family='rgb', bits=16, is_float=False, chroma='444')  source->gbrp16le     10->gbrp10le     16->gbrp16le
+rgb565le         SrcFmt(family='rgb', bits=8, is_float=False, chroma='444')  source->yuv420p      10->gbrp10le     16->gbrp16le
+yuv444p10msble   SrcFmt(family='yuv', bits=8, is_float=False, chroma='420')  source->yuv420p      10->yuv420p10le  16->yuv420p16le
+gbrp10msble      SrcFmt(family='yuv', bits=8, is_float=False, chroma='420')  source->yuv420p      10->yuv420p10le  16->yuv420p16le
+yuv420p12        SrcFmt(family='yuv', bits=12, is_float=False, chroma='420')  source->yuv420p12le  10->yuv420p10le  16->yuv420p16le
+vuya             SrcFmt(family='yuv', bits=8, is_float=False, chroma='444')  source->yuv420p      10->yuv444p10le  16->yuv444p16le
+unknown          SrcFmt(family='yuv', bits=8, is_float=False, chroma='420')  source->yuv420p      10->yuv420p10le  16->yuv420p16le
+None             SrcFmt(family='yuv', bits=8, is_float=False, chroma='420')  source->yuv420p      10->yuv420p10le  16->yuv420p16le
+yuv420p10le 7 5 roundtrip bitexact True maxdiff 0 
+yuv420p10le 8 6 roundtrip bitexact True maxdiff 0 
+yuv420p10le 321 255 roundtrip bitexact True maxdiff 0 
+yuv422p10le 7 5 roundtrip bitexact True maxdiff 0  even==src True odd==mean True lastcol [153.75  73.75 139.75] vs [153.75  73.75 139.75]
+yuv422p10le 8 6 roundtrip bitexact True maxdiff 0  even==src True odd==mean True lastcol [ 69.75  97.75 121.5 ] vs [ 69.75  97.75 121.5 ]
+yuv422p10le 321 255 roundtrip bitexact True maxdiff 0  even==src True odd==mean True lastcol [224.75  80.    23.  ] vs [224.75  80.    23.  ]
+yuv422p12le 7 5 roundtrip bitexact True maxdiff 0  even==src True odd==mean True lastcol [ 82.5     22.4375 244.    ] vs [ 82.5     22.4375 244.    ]
+yuv422p12le 8 6 roundtrip bitexact True maxdiff 0  even==src True odd==mean True lastcol [217.     252.125   17.3125] vs [217.     252.125   17.3125]
+yuv422p12le 321 255 roundtrip bitexact True maxdiff 0  even==src True odd==mean True lastcol [ 24.125 230.375 230.625] vs [ 24.125 230.375 230.625]
+yuv444p16le 7 5 roundtrip bitexact True maxdiff 0 
+yuv444p16le 8 6 roundtrip bitexact True maxdiff 0 
+yuv444p16le 321 255 roundtrip bitexact True maxdiff 0 
+gbrp10le 7 5 roundtrip bitexact True maxdiff 0 
+gbrp10le 8 6 roundtrip bitexact True maxdiff 0 
+gbrp10le 321 255 roundtrip bitexact True maxdiff 0 
+gbrp16le 7 5 roundtrip bitexact True maxdiff 0 
+gbrp16le 8 6 roundtrip bitexact True maxdiff 0 
+gbrp16le 321 255 roundtrip bitexact True maxdiff 0 
+gbrp12le 7 5 roundtrip bitexact True maxdiff 0 
+gbrp12le 8 6 roundtrip bitexact True maxdiff 0 
+gbrp12le 321 255 roundtrip bitexact True maxdiff 0 
+bt709 yuv_to_rgb(to_internal) vs RGB max 2.38e-07  from_internal round trip max 1.19e-07 min/max kept -0.1998219 1.7999411
+bt601 yuv_to_rgb(to_internal) vs RGB max 2.38e-07  from_internal round trip max 1.19e-07 min/max kept -0.19921152 1.7998525
+bt2020 yuv_to_rgb(to_internal) vs RGB max 2.38e-07  from_internal round trip max 1.19e-07 min/max kept -0.19967456 1.798014
+int clip: [1023    0  512]
+Traceback (most recent call last):
+  File "<stdin>", line 47, in <module>
+  File "<frozen importlib._bootstrap>", line 810, in module_from_spec
+AttributeError: 'NoneType' object has no attribute 'loader'
+../test.mp4 probe: new adds {'pix_fmt', 'bits_raw'} common equal True
+../sandbox/omo/coord/highbits/verify/misc/aud_10.mkv probe: new adds {'pix_fmt', 'bits_raw'} common equal True
+read_frames idx True planes equal True dtype uint8
+read_frames tail no-fps 6 6 True
+odd 10-bit file legacy read equal 3 True

@@ -1,0 +1,21 @@
+--depth source
+299x221 24/1 frames~8 rotation=0 out=[0,4) tags={'color_space': None, 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv444p12le (12-bit 4:4:4) -> processing yuv444p12le · 12-bit 4:4:4, codec x265
+profile frame 2: mode=auto area=[0, 24, 64] (small square (< 128 px)) sigma={'Y': 2.67, 'Cb': 8.297, 'Cr': 10.789}
+[ipod @ 0xc95018280] Could not find tag for codec hevc in stream #0, codec not currently supported in container
+[out#0/ipod @ 0xc95020180] Could not write header (incorrect codec parameters ?): Invalid argument
+[vf#0:0 @ 0xc95804000] Error sending frames to consumers: Invalid argument
+[vf#0:0 @ 0xc95804000] Task finished with error code: -22 (Invalid argument)
+[vf#0:0 @ 0xc95804000] Terminating thread with return code -22 (Invalid argument)
+[out#0/ipod @ 0xc95020180] Nothing was written into output file, because at least one of its streams received no packets.
+Traceback (most recent call last):
+  File "/Users/seitan/Desktop/work/reverse/repro/denoise_video_v5.py", line 487, in <module>
+    main()
+    ~~~~^^
+  File "/Users/seitan/Desktop/work/reverse/repro/denoise_video_v5.py", line 463, in main
+    write(True)
+    ~~~~~^^^^^^
+  File "/Users/seitan/Desktop/work/reverse/repro/denoise_video_v5.py", line 440, in write
+    enc.stdin.write(nd.from_internal(out, fmt, matrix))
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+BrokenPipeError: [Errno 32] Broken pipe

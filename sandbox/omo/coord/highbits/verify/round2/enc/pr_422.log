@@ -1,0 +1,6 @@
+323x257 24/1 frames~8 rotation=0 out=[0,3) tags={'color_space': None, 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv422p10le (10-bit 4:2:2) -> processing yuv422p10le · 10-bit 4:2:2, codec prores
+profile frame 1: mode=auto area=[0, 24, 64] (small square (< 128 px)) sigma={'Y': 2.696, 'Cb': 6.536, 'Cr': 8.735}
+note: odd frame width - the last column is dropped on encode
+frame 3/3 1s
+wrote ../sandbox/omo/coord/highbits/verify/round2/enc/pr_422.mov (3 frames, 1.5s)

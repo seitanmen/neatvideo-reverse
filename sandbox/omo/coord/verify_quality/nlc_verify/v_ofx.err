@@ -1,0 +1,23 @@
+qt.qpa.fonts: Populating font family aliases took 197 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+DRV {"ev": "profile", "ok": true}
+DRV {"ev": "nlc", "ok": true, "nlc": true, "btn": "Noise Level Check", "status": "Noise Level Check: mask of frame 0 (mean 0.527)"}
+DRV {"ev": "finish", "nlc": false}
+DRV {"ev": "apply", "emitted": 1, "t_noise": 0.4, "equals_process_frame": true, "differs_from_100": true}
+DRV {"ev": "exit", "rc": 0, "emits": [0]}

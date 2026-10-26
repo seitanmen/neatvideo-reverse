@@ -1,0 +1,39 @@
+qt.qpa.fonts: Populating font family aliases took 193 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost. 
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+prep_YFreq_noprofile: panes ready 0.64 s
+prep_YCrCbplus_noprofile: panes ready 0.54 s
+prep_selection: panes ready 0.01 s
+This plugin does not support propagateSizeHints()
+This plugin does not support propagateSizeHints()
+Build Profile + AFT: 112.7 s, area [0, 704, 216, 512]
+prep_YCrCbplus: panes ready 0.00 s
+prep_RGB_after: panes ready 0.16 s
+prep_YCrCb: panes ready 0.23 s
+This plugin does not support propagateSizeHints()
+switch to YCrCb +: 0.01 s
+switch to Y Freq: 0.17 s
+switch to Cr Freq: 0.32 s
+switch to RGB: 0.02 s
+switch to YCrCb +: 0.01 s
+adj_temporal: panes ready 0.00 s
+adj_spatial: panes ready 0.00 s
+adj_general: panes ready 0.01 s
+wrote 9 comparisons

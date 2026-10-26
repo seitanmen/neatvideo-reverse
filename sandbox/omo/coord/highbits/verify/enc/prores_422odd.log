@@ -1,0 +1,7 @@
+--depth 10 --codec prores
+323x257 24/1 frames~8 rotation=0 out=[0,4) tags={'color_space': None, 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv422p10le (10-bit 4:2:2) -> processing yuv422p10le · 10-bit 4:2:2, codec prores
+profile frame 2: mode=auto area=[0, 72, 64] (small square (< 128 px)) sigma={'Y': 2.702, 'Cb': 6.568, 'Cr': 8.739}
+note: odd frame size - the last row/column is dropped on encode
+frame 4/4 2s
+wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/prores_422odd.mov (4 frames, 1.8s)

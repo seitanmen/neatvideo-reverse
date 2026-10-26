@@ -1,0 +1,5 @@
+320x256 24/1 frames~8 rotation=0 out=[0,end) tags={'color_space': 'gbr', 'color_primaries': 'bt709', 'color_transfer': 'linear', 'color_range': None}
+source gbrpf32le (32-bit float RGB) -> processing gbrpf32le · 32-bit float RGB, codec ffv1
+profile frame 2: mode=auto area=[24, 64, 96] (small square (< 128 px)) sigma={'Y': 1.835, 'Cb': 5.56, 'Cr': 7.635}
+frame 8/8 2s
+wrote ../sandbox/omo/coord/highbits/test/t4_out.mkv (8 frames, 1.6s)

@@ -1,0 +1,87 @@
+{
+ "radius": 2,
+ "temporal": 1.0,
+ "threshold": 4.0,
+ "spatial": 2.0,
+ "luma": 0.7,
+ "chroma": 1.0,
+ "band_amounts": {
+  "high": 1.0,
+  "medium": 1.0,
+  "low": 1.0,
+  "very-low": 1.0,
+  "ultra-low": 0.0
+ },
+ "band_noise": {
+  "high": 1.0,
+  "medium": 1.0,
+  "low": 1.0,
+  "very-low": 1.0,
+  "ultra-low": 1.0
+ },
+ "noise_level": 1.0,
+ "channel_noise": {
+  "Y": 1.0,
+  "Cb": 1.0,
+  "Cr": 1.0
+ },
+ "similarity": "v5",
+ "pyramid_scale": 1.5,
+ "bs": 16,
+ "search": 16,
+ "mix": 0.0,
+ "ui_channels": {
+  "Y": {
+   "amount": 0.7,
+   "bands": {
+    "ultra-low": 0.0,
+    "very-low": 1.0,
+    "low": 1.0,
+    "medium": 1.0,
+    "high": 1.0
+   },
+   "noise": {
+    "ultra-low": 1.0,
+    "very-low": 1.0,
+    "low": 1.0,
+    "medium": 1.0,
+    "high": 1.0
+   }
+  },
+  "Cb": {
+   "amount": 1.0,
+   "bands": {
+    "ultra-low": 0.0,
+    "very-low": 1.0,
+    "low": 1.0,
+    "medium": 1.0,
+    "high": 1.0
+   },
+   "noise": {
+    "ultra-low": 1.0,
+    "very-low": 1.0,
+    "low": 1.0,
+    "medium": 1.0,
+    "high": 1.0
+   }
+  },
+  "Cr": {
+   "amount": 1.0,
+   "bands": {
+    "ultra-low": 0.0,
+    "very-low": 1.0,
+    "low": 1.0,
+    "medium": 0.6,
+    "high": 1.0
+   },
+   "noise": {
+    "ultra-low": 1.0,
+    "very-low": 1.0,
+    "low": 1.0,
+    "medium": 1.0,
+    "high": 1.0
+   }
+  }
+ },
+ "ui_spatial": true
+}

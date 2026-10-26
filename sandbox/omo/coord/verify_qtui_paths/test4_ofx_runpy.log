@@ -1,0 +1,14 @@
+case apply_change:192:108:8:12 (rc 0)
+  [PASS] 4.1 frames received from stdin 12 frames, Y [[108, 192], [54, 96], [54, 96]] uint8, src <OFX host>, n 12
+  [PASS] 4.2 Open / Export / Load / Generic disabled open False export False load False generic False; triggering them: no export True
+  [PASS] 4.4 Auto Profile -> AFT flat_status 2 area [32, 96, 48] frame 0 0.14s; AFT True 4.87s
+  [PASS] 4.3 Apply writes the processed frame to stdout frames written by Apply: 1; status 'Apply: frame 0 processed and written to the host'
+  [PASS] 4.3 frame written by Apply == the refreshed preview (same frame, same settings) 
+  [PASS] 4.3b second Apply without change writes nothing 0; status 'Apply: frame 0 and the settings are unchanged since the last Apply (not written again)'
+  [PASS] close writes a frame only when it differs from the last one frames written on close: 1 (expected 1)
+  [PASS] stdout size == emitted frames x frame_size 62208 bytes = 2 x 31104; emits 2 (expected 2); exit rc 0
+  [PASS] emit 0 (frame 0, amt_Y 70.0, AFT True): stdout bytes == pack(planes) Y 50..232 mean 134.035, CbCr 81..157, finite True
+  [PASS] emit 1 (frame 0, amt_Y 20.0, AFT True): stdout bytes == pack(planes) Y 47..232 mean 133.966, CbCr 81..157, finite True
+  [PASS] emit 1: emitted frame == preview shown 
+  [PASS] apply_change: frame after the slider change differs 
+1/1 cases PASS

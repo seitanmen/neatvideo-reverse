@@ -1,0 +1,12 @@
+[PASS] task snippet: 8-bit roundtrip (constant 128) 
+[PASS] task snippet: frame_size 345600 == 345600
+[PASS] 8-bit random roundtrip 640x360 
+[PASS] 16-bit random roundtrip 640x360 size 691200==691200
+[PASS] 32-bit roundtrip 640x360 (non-finite samples bit-identical True; finite: whole frame bit-identical False, max |diff| 1.19e-07 = x*255/255 float32 rounding)
+[PASS] 8-bit random roundtrip 192x108 
+[PASS] 16-bit random roundtrip 192x108 size 62208==62208
+[PASS] 32-bit roundtrip 192x108 (non-finite samples bit-identical True; finite: whole frame bit-identical False, max |diff| 1.19e-07 = x*255/255 float32 rounding)
+[PASS] 8-bit random roundtrip 191x107 
+[PASS] 16-bit random roundtrip 191x107 size 61014==61014
+[PASS] 32-bit roundtrip 191x107 (non-finite samples bit-identical True; finite: whole frame bit-identical False, max |diff| 1.19e-07 = x*255/255 float32 rounding)
+ALL PASS

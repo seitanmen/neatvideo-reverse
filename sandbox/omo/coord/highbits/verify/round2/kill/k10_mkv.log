@@ -1,0 +1,10 @@
+640x360 30/1 frames~901 rotation=0 out=[0,end) tags={'color_space': 'bt709', 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv420p (8-bit 4:2:0) -> processing yuv420p10le · 10-bit 4:2:0, codec ffv1
+profile frame 300: mode=auto area=[288, 416, 48] (small square (< 128 px)) sigma={'Y': 21.414, 'Cb': 1.938, 'Cr': 2.644}
+[vost#0:0/rawvideo @ 0xc7ac2c000] Error submitting a packet to the muxer: Broken pipe
+    Last message repeated 1 times
+[out#0/rawvideo @ 0xc7ac28180] Error muxing a packet
+[out#0/rawvideo @ 0xc7ac28180] Task finished with error code: -32 (Broken pipe)
+[out#0/rawvideo @ 0xc7ac28180] Terminating thread with return code -32 (Broken pipe)
+frame 13/13 4s
+error: the encoder failed (ffmpeg exit -9, message above); the incomplete /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/round2/kill/mkv/k10.mkv was removed

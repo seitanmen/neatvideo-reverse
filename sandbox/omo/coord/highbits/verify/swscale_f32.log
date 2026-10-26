@@ -1,0 +1,10 @@
+syn/y444p12_tag.mkv quant step (0..1 units) 2.85e-04 max|err| 0.003757 mean err per plane GBR [-0.00187, -0.00191, -0.0019] std [0.00065, 0.00068, 0.00067]
+   plane G fit out = 0.996149*ref + -0.000001
+   plane B fit out = 0.996139*ref + 0.000004
+   plane R fit out = 0.996139*ref + 0.000004
+   distinct G values in frame0 out: 32231  distinct Y codes in: 2331
+syn/y444p16.mkv quant step (0..1 units) 1.78e-05 max|err| 0.00388 mean err per plane GBR [-0.00188, -0.00193, -0.00186] std [0.00062, 0.00072, 0.00068]
+   plane G fit out = 0.996149*ref + -0.000001
+   plane B fit out = 0.996138*ref + 0.000004
+   plane R fit out = 0.996138*ref + 0.000005
+   distinct G values in frame0 out: 31442  distinct Y codes in: 26367

@@ -1,0 +1,10 @@
+depth 8: rc 0 stdout 92160 B (expect 92160) min 39 max 253 stderr []
+depth 16: rc 0 stdout 184320 B (expect 184320) min 9961 max 64987 stderr []
+   out16 % 256 != 0: 0.9899197048611111
+depth 32: rc 0 stdout 368640 B (expect 368640) min 0.152639 max 0.992581 stderr []
+   out32 Y superwhite block mean (8-bit units): 250.01782 max 253.10803  >235 frac 0.0478515625
+emitted frame index per main.py: pf = 1
+|out16/256-out8| max 4.6015625  |out32*255-out8| max 4.5802274495363235
+ragged+MAX_FRAMES=2: rc 0 stdout 184320
+--depth 24: rc 1 stderr tail ['ValueError: --depth 24: 8, 16 or 32']
+--ofx 320 (missing H): rc 1 ['usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]']

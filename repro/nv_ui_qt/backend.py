@@ -6,6 +6,15 @@ Cr band sliders, v5 shares one band set): when all channels use the same band se
 Cb = Cr, it calls nv.spatial_v5 once with exactly the parameters process_frame_v5 would get;
 otherwise it calls spatial_v5 once per channel with that channel's settings and keeps that
 channel's output. _init / _work are the worker functions of the full-video export (export.py).
+
+Temporal Noise Level (P["t_noise"], UI Temporal > Temporal Noise > Noise Level): temporal() calls
+nv.temporal_v5 with noise_level x t_noise for the temporal stage only (the spatial stage keeps
+noise_level); at t_noise = 1 (or without the key) P is passed unchanged.
+
+Noise Level Check (repro definition of the genuine's temporal filter mask; its formula is not decoded):
+temporal_mask() maps the luma residual noise variance rv of the temporal stage to
+m = clamp((1/rv - 1) / (1/rv_min - 1), 0, 1), rv_min = the variance when every neighbour of the window
+has weight 1; PreviewEngine.mask() uses the same cached temporal result as the preview.
 """
 import collections
 import copy
@@ -49,7 +58,20 @@ def spatial_ui(planes, prof, rv, P):
 def temporal(window, ci, prof, P, flows=None):
     R = int(P["radius"])
     lo, hi = max(0, ci - R), min(len(window), ci + R + 1)
-    return nv.temporal_v5(window[lo:hi], ci - lo, prof, P, flows)
+    tn = float(P.get("t_noise", 1.0))
+    Q = P if tn == 1.0 else dict(P, noise_level=P["noise_level"] * tn)
+    return nv.temporal_v5(window[lo:hi], ci - lo, prof, Q, flows)
+
+
+def temporal_mask(rv, n, a):
+    """Noise Level Check mask from the luma residual variance rv of temporal_v5 on n frames with
+    Amount a: 0 where the temporal filter averages nothing, 1 where every neighbour has weight 1
+    (rv = rv_min = ((1 - a) + a/n)^2 + a^2 0.64 (n - 1) / n^2). a <= 0 or n = 1: 0 everywhere."""
+    rv = np.asarray(rv, np.float32)
+    if a <= 0 or n <= 1:
+        return np.zeros(rv.shape, np.float32)
+    rv_min = ((1.0 - a) + a / n) ** 2 + a * a * nv.NEIGHBOUR_VAR * (n - 1) / (n * n)
+    return np.clip((1.0 / rv - 1.0) / (1.0 / rv_min - 1.0), 0.0, 1.0).astype(np.float32)
 
 
 def finish(window, ci, tmp, rv, prof, P):
@@ -81,7 +103,13 @@ def _work(job):
 
 
 # ---------------- preview engine ----------------
-_TEMPORAL_KEYS = ("radius", "temporal", "threshold", "noise_level", "similarity", "pyramid_scale", "bs", "search")
+_TEMPORAL_KEYS = ("radius", "temporal", "threshold", "noise_level", "similarity", "pyramid_scale", "bs", "search",
+                  "t_noise")
+
+
+def temporal_sig(P):
+    """The parameters the temporal stage depends on (cache key; t_noise defaults to 1)."""
+    return tuple(P.get(k, 1.0) if k == "t_noise" else P[k] for k in _TEMPORAL_KEYS), P["channel_noise"]["Y"]
 
 
 class PreviewEngine:
@@ -117,11 +145,12 @@ class PreviewEngine:
         while len(cache) > n:
             cache.popitem(last=False)
 
-    def process(self, t, prof, prof_token, P, crop=None):
+    def _temporal_stage(self, t, prof, prof_token, P, crop):
+        """(window, ci, (tmp, rv)) of frame t; the temporal result is cached per temporal_sig."""
         R = int(P["radius"])
         idx, win = self.window(t, R, crop)
         ci = idx.index(t)
-        tkey = (t, crop, prof_token, tuple(P[k] for k in _TEMPORAL_KEYS), P["channel_noise"]["Y"])
+        tkey = (t, crop, prof_token) + temporal_sig(P)
         with self._lock:
             hit = self._temporal.get(tkey)
             fkey = (t, crop, P["bs"], P["search"])
@@ -133,9 +162,26 @@ class PreviewEngine:
             hit = temporal(win, ci, prof, P, flows)
             with self._lock:
                 self._put(self._temporal, tkey, hit, 6)
-        tmp, rv = hit
+        return win, ci, hit
+
+    def process(self, t, prof, prof_token, P, crop=None):
+        win, ci, (tmp, rv) = self._temporal_stage(t, prof, prof_token, P, crop)
         out = finish(win, ci, [p.copy() for p in tmp], rv, prof, P)
         return self.to_rgb([np.clip(o, 0, 255) for o in out]), self.to_rgb(win[ci])
+
+    def mask(self, t, prof, prof_token, P):
+        """Noise Level Check mask (H x W float32 0..1, coded orientation) of the whole frame t from the
+        luma residual variance of the cached temporal stage."""
+        win, ci, (tmp, rv) = self._temporal_stage(t, prof, prof_token, P, None)
+        return temporal_mask(rv[0], len(win), float(P["temporal"]))
+
+    def assist(self, t, prof, P):
+        """Assist Image of Profile Check (repro definition; the genuine's processing is not decoded):
+        frame t through the spatial stage only (spatial_ui with the residual variance 1 that
+        temporal_v5 gives without temporal filtering), as RGB of the whole frame."""
+        planes = self._crop_planes(self.frames[t], None)
+        out = spatial_ui(planes, prof, [np.ones(p.shape, np.float32) for p in planes], P)
+        return self.to_rgb([np.clip(o, 0, 255) for o in out])
 
     def to_rgb(self, planes):
         return np.clip(nv.yuv_to_rgb(planes, self.matrix, self.full_range), 0, 255)

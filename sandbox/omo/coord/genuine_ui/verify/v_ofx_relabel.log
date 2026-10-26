@@ -1,0 +1,6 @@
+[PASS] apply: exit 0, 1 frames (expected 1), stderr tracebacks 0, stderr lines 20 (other than Qt offscreen notices: 0)
+[PASS] apply_apply_cancel: exit 0, 1 frames (expected 1), stderr tracebacks 0, stderr lines 20 (other than Qt offscreen notices: 0)
+[PASS] cancel: exit 0, 0 frames (expected 0), stderr tracebacks 0, stderr lines 20 (other than Qt offscreen notices: 0)
+[PASS] apply_change_close: exit 0, 2 frames (expected 2), stderr tracebacks 0, stderr lines 20 (other than Qt offscreen notices: 0)
+[PASS] close: exit 0, 1 frames (expected 1), stderr tracebacks 0, stderr lines 20 (other than Qt offscreen notices: 0)
+[PASS] menu_apply_cancel: exit 0, 1 frames (expected 1), stderr tracebacks 0, stderr lines 20 (other than Qt offscreen notices: 0)

@@ -2,8 +2,8 @@
 and value rows ("Label  (dot / band pattern)  slider  value"), the value underlined with dots and
 editable by a click. A row can drive several keys at once (Frequencies rows write Y, Cr and Cb)."""
 import numpy as np
-from PySide6.QtCore import QRectF, QSize, Qt, Signal
-from PySide6.QtGui import QBrush, QColor, QImage, QPainter, QPen, QPixmap
+from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtGui import QBrush, QColor, QIcon, QImage, QPainter, QPen, QPixmap, QPolygonF, QRadialGradient
 from PySide6.QtWidgets import (QAbstractSlider, QCheckBox, QComboBox, QDoubleSpinBox, QHBoxLayout, QLabel, QPushButton,
                                QSizePolicy, QSlider, QStackedWidget, QToolButton, QVBoxLayout, QWidget)
 
@@ -12,8 +12,8 @@ from ..state import PARAM_SPECS
 CH_COLORS = {"Y": QColor(255, 255, 255), "Cr": QColor(236, 60, 60), "Cb": QColor(150, 90, 240),
              "R": QColor(236, 60, 60), "G": QColor(60, 190, 60), "B": QColor(60, 90, 236)}
 BAND_SCALE = {"high": 1, "medium": 2, "low": 4, "very-low": 8, "ultra-low": 16}
-HEADER_CSS = "background:#d6d6d6; color:#202020;"
-SUBHEADER_CSS = "color:#202020;"
+HEADER_CSS = "background:#6e6e6e;"            # genuine section band (110, 110, 110), rp_freq.png
+HEADER_TEXT = "#e9e9e9"                         # its bold title (233, 233, 233)
 
 
 def _frames(v):
@@ -33,33 +33,114 @@ FORMATS = {
 
 
 def dot_pixmap(c, size=14):
+    """Round component marker, lit from the upper left like the genuine's (white / pink / lilac)."""
     pm = QPixmap(size, size)
     pm.fill(Qt.transparent)
     p = QPainter(pm)
     p.setRenderHint(QPainter.Antialiasing)
     p.setPen(QPen(QColor(90, 90, 90), 1))
-    p.setBrush(QBrush(CH_COLORS[c]))
+    g = QRadialGradient(QPointF(size * 0.35, size * 0.3), size * 0.75)
+    g.setColorAt(0, QColor(255, 255, 255))
+    g.setColorAt(1, CH_COLORS[c].lighter(115) if c == "Y" else CH_COLORS[c])
+    p.setBrush(QBrush(g))
     p.drawEllipse(QRectF(1.5, 1.5, size - 3, size - 3))
     p.end()
     return pm
+
+
+def glyph_icon(text, color=QColor(220, 220, 220), size=20, bold=False):
+    """QIcon of one text glyph (↶, ↷, ...) drawn in `color`."""
+    pm = QPixmap(size, size)
+    pm.fill(Qt.transparent)
+    p = QPainter(pm)
+    p.setRenderHint(QPainter.Antialiasing)
+    f = p.font()
+    f.setPixelSize(int(size * 0.8))
+    f.setBold(bold)
+    p.setFont(f)
+    p.setPen(color)
+    p.drawText(QRectF(0, 0, size, size), Qt.AlignCenter, text)
+    p.end()
+    return QIcon(pm)
+
+
+def info_icon(size=18):
+    """Blue round (i) of the panel's top bar."""
+    pm = QPixmap(size, size)
+    pm.fill(Qt.transparent)
+    p = QPainter(pm)
+    p.setRenderHint(QPainter.Antialiasing)
+    p.setPen(QPen(QColor(20, 60, 140), 1))
+    p.setBrush(QColor(40, 120, 230))
+    p.drawEllipse(QRectF(1.5, 1.5, size - 3, size - 3))
+    f = p.font()
+    f.setPixelSize(int(size * 0.7))
+    f.setBold(True)
+    p.setFont(f)
+    p.setPen(QColor(255, 255, 255))
+    p.drawText(QRectF(0, 0, size, size), Qt.AlignCenter, "i")
+    p.end()
+    return QIcon(pm)
+
+
+def pin_icon(size=18):
+    """Blue push pin (Default Profile / Preset menu)."""
+    pm = QPixmap(size, size)
+    pm.fill(Qt.transparent)
+    p = QPainter(pm)
+    p.setRenderHint(QPainter.Antialiasing)
+    p.setPen(QPen(QColor(200, 200, 200), 1.6))
+    p.drawLine(QPointF(size * 0.22, size * 0.82), QPointF(size * 0.48, size * 0.52))
+    p.setPen(QPen(QColor(20, 60, 140), 1))
+    p.setBrush(QColor(60, 140, 240))
+    p.drawPolygon(QPolygonF([QPointF(size * 0.45, size * 0.25), QPointF(size * 0.78, size * 0.58),
+                             QPointF(size * 0.62, size * 0.62), QPointF(size * 0.40, size * 0.40)]))
+    p.drawEllipse(QRectF(size * 0.50, size * 0.12, size * 0.36, size * 0.36))
+    p.end()
+    return QIcon(pm)
+
+
+def square_icon(color, size=12):
+    pm = QPixmap(size, size)
+    pm.fill(Qt.transparent)
+    p = QPainter(pm)
+    p.setPen(QPen(QColor(20, 40, 90), 1))
+    p.setBrush(color)
+    p.drawRect(QRectF(1.5, 1.5, size - 3, size - 3))
+    p.end()
+    return QIcon(pm)
+
+
+def triangle_icon(color=QColor(190, 190, 190), size=12):
+    pm = QPixmap(size, size)
+    pm.fill(Qt.transparent)
+    p = QPainter(pm)
+    p.setRenderHint(QPainter.Antialiasing)
+    p.setPen(Qt.NoPen)
+    p.setBrush(color)
+    p.drawPolygon(QPolygonF([QPointF(3, 1.5), QPointF(size - 2, size / 2), QPointF(3, size - 1.5)]))
+    p.end()
+    return QIcon(pm)
 
 
 _BAND_PM = {}
 
 
 def band_pixmap(band, w=22, h=16):
-    """Noise pattern of one frequency band (repro): white noise up-sampled by the band scale."""
+    """Noise pattern of one frequency band (repro picture, deterministic): white noise blurred with a
+    Gaussian of the band scale (the genuine's samples look like this: fine grain -> smooth blobs)."""
     if band not in _BAND_PM:
+        from scipy.ndimage import gaussian_filter
         s = BAND_SCALE[band]
         rng = np.random.default_rng(7 + s)
-        a = rng.standard_normal((h // s + 2, w // s + 2))
-        a = a.repeat(s, 0).repeat(s, 1)[:h, :w]
-        if s > 1:                                   # soften the blocks a little
-            k = np.ones(max(s // 2, 1)) / max(s // 2, 1)
-            a = np.apply_along_axis(lambda r: np.convolve(r, k, "same"), 1, a)
-            a = np.apply_along_axis(lambda r: np.convolve(r, k, "same"), 0, a)
+        m = 2 * s + 2
+        a = rng.standard_normal((h + 2 * m, w + 2 * m))
+        if s > 1:
+            a = gaussian_filter(a, 0.6 * s, mode="wrap")
+        a = a[m:m + h, m:m + w]
         a = (a - a.mean()) / (a.std() + 1e-6)
-        g = np.ascontiguousarray(np.clip(128 + 45 * a, 0, 255).astype(np.uint8))
+        k = {1: 50, 2: 45, 4: 40, 8: 32, 16: 24}[s]          # coarser bands: softer (as the genuine's)
+        g = np.ascontiguousarray(np.clip(128 + k * a, 0, 255).astype(np.uint8))
         _BAND_PM[band] = QPixmap.fromImage(QImage(g.data, w, h, w, QImage.Format_Grayscale8).copy())
     return _BAND_PM[band]
 
@@ -115,7 +196,7 @@ class Row(QWidget):
         self.deco = QLabel()
         self.deco.setFixedSize(QSize(24, 16))
         if deco:
-            self.deco.setPixmap(dot_pixmap(deco[4:]) if deco.startswith("dot:") else band_pixmap(deco[5:]))
+            self.deco.setPixmap(dot_pixmap(deco[4:], 16) if deco.startswith("dot:") else band_pixmap(deco[5:]))
             lay.addWidget(self.deco)
         self.slider = QSlider(Qt.Horizontal)
         lo, hi = sorted((self.to_d(s.lo), self.to_d(s.hi)))
@@ -289,21 +370,27 @@ class ChoiceRow(QWidget):
             self.edited.emit(self.key, self.choices[i])
 
 
+ACTIVE_TITLE = "#f0d000"                 # genuine: title of a running check tool in yellow (pc1_panel.png)
+
+
 class BeginRow(QWidget):
-    """'Name (?)   [▶ Begin]' check tool (Profile Check, Filter Tuning Assist, ...)."""
+    """'⚙ Name (?)   [▷ Begin]' check tool (Profile Check, Filter Tuning Assist, ...); while it runs the
+    title is yellow and the button reads '■ Finish' (blue square), as the genuine shows. dim = grey title
+    while not running (genuine Profile Check)."""
     toggled = Signal(bool)
 
-    def __init__(self, title, tip="", checkable=True, enabled=True, indent=0, parent=None):
+    def __init__(self, title, tip="", checkable=True, enabled=True, indent=0, dim=False, parent=None):
         super().__init__(parent)
         lay = QHBoxLayout(self)
         lay.setContentsMargins(6 + 14 * indent, 2, 22, 2)
-        self.title = QLabel(f"⚙ {title} <span style='color:#2a6fd6'>(?)</span>")
+        self.name, self.dim = title, dim
+        self.title = QLabel()
         self.title.setToolTip(tip)
         self.title.setWordWrap(True)
         self.title.setMinimumWidth(0)
         self.title.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         lay.addWidget(self.title, 1)
-        self.button = QPushButton("▶ Begin" if enabled else "Begin (n/a)")
+        self.button = QPushButton("Begin" if enabled else "Begin (n/a)")
         self.button.setCheckable(checkable)
         self.button.setFixedWidth(80)
         self.button.setToolTip(tip)
@@ -311,15 +398,24 @@ class BeginRow(QWidget):
         self.button.toggled.connect(self._t)
         self.button.clicked.connect(lambda: None if checkable else self.toggled.emit(True))
         self.setEnabled(enabled)
+        self._look(False)
+
+    def _look(self, on):
+        c = ACTIVE_TITLE if on else "#9a9a9a" if self.dim else None
+        name = f"⚙ {self.name}" if c is None else f"<span style='color:{c}'>⚙ {self.name}</span>"
+        self.title.setText(f"{name} <span style='color:#2a6fd6'>(?)</span>")
+        if self.button.text() != "Begin (n/a)":
+            self.button.setText("Finish" if on else "Begin")
+        self.button.setIcon(square_icon(QColor(70, 150, 255)) if on else triangle_icon())
 
     def _t(self, on):
-        self.button.setText("Finish" if on else "▶ Begin")
+        self._look(on)
         self.toggled.emit(on)
 
     def set_checked(self, on):
         self.button.blockSignals(True)
         self.button.setChecked(on)
-        self.button.setText("Finish" if on else "▶ Begin")
+        self._look(on)
         self.button.blockSignals(False)
 
 
@@ -358,7 +454,10 @@ class Header(QWidget):
         h.addWidget(self.arrow)
         na = enable is not None and not enable.spec.implemented
         self.title = QLabel(f"<b>{title}</b>" + (" <span style='color:#2a6fd6'>(?)</span>" if help_tip else "")
-                            + (" <span style='color:#808080'>(n/a)</span>" if na else ""))
+                            + (f" <span style='color:{'#c8c8c8' if level == 0 else '#808080'}'>(n/a)</span>"
+                               if na else ""))
+        if level == 0:
+            self.title.setStyleSheet(f"color:{HEADER_TEXT}")
         if na:
             self.title.setToolTip(enable.spec.tip)
             enable.na_label = self.title
@@ -413,8 +512,9 @@ def separator():
 
 
 class IconBar(QWidget):
-    """Top buttons of a side panel: open · save | undo · redo · reset | default ▾ · info.
-    Undo / redo get the QUndoStack actions later (bind_undo)."""
+    """Top buttons of a side panel: open · save | undo ▾ · redo ▾ (curved arrows; ▾ = the undo history)
+    · reset (red ×) | default (pin) ▾ · info (blue (i)). Undo / redo get the QUndoStack actions later
+    (bind_undo)."""
 
     def __init__(self, what, parent=None):
         super().__init__(parent)
@@ -443,19 +543,38 @@ class IconBar(QWidget):
         self.reset = btn(None, f"Reset {what}", "✕")
         self.reset.setStyleSheet("QToolButton{color:#d02020; font-weight:bold}")
         lay.addStretch(1)
-        self.default = btn(QStyle.SP_DialogApplyButton, f"Default {what}")
+        self.default = btn(None, f"Default {what}")
+        self.default.setIcon(pin_icon())
         self.default.setPopupMode(QToolButton.InstantPopup)
         self.default_menu = QMenu(self.default)
         self.default.setMenu(self.default_menu)
-        self.info = btn(QStyle.SP_MessageBoxInformation, f"Description of the current {what}")
+        self.info = btn(None, f"Description of the current {what}")
+        self.info.setIcon(info_icon())
 
-    def bind_undo(self, undo, redo):
-        from PySide6.QtWidgets import QStyle
-        for b, a, ic in ((self.undo, undo, QStyle.SP_ArrowBack), (self.redo, redo, QStyle.SP_ArrowForward)):
+    def bind_undo(self, undo, redo, stack=None):
+        """undo / redo: the QUndoStack actions; stack: the QUndoStack whose history the ▾ menus list
+        (choosing an entry undoes / redoes up to it)."""
+        from PySide6.QtWidgets import QMenu
+        for b, a, glyph, back in ((self.undo, undo, "↶", True), (self.redo, redo, "↷", False)):
             if a.icon().isNull():
-                a.setIcon(self.style().standardIcon(ic))
+                a.setIcon(glyph_icon(glyph, QColor(80, 150, 255), bold=True))
             b.setDefaultAction(a)
             b.setToolButtonStyle(Qt.ToolButtonIconOnly)
+            if stack is not None:
+                m = QMenu(b)
+                m.aboutToShow.connect(lambda m=m, back=back: self._history(m, stack, back))
+                b.setMenu(m)
+                b.setPopupMode(QToolButton.MenuButtonPopup)
+
+    @staticmethod
+    def _history(menu, stack, back):
+        menu.clear()
+        i = stack.index()
+        steps = range(i - 1, max(i - 11, -1), -1) if back else range(i, min(i + 10, stack.count()))
+        for k in steps:
+            menu.addAction(stack.text(k), lambda k=k: stack.setIndex(k if back else k + 1))
+        if menu.isEmpty():
+            menu.addAction("(no history)").setEnabled(False)
 
 
 def panel_title(text):

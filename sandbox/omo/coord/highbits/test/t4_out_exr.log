@@ -1,0 +1,5 @@
+320x256 25/1 frames~8 rotation=0 out=[0,end) tags={'color_space': None, 'color_primaries': None, 'color_transfer': 'linear', 'color_range': None}
+source gbrpf32le (32-bit float RGB) -> processing gbrpf32le · 32-bit float RGB, codec exr
+profile frame 2: mode=auto area=[24, 64, 96] (small square (< 128 px)) sigma={'Y': 1.835, 'Cb': 5.56, 'Cr': 7.635}
+frame 8/8 1s
+wrote ../sandbox/omo/coord/highbits/test/t4_out_exr/out_%05d.exr (8 frames, 1.3s)

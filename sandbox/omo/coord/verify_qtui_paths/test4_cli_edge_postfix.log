@@ -1,0 +1,15 @@
+== --ofx 192
+usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]
+rc 1
+== --ofx 192 108 24 --depth 10
+usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]
+rc 1
+== --ofx 192 108 24 --depth
+usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]
+rc 1
+== --ofx 192 x
+usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]
+rc 1
+== empty stdin
+no frames received on stdin
+       0

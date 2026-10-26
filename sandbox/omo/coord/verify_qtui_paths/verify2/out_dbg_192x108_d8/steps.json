@@ -1,0 +1,149 @@
+[
+ {
+  "name": "started",
+  "size": 0,
+  "frames": 12,
+  "shape": [
+   [
+    108,
+    192
+   ],
+   [
+    54,
+    96
+   ],
+   [
+    54,
+    96
+   ]
+  ],
+  "open": false,
+  "export": false,
+  "load": false,
+  "generic": false,
+  "frame": 4,
+  "prof": false
+ },
+ {
+  "name": "profile+aft",
+  "size": 0,
+  "t": 6.33,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "aft": true,
+  "flat": 2,
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_dbg_192x108_d8/prev_1.npy"
+ },
+ {
+  "name": "apply_t0",
+  "size": 31104,
+  "t": 6.68,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_dbg_192x108_d8/ref_2.npz",
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_dbg_192x108_d8/prev_2.npy"
+ },
+ {
+  "name": "move0",
+  "size": 31104,
+  "t": 26.71,
+  "frame": 2,
+  "status": "frame 0 filtered",
+  "ok": false,
+  "running": [],
+  "queued": [],
+  "keys": [
+   [
+    "0",
+    "5",
+    "None"
+   ]
+  ],
+  "gen": 5,
+  "timer": false,
+  "previewing": true
+ },
+ {
+  "name": "apply0",
+  "size": 62208,
+  "t": 26.75,
+  "frame": 2,
+  "status": "Apply: frame 2 processed and written to the host",
+  "gen": 6,
+  "timer": true
+ },
+ {
+  "name": "move1",
+  "size": 62208,
+  "t": 27.05,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "ok": true,
+  "running": [],
+  "queued": [],
+  "keys": [
+   [
+    "0",
+    "6",
+    "None"
+   ]
+  ],
+  "gen": 6,
+  "timer": false,
+  "previewing": true,
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_dbg_192x108_d8/prev_5.npy"
+ },
+ {
+  "name": "apply1",
+  "size": 93312,
+  "t": 27.08,
+  "frame": 0,
+  "status": "Apply: frame 0 processed and written to the host",
+  "gen": 7,
+  "timer": true
+ },
+ {
+  "name": "move2",
+  "size": 93312,
+  "t": 27.43,
+  "frame": 2,
+  "status": "frame 2 filtered",
+  "ok": true,
+  "running": [],
+  "queued": [],
+  "keys": [
+   [
+    "2",
+    "7",
+    "None"
+   ]
+  ],
+  "gen": 7,
+  "timer": false,
+  "previewing": true,
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_dbg_192x108_d8/prev_7.npy"
+ },
+ {
+  "name": "apply2",
+  "size": 124416,
+  "t": 27.47,
+  "frame": 2,
+  "status": "Apply: frame 2 processed and written to the host",
+  "gen": 8,
+  "timer": true
+ },
+ {
+  "name": "pre_close",
+  "size": 124416,
+  "t": 27.47,
+  "frame": 2,
+  "status": "Apply: frame 2 processed and written to the host",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_dbg_192x108_d8/ref_9.npz"
+ },
+ {
+  "name": "exit",
+  "rc": 0,
+  "size": 124416,
+  "t": 27.5
+ }
+]

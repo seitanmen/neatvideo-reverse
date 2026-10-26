@@ -1,0 +1,4 @@
+1920x1080 24/1 frames~721 rotation=0 out=[568,573) tags={'color_space': 'bt709', 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+profile frame 570: mode=auto area=[896, 1264, 96] (small square (< 128 px)) sigma={'Y': 3.391, 'Cb': 1.707, 'Cr': 2.179}
+frame 5/5 14s
+wrote ../sandbox/omo/coord/highbits/verify/r1/b_old.mp4 (5 frames, 13.9s)

@@ -1,0 +1,5 @@
+256x192 24/1 frames~8 rotation=0 out=[0,end) tags={'color_space': 'gbr', 'color_primaries': None, 'color_transfer': None, 'color_range': None}
+source gbrpf32le (32-bit float RGB) -> processing gbrpf32le · 32-bit float RGB, codec ffv1
+profile frame 2: mode=spatial area=[64, 112, 128] (ok) sigma={'Y': 1.953, 'Cb': 5.492, 'Cr': 6.521}
+frame 8/8 1s
+wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/round2/nan/whole_plane_mix1_out.mkv (8 frames, 1.2s)

@@ -1,0 +1,70 @@
+[
+ {
+  "name": "started",
+  "size": 0,
+  "frames": 12,
+  "shape": [
+   [
+    108,
+    192
+   ],
+   [
+    54,
+    96
+   ],
+   [
+    54,
+    96
+   ]
+  ],
+  "open": false,
+  "export": false,
+  "load": false,
+  "generic": false,
+  "frame": 4,
+  "prof": false
+ },
+ {
+  "name": "profile+aft",
+  "size": 0,
+  "t": 6.45,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "aft": true,
+  "flat": 2,
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_revert_192x108_d8/prev_1.npy"
+ },
+ {
+  "name": "applyA",
+  "size": 31104,
+  "t": 6.78,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_revert_192x108_d8/ref_2.npz",
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_revert_192x108_d8/prev_2.npy"
+ },
+ {
+  "name": "apply_reverted",
+  "size": 31104,
+  "t": 7.78,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_revert_192x108_d8/ref_3.npz",
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_revert_192x108_d8/prev_3.npy"
+ },
+ {
+  "name": "pre_close",
+  "size": 31104,
+  "t": 7.8,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_revert_192x108_d8/ref_4.npz",
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_revert_192x108_d8/prev_4.npy"
+ },
+ {
+  "name": "exit",
+  "rc": 0,
+  "size": 31104,
+  "t": 7.82
+ }
+]

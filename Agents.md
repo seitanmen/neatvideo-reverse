@@ -63,6 +63,9 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
 - `nvfilter.py` — 本体。上半分が v2〜v4 関数 (旧・validate_v2/v4 用に不変)、その後が **v5**
   (ネイティブ YCbCr・輝度別ノイズ曲線・画素単位の時間重み＋残留ノイズ追跡・5 帯域 a-trous)、
   最後に本家のノイズ測定の移植 (`band_model`・`is_clip`・`find_flat_area_genuine` など、§6.5。中身は下の nv_* モジュール)
+  2026-10-26: `build_profile_v5(area=...)` が (y0, x0, size) に加えて長方形 (y0, x0, h, w) を受け付ける (各辺を独立に [8, H]・[8, W] に切り詰め、
+  h == w なら従来の 3 要素の area にまとめる。`prof["area"]` は正方形 3 要素・長方形 4 要素)。None と 3 要素は変更前とビット一致 (独立検証 186/186、
+  `sandbox/omo/coord/genuine_ui/VERDICT.md`)。`nv_aft_v5.apply_aft` も 4 要素の area に対応 (正方形はビット一致)。CLI は `--area Y,X,SIZE` か `Y,X,H,W`
 - `nv_curve.py`・`nv_pixnoise.py`・`nv_lines.py` — 本家 EstimateNoiseLevelCurve の移植 (本家とビット一致、§6.5)。
   `nv_curve.genuine_noise_curve(rgb)` が (輝度, ノイズ) の 8 点表を、`nv_curve.noise_at(表)` が本家の補間器を返す。
   `nv_curve.is_clip_genuine` は本家の IsClip。`nvfilter.find_flat_area` の正規化曲線とクリップ判定はこれを使う
@@ -73,8 +76,26 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
 - `nv_profile.py` — BuildNoiseModel (`FUN_009af718`) が書くプロファイル 0xc300 バイト (`build_profile(rgb, mode, area)`。ヒープのポインタ
   以外は本家とビット一致)。見本画像の LZMA 圧縮 (0x18〜0x2b) は `nv_lzma.py` (LZMA SDK 9.20 の符号器の移植) を使う。部品は `nv_mcstats.py` (`FUN_0098718c`)・`nv_refnoise.py` (基準モデルの白色ノイズ `FUN_009c3bc4`)・
   `nv_cov.py` (照合用の分岐カウンタ)。照合用で、ノイズ除去のパイプライン (v5) は使っていない (2026-10-17 の高速化後、負荷平均 5〜8 の中で 1 面 128² 2.1 秒・320² 6.6〜6.8 秒、プロファイル 128² 15.4〜15.7 秒 (高速化前は同条件で 2.7 / 9.2〜9.5 / 20.5〜21.0 秒))。白色ノイズの基準値 (`reference_floor`、51 語) は workspace 直下の `data/ref_floor.npy` に置いてあり (参照実装で計算した値とビット一致)、無ければ計算する (約 7 秒)
-- `denoise_video_v5.py` — **実写用 v5 (推奨)**。ネイティブ yuv420p 入出力 (色タグ継承)・ストリーミング・フレーム並列
+- `denoise_video_v5.py` — **実写用 v5 (推奨)**。ネイティブ yuv420p 入出力 (色タグ継承)・ストリーミング・フレーム並列。
+  2026-10-26 に高ビット深度 (`--depth 10|12|16|32|source`、既定 8 = 従来と同じ yuv420p・libx264 で、控えとの出力のバイト一致を確認) と `--codec` を追加 (仕様・報告・検証は `sandbox/omo/coord/highbits/` の SPEC.md・REPORT.md・VERDICT.md、検証 Round 2 で APPROVE)
+- `nv_depth.py` — 画素形式の表と変換 (2026-10-26)。高ビット深度の入力は読み込み時に処理コアの「8 ビット相当 0〜255 の float32」へ正規化し (整数は v/2^(b−8) で厳密、float の RGB は ×255 して `_KRB` の係数で full range の YCbCr 4:4:4 へ)、書き出しで戻す。
+  `nvfilter.py` は無変更 (`CURVE_BINS` などは正規化後の尺度でそのまま働く)。色差はソースの形式のまま (4:2:0・4:4:4。4:2:2 は偶数列 = 元の標本・奇数列 = 左右の平均で 4:4:4 に広げて処理し、偶数列を戻す)。
+  float の NaN/±inf は処理用に有限の値へ置き換え (NaN→0、+inf→面の有限の最大、−inf→最小)、書き出しで元の値を戻す
 - `nv_ui.py` — 調整 UI (tkinter, v5)。`python3 nv_ui.py` で起動。全編出力は `denoise_video_v5.py` を呼ぶ
+- `nv_ui_qt/` — 調整 UI の PySide6 版 (2026-10-25。仕様 `ui_spec/UI_SPEC.md`・タスク `.claude/tasks/ui_qt_migration.md`)。2026-10-25 に配置を本家に寄せた (根拠は公式ユーザーガイド v6.1 の画像と、バイナリの UI 構築順の静的解析。`sandbox/omo/coord/verify_qtui_layout/` の LAYOUT_WEB.md・LAYOUT.md・LAYOUT_PLAN.md): ページ Prepare Noise Profile / Adjust and Preview、メニュー Effect / Edit / View / Profile / Filter / Tools / Help (本家の Task・Variants は省略) と Beginner / Advanced の切り替え、ビューアは既定 YCrCb+ (合成 + Y/Cr/Cb Enhanced。Enhanced と周波数表示は repro の定義)・「Filtered」表示と押している間だけ元画像・範囲を選ぶとその範囲だけ処理、最下段にサムネイル (青 = 現在、オレンジ = 時間窓) と Cancel / Apply (Apply = 全編の書き出し)、Filter Settings は Temporal / Spatial / General タブで成分は Luminance → Cr → Cb、帯域は High → Ultra Low。Frequencies 行は本家同様 3 成分共通 (成分別は「repro」欄)、Mix with Original は Enable 付きで本家の向き (表示 = 100 − 内部 mix)、プロファイルの Noise Level (Overall・成分別) は曲線の倍率 `tune`。Undo/Redo、JSON のプロファイル・プリセット (本家の .dnp / .nfp ではない)。
+  バックエンドは変更せず `nvfilter.py` の v5 と `nv_aft_v5.py` (AFT。2026-10-25 に別途追加されたもの。RGB 各面の係数を Y/Cb/Cr の曲線に掛けている点は未確認) を使う。既定値は `V5_DEFAULTS` (UI_SPEC の Luminance 帯域の既定値ではない)。
+  本家の Luminance / Cb / Cr 別の帯域スライダーは `nv_ui_qt/backend.py` が `spatial_v5` を成分ごとに呼んで実現し、全成分が同じ設定なら `process_frame_v5` とビット一致。4:2:0 では色差が 4 段なので Cb/Cr の High は無効表示。
+  v5 に対応のない Sharpening・Jitter・Dust and Scratches・Flicker・Edge Smoothing・品質モード・Input Data Gain・Overall Profile Quality は無効表示 (n/a)。Overall Profile Quality の式は、輝度曲線の項 g を除いて静的に読めた (`sandbox/omo/coord/verify_quality/static/QUALITY.md`、独立検証 APPROVE。g は入口が難読化された関数なので読んでおらず、本家の 23% は未再現のため UI には入れていない)。Most Noisy Frame・Auto Complete・Assist・ガイド文は再現側の独自。
+  全編出力は `nv_ui_qt/export.py` が `denoise_video_v5.main` を UI のプロファイル (AFT・手動調整込み) と成分別設定で動かす (CRF 0 で `backend.process_frame` とビット一致)。自己試験 `nv_ui_qt/selftest.py` 77 項目 (2026-10-26 に高ビット深度の 6 項目、本家合わせの 9 項目、Profile Check とパネルの 6 項目、Noise Level Check の 7 項目を追加)。Profile Check (2026-10-26、本家の観測と仕様・検証は `sandbox/omo/coord/genuine_ui2/` の SPEC.md・VERDICT.md で APPROVE): 本家同様ダイアログではなくビューアの Assist Image 表示に切り替える (パネルの Begin/Finish・ツールバー・メニューが 1 つの切り替え)。Assist Image は repro の定義 (現在のフレームに空間段だけを Luminance/Cr/Cb・全帯域 100% で掛けたもの。本家の処理は未解読) で、下段の Enhanced は強調なし。従来のダイアログは Profile Viewer… (⇧⌘I) になり、Repro 欄 (Profile mode など) もそこへ移した。Noise Level Check (2026-10-26、本家の観測・仕様・検証は `sandbox/omo/coord/verify_quality/` の REPORT.md・nlc/SPEC.md・nlc_verify/VERDICT.md で APPROVE): 本家同様、時間フィルタのマスクを Assist Image として出す (パネルの Begin/Finish・ツールバーの Filter Settings Check のメニュー・Tools のメニューが 1 つの切り替え)。色は本家の画面に当てはめた式 (I = (R+G+B)/3、(1 − m)·I·(1, 0.9, 0.75) + m·(I·(0.3, 0.45, 0.5) + (0, 0, 126.5))、残差 0.35〜1.3 階調)。マスク m は repro の定義 (時間段の Y の残留分散 rv から m = clamp((1/rv − 1)/(1/rv_min − 1), 0, 1)。本家の式は未解読で、test_v02 の −60% では本家 0.33 に対し 0.52)。Temporal の Noise Level (`t_noise`) を実装した (`nv_ui_qt/backend.py` が時間段だけ noise_level を ×t_noise。既定 +0% は変更前とビット一致)。`nv_aft_v5.assist_params` (2026-10-26 に別エージェントが処理コアに追加) は UI から使っていない。Device Noise Profile パネルは本家の順でスクロールなし、選択範囲の Noise Level は Main Sample 比の (±n%) 付き。
+  本家合わせ (2026-10-26、DaVinci Resolve 上の本家 6.1.3 Pro の観測 `sandbox/omo/coord/genuine_ui/OBSERVED.md`・`shots/` と、バイナリの静的解析 `STATIC.md`。仕様 `SPEC.md`、独立検証 `VERDICT.md` で APPROVE):
+  ビューアの表示は本家の式 (`nv_ui_qt/display.py`: 色変換 Y = 0.2989R+0.5866G+0.1145B・Cr = (R−Y)·0.71316504・Cb = (B−Y)·0.56465274、ペインごとの色付きの出力範囲、
+  明るさ 0〜100 (50 で恒等)、YCrCb+ の Enhanced と Frequencies は BuildFreqImage (5 段の間引きラプラシアン、Prepare だけ強調 b/((Box3Box3 b²)^¼+0.01)・重み 1.25^k) と
+  FindFreqLevs の表示範囲。本家の画面の YCrCb ペインとの平均絶対誤差は Y 0.29 / Cr 0.43 / Cb 0.33。ディザは省略)。表示モードはページごと (Prepare 既定 YCrCb+、Adjust 既定 Normal)。
+  選択範囲は自由な長方形 (起点が角、各辺 ≤ 512、内側のドラッグで移動、クリックで消去、枠の色は min(w,h) で赤 ≤15 / 黄 ≤127 / 緑、上に本家の式の "Noise Level"
+  = √(Σ_段 Σ_RGB 局所 RMS 平均²)、下に "Not Uniform" (平坦度 ≥ 2.0)・"Clipping"、▽ で Build Profile (Most Noisy / Current Frame))。選択の有無で Auto / Build Profile、
+  32 未満は作成不可、32〜127 は確認。メニューは Effect / View / Profile / Filter / Variants / Tools / Help (Edit なし)、ツールバーと右パネルの並びも本家どおり。
+  本家と違う点: イコライザは Y/Cr/Cb (本家は R/G/B)、Quality と帯域のバーの値は n/a か repro の定義、View・Filter・Tools の中身は未観測、Fit ズームは連続、フレームのスライダーは残す。
+  Resolve のタイムラインが 3840×2160 だったので、本家の数値 (Noise Level など) は test_v02 を 2 倍に拡大した入力でのもの。高ビット深度 (2026-10-26): Preferences の Bit depth (既定 8-bit = 従来どおり) で読み込み・Batch Profiler・書き出しの深度を決め、高ビットのフレームは float32 で持つ (メモリ上限は実際のバイト数で計算)。ステータスバーに元の pix_fmt と処理の深度を出す。プロファイルの色差の間引き (`sub`) が書き出しの形式と違えば書き出しを拒否。OFX ブリッジは `--ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]` (16 = 4:2:0 の uint16 LE、32 = 4:2:0 の float32 LE で 8 ビット符号値/255。プロトコルは `ofx_bridge.py` の docstring)。OFX モードの既存の不具合 (`argv` 未定義、存在しないメソッドの呼び出しなど 6 件) は往復試験に必要な範囲で修正。独立検証で APPROVE (2026-10-25、D1〜D10 の指摘を修正済み。配置変更後は `coord/verify_qtui_layout/VERDICT.md` で L1〜L10・N1・N2 を修正して APPROVE。旧版の D6「ドラッグは Undo 1 件」は PySide6 6.12 の Enum 比較のため実際には成り立っておらず、L1 で修正)
 - `denoise_video.py` — v1 実写用 (RGB・旧式。記録用)
 - `denoise_video_v2.py` — 実写用 v2〜v4 (記録用。RGB 経由のため色ずれあり §6.2)
 - `neat_repro.py` — v1 合成検証用。`validate_v2.py` / `validate_v4.py` / `validate_v5.py` — 各版の合成検証
@@ -138,13 +159,18 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
 
 ## 5. 使い方
 
-- 実写一括 (推奨 v5): `cd repro && python3 denoise_video_v5.py <in> <out> [--profile auto|spatial|temporal] [--area Y,X,SIZE] [--radius 2] [--temporal 1.0] [--threshold 4] [--luma 0.7] [--chroma 1.0] [--spatial 2.0] [--noise-level 1.0] [--chroma-noise 1.0] [--start S --frames M] [--jobs 10] [--crf 16] [--flicker R] [--params P.json] [--audio copy|aac|none]`
+- 実写一括 (推奨 v5): `cd repro && python3 denoise_video_v5.py <in> <out> [--profile auto|spatial|temporal] [--area Y,X,SIZE|Y,X,H,W] [--radius 2] [--temporal 1.0] [--threshold 4] [--luma 0.7] [--chroma 1.0] [--spatial 2.0] [--noise-level 1.0] [--chroma-noise 1.0] [--start S --frames M] [--jobs 10] [--crf 16] [--flicker R] [--params P.json] [--audio copy|aac|none]`
   - 音声はトラックごとに判定: 出力コンテナの再生互換リスト (mp4: aac/alac/mp3/ac3/eac3/pcm、mov: +mp2 等) に入り試し書きが通ればコピー、
     だめなら AAC、それも無理なら警告して除外。部分範囲は同じ時刻範囲を切り出す。A/V のずれは最初にデコードされるフレームを基準に保ち、
     MPEG-TS/PS で ffmpeg が音声入力の基準を付け直す分も補正 (検証は `blackbox/av_sync/sync2.py`・`sync3.py`、結果は `exp_results.txt`)
   - 読み込みは最初のフレームを 0 とした r_frame_rate の等間隔格子 (`setpts=PTS-STARTPTS,fps=R`)。CFR 素材は passthrough とビット一致
   - 1080p・721f で 278 秒 (M2 Max・jobs 10)。出力に `<out>.json` (プロファイル・パラメータ) を併記
+  - 高ビット深度: `--depth 8|10|12|16|32|source` (既定 8) と `--codec auto|x264|x265|ffv1|prores|exr`。auto は 10 ビット → libx264 (High 10 / 4:2:2 / 4:4:4)、
+    12 ビット → libx265 (.mp4/.mov)、.mkv → FFV1 (可逆)、16 ビット → FFV1 (.mkv のみ)、32 ビット → gbrpf32le の FFV1 (.mkv) か EXR 連番 (`out_%05d.exr`、音声なし)。
+    出力の pix_fmt は処理形式と同じで ffmpeg に変換させない。書けない組み合わせはプロファイルの前に 64×64 の試し書きで止め、途中で符号器が失敗したら書きかけを消す
 - UI: `cd repro && python3 nv_ui.py` (Load→Auto Profile (auto/spatial/temporal)→タブで調整→Preview→Process full video)
+- Qt UI: `cd repro && python3 -m nv_ui_qt.main [video]` (要 PySide6。2026-10-25 に 6.12.0 を導入)。自己試験 (画面を出さない): `QT_QPA_PLATFORM=offscreen python3 -m nv_ui_qt.selftest ../test.mp4 <出力先>` (出力先に設定・試験ファイル・短い可逆の書き出しだけを書く)。
+  プレビューは全フレームをメモリに読む (上限は Preferences、既定 4 GB。1080p 721f で約 2.2 GB)。1080p 1 フレームのプレビューは約 2.4 秒、Preview Area で約 0.6 秒、AFT は約 48 秒 (検証者の測定)
 - 検証: `python3 validate_v5.py` (合成)、`neatvideo_ofx_614/analysis/blackbox/calibrate_v5.py` (本家区間比較・較正)、
   `compare_full.py` (全編比較)。区間 yuv の抽出手順は calibrate_v5.py の docstring 参照。
   calibrate_v5.py の候補には `"area": [y0, x0, size]` (区間別は `{"296": [...], "560": [...]}`) でプロファイル領域を指定できる
@@ -434,7 +460,12 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
 - Pro バイナリ未取得。Demo と Pro の差分、本家レンダーカーネル定数の完全抽出は未了。
 - 後方フローは順方向の否定近似ではなく方向別に推定している (v4 以降。v5 も中心→各近傍を個別推定)。
 - 4K・長尺は未検証。1080p・721f で v4 は約40分 (bs32・並列なし)、v5 は 278 秒 (jobs 10)。
-- v5 CLI は 8bit 4:2:0 で入出力する (10bit 入力も 8bit に変換)。画素アスペクト比・字幕・データストリームはコピーしない
+- v5 CLI は既定 (`--depth 8`) では 8bit 4:2:0 で入出力する (10bit 入力も 8bit に変換)。高ビット深度 (`--depth`、2026-10-26) の制限 (検証で観測):
+  FFV1 の float は ffmpeg 8.0.1 で `-level 4 -strict experimental` が必要 (可逆は確認、他のツールでの読み込みは未確認。ほぼ全面 NaN のフレームでは ffmpeg 側が可逆に符号化できない例あり)。
+  x264 10 ビットの `--crf 0` は可逆ではない。full range の高ビットの白 (2^b−1) は内部で 255.75 になる (limited range は 8 ビット ×4 で厳密に一致)。
+  4:2:2 の色差は奇数列が補間なので σ が約 20% 低く出る。yuv ソースを `--depth 32` で読むと swscale の変換誤差 (BT.709 の定義式との差が最大 0.0038、0〜1 尺度) が入る。
+  float の有限の巨大値は壊れる (1e9 以上で値が失われ、1e17 以上で出力の大半が NaN。+inf の置き換え先が巨大でも同様)。
+  EXR 連番の後始末はパターンに合う既存の番号のフレームも消す。`vyu444` は 4:2:0 と誤判定する (まれな形式)。worker が落ちた場合 (BrokenProcessPool) は書きかけが残る。画素アスペクト比・字幕・データストリームはコピーしない
   (音声はトラックごとにコピー/AAC/除外。ストリームコピーの部分範囲は先頭が音声パケット 1 個分 (≤約20ms) 遅れて始まり得る。
   レビュー素材 (TS/PS/GOP 途中開始/音声先行/VFR/FLV/複数トラック) で A/V のずれは全トラック ±1.6ms 以内)。
   VFR 入力は r_frame_rate の CFR タイムラインに載せて処理・出力する (NLE と同様に隙間は重複フレームになり、
@@ -489,5 +520,5 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
 - 長時間ジョブ (実写処理は 1080p で約40分) はバックグラウンド実行し、
   `repro/out/` の既存成果物を上書きしない (別名保存)。
 - 揮発物 (`/tmp/nv_expand`, `/tmp/ghproj`, `/tmp/nv_out*`) の再生成手順は §3 参照。
-- 競合回避: 同一ファイルの同時編集を避ける。UI (`nv_ui.py`) と core (`nvfilter.py`)
+- 競合回避: 同一ファイルの同時編集を避ける。UI (`nv_ui.py`・`nv_ui_qt/`) と core (`nvfilter.py`)
   は担当を分け、結合部は `params()` / `process_frame()` の I/F とする。

@@ -1,0 +1,8 @@
+sizes 4147200 4147200 4147200
+Y max 2 mean 0.9997 hist [691914, 1381891, 690995]
+U max 2 mean 0.9997 hist [172814, 345747, 172639]
+V max 2 mean 1.0029 hist [172462, 344281, 174457]
+o10 == o8to10: True
+o8 != src (processed): 0.9059606481481481
+profile o8==o10 True o10==o8to10 True params eq True
+{'pix_fmt': ('yuv420p', 'yuv420p10le', 'yuv420p10le'), 'depth': (8, 10, 10), 'codec': ('x264', 'ffv1', 'ffv1'), 'source_pix_fmt': ('yuv420p', 'yuv420p10le', 'yuv420p')}

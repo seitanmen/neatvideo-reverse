@@ -1,0 +1,11 @@
+== empty stdin
+no frames received on stdin
+rc 1 stdout        0 bytes
+== missing H
+usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]
+rc 1
+== bad depth
+ValueError: --depth 10: 8, 16 or 32
+== partial frame (1.5 frames)
+qt.qpa.fonts: Populating font family aliases took 189 ms. Replace uses of missing font family "Sans Serif" with one that exists to avoid this cost. 
+killed after 6 s (UI running with 1 frame) rc-of-kill 0

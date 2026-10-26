@@ -1,0 +1,5 @@
+640x360 30/1 frames~901 rotation=0 out=[300,302) tags={'color_space': 'bt709', 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv420p (8-bit 4:2:0) -> processing yuv420p · 8-bit 4:2:0, codec x264
+profile frame 301: mode=auto area=[0, 0, 360, 640] (manual) sigma={'Y': 20.945, 'Cb': 2.726, 'Cr': 2.808}
+frame 2/2 2s
+wrote ../sandbox/omo/coord/genuine_ui/verify/dv2/new_big.mp4 (2 frames, 1.9s)

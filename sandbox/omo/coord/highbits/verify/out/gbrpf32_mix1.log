@@ -1,0 +1,6 @@
+--depth source --mix 1
+320x240 24/1 frames~8 rotation=0 out=[0,end) tags={'color_space': 'gbr', 'color_primaries': None, 'color_transfer': None, 'color_range': None}
+source gbrpf32le (32-bit float RGB) -> processing gbrpf32le · 32-bit float RGB, codec ffv1
+profile frame 2: mode=auto area=[0, 200, 96] (small square (< 128 px)) sigma={'Y': 2.109, 'Cb': 5.799, 'Cr': 8.152}
+frame 8/8 2s
+wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/out/gbrpf32_mix1.mkv (8 frames, 2.1s)

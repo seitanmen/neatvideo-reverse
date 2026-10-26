@@ -1,0 +1,41 @@
+320x240 24/1 frames~8 rotation=0 out=[0,3) tags={'color_space': 'gbr', 'color_primaries': None, 'color_transfer': None, 'color_range': None}
+source gbrpf32le (32-bit float RGB) -> processing gbrpf32le · 32-bit float RGB, codec ffv1
+/Users/seitan/Desktop/work/reverse/repro/nv_depth.py:216: RuntimeWarning: invalid value encountered in subtract
+  cb = (b - y) / (2 * (1 - kb)) + 128.0
+/Users/seitan/Desktop/work/reverse/repro/nv_depth.py:217: RuntimeWarning: invalid value encountered in subtract
+  cr = (r - y) / (2 * (1 - kr)) + 128.0
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:409: RuntimeWarning: invalid value encountered in subtract
+  b1 = Y - _b3(_b3(Y, 1, 0), 1, 1)
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:667: RuntimeWarning: invalid value encountered in subtract
+  d = (np.asarray(a1, np.float32) - np.asarray(a0, np.float32)) / np.sqrt(2.0)
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:442: RuntimeWarning: Mean of empty slice.
+  return float(1.04 * np.sqrt((a * a).mean()))
+/opt/anaconda3/lib/python3.13/site-packages/numpy/_core/_methods.py:147: RuntimeWarning: invalid value encountered in divide
+  ret = ret.dtype.type(ret / rcount)
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:677: RuntimeWarning: invalid value encountered in cast
+  bins = np.clip((lu * CURVE_BINS / 256.0).astype(int), 0, CURVE_BINS - 1)
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:630: RuntimeWarning: invalid value encountered in cast
+  bins = np.clip((_blocks(Y, blk).mean(-1) * CURVE_BINS / 256.0).astype(int), 0, CURVE_BINS - 1)
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:378: RuntimeWarning: invalid value encountered in subtract
+  bands.append(c - s)
+profile frame 1: mode=auto area=[0, 192, 96] (small square (< 128 px)) sigma={'Y': nan, 'Cb': nan, 'Cr': nan}
+/Users/seitan/Desktop/work/reverse/repro/nv_depth.py:216: RuntimeWarning: invalid value encountered in subtract
+  cb = (b - y) / (2 * (1 - kb)) + 128.0
+/Users/seitan/Desktop/work/reverse/repro/nv_depth.py:217: RuntimeWarning: invalid value encountered in subtract
+  cr = (r - y) / (2 * (1 - kr)) + 128.0
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:780: RuntimeWarning: invalid value encountered in subtract
+  d = np.abs(c - P[rng + dy:rng + dy + Hp, rng + dx:rng + dx + Wp])
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:800: RuntimeWarning: invalid value encountered in subtract
+  d = cb - P[ys, xx + (vx + ox)[:, :, None, None]]
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:826: RuntimeWarning: invalid value encountered in divide
+  fy += np.where(centred & (dny > 0), np.clip(0.5 * (c[0, 1] - c[2, 1]) / np.maximum(dny, 1e-6), -0.5, 0.5), 0)
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:780: RuntimeWarning: invalid value encountered in subtract
+  d = np.abs(c - P[rng + dy:rng + dy + Hp, rng + dx:rng + dx + Wp])
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:800: RuntimeWarning: invalid value encountered in subtract
+  d = cb - P[ys, xx + (vx + ox)[:, :, None, None]]
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:827: RuntimeWarning: invalid value encountered in divide
+  fx += np.where(centred & (dnx > 0), np.clip(0.5 * (c[1, 0] - c[1, 2]) / np.maximum(dnx, 1e-6), -0.5, 0.5), 0)
+/Users/seitan/Desktop/work/reverse/repro/nvfilter.py:827: RuntimeWarning: invalid value encountered in divide
+  fx += np.where(centred & (dnx > 0), np.clip(0.5 * (c[1, 0] - c[1, 2]) / np.maximum(dnx, 1e-6), -0.5, 0.5), 0)
+frame 3/3 1s
+wrote ../sandbox/omo/coord/highbits/verify/edge/nan_out.mkv (3 frames, 1.3s)

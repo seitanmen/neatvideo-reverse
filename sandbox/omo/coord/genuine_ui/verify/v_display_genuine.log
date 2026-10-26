@@ -1,0 +1,8 @@
+RGB pane shifts vs R pane: G (np.float64(0.9277840626371352), 0, 0) B (np.float64(0.8530996225875159), 0, 0)
+R pane G/B channels vs (A) R-kind prediction from its R channel: MAE 0.2908662518037518
+Y: shift (0, 0) MAE all 0.293 per channel [0.293, 0.293, 0.293]; fit (slope, icpt) [(0.9987, 0.3096), (0.9987, 0.3096), (0.9987, 0.3096)]; formula [(1.0, 0.0), (1.0, 0.0), (1.0, 0.0)]
+   5x5-blurred MAE 0.212
+Cr: shift (0, 0) MAE all 0.427 per channel [0.419, 0.42, 0.441]; fit (slope, icpt) [(1.7199, 143.6448), (1.6588, 107.6366), (1.7353, 112.6626)]; formula [(1.7364, 143.5), (1.6744, 107.5), (1.7519, 112.5)]
+   5x5-blurred MAE 0.234
+Cb: shift (0, 0) MAE all 0.334 per channel [0.34, 0.324, 0.337]; fit (slope, icpt) [(1.8275, 117.4991), (1.7502, 112.4997), (1.8599, 135.5173)]; formula [(1.8295, 117.5), (1.7519, 112.5), (1.8605, 135.5)]
+   5x5-blurred MAE 0.153

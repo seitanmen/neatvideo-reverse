@@ -1,0 +1,15 @@
+=== cancel_changed 192 108 8
+pipeline exit 0
+=== cancel 192 108 8
+pipeline exit 0
+=== cancel_none 192 108 8
+pipeline exit 0
+=== cancel_noprof 192 108 8
+pipeline exit 0
+=== seq 192 108 8
+pipeline exit 0
+=== seq 192 108 16
+pipeline exit 0
+=== seq 192 108 32
+pipeline exit 0
+selftest rc=0

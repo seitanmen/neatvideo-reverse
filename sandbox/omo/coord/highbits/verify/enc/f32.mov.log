@@ -1,0 +1,5 @@
+320x240 24/1 frames~8 rotation=0 out=[0,2) tags={'color_space': 'gbr', 'color_primaries': None, 'color_transfer': None, 'color_range': None}
+source gbrpf32le (32-bit float RGB) -> processing gbrpf32le · 32-bit float RGB, codec ffv1
+profile frame 1: mode=auto area=[0, 192, 96] (small square (< 128 px)) sigma={'Y': 2.118, 'Cb': 5.801, 'Cr': 8.136}
+frame 2/2 1s
+wrote ../sandbox/omo/coord/highbits/verify/enc/f32.mov (2 frames, 1.2s)

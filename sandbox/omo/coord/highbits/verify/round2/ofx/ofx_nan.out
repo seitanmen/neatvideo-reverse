@@ -1,0 +1,3 @@
+scatter: rc 0 bytes 368640 (expect 368640) in_nf 178 out_nf 178 restored_bitexact True others_finite True stderr []
+wholeY: rc 0 bytes 368640 (expect 368640) in_nf 61440 out_nf 61440 restored_bitexact True others_finite True stderr []
+other_frames: rc 0 bytes 368640 (expect 368640) in_nf 0 out_nf 0 restored_bitexact True others_finite True stderr []

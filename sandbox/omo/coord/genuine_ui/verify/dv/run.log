@@ -1,0 +1,48 @@
++ cd /Users/seitan/Desktop/work/reverse/repro
++ V=../sandbox/omo/coord/genuine_ui/verify/dv
++ B=../sandbox/omo/coord/backup/denoise_video_v5.py.20261026_pre_genuineui
++ python3 denoise_video_v5.py ../test.mp4 ../sandbox/omo/coord/genuine_ui/verify/dv/new_default.mkv --start 300 --frames 8 --crf 0 --jobs 4 --audio none
++ echo rc=0
+rc=0
++ PYTHONPATH=.
++ python3 ../sandbox/omo/coord/backup/denoise_video_v5.py.20261026_pre_genuineui ../test.mp4 ../sandbox/omo/coord/genuine_ui/verify/dv/old_default.mkv --start 300 --frames 8 --crf 0 --jobs 4 --audio none
++ echo rc=0
+rc=0
++ python3 denoise_video_v5.py ../test.mp4 ../sandbox/omo/coord/genuine_ui/verify/dv/new_sq.mkv --start 300 --frames 8 --crf 0 --jobs 4 --audio none --area 40,60,96 --profile spatial
++ echo rc=0
+rc=0
++ PYTHONPATH=.
++ python3 ../sandbox/omo/coord/backup/denoise_video_v5.py.20261026_pre_genuineui ../test.mp4 ../sandbox/omo/coord/genuine_ui/verify/dv/old_sq.mkv --start 300 --frames 8 --crf 0 --jobs 4 --audio none --area 40,60,96 --profile spatial
++ echo rc=0
+rc=0
++ python3 denoise_video_v5.py ../test.mp4 ../sandbox/omo/coord/genuine_ui/verify/dv/new_rect.mkv --start 300 --frames 4 --crf 0 --jobs 4 --audio none --area 40,60,64,160 --profile spatial
++ echo rc=0
+rc=0
++ python3 denoise_video_v5.py ../test.mp4 ../sandbox/omo/coord/genuine_ui/verify/dv/new_rect_clamp.mkv --start 300 --frames 2 --crf 0 --jobs 4 --audio none --area 340,600,216,512
++ echo rc=0
+rc=0
++ python3 denoise_video_v5.py ../test.mp4 ../sandbox/omo/coord/genuine_ui/verify/dv/bad1.mkv --start 300 --frames 2 --area 1,2
++ echo rc=2
+rc=2
++ python3 denoise_video_v5.py ../test.mp4 ../sandbox/omo/coord/genuine_ui/verify/dv/bad2.mkv --start 300 --frames 2 --area 1,2,3,4,5
++ echo rc=2
+rc=2
++ python3 denoise_video_v5.py ../test.mp4 ../sandbox/omo/coord/genuine_ui/verify/dv/bad3.mkv --start 300 --frames 2 --area a,b,c
++ echo rc=1
+rc=1
++ for f in new_default old_default new_sq old_sq
++ ffmpeg -v error -i ../sandbox/omo/coord/genuine_ui/verify/dv/new_default.mkv -f rawvideo -pix_fmt yuv420p -
++ shasum -a 256
+7269350edc1c14f44ebf4f4c737fd0554c20684d231d34936980ac5738247073  -
++ for f in new_default old_default new_sq old_sq
++ ffmpeg -v error -i ../sandbox/omo/coord/genuine_ui/verify/dv/old_default.mkv -f rawvideo -pix_fmt yuv420p -
++ shasum -a 256
+7269350edc1c14f44ebf4f4c737fd0554c20684d231d34936980ac5738247073  -
++ for f in new_default old_default new_sq old_sq
++ ffmpeg -v error -i ../sandbox/omo/coord/genuine_ui/verify/dv/new_sq.mkv -f rawvideo -pix_fmt yuv420p -
++ shasum -a 256
+519aea2abb73122163caf5939483e5febc606c758bf4a4b0a87024c4f10d9758  -
++ for f in new_default old_default new_sq old_sq
++ ffmpeg -v error -i ../sandbox/omo/coord/genuine_ui/verify/dv/old_sq.mkv -f rawvideo -pix_fmt yuv420p -
++ shasum -a 256
+519aea2abb73122163caf5939483e5febc606c758bf4a4b0a87024c4f10d9758  -

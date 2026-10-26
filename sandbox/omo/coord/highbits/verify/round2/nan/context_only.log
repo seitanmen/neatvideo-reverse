@@ -1,0 +1,5 @@
+256x192 24/1 frames~8 rotation=0 out=[3,5) tags={'color_space': 'gbr', 'color_primaries': None, 'color_transfer': None, 'color_range': None}
+source gbrpf32le (32-bit float RGB) -> processing gbrpf32le · 32-bit float RGB, codec ffv1
+profile frame 4: mode=auto area=[64, 112, 128] (ok) sigma={'Y': 2.144, 'Cb': 5.814, 'Cr': 8.16}
+frame 2/2 1s
+wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/round2/nan/context_only_out.mkv (2 frames, 1.5s)

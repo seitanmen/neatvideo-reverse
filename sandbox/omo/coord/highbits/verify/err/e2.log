@@ -1,0 +1,1 @@
+error: --codec x264 cannot write yuv444p12le: it needs 8 or 10-bit yuv (--depth 8 or 10 with a yuv source)

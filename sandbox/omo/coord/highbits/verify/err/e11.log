@@ -1,0 +1,1 @@
+error: --codec exr cannot write yuv420p: it needs 32-bit float (--depth 32)

@@ -1,0 +1,12 @@
+259x195 24/1 frames~8 rotation=0 out=[0,2) tags={'color_space': None, 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv420p10le (10-bit 4:2:0) -> processing yuv420p10le · 10-bit 4:2:0, codec x265
+profile frame 1: mode=auto area=[0, 24, 64] (small square (< 128 px)) sigma={'Y': 2.729, 'Cb': 8.153, 'Cr': 10.789}
+note: odd frame size - the last row/column is dropped on encode
+frame 2/2 1s
+[ipod @ 0x88b024280] Could not find tag for codec hevc in stream #0, codec not currently supported in container
+[out#0/ipod @ 0x88b02c180] Could not write header (incorrect codec parameters ?): Invalid argument
+[vf#0:0 @ 0x88b034000] Error sending frames to consumers: Invalid argument
+[vf#0:0 @ 0x88b034000] Task finished with error code: -22 (Invalid argument)
+[vf#0:0 @ 0x88b034000] Terminating thread with return code -22 (Invalid argument)
+[out#0/ipod @ 0x88b02c180] Nothing was written into output file, because at least one of its streams received no packets.
+encoder failed (ffmpeg exit 234); ../sandbox/omo/coord/highbits/verify/enc/x5.m4v is incomplete

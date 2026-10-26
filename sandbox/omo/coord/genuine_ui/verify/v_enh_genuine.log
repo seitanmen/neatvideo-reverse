@@ -1,0 +1,12 @@
+registration: scale 0.333 of the 3840 frame (pane px per frame px), NCC 0.9972, pane origin (57,145); primary pane is 1280/3840 = 0.333
+plain Y (own decode/upscale) vs genuine Y pane MAE 3.87
+  per-shot registration NCC 0.995 origin (-1,103)
+g_yccplus.png: display ranges [(-24.12, 27.75), (-40.72, 40.28), (-43.97, 45.03)]
+  Y+       MAE 10.93 | ch0: ours  117.3/ 56.4 genuine  118.1/ 59.1 corr 0.954 | ch1: ours  117.3/ 56.4 genuine  118.1/ 59.1 corr 0.954 | ch2: ours  117.3/ 56.4 genuine  118.1/ 59.1 corr 0.954
+  Cr+      MAE  3.66 | ch0: ours  143.8/ 15.1 genuine  143.8/ 17.9 corr 0.811 | ch1: ours  107.8/ 14.6 genuine  108.6/ 18.4 corr 0.759 | ch2: ours  112.8/ 15.3 genuine  113.5/ 18.7 corr 0.780
+  Cb+      MAE  3.62 | ch0: ours  116.6/ 17.4 genuine  117.2/ 20.6 corr 0.838 | ch1: ours  111.6/ 16.7 genuine  112.4/ 20.1 corr 0.821 | ch2: ours  134.6/ 17.7 genuine  134.8/ 20.4 corr 0.856
+  per-shot registration NCC 0.784 origin (57,145)
+m_yfreq.png: display ranges [(-8.5, 8.5), (-10.78, 10.72), (-9.78, 9.72)]
+  Y High   MAE 29.49 | ch0: ours  127.5/ 20.6 genuine  127.5/ 41.4 corr 0.384 | ch1: ours  127.5/ 20.6 genuine  127.5/ 41.4 corr 0.384 | ch2: ours  127.5/ 20.6 genuine  127.5/ 41.4 corr 0.384
+  Y Mid    MAE 26.81 | ch0: ours  127.7/ 31.1 genuine  127.6/ 45.1 corr 0.641 | ch1: ours  127.7/ 31.1 genuine  127.6/ 45.1 corr 0.641 | ch2: ours  127.7/ 31.1 genuine  127.6/ 45.1 corr 0.641
+  Y Low    MAE 19.56 | ch0: ours  127.4/ 47.6 genuine  127.1/ 55.9 corr 0.887 | ch1: ours  127.4/ 47.6 genuine  127.1/ 55.9 corr 0.887 | ch2: ours  127.4/ 47.6 genuine  127.1/ 55.9 corr 0.887

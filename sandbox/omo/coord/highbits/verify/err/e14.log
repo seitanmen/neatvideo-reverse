@@ -1,0 +1,1 @@
+error: --codec prores cannot write gbrpf32le: it needs 10-bit yuv 4:2:2 or 4:4:4 (--depth 10 with a 4:2:2 / 4:4:4 source)

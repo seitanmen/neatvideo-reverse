@@ -1,0 +1,1 @@
+error: gbrpf32le output needs .mkv (FFV1) or an EXR sequence pattern such as out_%05d.exr

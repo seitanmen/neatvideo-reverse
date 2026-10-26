@@ -1,0 +1,59 @@
+[
+ {
+  "name": "started",
+  "size": 0,
+  "frames": 12,
+  "shape": [
+   [
+    108,
+    192
+   ],
+   [
+    54,
+    96
+   ],
+   [
+    54,
+    96
+   ]
+  ],
+  "open": false,
+  "export": false,
+  "load": false,
+  "generic": false,
+  "frame": 4,
+  "prof": false
+ },
+ {
+  "name": "profile+aft",
+  "size": 0,
+  "t": 6.36,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "aft": true,
+  "flat": 2,
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_cancel_changed_192x108_d8/prev_1.npy"
+ },
+ {
+  "name": "apply1",
+  "size": 31104,
+  "t": 6.71,
+  "frame": 0,
+  "status": "frame 0 filtered",
+  "ref": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_cancel_changed_192x108_d8/ref_2.npz",
+  "prev": "/Users/seitan/Desktop/work/reverse/sandbox/omo/coord/verify_qtui_paths/verify2/out_cancel_changed_192x108_d8/prev_2.npy"
+ },
+ {
+  "name": "slider30",
+  "size": 31104,
+  "t": 6.74,
+  "frame": 0,
+  "status": "frame 0 filtered"
+ },
+ {
+  "name": "exit",
+  "rc": 0,
+  "size": 31104,
+  "t": 6.74
+ }
+]

@@ -1,0 +1,16 @@
+default          t= 0 process_frame True engine True crop True
+default          t= 5 process_frame True engine True crop True
+default          t=10 process_frame True engine True crop True
+radius1_crband   t= 0 process_frame True engine True crop True
+radius1_crband   t= 5 process_frame True engine True crop True
+radius1_crband   t=10 process_frame True engine True crop True
+mix_noise150     t= 0 process_frame True engine True crop True
+mix_noise150     t= 5 process_frame True engine True crop True
+mix_noise150     t=10 process_frame True engine True crop True
+temporal_off     t= 0 process_frame True engine True crop True
+temporal_off     t= 5 process_frame True engine True crop True
+temporal_off     t=10 process_frame True engine True crop True
+pyramid          t= 0 process_frame True engine True crop True
+pyramid          t= 5 process_frame True engine True crop True
+pyramid          t=10 process_frame True engine True crop True
+15/15 identical at +0%; -40% differs from the old code: True

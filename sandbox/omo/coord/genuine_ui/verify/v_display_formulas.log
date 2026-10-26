@@ -1,0 +1,8 @@
+max |display - independent| per mapping over b in {0,13,37,50,51,77,100}: {'A R': 1.0, 'A G': 1.0, 'A B': 1.0, 'A Y': 1.0, 'A Normal': 1.0, 'C Cr': 1.0, 'C Cb': 1.0, 'B Cb': 1.0}
+Enhanced emph=True: interior max |diff| 0.0625, full-frame max 0.0625, corr 1.000000
+Enhanced emph=False: interior max |diff| 0.0625, full-frame max 0.0625, corr 1.000000
+Freq level 0: interior max |diff| 0.0625
+Freq level 1: interior max |diff| 0.0625
+Freq level 2: interior max |diff| 0.0625
+FindFreqLevs Enhanced Y: display (-11.5625, 11.4375) independent (-11.5625, 11.4375); Cr slot (+-8d) (-45.0, 45.0) indep (-45.0000, 45.0000)
+FindFreqLevs Freq: display (-22.5, 22.5) independent (-22.5000, 22.5000)

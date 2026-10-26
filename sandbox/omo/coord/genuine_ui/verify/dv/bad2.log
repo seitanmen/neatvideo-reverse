@@ -1,0 +1,17 @@
+640x360 30/1 frames~901 rotation=0 out=[300,302) tags={'color_space': 'bt709', 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv420p (8-bit 4:2:0) -> processing yuv420p · 8-bit 4:2:0, codec x264
+usage: denoise_video_v5.py [-h] [--params PARAMS] [--radius RADIUS]
+                           [--temporal TEMPORAL] [--threshold THRESHOLD]
+                           [--spatial SPATIAL] [--luma LUMA] [--chroma CHROMA]
+                           [--noise-level NOISE_LEVEL]
+                           [--chroma-noise CHROMA_NOISE] [--mix MIX] [--bs BS]
+                           [--search SEARCH]
+                           [--profile {auto,spatial,temporal}]
+                           [--profile-frame PROFILE_FRAME] [--area AREA]
+                           [--start START] [--frames FRAMES]
+                           [--flicker FLICKER] [--jobs JOBS] [--crf CRF]
+                           [--audio {copy,aac,none}]
+                           [--depth {8,10,12,16,32,source}]
+                           [--codec {auto,x264,x265,ffv1,prores,exr}]
+                           src dst
+denoise_video_v5.py: error: --area takes Y,X,SIZE or Y,X,H,W

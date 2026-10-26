@@ -1,0 +1,1 @@
+error: ffv1 / yuv420p10le cannot be written to .m4v (trial encode: [ipod @ 0x9f9020280] Could not find tag for codec ffv1 in stream #0, codec not currently supported in container); choose another --codec or container (.mkv takes them all)

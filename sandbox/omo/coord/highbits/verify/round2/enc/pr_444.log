@@ -1,0 +1,5 @@
+299x221 24/1 frames~8 rotation=0 out=[0,3) tags={'color_space': None, 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv444p12le (12-bit 4:4:4) -> processing yuv444p10le · 10-bit 4:4:4, codec prores
+profile frame 1: mode=auto area=[0, 56, 64] (small square (< 128 px)) sigma={'Y': 2.732, 'Cb': 8.241, 'Cr': 10.836}
+frame 3/3 1s
+wrote ../sandbox/omo/coord/highbits/verify/round2/enc/pr_444.mov (3 frames, 1.3s)

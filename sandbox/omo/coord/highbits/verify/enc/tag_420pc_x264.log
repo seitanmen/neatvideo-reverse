@@ -1,0 +1,7 @@
+--depth 10 --crf 0
+259x195 24/1 frames~8 rotation=0 out=[0,4) tags={'color_space': 'bt2020nc', 'color_primaries': None, 'color_transfer': None, 'color_range': 'pc'}
+source yuv420p10le (10-bit 4:2:0) -> processing yuv420p10le · 10-bit 4:2:0, codec x264
+profile frame 2: mode=auto area=[32, 136, 64] (small square (< 128 px)) sigma={'Y': 3.171, 'Cb': 6.721, 'Cr': 9.442}
+note: odd frame size - the last row/column is dropped on encode
+frame 4/4 1s
+wrote /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/enc/tag_420pc_x264.mp4 (4 frames, 1.1s)

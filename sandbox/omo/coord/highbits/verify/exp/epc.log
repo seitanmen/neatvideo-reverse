@@ -1,0 +1,6 @@
+259x195 24/1 frames~8 rotation=0 out=[0,2) tags={'color_space': 'bt2020nc', 'color_primaries': None, 'color_transfer': None, 'color_range': 'pc'}
+source yuv420p10le (10-bit 4:2:0) -> processing yuv420p10le · 10-bit 4:2:0, codec ffv1
+warning: the UI profile and this export differ in range (limited / full: RGB formats are processed as full range); the noise curve's brightness axis may be off
+profile frame 1: mode=auto area=[272, 120, 48] (small square (< 128 px)) sigma={'Y': 23.203, 'Cb': 2.208, 'Cr': 2.796}
+frame 2/2 1s
+wrote ../sandbox/omo/coord/highbits/verify/exp/epc.mkv (2 frames, 0.7s)

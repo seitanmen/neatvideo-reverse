@@ -1,0 +1,11 @@
+y422p10_odd mix1 rc 0 bitexact True
+y422p10_odd proc rc 0 identical to round-1 output True
+y444p16 mix1 rc 0 bitexact True
+y444p16 proc rc 0 identical to round-1 output True
+gbrp12 mix1 rc 0 bitexact True
+gbrp12 proc rc 0 identical to round-1 output True
+y420p10_odd mix1 rc 0 bitexact True
+y420p10_odd proc rc 0 identical to round-1 output True
+gbrpf32 mix1 rc 0 maxabs 1.19e-07
+gbrpf32 proc rc 0 identical to round-1 output True
+scale: |out10-4*out8| max 2  o10 == round-1 o10: True  profiles equal: True

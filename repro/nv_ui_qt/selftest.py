@@ -9,8 +9,21 @@ save + load, batch profiler, and that the export equals nv.process_frame_v5 bit 
 Layout checks: panel order (Temporal / Spatial / General, Luminance -> Cr -> Cb, High -> Ultra Low),
 common Frequencies rows, Mix with Original Enable, profile Noise Level, hold-for-original, viewer
 panes and splits, thumbnails, Beginner / Advanced Mode, Auto / Build Profile button.
+Genuine UI (2026-10-26, sandbox/omo/coord/genuine_ui/SPEC.md): display formulas (display.py), free
+rectangular selection by mouse (corner = press point, <= 512 px, move inside, click clears), frame colours,
+Noise Level label = display.noise_level, Not Uniform, Build Profile size rules (< 32 error, 32..127
+confirmation), menus / toolbars in the genuine order, viewer mode per page, rectangular profile through
+the export.
 High bit depth (written into OUTDIR as src10.mkv): Preferences > Bit depth 10 reloads a 10-bit copy,
 frames hold value/4 exactly, status bar, preview, FFV1 export == backend.process_frame bit for bit.
+Profile Check and the panel (2026-10-26, sandbox/omo/coord/genuine_ui2/SPEC.md R1-R3): Begin / toolbar /
+menu = one Assist Image toggle (image == spatial-only 100% filter of the frame, bottom panes without
+emphasis, live update on Noise Level, ends on Finish / Adjust page / Reset Profile), Profile Viewer,
+panel without a scroll bar at 1800 x 1125 with Noise Level and Frequencies open, dark info box, equalizer
+button order, selection Noise Level "(+n%)" against the Main Sample.
+Noise Level Check (2026-10-26, sandbox/omo/coord/verify_quality/nlc/SPEC.md R1-R5): Temporal Noise Level in
+the temporal stage only (+0% = before; export with -40% == backend.process_frame), Begin = temporal mask image
+(1 on a repeated frame, 0 at -100%), live update, panel / toolbar menu / Tools menu in sync, panel state.
 """
 import json
 import os
@@ -44,6 +57,486 @@ def wait(app, cond, timeout=600.0):
     return True
 
 
+def genuine_ui_checks(app, win, wait, idle, outdir):
+    """Checks of the genuine-UI changes (display formulas, selection, buttons, menus)."""
+    from nv_ui_qt import display as D
+    from nv_ui_qt.widgets.viewer import PANES, sel_colors
+    st, vw = win.state, win.viewer
+    # display formulas on a synthetic image (STATIC.md §1)
+    rng = np.random.default_rng(1)
+    rgb = rng.uniform(0, 255, (40, 64, 3)).astype(np.float32)
+    R, G, B = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    Y = 0.2989 * R + 0.5866 * G + 0.1145 * B
+    Cr, Cb = (R - Y) * 0.71316504, (B - Y) * 0.56465274
+    ident = np.array_equal(D.render_simple("rgb", rgb, 50), np.clip(np.rint(rgb), 0, 255).astype(np.uint8))
+    yok = np.abs(D.render_simple("Y", rgb, 50).astype(float) - np.rint(Y)[..., None]).max() <= 1
+    m, h = np.array([143.5, 107.5, 112.5]), np.array([112.0, 108.0, 113.0])
+    crok = np.abs(D.render_simple("Cr", rgb, 50).astype(float) -
+                  np.clip(np.rint(m + h * Cr[..., None] / 64.5), 0, 255)).max() <= 1
+    gp = D.render_simple("R", rgb, 50).astype(float)
+    rok = np.array_equal(gp[..., 0], np.rint(R)) and np.abs(gp[..., 1] - (R * 201 / 256 - 0.5 + 0.5 * 201 / 256)).max() <= 1
+    bright = D.render_simple("rgb", rgb, 100).mean() > D.render_simple("rgb", rgb, 50).mean() > \
+        D.render_simple("rgb", rgb, 0).mean()
+    pl, lv = D.freq_images(rgb, "Y+", True)
+    pf, lf = D.freq_images(rgb, "Y", True)
+    fr = len(pl) == 3 and len(pf) == 3 and all(p.dtype == np.int16 and p.shape == (40, 64) for p in pl + pf) \
+        and all(a < b for a, b in lv + lf)
+    check("display: Normal identity at 50, Y / Cr / R pane formulas, brightness, Enhanced / Freq images",
+          ident and yok and crok and rok and bright and fr, f"{ident} {yok} {crok} {rok} {bright} {fr}")
+    check("display: frame colours by min(w, h) (<= 15 red, 16..127 yellow, >= 128 green)",
+          sel_colors(30, 15)[0] == (255, 15, 15) and sel_colors(512, 16)[0] == (255, 208, 15)
+          and sel_colors(200, 128)[0] == (15, 192, 15))
+
+    # menus and toolbars in the genuine order; viewer mode per page
+    win._viewer_click()
+    mb = [a.text().replace("&", "") for a in win.menuBar().actions()]
+
+    def bar(i):
+        lay = win.tb_stack.widget(i).layout()
+        return [lay.itemAt(j).widget().text() for j in range(lay.count()) if lay.itemAt(j).widget()]
+    tb, ta = bar(0), bar(1)
+    check("menus Effect View Profile Filter Variants Tools Help; toolbars in the genuine order",
+          mb == ["Effect", "View", "Profile", "Filter", "Variants", "Tools", "Help"]
+          and tb == ["Auto Profile", "Generic Profile", "Load Profile", "Profile Check", "Variants"]
+          and ta[1:] == ["Preview", "Play All", "Filter Settings Check", "Variants"], f"{mb} {tb} {ta}")
+    win.tabs.setCurrentIndex(1)
+    vw.set_mode("Normal")
+    win.tabs.setCurrentIndex(0)
+    win.viewer.set_mode("YCrCb +")
+    win.tabs.setCurrentIndex(1)
+    adj = vw.mode() == "Normal" and not vw.emphasis and win.first_modes == ["YCrCb +", "Normal"]
+    split_off = not win.actions["split_2 x 2"].isEnabled()
+    vw.set_mode("RGB")
+    win.tabs.setCurrentIndex(0)
+    prep = vw.mode() == "YCrCb +" and vw.emphasis
+    win.tabs.setCurrentIndex(1)
+    back = vw.mode() == "RGB"
+    vw.set_mode("Normal")
+    check("viewer mode kept per page (defaults Prepare YCrCb+, Adjust Normal), Split disabled in Normal",
+          adj and prep and back and split_off, f"{win.first_modes} {adj} {prep} {back} {split_off}")
+
+    # free rectangular selection by mouse on the Prepare page
+    win.tabs.setCurrentIndex(0)
+    vw.set_mode("YCrCb +")
+    vw.set_zoom(100)
+    app.processEvents()
+    pr = vw.panes()[0][1]
+    c = pr.center()
+    sx, sy = c.x() - 150, c.y() - 60
+
+    def drag(p0, p1):
+        QTest.mousePress(vw, Qt.LeftButton, Qt.NoModifier, p0)
+        for k in range(1, 6):
+            QTest.mouseMove(vw, p0 + (p1 - p0) * k / 5)
+            app.processEvents()
+        QTest.mouseRelease(vw, Qt.LeftButton, Qt.NoModifier, p1)
+        app.processEvents()
+
+    from PySide6.QtCore import QPoint
+    drag(QPoint(int(sx), int(sy)), QPoint(int(sx + 200), int(sy + 50)))
+    a = win.sel_area
+    rect_ok = a is not None and (a[2], a[3]) == (50, 200) and win.auto_btn.text() == "Build Profile"
+    lab = vw.sel_label
+    nl = D.noise_level(win.frame_rgb(win.timeline.frame())[a[0]:a[0] + a[2], a[1]:a[1] + a[3]])
+    from nv_ui_qt.main_window import area_rect
+    base = st.profile.base
+    main_nl = None
+    if base is not None:                        # the label adds (%+d%) against the Main Sample (R3)
+        my, mx, mh, mw = area_rect(base["area"])
+        main_nl = D.noise_level(win.frame_rgb(int(base["ui_frame"]))[my:my + mh, mx:mx + mw])
+    suffix = f" ({int((nl / main_nl - 1.0) * 100.0):+d}%)" if main_nl else ""
+    nl_ok = lab == f"Noise Level: {nl:.1f}{suffix}" and win.profile_page.panel.sel_val.text() == f"{nl:.1f}"
+    drag(QPoint(int(sx + 100), int(sy + 25)), QPoint(int(sx + 130), int(sy + 45)))     # inside: move
+    b = win.sel_area
+    moved = b is not None and (b[2], b[3]) == (a[2], a[3]) and (b[0] - a[0], b[1] - a[1]) == (20, 30)
+    QTest.mouseClick(vw, Qt.LeftButton, Qt.NoModifier, QPoint(int(c.x() + 200), int(c.y() + 100)))
+    app.processEvents()
+    cleared = win.sel_area is None and win.auto_btn.text() == "Auto Profile"
+    # each side at most 512 from the press point, inside the frame
+    vw.set_zoom(50)
+    app.processEvents()
+    c = vw.panes()[0][1].center()
+    H, W = win.frames[0][0].shape
+    p0 = QPoint(int(c.x() + (10 - W / 2) * 0.5), int(c.y() + (10 - H / 2) * 0.5))      # image (10, 10)
+    drag(p0, p0 + QPoint(600, 600))             # 1200 image px each way
+    big = win.sel_area
+    lim = big is not None and big[3] == min(512, W - big[1]) and big[2] == min(512, H - big[0]) and big[1] <= 11
+    check("free rectangle by mouse (corner = press point), Noise Level label, move inside, click clears, "
+          "<= 512 px", rect_ok and nl_ok and moved and cleared and lim, f"{a} {lab!r} {nl:.2f} {b} {big}")
+    vw.set_zoom("fit")
+
+    # Build Profile rules: < 32 px disabled / error; Not Uniform label
+    win.on_area(10, 10, 18, 30)
+    dis = not win.auto_btn.isEnabled() and win.auto_btn.text() == "Build Profile"
+    box = win.build_profile(False)
+    err = box is not None and "at least 32x32" in box.text()
+    box.close()
+    win.on_area(0, 0, 64, 64)
+    y0 = win.frames[0][0].shape[0] // 2
+    win.on_area(y0 - 100, 0, 200, 200)          # a detailed area of the frame
+    bad, clip = D.not_uniform(win.frame_rgb(win.timeline.frame())[y0 - 100:y0 + 100, 0:200])
+    warn_ok = vw.sel_warn == ([f"Not Uniform: {', '.join(bad)}"] if bad else []) + \
+        ([f"Clipping: {', '.join(clip)}"] if clip else [])
+    m = win._sel_menu(vw.mapToGlobal(QPoint(10, 10)))
+    menu_ok = m is not None and [x.text() for x in m.actions()] == ["Build Profile (Most Noisy Frame)",
+                                                                      "Build Profile (Current Frame)"]
+    m.close()
+    win._viewer_click()
+    check("Build Profile disabled / error under 32 px, Not Uniform label, triangle menu",
+          dis and err and warn_ok and menu_ok, f"{dis} {err} {vw.sel_warn} {bad} {clip}")
+
+    # bottom panes: same scale as the primary pane, 2 : 1 rows; screenshots of the modes
+    for mode in ("YCrCb +", "YCrCb", "RGB", "Y Freq"):
+        vw.set_mode(mode)
+        t0 = time.time()
+        ok = wait(app, vw.ready, 60)
+        vw.grab().save(os.path.join(outdir, f"viewer_{mode.replace(' ', '_').replace('+', 'plus')}.png"))
+        print(f"    viewer mode {mode}: panes ready in {time.time() - t0:.2f} s", flush=True)
+    names = [n for n, _ in vw.panes()]
+    check("component panes computed for every mode", ok and names == ["rgb"] + PANES["Y Freq"])
+    vw.set_mode("YCrCb +")
+    win.tabs.setCurrentIndex(1)
+
+
+def profile_check_checks(app, win, wait, idle, outdir):
+    """R1-R3 of sandbox/omo/coord/genuine_ui2/SPEC.md (Profile Check = Assist Image mode, the Device Noise
+    Profile panel, the selection's Noise Level suffix)."""
+    from PySide6.QtGui import QKeySequence
+    from PySide6.QtWidgets import QLabel
+    from nv_ui_qt import display as D
+    from nv_ui_qt.main_window import area_rect, assist_params
+    from nv_ui_qt.state import UI_BANDS
+    from nv_ui_qt.widgets.profile_panel import EQ_TIPS, ProfilePanel
+    from nv_ui_qt.widgets.rows import ACTIVE_TITLE, Header
+    st, vw, ppn = win.state, win.viewer, win.profile_page.panel
+    win.tabs.setCurrentIndex(0)
+    vw.set_mode("YCrCb +")
+    wait(app, idle)
+
+    def synced(on):
+        return (win.pcheck == on and win.check_btn.isChecked() == on and win.actions["p_check"].isChecked() == on
+                and ppn.check.button.isChecked() == on and ppn.check.button.text() == ("Finish" if on else "Begin")
+                and (ACTIVE_TITLE in ppn.check.title.text()) == on and (ACTIVE_TITLE in ppn.tuning.title.text()) == on)
+
+    # R1: Begin -> Assist Image of the current frame (spatial only, every amount 100%), in a worker
+    ppn.check.button.click()
+    on_ok = synced(True)
+    got = wait(app, lambda: vw.showing_pcheck() and idle() and vw.ready(), 120)
+    t = win.timeline.frame()
+    P = assist_params()
+    pok = P["temporal"] == 0.0 and all(ch["amount"] == 1.0 and all(v == 1.0 for v in ch["bands"].values())
+                                       for ch in P["ui_channels"].values())
+    rot = (win.info["rotation"] // 90) % 4
+    exp = np.ascontiguousarray(np.rot90(win.engine.assist(t, st.effective_profile(), P).astype(np.float32), rot))
+    same = got and np.array_equal(vw._f["pcheck"], exp)
+    differs = got and vw._source() == "pcheck" and float(np.abs(vw._f["pcheck"] - vw._f["orig"]).mean()) > 0.1
+    keys = [k for k in vw._freq if k[0] == vw._tok["pcheck"]]
+    noemph = bool(keys) and all(k[2] is False for k in keys)
+    pl, lv = D.freq_images(exp, "Y+", False)
+    want = D.render_freq(["Y+"], [pl[0]], [lv[0]], vw.brightness)[0]
+    qi = vw.pane_image("Y+", "pcheck")
+    bits = np.frombuffer(qi.constBits(), np.uint8).reshape(qi.height(), qi.bytesPerLine())[:, :3 * qi.width()]
+    pane_ok = np.array_equal(bits.reshape(qi.height(), qi.width(), 3), want)
+    vw.grab().save(os.path.join(outdir, "pcheck_viewer.png"))
+    check("R1 Begin: Assist Image (spatial only, 100%) on all panes, bottom Enhanced without emphasis; "
+          "panel / toolbar / menu in sync", on_ok and got and pok and same and differs and noemph and pane_ok,
+          f"{on_ok} {got} {pok} {same} {differs} {noemph} {pane_ok}")
+    # live update on the profile Noise Level (thinned out), the old image comes back from the cache
+    before = vw._f["pcheck"].copy()
+    st.new_edit()
+    ppn.tune["all"].slider.setValue(50)
+    upd = wait(app, lambda: idle() and not win.pc_timer.isActive() and win._pc_key() in win._pc_cache
+               and not np.array_equal(vw._f["pcheck"], before), 120)
+    exp2 = np.rot90(win.engine.assist(t, st.effective_profile(), P).astype(np.float32), rot)
+    upd = upd and np.array_equal(vw._f["pcheck"], exp2) and st.effective_profile() is not None
+    st.undo.undo()
+    app.processEvents()
+    cached = wait(app, lambda: idle() and not win.pc_timer.isActive() and np.array_equal(vw._f["pcheck"], before), 30)
+    check("R1 Noise Level slider recomputes the Assist Image; undo shows the cached one", upd and cached,
+          f"{upd} {cached}")
+    # Finish from the toolbar; menu starts it; Adjust page and Reset Profile end it
+    win.check_btn.click()
+    off_ok = synced(False) and vw._source() == "orig" and not vw.showing_pcheck()
+    win.actions["p_check"].trigger()
+    m_on = synced(True)
+    win.tabs.setCurrentIndex(1)
+    page_off = synced(False)
+    win.tabs.setCurrentIndex(0)
+    ppn.check.button.click()
+    win.reset_profile()
+    reset_off = synced(False) and not ppn.check.isEnabled() and not win.actions["p_check"].isEnabled() \
+        and not win.check_btn.isVisible()
+    st.undo.undo()
+    back = ppn.check.isEnabled() and win.actions["p_check"].isEnabled() and not win.pcheck
+    check("R1 Finish (toolbar) / menu toggle / Adjust page / Reset Profile; disabled without a profile",
+          off_ok and m_on and page_off and reset_off and back, f"{off_ok} {m_on} {page_off} {reset_off} {back}")
+    # Profile Viewer = the former dialog plus the Repro section (Profile mode kept in the preferences)
+    dlg = win.profile_viewer()
+    pv = dlg.windowTitle() == "Profile Viewer" and dlg.mode.currentText() == "auto"
+    dlg.mode.setCurrentText("spatial")
+    pv = pv and win._profile_mode() == "spatial" and win.prefs["profile_mode"] == "spatial"
+    dlg.mode.setCurrentText("auto")
+    labels = " ".join(w.text() for w in dlg.findChildren(QLabel))
+    pv = pv and "Sample area" in labels and "Match" in labels and "Band ratios" in labels
+    dlg.close()
+    check("R1 Profile Viewer… (Shift+Ctrl+I): repro profile details and Profile mode", pv and
+          win.actions["p_viewer"].shortcut() == QKeySequence("Ctrl+Shift+I"))
+
+    # R2: the panel at 1800 x 1125 with Noise Level and Frequencies open: no scroll bar
+    size0 = win.size()
+    win.resize(1800, 1125)
+    ppn.tune_header.set_expanded(True)
+    ppn.freq_header.set_expanded(True)
+    for _ in range(5):
+        app.processEvents()
+    sb = ppn.scroll.verticalScrollBar()
+    fits = not sb.isVisible() and sb.maximum() == 0
+    ppn.grab().save(os.path.join(outdir, "profile_panel_open.png"))
+    titles = [h.title_text for h in ppn.findChildren(Header)]
+    texts = " ".join(w.text() for w in ppn.findChildren(QLabel))
+    gone = "Repro" not in titles and "Quick Start Guide" not in texts and "Currently working" not in texts \
+        and "(?)" not in ppn.tuning.title.text()
+    im = ppn.info.grab().toImage()
+    bg = im.pixelColor(im.width() - 4, im.height() - 4)
+    light = max(im.pixelColor(x, y).lightness() for x in range(0, im.width(), 2) for y in range(0, im.height(), 2))
+    dark = bg.lightness() < 80 and light > 170
+    lay = ppn.curve.buttons
+    ws = [lay.itemAt(i).widget() for i in range(lay.count()) if lay.itemAt(i).widget()]
+    order = ws == [ppn.b_aft, ppn.b_manual, ppn.b_complete] + \
+        [ppn.curve.target_buttons[k] for k in ("all", "Y", "Cr", "Cb")] + [ppn.complete_lbl, ppn.b_reset]
+    tips = (ppn.b_aft.toolTip().startswith("Use to automatically fine-tune the current noise profile using the "
+                                           "whole input image") and ppn.b_manual.toolTip() == EQ_TIPS["manual"]
+            and not ppn.b_manual.isEnabled() and ppn.b_reset.toolTip() == "Reset all fine-tuning"
+            and ppn.curve.target_buttons["all"].toolTip().startswith("Show the noise graphs (noise level vs "
+                                                                     "brightness level) for all three color channels"))
+    samples = all(not ppn.band_samples[b].pixmap().isNull() for b, _ in UI_BANDS)
+    fresh = ProfilePanel()
+    collapsed = fresh.tune_header.body.isHidden() and fresh.freq_header.body.isHidden()
+    fresh.deleteLater()
+    win.resize(size0)
+    app.processEvents()
+    check("R2 panel: no scroll bar at 1800x1125 (Noise Level + Frequencies open), dark info box, no Repro / "
+          "guide, equalizer buttons in the genuine order with its tooltips, band samples, collapsed defaults",
+          fits and gone and dark and order and tips and samples and collapsed,
+          f"{fits} {sb.maximum()} {gone} {dark} ({bg.lightness()}, {light}) {order} {tips} {samples} {collapsed}")
+
+    # R3: Noise Level: x.x (%+d%) against the Main Sample, truncated toward zero
+    base = st.profile.base
+    mrect = area_rect(base["area"])
+    win.timeline.set_frame(int(base["ui_frame"]), emit=True)
+    main_nl = D.noise_level(win.frame_rgb(int(base["ui_frame"]))[mrect[0]:mrect[0] + mrect[2],
+                                                                   mrect[1]:mrect[1] + mrect[3]])
+    win.on_area(*mrect)
+    zero = vw.sel_label == f"Noise Level: {main_nl:.1f} (+0%)"
+    H, W = win.frames[0][0].shape
+    rect = (H // 2, W // 4, 64, 96)
+    win.on_area(*rect)
+    sel = D.noise_level(win.frame_rgb(win.timeline.frame())[rect[0]:rect[0] + 64, rect[1]:rect[1] + 96])
+    r = sel / main_nl - 1.0
+    pct = int(r * 100.0)                       # C (int) cast: toward zero
+    other = vw.sel_label == f"Noise Level: {sel:.1f} ({'+' if pct >= 0 else '-'}{abs(pct)}%)"
+    win.reset_profile()
+    plain = vw.sel_label == f"Noise Level: {sel:.1f}"
+    st.undo.undo()
+    win._viewer_click()
+    check("R3 selection Noise Level (%+d%) vs Main Sample (+0% on the sample itself, none without a profile)",
+          zero and other and plain, f"{vw.sel_label!r} {main_nl:.3f} {sel:.3f} {zero} {other} {plain}")
+    win.tabs.setCurrentIndex(1)
+
+
+def nlc_checks(app, win, wait, idle, outdir):
+    """R1-R5 of sandbox/omo/coord/verify_quality/nlc/SPEC.md (Temporal Noise Level, Noise Level Check =
+    temporal filter mask, its panel state and the three entries)."""
+    import nvfilter as nv
+    from denoise_video_v5 import probe, read_frames
+    from nv_ui_qt import backend
+    from nv_ui_qt import display as D
+    from nv_ui_qt.state import backend_params, default_params
+    from nv_ui_qt.widgets.rows import ACTIVE_TITLE
+    st, vw, fpn = win.state, win.viewer, win.filter_page.panel
+    win.tabs.setCurrentIndex(1)
+    wait(app, idle)
+    rot = (win.info["rotation"] // 90) % 4
+
+    def synced(on):
+        return (win.nlc == on and fpn.nl_check.button.isChecked() == on
+                and fpn.nl_check.button.text() == ("Finish" if on else "Begin")
+                and (ACTIVE_TITLE in fpn.nl_check.title.text()) == on and win.fsc_nlc.isChecked() == on
+                and win.actions["nlc"].isChecked() == on and win.fsc_btn.isChecked() == on
+                and win.fsc_btn.text() == ("Noise Level Check" if on else "Filter Settings Check"))
+
+    def expected():
+        t, P = win.timeline.frame(), st.backend()
+        m = win.engine.mask(t, st.effective_profile(), win.prof_token, P)
+        return np.ascontiguousarray(np.rot90(D.nlc_image(win.frame_rgb(t), m), rot)), m
+
+    def shown():
+        return wait(app, lambda: idle() and not win.nlc_timer.isActive() and vw.showing_nlc()
+                    and win._nlc_shown == win._nlc_key(), 120)
+
+    # (a) Begin (panel) -> mask image on the primary pane, viewer Normal; Finish restores the mode
+    vw.set_mode("RGB")
+    fpn.nl_check.button.click()
+    on_ok = synced(True) and vw.mode() == "Normal"
+    got = shown()
+    exp, m0 = expected()
+    same = got and vw._source() == "nlc" and np.array_equal(vw._f["nlc"], exp)
+    comp = vw.composite()
+    img_ok = comp.shape[:2] == exp.shape[:2] and not win.msg.text().startswith("error")
+    vw.grab().save(os.path.join(outdir, "nlc_viewer.png"))
+    fpn.nl_check.button.click()
+    off_ok = synced(False) and vw._source() != "nlc" and not vw.showing_nlc() and vw.mode() == "RGB"
+    vw.set_mode("Normal")
+    check("NLC (a) Begin: temporal mask image (display.nlc_image) on the primary pane, viewer Normal; Finish "
+          "restores", on_ok and got and same and img_ok and off_ok,
+          f"{on_ok} {got} {same} {img_ok} {off_ok} mean m {float(m0.mean()):.3f}")
+
+    # (b) m = 1 where every neighbour has weight 1 (the same frame five times), 0 at Temporal Noise Level 0%
+    prof = st.effective_profile()
+    t = win.timeline.frame()
+    planes = win.engine.window(t, 0, None)[1][0]
+    P = st.backend()
+    tmp, rv = backend.temporal([planes] * 5, 2, prof, P)
+    m_same = backend.temporal_mask(rv[0], 5, P["temporal"])
+    ui0 = dict(st.params, t_noise=0.0)
+    m_zero = win.engine.mask(t, prof, win.prof_token, backend_params(ui0))
+    edge = (not backend.temporal_mask(rv[0], 1, 1.0).any() and not backend.temporal_mask(rv[0], 5, 0.0).any())
+    check("NLC (b) mask = 1 on a repeated frame (all neighbour weights 1), 0 at Temporal Noise Level -100%, "
+          "0 for one frame / Amount 0", m_same.min() > 0.999 and m_zero.max() < 1e-3 and edge,
+          f"min {m_same.min():.6f} max(0%) {m_zero.max():.2e} {edge}")
+
+    # (b') live recomputation on Noise Level / Radius / Enable, results only for the current key
+    fpn.nl_check.button.click()
+    shown()
+    before = vw._f["nlc"].copy()
+    st.new_edit()
+    fpn.controls["t_noise"].slider.setValue(-60)                     # display -60% = 40
+    nl_ok = shown() and st.params["t_noise"] == 40.0 and not np.array_equal(vw._f["nlc"], before)
+    exp, m1 = expected()
+    nl_ok = nl_ok and np.array_equal(vw._f["nlc"], exp) and m1.mean() < m0.mean()
+    st.set_param("t_radius", 1)
+    r_ok = shown() and np.array_equal(vw._f["nlc"], expected()[0])
+    st.set_param("t_enable", False)
+    e_ok = shown() and np.array_equal(vw._f["nlc"], np.ascontiguousarray(
+        np.rot90(D.nlc_image(win.frame_rgb(t), np.zeros(m1.shape, np.float32)), rot)))
+    for _ in range(3):
+        st.undo.undo()
+    undo_ok = shown() and st.params["t_noise"] == 100.0 and np.array_equal(vw._f["nlc"], before)
+    nxt = t + 1 if t + 1 < len(win.frames) else t - 1
+    win.timeline.set_frame(nxt, emit=True)
+    stale_gone = not vw.showing_nlc()                                # no image of the previous frame
+    f_ok = shown() and win._nlc_shown[0] == nxt and np.array_equal(vw._f["nlc"], expected()[0])
+    win.timeline.set_frame(t, emit=True)
+    shown()
+    check("NLC (b') Noise Level / Radius / Enable recompute the mask, undo shows the cached one, another frame "
+          "drops the old image", nl_ok and r_ok and e_ok and undo_ok and stale_gone and f_ok,
+          f"{nl_ok} {r_ok} {e_ok} {undo_ok} {stale_gone} {f_ok} mean -60% {float(m1.mean()):.3f}")
+
+    # (c) t_noise 100% = the temporal stage before the change (nv.temporal_v5 with P unchanged); t_noise != 100%
+    # scales the temporal noise level only
+    idx, wp = win.engine.window(t, int(P["radius"]), None)
+    ci = idx.index(t)
+    ok = True
+    for ui in (default_params(), dict(default_params(), bamt_Cr_medium=60.0, t_radius=1),
+               dict(default_params(), mix_enable=True, mix=25.0, adv_noise_level=150.0)):
+        Pb = backend_params(ui)
+        ref_t = nv.temporal_v5(wp[max(0, ci - Pb["radius"]):ci + Pb["radius"] + 1], min(ci, Pb["radius"]), prof, Pb)
+        a = backend.process_frame(wp, ci, prof, Pb)
+        b = backend.finish(wp, ci, *ref_t, prof, Pb)
+        ok &= all(np.array_equal(x, y) for x, y in zip(a, b))
+    Pn = backend_params(dict(default_params(), t_noise=60.0))
+    ref_t = nv.temporal_v5(wp, ci, prof, dict(Pn, noise_level=Pn["noise_level"] * 0.6))
+    a = backend.process_frame(wp, ci, prof, Pn)
+    scaled = all(np.array_equal(x, y) for x, y in zip(a, backend.finish(wp, ci, *ref_t, prof, Pn)))
+    eng = win.engine.process(t, prof, win.prof_token, backend_params(default_params()))[0]
+    prev = np.array_equal(eng, win.engine.to_rgb([np.clip(o, 0, 255) for o in backend.process_frame(
+        wp, ci, prof, backend_params(default_params()))]))
+    check("NLC (c) Temporal Noise Level +0% = the temporal stage before the change (process_frame, preview); "
+          "other values scale only the temporal noise level", ok and scaled and prev, f"{ok} {scaled} {prev}")
+
+    # (c) export with Temporal Noise Level -40% (CRF 0) == backend.process_frame, and differs from +0%
+    fpn.nl_check.button.click()
+    st.set_param("t_noise", 60.0)
+    dst = os.path.join(outdir, "export_tnoise.mp4")
+    video = win.src
+    lo, n = 100, 2
+    win.process_video(dst, start=lo, frames=n)
+    ok = wait(app, lambda: win.export is None, 1800) and getattr(win, "export_ok", False)
+    info = probe(dst)
+    got = [f for _, f in read_frames(dst, info["W"], info["H"], fps=info["fps"])]
+    sinfo = probe(video)
+    P = st.backend()
+    pj = json.load(open(os.path.splitext(dst)[0] + ".ui_params.json"))
+    eprof = json.load(open(os.path.splitext(dst)[0] + ".ui_profile.json"))
+    R = int(P["radius"])
+    src = {i: tuple(p.astype(np.float32) for p in f)
+           for i, f in read_frames(video, sinfo["W"], sinfo["H"], lo - R, lo + n + R, sinfo["fps"])}
+    exact, differs = ok and len(got) == n and pj.get("t_noise") == 0.6, False
+    for k in range(min(n, len(got))):
+        c = lo + k
+        ids = [i for i in sorted(src) if abs(i - c) <= R]
+        out = backend.process_frame([src[i] for i in ids], ids.index(c), eprof, P)
+        exact &= all(np.array_equal(np.clip(np.rint(o), 0, 255).astype(np.uint8), g) for o, g in zip(out, got[k]))
+        o1 = backend.process_frame([src[i] for i in ids], ids.index(c), eprof, dict(P, t_noise=1.0))
+        differs |= any(not np.array_equal(np.clip(np.rint(o), 0, 255).astype(np.uint8), g) for o, g in zip(o1, got[k]))
+    st.undo.undo()
+    check("NLC (c) export with Temporal Noise Level -40% (CRF 0) == backend.process_frame bit for bit, differs "
+          "from +0%", exact and differs and st.params["t_noise"] == 100.0, f"{len(got)} frames {exact} {differs}")
+
+    # (d) one state for the panel, Filter Settings Check > 1. Noise Level Check and Tools > Noise Level Check;
+    # exclusive with Filter Tuning Assist; ends on the Prepare page / Reset Profile
+    win.fsc_nlc.trigger()
+    m_on = synced(True)
+    win.fsc_btn.toggle()                                             # the button only shows the state
+    btn_kept = synced(True)
+    win.actions["nlc"].trigger()
+    t_off = synced(False)
+    fpn.nl_check.button.click()
+    win.set_assist(True)
+    excl = synced(False) and vw.assist and fpn.assist.button.isChecked()
+    win.fsc_nlc.trigger()
+    excl2 = synced(True) and not vw.assist and not fpn.assist.button.isChecked()
+    win.tabs.setCurrentIndex(0)
+    page_off = synced(False)
+    win.actions["nlc"].trigger()
+    page_back = synced(True) and win.page() == 1
+    win.reset_profile()
+    reset_off = synced(False) and not fpn.nl_check.isEnabled() and not win.fsc_nlc.isEnabled() \
+        and not win.actions["nlc"].isEnabled()
+    win.actions["nlc"].trigger()
+    stays_off = synced(False)
+    st.undo.undo()
+    back = fpn.nl_check.isEnabled() and win.fsc_nlc.isEnabled() and win.actions["nlc"].isEnabled() and not win.nlc
+    check("NLC (d) panel / toolbar menu / Tools menu in sync, toolbar 'Noise Level Check' pressed; exclusive with "
+          "Filter Tuning Assist; ends on Prepare / Reset Profile; disabled without a profile",
+          m_on and btn_kept and t_off and excl and excl2 and page_off and page_back and reset_off and stays_off
+          and back, f"{m_on} {btn_kept} {t_off} {excl} {excl2} {page_off} {page_back} {reset_off} {stays_off} {back}")
+
+    # R3 panel: yellow rows, other Temporal sections and the Spatial / General tabs disabled, restored on Finish
+    th = fpn.headers["Temporal Filter"]
+    ah = fpn.headers["Adapt to Changing Noise"]
+    labs = (th.title, ah.title, fpn.controls["t_radius"].label, fpn.controls["t_noise"].label)
+    texts0 = [(l.text(), l.styleSheet()) for l in labs]
+    win.tabs.setCurrentIndex(1)
+    fpn.tabs.setCurrentIndex(1)
+    fpn.nl_check.button.click()
+    yellow = all(ACTIVE_TITLE in l.text() or ACTIVE_TITLE in l.styleSheet() for l in labs)
+    dis = (not fpn.tabs.isTabEnabled(1) and not fpn.tabs.isTabEnabled(2) and fpn.tabs.currentIndex() == 0
+           and not fpn.controls["t_amount"].isEnabled() and not fpn.headers["Jitter of Details"].isEnabled()
+           and not fpn.headers["Repeated Frames"].isEnabled() and fpn.controls["t_noise"].isEnabled()
+           and fpn.controls["t_radius"].isEnabled() and fpn.controls["t_enable"].isEnabled()
+           and fpn.t_noise_header.body.isVisible())
+    fpn.grab().save(os.path.join(outdir, "nlc_panel.png"))
+    fpn.nl_check.button.click()
+    restored = ([(l.text(), l.styleSheet()) for l in labs] == texts0 and fpn.tabs.isTabEnabled(1)
+                and fpn.tabs.isTabEnabled(2) and fpn.controls["t_amount"].isEnabled()
+                and fpn.headers["Jitter of Details"].isEnabled() and not fpn.controls["flicker_local"].isEnabled()
+                and not fpn.controls["t_quality"].isEnabled())
+    check("NLC R3 panel: Temporal Filter / Radius / Noise Level / Adapt yellow, other sections and Spatial / "
+          "General tabs disabled; restored on Finish (n/a rows stay disabled)", yellow and dis and restored,
+          f"{yellow} {dis} {restored}")
+
+
 def main(video, outdir):
     os.makedirs(outdir, exist_ok=True)
     os.environ["NV_UI_QT_SETTINGS"] = os.path.join(outdir, "settings.ini")
@@ -66,7 +559,10 @@ def main(video, outdir):
     idle = lambda: not win.runner.running and not win.runner.queued
     check("load + auto profile", wait(app, lambda: st.profile.base is not None and idle()),
           f"{len(win.frames or [])} frames, area {st.profile.base and st.profile.base['area']}")
+    first_modes = [win.viewer.mode()]
     win.tabs.setCurrentIndex(1)                 # Adjust and Preview: the filtered preview is computed
+    first_modes.append(win.viewer.mode())
+    win.first_modes = first_modes               # checked in genuine_ui_checks (genuine defaults per page)
     check("preview filtered", wait(app, lambda: idle() and win.filt_cache and win.viewer.filt is not None))
 
     # defaults = V5_DEFAULTS
@@ -217,8 +713,11 @@ def main(video, outdir):
 
     # build profile from a dragged area / most noisy frame
     win.on_area(8, 8, 64)
-    win.build_profile(False)
-    check("Build Profile (Current Frame)", wait(app, lambda: idle() and st.profile.base["area"][:3] == [8, 8, 64]))
+    box = win.build_profile(False)              # 32..127 px: the genuine asks first (Use the small area)
+    asked = box is not None and [b.text() for b in box.buttons()].count("Use the small area") == 1
+    [b for b in box.buttons() if b.text() == "Use the small area"][0].click()
+    check("Build Profile (Current Frame), small-area confirmation", asked and wait(
+        app, lambda: idle() and st.profile.base["area"][:3] == [8, 8, 64]))
     win.auto_profile(True)
     nf = backend.noisiest_frame(win.frames)
     check("Auto Profile (Most Noisy Frame)", wait(app, lambda: idle() and st.profile.base["ui_frame"] == nf
@@ -242,7 +741,7 @@ def main(video, outdir):
     check("Preview Area (crop) filtering", wait(app, lambda: idle() and any(k[2] is not None for k in win.filt_cache)))
     win.area_btn.setChecked(False)
     check("preview area off -> whole frame", win.crop() is None and win.preview_sel is None)
-    win.profile_check().close()
+    win.profile_viewer().close()
     win.guide("filter").close()
 
     # ---------------- layout checks ----------------
@@ -281,7 +780,7 @@ def main(video, outdir):
     pbody = ppn.curve.parentWidget().parentWidget().layout()
     idx = lambda w: pbody.indexOf(w)
     tuning = [w for w in ppn.findChildren(Header) if w.title_text == "Profile Check and Tuning"][0]
-    stats = ppn.quality.parentWidget()
+    stats = ppn.stats
     prep_ok = idx(stats) < idx(ppn.curve.parentWidget()) < idx(tuning) and \
         [w.label.text() for w in (ppn.tune["Y"], ppn.tune["Cr"], ppn.tune["Cb"])] == ["Luminance", "Cr", "Cb"]
     check("(a) panel order: Temporal / Spatial / General, Luminance -> Cr -> Cb, High -> Ultra Low",
@@ -524,8 +1023,9 @@ def main(video, outdir):
     widgets = [w for k, w in fpn.controls.items()] + [w for ws in fpn.extra.values() for w in ws]
     no_na = [w.key for w in widgets if not getattr(w, "spec", PARAM_SPECS.get(getattr(w, "key", ""))).implemented
              and "n/a" not in na_text(w)]
-    check("non-implemented controls show 'n/a'", not no_na and "n/a" in win.match_btn.text()
-          and "n/a" in ppn.b_manual.text(), str(no_na))
+    # (Auto Match is no longer a toolbar button: the genuine Prepare toolbar has none; it stays in the menu)
+    check("non-implemented controls show 'n/a'", not no_na and "n/a" in win.actions["p_match"].text()
+          and not win.actions["p_match"].isEnabled() and "n/a" in ppn.b_manual.text(), str(no_na))
 
     # genuine slider tracks / texts
     nr, ov = fpn.controls["noise_Y"].slider, fpn.controls["adv_noise_level"]
@@ -549,9 +1049,24 @@ def main(video, outdir):
           and win.sel_area is None)
     win.tabs.setCurrentIndex(1)
 
+    genuine_ui_checks(app, win, wait, idle, outdir)
+    profile_check_checks(app, win, wait, idle, outdir)
+    nlc_checks(app, win, wait, idle, outdir)
+
     # batch profiler
     win.batch_profiler([video], outdir, "auto")
     check("batch profiler", wait(app, lambda: idle() and getattr(win, "batch_result", None)))
+
+    # rectangular profile (216 x 512) built from the UI selection, then exported with it
+    win.tabs.setCurrentIndex(0)
+    H0, W0 = win.frames[0][0].shape
+    rh, rw = min(216, H0 - 40), min(512, W0 - 60)
+    win.on_area(40, 60, rh, rw)
+    win.build_profile(False)
+    check("rectangular Build Profile: area [y0, x0, h, w] kept", wait(
+        app, lambda: idle() and st.profile.base["area"] == [40, 60, rh, rw] and st.profile.base.get("aft_applied")),
+          f"{st.profile.base['area']}")
+    win.tabs.setCurrentIndex(1)
 
     # export: lossless, compared with process_frame_v5 using the UI profile
     st.set_param("bamt_Cr_medium", 60.0)        # non-uniform channels exercise backend._work
@@ -560,6 +1075,8 @@ def main(video, outdir):
     win.process_video(dst, start=lo, frames=n)
     ok = wait(app, lambda: win.export is None, 1800)
     check("export finished", ok and getattr(win, "export_ok", False))
+    check("export used the rectangular profile", json.load(open(os.path.splitext(dst)[0] + ".ui_profile.json"))
+          ["area"] == [40, 60, rh, rw])
     info = probe(dst)
     got = [f for _, f in read_frames(dst, info["W"], info["H"], fps=info["fps"])]
     sinfo = probe(video)

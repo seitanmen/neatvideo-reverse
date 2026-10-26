@@ -1,0 +1,8 @@
+verify/edge/nan.mkv: 1843200 samples, NaN 24, +inf 24, -inf 0
+  normal: exit 0, samples 1843200, non-finite input samples restored bit for bit True, all other samples finite True (non-finite share of output 0.000026 = input 0.000026)
+  mix1: exit 0, samples 1843200, non-finite input samples restored bit for bit True, all other samples finite True (non-finite share of output 0.000026 = input 0.000026), max |out-in| elsewhere 1.19e-07
+  UI: frames held finite True, profile sigma finite True, preview filtered finite True, original view finite True
+test/r2/nf_src.mkv: 1966080 samples, NaN 616, +inf 8, -inf 8
+  normal: exit 0, samples 1966080, non-finite input samples restored bit for bit True, all other samples finite True (non-finite share of output 0.000321 = input 0.000321)
+  mix1: exit 0, samples 1966080, non-finite input samples restored bit for bit True, all other samples finite True (non-finite share of output 0.000321 = input 0.000321), max |out-in| elsewhere 5.96e-08
+  UI: frames held finite True, profile sigma finite True, preview filtered finite True, original view finite True

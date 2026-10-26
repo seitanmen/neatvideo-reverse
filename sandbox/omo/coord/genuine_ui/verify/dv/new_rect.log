@@ -1,0 +1,5 @@
+640x360 30/1 frames~901 rotation=0 out=[300,304) tags={'color_space': 'bt709', 'color_primaries': None, 'color_transfer': None, 'color_range': 'tv'}
+source yuv420p (8-bit 4:2:0) -> processing yuv420p · 8-bit 4:2:0, codec x264
+profile frame 302: mode=spatial area=[40, 60, 64, 160] (manual) sigma={'Y': 40.194, 'Cb': 5.493, 'Cr': 5.069}
+frame 4/4 2s
+wrote ../sandbox/omo/coord/genuine_ui/verify/dv/new_rect.mkv (4 frames, 1.9s)

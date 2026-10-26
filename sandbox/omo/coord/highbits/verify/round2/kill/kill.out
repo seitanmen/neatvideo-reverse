@@ -1,0 +1,12 @@
+k8_mp4: killed=([74491], 48) rc=1 traceback=False dst_exists=False dir_now=['k8_other.mp4'] unrelated_kept=True
+   last: error: the encoder failed (ffmpeg exit -9, message above); the incomplete /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/round2/kill/mp4/k8.mp4 was removed
+k10_mkv: killed=([74517], 2621440) rc=1 traceback=False dst_exists=False dir_now=['k10.mkv.keep'] unrelated_kept=True
+   last: error: the encoder failed (ffmpeg exit -9, message above); the incomplete /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/round2/kill/mkv/k10.mkv was removed
+k32_exr: killed=([74537], 7) rc=1 traceback=False dst_exists=None dir_now=['cx.json', 'cx_00001.exr.keep', 'cx_1.exr', 'cxx_00001.exr', 'other_00001.exr'] unrelated_kept=False
+   last: error: the encoder failed (ffmpeg exit -9, message above); the incomplete /Users/seitan/Desktop/work/reverse/sandbox/omo/coord/highbits/verify/round2/kill/exr/cx_%05d.exr was removed
+    other_00001.exr kept
+    cx_00001.exr.keep kept
+    cx_1.exr kept
+    cxx_00001.exr kept
+    cx_123456.exr REMOVED
+    cx.json kept

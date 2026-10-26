@@ -4,7 +4,11 @@ Ultra Low. Advanced-only rows are hidden in Beginner Mode (values are kept).
 
 Frequencies rows are common to the three components as in the genuine panel: one row writes
 bamt_{Y,Cr,Cb}_<band> (or bnoise_...) in one undo step; the per-component rows of the v5 backend
-stay available in "Per-component bands (repro)"."""
+stay available in "Per-component bands (repro)".
+
+Noise Level Check (set_nlc_active, genuine g_nlc1.png): while it runs the button reads Finish, the rows
+it concerns (Temporal Filter, Radius, Noise Level Check, Noise Level, Adapt to Changing Noise) are
+yellow, the other sections of the Temporal tab and the Spatial / General tabs are disabled."""
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (QComboBox, QFrame, QHBoxLayout, QLabel, QPushButton, QScrollArea, QTabWidget,
                                QVBoxLayout, QWidget)
@@ -12,8 +16,8 @@ from PySide6.QtWidgets import (QComboBox, QFrame, QHBoxLayout, QLabel, QPushButt
 from nvfilter import V5_BANDS
 
 from ..state import PARAM_SPECS, UI_BANDS, UI_CHANNELS
-from .rows import (BeginRow, ChoiceRow, EnableCheck, Header, IconBar, Row, guide_labels, mode_text,
-                   panel_title)
+from .rows import (ACTIVE_TITLE, BeginRow, ChoiceRow, EnableCheck, Header, IconBar, Row, guide_labels,
+                   mode_text, panel_title)
 
 ADV, BEG, BOTH = {"adv"}, {"beg"}, {"adv", "beg"}
 QUALITY_NAMES = ["Normal (Faster)", "High (Slower)"]
@@ -135,34 +139,44 @@ class FilterPanel(QWidget):
     def _temporal(self):
         lay = self._page("Temporal")
         h = self._header(lay, "Temporal Filter", "t_enable", collapsible=False)
-        self._choice(h, "t_quality", "Quality Mode", QUALITY_NAMES, modes=ADV)
-        self._row(h, "t_radius", "Radius", fmt="frames", steps=(1, 1))
+        nlc_hl = [h]                            # yellow while Noise Level Check runs
+        nlc_off = [self._choice(h, "t_quality", "Quality Mode", QUALITY_NAMES, modes=ADV)]   # disabled then
+        nlc_hl.append(self._row(h, "t_radius", "Radius", fmt="frames", steps=(1, 1)))
         h = self._header(lay, "Temporal Noise", modes=ADV, expanded=False)
-        nl = BeginRow("Noise Level Check", "Noise Level Check: shows the noise-reduced frame in the "
-                      "preview. Adjust Noise Level while watching the result to find the optimal value.",
-                      enabled=True)
+        self.t_noise_header = h
+        nl = BeginRow("Noise Level Check", "Click Begin to show the Temporal Filter mask. The mask shows the "
+                      "areas where temporal noise reduction is applied. Adjust Noise Level while watching the "
+                      "mask to make it sufficiently cover the noisy areas of the frame.\n(repro: the mask is "
+                      "1 - the residual noise of the temporal stage, relative to full averaging)", enabled=True)
         nl.toggled.connect(lambda on: self.noiseLevelCheck.emit(on))
         h.add(nl)
         self._reg(nl, ADV)
-        self._row(h, "t_noise", "Noise Level", fmt="rel", steps=(5, 20))
-        self._na_begin(h, "Local Flicker Check")
-        self._row(h, "flicker_local", "Local Flicker", steps=(1, 5))
-        self._row(h, "flicker_full", "Frame Flicker", steps=(1, 5))
+        self.nl_check = nl
+        nlc_hl.append(self._row(h, "t_noise", "Noise Level", fmt="rel", steps=(5, 20)))
+        nlc_off.append(self._na_begin(h, "Local Flicker Check"))
+        nlc_off.append(self._row(h, "flicker_local", "Local Flicker", steps=(1, 5)))
+        nlc_off.append(self._row(h, "flicker_full", "Frame Flicker", steps=(1, 5)))
         hn = self._header(h, "Noise Reduction Amount", level=1)
         self._row(hn, "t_amount", "Amount", steps=(5, 20), indent=1)
+        nlc_off.append(hn)
         h = self._header(lay, "Repeated Frames", modes=ADV, expanded=False)
         self._na_begin(h, "Repeated Frames Check")
         self._row(h, "rep_rate", "Repeat Rate", steps=(1, 20))
+        nlc_off.append(h)
         h = self._header(lay, "Jitter of Details", modes=ADV, expanded=False)
         self._row(h, "jitter_thr", "Threshold")
         self._check_row(h, "jitter_enable", "Jitter Extended Filtration")
+        nlc_off.append(h)
         h = self._header(lay, "Flicker", "flicker_enable", modes=BEG, collapsible=False, level=0)
+        nlc_off.append(h)
         h = self._header(lay, "Dust and Scratches", "dust_enable", expanded=False)
         self._reg(h.arrow, ADV)
         self._choice(h, "dust_mode", "Mode", modes=ADV)
         self._row(h, "dust_thr", "Threshold", modes=ADV)
         self._row(h, "dust_amount", "Amount", modes=ADV)
-        self._header(lay, "Adapt to Changing Noise", "adapt_enable", modes=ADV, collapsible=False)
+        nlc_off.append(h)
+        nlc_hl.append(self._header(lay, "Adapt to Changing Noise", "adapt_enable", modes=ADV, collapsible=False))
+        self._nlc_hl, self._nlc_off, self._nlc_text, self._nlc_dis, self._nlc_on = nlc_hl, nlc_off, {}, [], False
         lay.addStretch(1)
 
     def _freq(self, parent, prefix, fmt, steps):
@@ -332,3 +346,37 @@ class FilterPanel(QWidget):
 
     def set_performance(self, html):
         self.perf.setText(html)
+
+    def set_nlc_active(self, on):
+        """Noise Level Check running: Begin -> Finish, its rows yellow, the other Temporal sections and the
+        Spatial / General tabs disabled (a parent's setEnabled keeps the children's own n/a state)."""
+        on = bool(on)
+        self.nl_check.set_checked(on)
+        if on == self._nlc_on:
+            return
+        self._nlc_on = on
+        for w in self._nlc_hl:
+            lab = w.title if isinstance(w, Header) else w.label
+            if on:
+                self._nlc_text.setdefault(id(lab), (lab, lab.text(), lab.styleSheet()))
+                if isinstance(w, Header):
+                    t = f"<b>{w.title_text}</b>"
+                    lab.setText(lab.text().replace(t, f"<span style='color:{ACTIVE_TITLE}'>{t}</span>", 1))
+                else:
+                    lab.setStyleSheet(f"color:{ACTIVE_TITLE}")
+        if not on:
+            for lab, text, css in self._nlc_text.values():
+                lab.setText(text)
+                lab.setStyleSheet(css)
+            self._nlc_text = {}
+        if on:                                  # disable only what is enabled by itself (n/a rows stay off)
+            self._nlc_dis = [w for w in self._nlc_off if not w.testAttribute(Qt.WA_ForceDisabled)]
+        for w in self._nlc_dis:
+            w.setEnabled(not on)
+        if not on:
+            self._nlc_dis = []
+        for i in (1, 2):
+            self.tabs.setTabEnabled(i, not on)
+        if on:
+            self.tabs.setCurrentIndex(0)
+            self.t_noise_header.set_expanded(True)
