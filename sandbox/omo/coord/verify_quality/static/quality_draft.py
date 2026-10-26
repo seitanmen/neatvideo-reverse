@@ -44,6 +44,45 @@ LUMA_FLAGS = (1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0)  # RS 0x1622348 / Demo 0x147df
 HALF = F32(0.5)
 
 
+def genuine_g(blob):
+    """RS 0xa4b03c / Demo 0x9bb748 (2026-10-26 統括が解読。入口と末尾の難読化ブロックは大域語の
+    記帳だけで数値 s0 に触れない。RS と Demo で同じオフセット・同じ定数・同じ分岐構造)。
+
+    x0 = p + 0xbf40、k = 0..8 (x8 = 0x20k)、チャンネル c = 0,1,2 (+0x120c) の順に 1つずつ加算する。
+    ビン (c,k) の基点 o = 0xbf44 + 0x120c + 0x20k として:
+        byte o+0x1e != 0            -> s -= 1/27   (レベル > 3.0 の旗)
+        elif byte o+0x1d != 0       -> s -= 1/27   (クリップ旗。AFT の curve_post が 0 に戻す)
+        else:
+            f32 o+0x4 == 0          -> s -= 1/81   (段係数の語が 0)
+            elif i32 o+0x1c != 0    -> s += 1/27   (AFT のマーカー旗 o+0x1c)
+            elif byte o+0x20 != 0   -> s += 1/81   (次のビンの語0 の下位バイト。ch2 k=8 では 0xc2a4 = LZMA 成功旗)
+            else                    -> +0
+    戻り値 = fmax(s, 0.0)。0xbf40 のモード語は読まない。
+    """
+    b = bytes(blob)
+    NEG27 = F32(np.frombuffer(struct.pack("<I", 0xBD17B426), F32)[0])   # -1/27
+    POS27 = F32(np.frombuffer(struct.pack("<I", 0x3D17B426), F32)[0])   # +1/27
+    NEG81 = F32(np.frombuffer(struct.pack("<I", 0xBC4A4588), F32)[0])   # -1/81
+    POS81 = F32(np.frombuffer(struct.pack("<I", 0x3C4A4588), F32)[0])   # +1/81
+    f32 = np.frombuffer(b, F32)
+    s = F32(0.0)
+    for k in range(9):
+        for c in range(3):
+            o = (0xbf44 + 0x120 * c + 0x20 * k) // 4        # 語単位
+            ob = 0xbf44 + 0x120 * c + 0x20 * k              # バイト単位
+            if b[ob + 0x1e] != 0:
+                s = F32(s + NEG27)
+            elif b[ob + 0x1d] != 0:
+                s = F32(s + NEG27)
+            elif f32[o + 1] == F32(0.0):                    # 語 1 = o+0x4 (段係数の先頭)
+                s = F32(s + NEG81)
+            elif struct.unpack_from("<I", b, ob + 0x1c)[0] != 0:
+                s = F32(s + POS27)
+            elif b[ob + 0x20] != 0:
+                s = F32(s + POS81)
+    return F32(max(s, F32(0.0))) if s > F32(0.0) else F32(0.0)   # fmax s0, 0.0 (NaN -> 0)
+
+
 def penalty(x, s=F32(2.0), c=F32(-0.25)):
     """FUN_009d49b4(x, s, c) (Demo。aft_port/notes/AutoFineTune.md の読み。RS 0xa63938 は難読化ブロックが挿入され
     バイト列が異なる。同じ式であることは推定)。"""
@@ -173,24 +212,33 @@ def main():
     # 1) 1080p n=312、本家が選ぶ領域 x832 y0 128x128 (AGENTS.md §6.5)。nv_profile の完全なプロファイル
     rgb = _frame(vid, 312)
     t = time.time()
-    blob, _ = npf.build_profile(rgb, 1, (832, 0, 128, 128), with_floor=False, lzma=False)
-    res["n312_1x_full_profile"] = quality_from_profile(blob.tobytes())
+    blob, _ = npf.build_profile(rgb, 1, (832, 0, 128, 128), with_floor=False, lzma=True)
+    res["n312_1x_full_profile"] = quality_from_profile(blob.tobytes(), g=genuine_g(blob))
     res["n312_1x_full_profile"]["t"] = round(time.time() - t, 1)
     fast = _fast_blob(rgb, (832, 0, 128, 128))
-    res["n312_1x_fast_equal"] = quality_from_profile(fast)["R"] == res["n312_1x_full_profile"]["R"]
+    # _fast_blob は LZMA 旗 0xc2a4 を書かないので、本家同等の状態にしてから g を計算
+    fast = bytearray(fast)
+    fast[0xc2a4] = 1
+    fast = bytes(fast)
+    res["n312_1x_fast"] = quality_from_profile(fast, g=genuine_g(fast))
+    res["n312_1x_fast_equal"] = (res["n312_1x_fast"]["q"] == res["n312_1x_full_profile"]["q"])
     # 2) Resolve の条件の近似: フレーム 0 を 2 倍 (bicubic) に拡大し、移植の FindFlatArea で領域を選ぶ
     for n in (0, 312):
         big = _frame(vid, n, 2)
         table = ncv.genuine_noise_curve(big)
         x0, y0, w, h, st = nf.find_flat_area_genuine(big, ncv.noise_at(table), 1)
-        r = quality_from_profile(_fast_blob(big, (x0, y0, w, h)))
+        fb = bytearray(_fast_blob(big, (x0, y0, w, h)))
+        fb[0xc2a4] = 1
+        r = quality_from_profile(bytes(fb), g=genuine_g(fb))
         r.update(area=[int(x0), int(y0), int(w), int(h)], status=int(st))
         res[f"n{n}_2x_ffa"] = r
         # 同じフレームの 1080p での FindFlatArea
         small = _frame(vid, n)
         table = ncv.genuine_noise_curve(small)
         x0, y0, w, h, st = nf.find_flat_area_genuine(small, ncv.noise_at(table), 1)
-        r = quality_from_profile(_fast_blob(small, (x0, y0, w, h)))
+        fb = bytearray(_fast_blob(small, (x0, y0, w, h)))
+        fb[0xc2a4] = 1
+        r = quality_from_profile(bytes(fb), g=genuine_g(fb))
         r.update(area=[int(x0), int(y0), int(w), int(h)], status=int(st))
         res[f"n{n}_1x_ffa"] = r
     out = os.path.join(_HERE, "quality_draft_results.json")

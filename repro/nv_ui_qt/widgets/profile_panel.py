@@ -178,7 +178,8 @@ class ProfilePanel(QWidget):
         self.quality.setAlignment(Qt.AlignCenter)
         self.quality.setFixedWidth(58)
         self.quality.setStyleSheet("QLabel{" + DARK_BOX + "}")
-        self.quality.setToolTip("Overall Profile Quality: the genuine quality measure is not decoded; not shown")
+        self.quality.setToolTip("Overall Profile Quality: curve completeness x sample uniformity x "
+                                "area size x clipping penalty (genuine measure, decoded 2026-10-26)")
         left.addWidget(self.quality, 0, 1, Qt.AlignRight)
         lt = QHBoxLayout()
         self.levels_title = QLabel("<b>Noise Levels</b>")
@@ -357,3 +358,7 @@ class ProfilePanel(QWidget):
     def set_levels(self, main=None, sel=None):
         self.main_val.setText("-" if main is None else f"{main:.1f}")
         self.sel_val.setText("-" if sel is None else f"{sel:.1f}")
+
+    def set_quality(self, pct):
+        """Overall Profile Quality (genuine measure, quality.py): percent or None = not computed."""
+        self.quality.setText("n/a" if pct is None else f"{pct}%")

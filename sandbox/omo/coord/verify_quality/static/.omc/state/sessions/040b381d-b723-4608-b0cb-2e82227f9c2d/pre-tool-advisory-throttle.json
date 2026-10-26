@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "entries": {
+    "79a93d4a2f8f50b95f852280616242fee1855dc99a3c75211917f55e72e95fae": {
+      "last_emitted_at_ms": 1793000099939,
+      "message": "Use parallel execution for independent tasks. Use run_in_background for long operations (npm install, builds, tests)."
+    },
+    "445ed27a3872b681d98190bae61ccb84954e1bc4e140df5370be958dee776b3a": {
+      "last_emitted_at_ms": 1792999504838,
+      "message": "Verify changes work after editing. Test functionality before marking complete."
+    },
+    "2209d57405ad9484cc5be205b3426aff7a3df347862137524f7f08e6dfad7045": {
+      "last_emitted_at_ms": 1792999464680,
+      "message": "Spawning agent: oh-my-claudecode:verifier (opus) | Task: Verify Quality static findings"
+    }
+  },
+  "updated_at": "2026-10-26T07:34:59.939Z"
+}

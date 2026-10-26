@@ -537,6 +537,87 @@ def nlc_checks(app, win, wait, idle, outdir):
           f"{yellow} {dis} {restored}")
 
 
+def quality_checks(app, win, wait, idle, outdir):
+    """Overall Profile Quality (2026-10-26, quality.py; decode + verification in
+    sandbox/omo/coord/verify_quality/static/QUALITY.md)."""
+    import copy
+    import struct
+    import numpy as np
+    from nv_ui_qt.quality import genuine_g, profile_quality
+
+    def blob(states, c2a4=1):
+        b = bytearray(0xc300)
+        b[0xbf34] = 1
+        b[0xc2a4] = c2a4
+        for (c, k), stv in states.items():
+            o = 0xbf44 + 0x120 * c + 0x20 * k
+            for wd in range(6):
+                struct.pack_into("<I", b, o + 4 * wd,
+                                 struct.unpack("<I", struct.pack("<f", stv.get("scale", 1.0)))[0])
+            if stv.get("valid"):
+                struct.pack_into("<I", b, o + 0x18, 1)
+            b[o + 0x1c] = stv.get("marker", 0)
+            b[o + 0x1d] = stv.get("clip", 0)
+            b[o + 0x1e] = stv.get("gt3", 0)
+        return bytes(b)
+
+    def fresh(**kw):
+        return {(c, k): dict(**kw) for c in range(3) for k in range(9)}
+
+    g = float(genuine_g(blob(fresh())))
+    check("Quality g: fresh profile = 1/81 (LZMA flag path only)", abs(g - 1 / 81) < 1e-9, f"{g}")
+    stv = fresh()
+    for key in stv:
+        stv[key]["marker"] = 1
+    g = float(genuine_g(blob(stv)))
+    check("Quality g: after AFT = float32 27*(1/27)", abs(g - 0.999999762) < 1e-6, f"{g}")
+    stv = fresh()
+    for key in stv:
+        stv[key]["marker"] = 1
+    stv[(1, 4)]["gt3"] = 1
+    stv[(2, 7)]["gt3"] = 1
+    g = float(genuine_g(blob(stv)))
+    check("Quality g: two >3.0 flags -> 25*(+1/27) + 2*(-1/27) = 23/27",
+          abs(g - 23 / 27) < 1e-6, f"{g}")
+    stv = fresh()
+    stv[(0, 3)]["clip"] = 1
+    check("Quality g: clip flag clamps to 0 (1/81 - 1/27 < 0)", float(genuine_g(blob(stv))) == 0.0)
+    stv = fresh(scale=0.0)
+    check("Quality g: all-empty clamps to 0", float(genuine_g(blob(stv))) == 0.0)
+    stv = fresh()
+    stv[(0, 5)]["scale"] = 0.0                      # (0,5) itself -1/81
+    stv[(2, 8)]["clip"] = 1                         # -1/27, kills the 0xc2a4 +1/81 path
+    check("Quality g: zero scale word + clip flag -> -4/81 clamps to 0",
+          float(genuine_g(blob(stv))) == 0.0)
+
+    # the label: profile exists (auto-AFT ran), frames in memory
+    st = win.state
+    check("Quality: panel shows a percent for the AFT profile", wait(
+        app, lambda: idle() and win.profile_page.panel.quality.text() not in ("", "n/a")),
+        win.profile_page.panel.quality.text())
+    pct_aft = profile_quality(st.profile, win.frames, win.full_range, win.matrix)
+    check("Quality: label matches recomputation",
+          win.profile_page.panel.quality.text() == f"{pct_aft}%", f"{pct_aft}")
+    fresh_ps = copy.deepcopy(st.profile)
+    fresh_ps.base = copy.deepcopy(st.profile.base)
+    fresh_ps.base.pop("aft_applied", None)
+    fresh_ps.base.pop("ui_pre_aft", None)
+    pct_fresh = profile_quality(fresh_ps, win.frames, win.full_range, win.matrix)
+    check("Quality: AFT raises the value (s11 0.506 -> 1.0)", pct_fresh is not None and
+          pct_fresh < pct_aft, f"fresh {pct_fresh} < aft {pct_aft}")
+    none_ps = copy.deepcopy(st.profile)
+    none_ps.base = None
+    check("Quality: n/a without a profile", profile_quality(none_ps, win.frames, win.full_range,
+                                                            win.matrix) is None
+          and profile_quality(st.profile, None, win.full_range, win.matrix) is None)
+    # the Profile Viewer line
+    dlg = win.profile_viewer()
+    txt = dlg.findChildren(__import__("PySide6.QtWidgets", fromlist=["QTextEdit"]).QTextEdit)[0].toPlainText()
+    dlg.close()
+    check("Quality: Profile Viewer shows the value",
+          f"Overall Profile Quality: {pct_aft}%" in txt, txt.splitlines()[-1])
+
+
 def main(video, outdir):
     os.makedirs(outdir, exist_ok=True)
     os.environ["NV_UI_QT_SETTINGS"] = os.path.join(outdir, "settings.ini")
@@ -1052,6 +1133,7 @@ def main(video, outdir):
     genuine_ui_checks(app, win, wait, idle, outdir)
     profile_check_checks(app, win, wait, idle, outdir)
     nlc_checks(app, win, wait, idle, outdir)
+    quality_checks(app, win, wait, idle, outdir)
 
     # batch profiler
     win.batch_profiler([video], outdir, "auto")

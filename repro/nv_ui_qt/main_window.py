@@ -747,6 +747,37 @@ class MainWindow(QMainWindow):
             if self.nlc:
                 self.nlc_timer.start()          # temporal settings: new mask (same key = from the cache)
 
+    def _update_quality(self):
+        """Overall Profile Quality (quality.py = the genuine measure, decoded 2026-10-26) whenever
+        the profile, its factors / tune or the opened clip change.  Runs in a worker (the area's
+        model levels take a moment); n/a without a profile or without the frames in memory."""
+        ps = self.state.profile
+        if ps.base is None or self.frames is None:
+            self._quality_req = getattr(self, "_quality_req", 0) + 1
+            self._quality_key = None          # a later identical profile must recompute again
+            self._quality_pct = None
+            self.profile_page.panel.set_quality(None)
+            return
+        key = (self._profile_sig(), self.matrix, bool(self.full_range), len(self.frames),
+               getattr(self, "src", None))
+        if key == getattr(self, "_quality_key", None):
+            return
+        self._quality_key = key
+        req = self._quality_req = getattr(self, "_quality_req", 0) + 1
+        frames, fr, mat = self.frames, self.full_range, self.matrix
+
+        def job(task):
+            import nv_ui_qt.quality as qlt
+            return qlt.profile_quality(ps, frames, fr, mat)
+
+        def done(tag, pct):
+            if tag != self._quality_req:
+                return
+            self._quality_pct = pct
+            self.profile_page.panel.set_quality(pct)
+
+        self.runner.submit("quality", req, job, done, self._failed)
+
     def _profile_sig(self):
         return json.dumps(self.state.profile.to_json(), sort_keys=True, default=str)
 
@@ -757,6 +788,7 @@ class MainWindow(QMainWindow):
         fi = (self.info["W"], self.info["H"]) if self.info else None
         pp = self.profile_page.panel
         pp.show_profile(ps, eff, fi)
+        self._update_quality()
         pp.set_name(None if ps.base is None else f"Noise profile ({fi[0]}x{fi[1]}p)" if fi else "Noise profile",
                     ps.base is not None and self._profile_sig() != self.prof_clean)
         self.check_btn.setVisible(ps.base is not None)
@@ -1417,7 +1449,9 @@ class MainWindow(QMainWindow):
             lines.append("brightness bins " + " ".join(f"{c:.0f}" for c in eff["curve_centers"]))
             for n in ("Y", "Cb", "Cr"):
                 lines.append(f"{n} σ1 curve " + " ".join(f"{v:.3f}" for v in eff["curve"][n]))
-            lines.append("Overall Profile Quality: not computed (genuine measure not decoded)")
+            lines.append("Overall Profile Quality: " +
+                         ("n/a" if self._quality_pct is None else f"{self._quality_pct}%") +
+                         " (genuine measure, quality.py)")
             t.setPlainText("\n".join(lines))
         v.addWidget(t)
         dlg.resize(640, 620)
