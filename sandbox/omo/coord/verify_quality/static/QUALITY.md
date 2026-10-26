@@ -199,14 +199,13 @@ Quality と独立した g の直接表示なので、g の値を丸め誤差 ±0
 - UI は Quality (q×100) と Completeness (g×100) の両方を Device Noise Profile パネルと
   Profile Viewer に出す (本家と同じ 2 つの表示)。
 
-### 8.6 未解決: Reset 直後の g = 0 の機構
+### 8.6 Reset 直後の g = 0 の機構 (2026-10-26 深夜に解決)
 
-Reset Fine-Tuning Results の直後は完成度 0% (g < 0.005) で、新規ビルドの 1/81 (完成度 1%)
-とは違う。段係数は init/AFT とも 1.0 を書くので −1/81 の相殺はなく、レベルも (完成度が
- Manual 編集にだけ反応することから) ほぼ 1.0 に戻っているとみられる。残る説明は
- **0xc2a4 = 0 (Reset が LZMA 旗を消すか、復元しない)** である。確かめる方法:
-- 本家で新しく Build Profile (Full frame) を作り Quality/完成度を見る (Copy Profile の控え +
-  Undo で復旧できることは確認済み)。完成度 1% なら Reset 固有の差、0% なら Reset ≡ 新規。
-- Reset Fine-Tuning Results の関数を静的に読む (UI コードとみられ、保護区画の外の可能性)。
-repro は Reset を新規同様 (1/81) に扱うので、その状態では本家より最大 0.5 ポイント高く出る
-(丸め境界でのみ見える差)。
+Reset Fine-Tuning Results はプロファイルを**構築直後の状態**へ戻す。プロファイルのコンストラクタ
+(RS 0xa499d4。曲線 3 チャンネル 0xbf44/0xc064/0xc184 を 0x120 バイトずつ初期化し、+0x48 に色モード、
+末尾 0xa49e28 で `strb wzr, [x19+0xc2a4]`) が **0xc2a4 (LZMA 成功旗) を 0 にする**。BuildNoiseModel は
+圧縮成功後に 0xc2a4 = 1 を書くので、新規ビルドは 1/81 (完成度 1%)、Reset 後は 0 (完成度 0%)。
+Reset 後に編集すると +1/81 ずつ増えるのは、コンストラクタが段係数 1.0 も書き直すから (観測と一致)。
+イコライザの reset ボタンは `1resetEqualizer()` スロット (RS 0xe4cfc の接続)。
+repro: Reset Fine-Tuning アクションが base["aft_reset"] を立て、`quality._curve_blob` が
+0xc2a4 = 0 を書く。次の AFT で消える (backend.run_aft)。

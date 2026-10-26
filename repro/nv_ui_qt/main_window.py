@@ -18,6 +18,7 @@ in the colours of display.nlc_image, computed in a worker thread from the previe
 cached per (frame, video, profile, temporal parameters) and recomputed 100 ms after a temporal setting
 changes. It excludes Filter Tuning Assist and ends on another page, a new video or without a profile."""
 import collections
+import copy
 import json
 import os
 import time
@@ -1320,9 +1321,17 @@ class MainWindow(QMainWindow):
         self.state.set_profile(new, "Rename device")
 
     def reset_fine_tune(self):
+        """Genuine "Reset Fine-Tuning Results": the curve back to the just-constructed state -
+        levels/scales 1.0, bin flags cleared, and the LZMA success flag (profile byte 0xc2a4)
+        cleared as the profile constructor does (RS 0xa49e28 strb wzr).  Hence g = 0 and
+        Completeness 0% (observed 2026-10-26), while a fresh Build keeps the flag (g = 1/81).
+        The repro records that with the aft_reset annotation (quality._curve_blob)."""
         new = self.state.profile.clone()
         new.factors = [[1.0] * 9 for _ in CHANNELS]
         new.pinned = [set() for _ in CHANNELS]
+        if new.base is not None:
+            new.base = copy.deepcopy(new.base)
+            new.base["aft_reset"] = True
         self.state.set_profile(new, "Reset Fine-Tuning Results")
 
     def generic_profile(self):

@@ -628,6 +628,17 @@ def quality_checks(app, win, wait, idle, outdir):
           pct_fresh < pct_aft, f"fresh {pct_fresh} < aft {pct_aft}")
     check("Completeness: fresh profile is 0-1% (unmarked bins, LZMA flag path at most)",
           comp_fresh is not None and comp_fresh in (0, 1), f"{comp_fresh}")
+    # Reset Fine-Tuning: aft_reset clears the LZMA flag (0xc2a4) -> g = 0 -> Completeness 0%
+    reset_ps = copy.deepcopy(st.profile)
+    reset_ps.base = copy.deepcopy(st.profile.base)
+    reset_ps.factors = [[1.0] * 9 for _ in range(3)]
+    reset_ps.base["aft_reset"] = True
+    reset_ps.base.pop("aft_bin_flags", None)
+    qp_r, cp_r = profile_numbers(reset_ps, win.frames, win.full_range, win.matrix)
+    check("Completeness: after Reset the LZMA flag is cleared -> 0%",
+          cp_r == 0, f"{cp_r}")
+    check("Quality: after Reset only the curve term is gone (s11 = 0.5)",
+          qp_r is not None and 0 < qp_r < pct_aft, f"{qp_r}")
     none_ps = copy.deepcopy(st.profile)
     none_ps.base = None
     check("Quality: n/a without a profile", profile_quality(none_ps, win.frames, win.full_range,

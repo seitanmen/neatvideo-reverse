@@ -37,10 +37,12 @@ Manual Fine-Tune writes level words without markers - confirmed by observation
 (2026-10-26, genuine 6.1.3 Pro Full frame: Reset -> Quality 35% / Completeness 0%,
 then 4 red-bin edits -> 36/36/37/37% and 1/2/4/5%: exactly +1/81 per edit;
 +1/27 per edit would jump to Completeness 4% / Quality 37% on the first edit).
-Known gap: genuine Reset gives g = 0, while a fresh build gives g = 1/81
-(scales are 1.0 everywhere, so the +1/81 must vanish via 0xc2a4 = 0 after Reset;
-mechanism TBD - fresh-Build observation or static read of the Reset handler).
-Repro treats Reset like fresh (1/81): at most a 0.5-point boundary effect.
+Reset resolves to the just-constructed profile: the constructor clears the LZMA
+success flag (RS 0xa499d4 profile init, 0xa49e28 strb wzr to p+0xc2a4), so
+ch2 bin8 loses its +1/81 and g = 0 / Completeness 0% (observed; the edits after
+Reset still see scales = 1.0, matching the init).  A fresh Build keeps the flag
+(g = 1/81 -> Completeness 1%).  The repro records it as base["aft_reset"],
+set by the Reset Fine-Tuning action and cleared by the next AFT.
 Static analysis and verification: sandbox/omo/coord/verify_quality/static/QUALITY.md;
 quality_draft.genuine_g there is the same decode - keep the two in sync.
 """
@@ -166,13 +168,23 @@ def _curve_blob(ps, planes, full_range, matrix):
     for c, cl in enumerate(clips):
         buf[0xbf3c + c] = cl
     struct.pack_into("<ii", buf, 0xc2c0, w, h)
-    buf[0xc2a4] = 1                                      # LZMA part written (always true in repro)
     means = [nb.mean_exact(p) for p in (R, G, B)]
     filled = [npv.curve_bin(m) for m in means]
     aft = bool(base.get("aft_applied"))
-    stored = base.get("aft_bin_flags") if aft else None    # per-bin flags from the AFT run
-    if stored is None and aft:
-        stored = {"marker": [[True] * 9] * 3}              # profiles saved before flags existed
+    reset = bool(base.get("aft_reset"))
+    # Reset Fine-Tuning Results restores the just-constructed profile: all bin flags clear
+    # (levels/scales 1.0) and the LZMA success flag (0xc2a4) cleared as the profile
+    # constructor does (RS 0xa49e28 strb wzr) -> g = 0, Completeness 0% (observed).
+    # A fresh Build keeps the flag (g = 1/81 -> Completeness 1%).
+    if reset:
+        stored = {"marker": [[False] * 9] * 3, "clip": [[False] * 9] * 3, "gt3": [[False] * 9] * 3}
+    elif aft:
+        stored = base.get("aft_bin_flags")            # per-bin flags from the AFT run
+        if stored is None:
+            stored = {"marker": [[True] * 9] * 3}     # profiles saved before flags existed
+    else:
+        stored = None
+    buf[0xc2a4] = 0 if reset else 1
     tune = ps.tune or {}
     chans = ("Y", "Cr", "Cb")                            # repro channel order (the genuine: R, G, B)
     tk = [float(tune.get("all", 1.0)) * float(tune.get(c, 1.0)) for c in chans]
@@ -184,7 +196,7 @@ def _curve_blob(ps, planes, full_range, matrix):
             f32[e // 4] = lvl                                # word 0 = the bin's level
             if stored is not None:
                 # the AFT run's own flags: markers only on unmeasured bins, clip kept
-                # where the run left it, >3.0 where its level exceeded it
+                # where the run left it, >3.0 where its level exceeded it (after Reset: all clear)
                 if stored["marker"][c][k]:
                     buf[e + 0x1c] = 1
                 if stored.get("clip", [[False] * 9] * 3)[c][k]:
@@ -193,10 +205,11 @@ def _curve_blob(ps, planes, full_range, matrix):
                     buf[e + 0x1e] = 1
             elif lvl > F32(3.0):
                 buf[e + 0x1e] = 1                            # manual edit above 3.0 (genuine flag)
-        e = 0xbf44 + 0x120 * c + 0x20 * filled[c]
-        if not aft:
-            w32[(e + 0x18) // 4] = 1                         # the fresh profile's valid word
-            buf[e + 0x1d] = clips[c]                         # and the clip flag in +0x1d
+        if not aft and not reset:
+            # the fresh profile's filled bin (Reset: constructed state, no filled-bin info)
+            e = 0xbf44 + 0x120 * c + 0x20 * filled[c]
+            w32[(e + 0x18) // 4] = 1
+            buf[e + 0x1d] = clips[c]
     return buf
 
 

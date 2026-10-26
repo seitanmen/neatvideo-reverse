@@ -257,6 +257,7 @@ def run_aft(base, planes, full_range, matrix, mode=0):
     rgb = np.clip(nv.yuv_to_rgb(tuple(np.asarray(p, np.float32) for p in planes), matrix, full_range),
                   0, 255).astype(np.float32)
     prof = nv_aft_v5.apply_aft(prof, rgb, mode=mode)
+    prof.pop("aft_reset", None)     # a run after Reset Fine-Tuning rewrites the curve flags
     prof["ui_pre_aft"] = keep
     return prof
 
