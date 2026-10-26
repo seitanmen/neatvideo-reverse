@@ -58,3 +58,8 @@ N4. OFX プラグイン化
   most vexing parse に注意。
 
 次 (N1): nv_band.model_levels の C++ 移植とビット一致検証 (同様の verify_*.py 形式)。
+
+N1 の委託分割: `.claude/tasks/native_n1_split.md` (N1a 帯域測度 / N1b ノイズ曲線 /
+N1c LZMA (SDK 9.20 の C ソースを流用) / N1d 領域探索 / N1e モデル / N1f プロファイル /
+N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと共通規約・検証形式つき。
+並列開始は N1a・N1b・N1c)。統括が各ワーカーの REPORT を受領後に verify 再実行・マージ・コミット。
