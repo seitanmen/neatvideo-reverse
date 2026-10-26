@@ -1,0 +1,73 @@
+python3 verify_quality.py
+4000/4000 bit-exact
+python3 verify_band.py
+  ms    mean/std     : 1080/1080 bit-exact
+  quant quantile     : 1080/1080 bit-exact
+  rand  model_levels : 1665/1665 bit-exact
+  rand  band_levels  : 1665/1665 bit-exact
+  real  model_levels : 108/108 bit-exact
+  real  band_levels  : 108/108 bit-exact
+5706/5706 bit-exact
+time: Python 14.8 s (4 procs), C++ 1.02 s (one process); nv_band_test: model 0.306 s, band 0.295 s, quantile 0.012 s, mean/std 0.000 s
+python3 verify_curve.py
+curve: 8 real frames + 19 synthetic + 520 fuzz images
+  C++ -j 1: 8.7 s for 547 images (Python, 4 procs: 15.9 s)
+  C++ -j 4: 2.7 s for 547 images (Python, 4 procs: 15.9 s)
+curve: 1094/1094 curves bit-exact (xs + ys), histograms 1094/1094 (178 cases with NaN in ys)
+clip: 4000/4000 IsClip values bit-exact
+interp: 20554/20554 queries bit-exact (640 tables)
+tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright)
+total 40.8 s: ALL BIT-EXACT
+python3 verify_lzma.py
+[python] 668 inputs (9277926 source bytes); planes 572, byte strings 96
+[python] byte equal: 667/667 (blob fits 651, overflow -1 17); C++ 1.71 s, Python 18.0 s wall (7.6 us/byte over 4 workers)
+[python] around the output limit n + 0x80 (stream length - n, fits): [(126, True), (126, True), (126, True), (127, True), (127, True), (127, True), (128, True), (128, True), (128, True), (129, False), (129, False), (129, False), (130, False), (130, False), (130, False)]
+  known divergence (empty input, not a genuine case; REPORT.md): 0 bytes: props 5d00000001 != 5d00100000; blob bytes differ
+[genuine] 717 saved blob files, 258 distinct (10250646 plane bytes, 2048..524288)
+[genuine] blob byte equal (bytes 13..15 skipped): 258/258; C++ 2.84 s
+[genuine] plane_int16 + blob of known crops: 24/24 (8 areas x 3 planes)
+TOTAL: 949/949 byte equal, 0 mismatches (25.3 s)
+python3 verify_flat.py
+flat: 181 cases (60 real frame x mode, 81 synthetic, 40 fuzz; 32 deep)
+flat: 362/362 case runs bit-exact (result + steps + curve + reduce + candidates + placed/IsClip + trace + structs)
+  per run: 17730 candidates, 17109 scored candidates, 1293 x 3 structs (deep); statuses {0: 41, 1: 60, 2: 65, 3: 13, 4: 2}
+  time: Python (incl. intermediates, 3 procs, wall) 58.6 s; C++ -j 1 50.0 s, -j 3 21.1 s (incl. blob I/O)
+total 132.5 s: ALL BIT-EXACT
+python3 verify_model.py
+  levels set -1  : 8/8 bit-exact
+  levels set 0-4 : 8/8 bit-exact
+  rand   set -1  : 148/148 bit-exact
+  rand   set 0-4 : 708/708 bit-exact
+  real   set -1  : 56/56 bit-exact
+  real   set 0-4 : 280/280 bit-exact
+  tail   set -1  : 6/6 bit-exact
+  tail   set 0-4 : 30/30 bit-exact
+1244/1244 bit-exact (218 planes x sets; 254 runs with NaN in the input; 5095424 words compared)
+time: Python 0.2 s (cache + 0 computed), C++ 57.06 s wall (nv_model_test: 1244 cases, model_full 56.664 s)
+python3 verify_temporal.py
+  comp  blocksum : 120/120 bit-exact (1040 words)
+  comp  dense    : 44/44 bit-exact (421138 words)
+  comp  flow     : 44/44 bit-exact (6384 words)
+  comp  pyramid  : 24/24 bit-exact (107553 words)
+  comp  refine   : 120/120 bit-exact (11440 words)
+  comp  warp     : 16/16 bit-exact (71702 words)
+  rand  frame    : 16/16 bit-exact (166817 words, 21 flows compared)
+  rand  temporal : 48/48 bit-exact (1113646 words, 163 flows compared)
+  real  frame    : 6/6 bit-exact (8490400 words, 30 flows compared)
+  real  temporal : 36/36 bit-exact (101011680 words, 144 flows compared)
+474/474 bit-exact (147 cases with NaN in the expected output, 45933 NaN words, payloads compared)
+time: Python 16.9 s wall (3 procs, 41.9 s CPU), C++ 4.0 s (3 threads)
+python3 verify_spatial.py
+  comp  atrous        : 180/180 bit-exact (896736 words)
+  comp  curve         : 66/66 bit-exact (74950 words)
+  comp  down2         : 48/48 bit-exact (18336 words)
+  comp  exp           : 60/60 bit-exact (74728 words)
+  comp  gauss         : 66/66 bit-exact (89848 words)
+  comp  mapc          : 61/61 bit-exact (74735 words)
+  comp  median        : 60/60 bit-exact (74728 words)
+  comp  to_grid       : 144/144 bit-exact (77136 words)
+  comp  uniform       : 512/512 bit-exact (644672 words)
+  rand  spatial       : 60/60 bit-exact (638942 words)
+  real  spatial       : 30/30 bit-exact (139968000 words)
+1287/1287 bit-exact (455 cases with NaN in the expected output, 930522 NaN words, payloads compared)
+time: Python 7.7 s wall (3 procs, 10.8 s CPU), C++ 2.4 s (3 threads)

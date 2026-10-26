@@ -80,4 +80,21 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
   - libm の pow/tan は volatile 関数ポインタ経由 (定数畳み込み防止)
 - **既知の差**: `repro/nv_lzma.py` は長さ 0 の入力で props が SDK と違う (C++ は SDK どおり。
   本家の経路は 32px 以上なので不発生。N1f の照合では長さ 0 を除外)。
-- **次**: N1d (領域探索)・N1e (モデル) が解放済み。N1g/N1h も N1a 済みなので開始可能。
+### N1d/e/g/h (2026-10-27 完了。REPORT は sandbox/omo/wp_native_{flat,model,spatial,temporal}/、独立検証は coord/native_n1b/VERDICT.md で 4 件 APPROVE)
+
+- **N1d 領域探索** `native/nv_flat.{h,cpp}` (N1a・N1b を利用): 181 ケース × (-j 1, -j 3) = 362/362 ビット一致
+  (実写 20 フレーム × 色モード 0..2、合成 81、乱数 40。縮小面・候補・trace・帯域測度の構造体まで比較)。
+  1080p 0.81 秒 / 3 スレッド 0.34 秒 (Python 1.58 秒)。取り消し (状態 5) は未移植。
+- **N1e 1 面モデル** `native/nv_model.{h,cpp}` (4096 語すべて、族 A/R/dc/B/C・FUN_00ad319c・FUN_00ad1ae0): 1244/1244 ビット一致。
+  本家の nvh model ダンプ (キャッシュ) とも 753/753 一致。8〜13 倍 (スカラー asm、未ベクトル化)。
+  線カーネルは nv_curve.cpp と重複 (共通化は未了)。非 AArch64 は未対応 (FRECPE のソフト版なし)。
+- **N1h 空間カーネル** `native/nv_spatial.{h,cpp}` + 共通部品 `native/nv_ndimage.{h,cpp}`: 1287/1287 ビット一致。1080p 約 1.7 倍。
+- **N1g 時間カーネル** `native/nv_temporal.{h,cpp}` (動き推定・dense_flow・warp・類似度 v5/pyramid・rv、process_frame_v5 全体も):
+  474/474 ビット一致。1080p の process_frame_v5 2.1 秒 → 0.55 秒 (1 スレッド)。
+- **照合の前提 (N1g/N1h)**: 期待値は scipy.ndimage / numpy の演算順に依存し、照合はこの環境 (numpy 2.1.3・scipy 1.15.3・arm64) に固定。
+  scipy の gaussian_filter と np.interp は FMA を使い、numpy の加算リダクションは形状で順が変わる (1 列幅・nbx=1 の特例)。
+  numpy/scipy を更新したら照合をやり直す。
+- **API の前提**: パラメータは Python の float と同じく演算前に float32 にする (NEP 50。np.float64 を混ぜると Python 側が倍精度になる)。
+  pyramid は Y の帯域が 3 段以上を前提 (Python は 3 段未満で IndexError、C++ は 0 埋め)。
+- `make -C native verify` で 8 本 (N0 + N1a〜e・g・h) を通しで照合できる (2026-10-27: クリーンビルド警告 0、全件一致)。
+- **次**: N1f (プロファイル: N1c・N1d・N1e 済み) と N1i (AFT: N1a・N1e 済み) が解放済み。

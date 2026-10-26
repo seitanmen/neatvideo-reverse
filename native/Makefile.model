@@ -1,0 +1,21 @@
+# N1e: nv_model (BuildNoiseModel per-plane model FUN_00995250, all 4096 words) verified bit-exact
+# against repro/nv_model.py + nv_model_special.py + nv_model_bm.py.
+#   make -C native -f Makefile.model && python3 native/verify_model.py
+# Same flags as native/Makefile (no fast-math, no FMA contraction).  nv_band.cpp (N1a) supplies
+# words 0..54, the box filters, down2 / band_from and the quantile.
+
+CXX ?= clang++
+CXXFLAGS ?= -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra
+
+all: nv_model_test
+
+nv_model_test: nv_model_main.cpp nv_model.cpp nv_model.h nv_band.cpp nv_band.h
+	$(CXX) $(CXXFLAGS) -o $@ nv_model_main.cpp nv_model.cpp nv_band.cpp
+
+verify: nv_model_test
+	python3 verify_model.py
+
+clean:
+	rm -f nv_model_test
+
+.PHONY: all verify clean

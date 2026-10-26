@@ -1,0 +1,20 @@
+# N1d: FindFlatArea port (nv_flat) over nv_band (N1a) and nv_curve (N1b) - separate makefile until
+# the lead merges it into native/Makefile.
+#   make -C native -f Makefile.flat && python3 native/verify_flat.py
+# Same flags as native/Makefile: no fast-math, no FMA contraction.
+
+CXX ?= clang++
+CXXFLAGS ?= -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra
+
+all: nv_flat_test
+
+nv_flat_test: nv_flat_main.cpp nv_flat.cpp nv_flat.h nv_band.cpp nv_band.h nv_curve.cpp nv_curve.h
+	$(CXX) $(CXXFLAGS) $(MUTFLAGS) -o $@ nv_flat_main.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp -lpthread
+
+verify: nv_flat_test
+	python3 verify_flat.py
+
+clean:
+	rm -f nv_flat_test
+
+.PHONY: all verify clean

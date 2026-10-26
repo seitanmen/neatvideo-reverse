@@ -27,6 +27,9 @@ native/**
 !native/Makefile.band
 !native/Makefile.curve
 !native/Makefile.lzma
+!native/Makefile.flat
+!native/Makefile.model
+!native/Makefile.v5
 !native/MIGRATION.md
 !native/lzma/
 native/lzma/**

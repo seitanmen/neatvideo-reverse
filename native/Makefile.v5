@@ -1,0 +1,24 @@
+# N1g / N1h: v5 temporal and spatial kernels (repro/nvfilter.py temporal_v5 / spatial_v5 /
+# process_frame_v5) verified bit-exact against the Python code.
+#   make -C native -f Makefile.v5 && python3 native/verify_spatial.py && python3 native/verify_temporal.py
+# Same flags as native/Makefile (no fast-math, no FMA contraction).
+
+CXX ?= clang++
+CXXFLAGS ?= -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra
+
+V5_SRC = nv_v5_main.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp
+V5_HDR = nv_ndimage.h nv_spatial.h nv_temporal.h
+
+all: nv_v5_test
+
+nv_v5_test: $(V5_SRC) $(V5_HDR)
+	$(CXX) $(CXXFLAGS) -o $@ $(V5_SRC) -lpthread
+
+verify: nv_v5_test
+	python3 verify_spatial.py
+	python3 verify_temporal.py
+
+clean:
+	rm -f nv_v5_test
+
+.PHONY: all verify clean
