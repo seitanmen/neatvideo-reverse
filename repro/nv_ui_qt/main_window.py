@@ -1,6 +1,14 @@
 """Main window in the genuine layout: menu bar with the Beginner / Advanced switch, page tabs
 (Prepare Noise Profile | Adjust and Preview), left column = page toolbar -> viewer -> viewer bar,
-right = side panel, bottom row = scan type / gamma / gain (n/a), thumbnails, Cancel, Apply."""
+right = side panel, bottom row = scan type / gamma / gain (n/a), thumbnails, Cancel, Apply.
+
+Profile Check (genuine 6.1.3, sandbox/omo/coord/genuine_ui2/SPEC.md O1): the panel's Begin / Finish, the
+Prepare toolbar's [Profile Check] and Profile > Profile Check are one toggle of the Assist Image mode
+(set_profile_check): the viewer shows the current frame through the spatial filter only with every
+amount at 100% and the effective profile (repro definition of the Assist Image; the genuine's
+processing is not decoded), computed in a worker thread, cached per (frame, profile) and recomputed
+100 ms after a profile Noise Level change. Leaving the Prepare page or removing the profile ends it.
+The profile details dialog is Profile > Profile Viewer… (profile_viewer)."""
 import collections
 import json
 import os
@@ -19,11 +27,12 @@ import nvfilter as nv
 from denoise_video_v5 import probe, read_frames, remove_output, sidecar_stem
 
 from . import backend
+from . import display as D
 from .menus import build_menus
 from .pages.filter_page import FilterPage
 from .pages.profile_page import ProfilePage
-from .state import (CHANNELS, PARAM_SPECS, AppState, ProfileState, auto_complete, default_params, dump_json,
-                    load_json, params_from_json, preset_json)
+from .state import (BANDS, CHANNELS, PARAM_SPECS, AppState, ProfileState, auto_complete, backend_params,
+                    default_params, dump_json, load_json, params_from_json, preset_json)
 from .widgets.noise_graph import NoiseGraph
 from .widgets.timeline import Timeline
 from .widgets.viewer import SPLITS, Viewer, ViewerBar, to_qimage
@@ -34,7 +43,8 @@ PROFILE_FILTER = "Repro noise profile (*.nvprof.json);;JSON (*.json)"
 PRESET_FILTER = "Repro filter preset (*.nvpreset.json);;JSON (*.json)"
 PREFS = {"jobs": max(1, (os.cpu_count() or 2) - 2), "crf": 16, "audio": "copy", "preview_area": 0.5,
          "auto_fine_tune": True,
-         "mem_gb": 4.0, "auto_profile": True, "depth": "8"}
+         "mem_gb": 4.0, "auto_profile": True, "depth": "8", "profile_mode": "auto"}
+PROFILE_MODES = ("auto", "spatial", "temporal")    # build_profile_v5 modes (repro, Profile Viewer)
 # Preferences > Bit depth: (label, --depth value); 8-bit = the original yuv420p path
 DEPTHS = (("8-bit (legacy yuv420p)", "8"), ("Source depth", "source"), ("10-bit", "10"), ("12-bit", "12"),
           ("16-bit", "16"), ("32-bit float (RGB)", "32"))
@@ -67,9 +77,11 @@ GUIDES = {
               "Set them where flat areas just become clean in the filtered view; going further treats "
               "image detail as noise.\n\n(Guide text written for the reproduction.)"),
     "tuning": ("Quick Start Guide",
-               "1. Prepare Noise Profile: Auto Profile (a frame with a flat, unclipped area), or drag a square "
-               "over a flat area and Build Profile.\n"
-               "2. Check the profile (Profile Check): sigma should vary smoothly with brightness.\n"
+               "1. Prepare Noise Profile: Auto Profile (a frame with a flat, unclipped area), or drag a rectangle "
+               "over a flat area (at least 128 x 128 recommended, 32 x 32 minimum) and Build Profile.\n"
+               "2. Profile Check (Begin): the viewer shows the Assist Image (repro: the frame through the "
+               "spatial filter at 100%); adjust Noise Level until the noise is gone while details remain. "
+               "Profile > Profile Viewer… shows the noise curve (sigma should vary smoothly with brightness).\n"
                "3. Advanced Mode: Auto Fine-Tune adjusts the per-brightness factors (static port of the genuine "
                "AFT); drag the knots of the equalizer for Manual Fine-Tune, Auto Complete interpolates the "
                "bins you did not touch.\n"
@@ -77,6 +89,24 @@ GUIDES = {
                "to compare with the original; Apply processes the full video.\n\n"
                "(Guide text written for the reproduction.)"),
 }
+
+
+def area_rect(area):
+    """Profile area [y0, x0, size] or [y0, x0, h, w] -> (y0, x0, h, w)."""
+    a = [int(v) for v in area]
+    return (a[0], a[1], a[2], a[3] if len(a) == 4 else a[2])
+
+
+def assist_params():
+    """Backend parameters of the Assist Image (Profile Check, repro definition): spatial filter only,
+    Luminance / Cr / Cb and every band at 100%, the other settings at their defaults."""
+    ui = default_params()
+    ui["t_enable"] = False
+    for c, _ in CHANNELS:
+        ui[f"amt_{c}"] = 100.0
+        for b, _ in BANDS:
+            ui[f"bamt_{c}_{b}"] = 100.0
+    return backend_params(ui)
 
 
 def _tool(text, tip, checkable=False, icon=None, style=None):
@@ -99,7 +129,7 @@ class MainWindow(QMainWindow):
         self.frames = self.info = self.engine = self.src = None
         self.matrix = "bt709"
         self.fmt, self.full_range, self.depth_used = None, False, "8"   # processing format of the frames
-        self.sel_area = None                 # Prepare page: square (y0, x0, size), coded pixels
+        self.sel_area = None                 # Prepare page: rectangle (y0, x0, h, w), coded pixels
         self.preview_sel = None              # Adjust page: preview area (y0, x0, h, w), coded pixels
         self.prof_req = 0
         self.gen = 0
@@ -112,6 +142,12 @@ class MainWindow(QMainWindow):
         self.preset_name, self.preset_clean = "default", default_params()
         self.prof_clean = None
         self.play_start = 0
+        self.view_modes = {0: "YCrCb +", 1: "Normal"}   # viewer mode per page (genuine defaults)
+        self._page = 0
+        self._nl_cache = collections.OrderedDict()
+        self._cur_rgb = None                 # (frame, coded float RGB) of the displayed frame
+        self.pcheck = False                  # Profile Check (Assist Image) running
+        self._pc_cache = collections.OrderedDict()     # (frame, engine, profile) -> Assist Image RGB
         self.setWindowTitle(f"Neat Video v6 — reproduction UI (export using {self.prefs['jobs']} CPU processes)")
         self.resize(1400, 860)
         st = self.style()
@@ -208,8 +244,8 @@ class MainWindow(QMainWindow):
 
         fp, pp = self.filter_page.panel, self.profile_page.panel
         for panel in (fp, pp):
-            panel.icons.bind_undo(self.actions["undo"], self.actions["redo"])
-            panel.linkActivated.connect(self._link)
+            panel.icons.bind_undo(self.actions["undo"], self.actions["redo"], self.state.undo)
+        fp.linkActivated.connect(self._link)
         fp.edited.connect(self.state.set_param)
         fp.editedMany.connect(lambda d: self.state.set_params(d, "Change filter settings"))
         fp.editStarted.connect(self.state.new_edit)
@@ -229,14 +265,14 @@ class MainWindow(QMainWindow):
         pi.open.clicked.connect(lambda: self.load_profile())
         pi.save.clicked.connect(lambda: self.save_profile())
         pi.reset.clicked.connect(self.reset_profile)
-        pi.info.clicked.connect(self.profile_check)
+        pi.info.clicked.connect(self.profile_viewer)
         for k in ("p_assign", "p_reset_default", "p_change_default"):
             pi.default_menu.addAction(self.actions[k])
         fp.set_values(self.state.params)
         pp.autoFineTune.connect(self.auto_fine_tune)
         pp.autoComplete.connect(self.auto_complete)
         pp.resetFineTune.connect(self.reset_fine_tune)
-        pp.profileCheck.connect(self.profile_check)
+        pp.profileCheck.connect(self.set_profile_check)
         pp.editDevice.connect(self.edit_device)
         pp.tuneEdited.connect(self.state.set_tune)
         pp.editStarted.connect(self.state.new_edit)
@@ -248,6 +284,8 @@ class MainWindow(QMainWindow):
         self.tabs.currentChanged.connect(self.on_page)
         self.timeline.frameChanged.connect(self.on_frame)
         self.viewer.areaSelected.connect(self._viewer_area)
+        self.viewer.selectionChanging.connect(self._viewer_changing)
+        self.viewer.menuRequested.connect(self._sel_menu)
         self.viewer.clicked.connect(self._viewer_click)
         self.viewer.viewChanged.connect(self._sync_view_actions)
         self.viewer_bar.info.clicked.connect(self.image_info)
@@ -255,6 +293,14 @@ class MainWindow(QMainWindow):
         self.timer.setSingleShot(True)
         self.timer.setInterval(300)
         self.timer.timeout.connect(self.request_preview)
+        self.sel_timer = QTimer(self)            # Noise Level / Not Uniform while dragging (thinned out)
+        self.sel_timer.setSingleShot(True)
+        self.sel_timer.setInterval(100)
+        self.sel_timer.timeout.connect(self._sync_selection)
+        self.pc_timer = QTimer(self)             # Assist Image after a Noise Level change (thinned out)
+        self.pc_timer.setSingleShot(True)
+        self.pc_timer.setInterval(100)
+        self.pc_timer.timeout.connect(self.request_pcheck)
 
         dp = settings().value("default_preset")
         if dp:
@@ -288,19 +334,24 @@ class MainWindow(QMainWindow):
         self.load_btn = _tool("Load Profile", "Load a noise profile (repro JSON)", icon=QStyle.SP_DirOpenIcon,
                               style=st)
         self.load_btn.clicked.connect(lambda: self.load_profile())
-        self.match_btn = _tool("Auto Match (n/a)", N_A + " (Auto Match picks a ready-made profile)")
-        self.match_btn.setEnabled(False)
         self.generic_btn = _tool("Generic Profile", "repro: no genuine generic profile — loads the Default "
                                  "Profile (Profile > Assign As Default Profile), or resets the profile if none",
                                  icon=QStyle.SP_FileIcon, style=st)
         self.generic_btn.clicked.connect(self.generic_profile)
-        self.check_btn = _tool("Profile Check", "Profile Check: noise graph and profile values (repro dialog)",
+        self.check_btn = _tool("Profile Check", "Profile Check: shows the Assist Image (a visually enhanced, "
+                               "overprocessed preview) to find the optimal Noise Level; click again to finish "
+                               "(repro: spatial filter only, 100% amounts)", checkable=True,
                                icon=QStyle.SP_FileDialogInfoView, style=st)
-        self.check_btn.clicked.connect(self.profile_check)
-        for b in (self.auto_btn, self.load_btn, self.match_btn, self.generic_btn):
+        self.check_btn.setStyleSheet("QToolButton{padding:3px 8px} QToolButton:checked{background:#3d5fd0; "
+                                     "color:white; border:1px solid #2a3f90; border-radius:3px}")   # genuine: blue
+        self.check_btn.toggled.connect(self.set_profile_check)
+        for b in (self.auto_btn, self.generic_btn, self.load_btn):
             h.addWidget(b)
         h.addStretch(1)
         h.addWidget(self.check_btn)
+        self.variants_btn = _tool("Variants", N_A + " (Variants: alternative filter settings)")
+        self.variants_btn.setEnabled(False)
+        h.addWidget(self.variants_btn)
         self._update_profile_button()
         return w
 
@@ -340,20 +391,27 @@ class MainWindow(QMainWindow):
         m.addSeparator()
         m.addAction("&Finish", lambda: self.set_assist(False))
         self.fsc_btn.setMenu(m)
-        for b in (self.area_btn, self.play_btn, self.preview_btn):
+        for b in (self.area_btn, self.preview_btn, self.play_btn):
             h.addWidget(b)
         h.addStretch(1)
         h.addWidget(self.fsc_btn)
+        b = _tool("Variants", N_A + " (Variants: alternative filter settings)")
+        b.setEnabled(False)
+        h.addWidget(b)
         return w
 
     def _update_profile_button(self):
+        """'Auto Profile' without a selection, 'Build Profile' with one (disabled under 32 px, as the
+        genuine greys it out for a 30 x 18 selection)."""
         build = self.sel_area is not None
         what = "Build Profile" if build else "Auto Profile"
         self.auto_btn.setText(what)
         self.auto_menu.clear()
         f = self.build_profile if build else self.auto_profile
-        self.auto_menu.addAction(f"{what} (Current Frame)", lambda: f(False))
         self.auto_menu.addAction(f"{what} (Most Noisy Frame)", lambda: f(True))
+        self.auto_menu.addAction(f"{what} (Current Frame)", lambda: f(False))
+        small = build and min(self.sel_area[2], self.sel_area[3]) < 32
+        self.auto_btn.setEnabled(not small and not self._busy_slots)
         self.auto_btn.setToolTip("Build a device noise profile from the selected area (click: Current Frame)"
                                  if build else "Automatically build a device noise profile using the input image "
                                  "(click: Most Noisy Frame; menu: Current Frame)")
@@ -391,10 +449,17 @@ class MainWindow(QMainWindow):
         self.timeline.set_radius(int(P["t_radius"]) if P["t_enable"] and self.page() == 1 else 0)
 
     def on_page(self, i):
+        if i != 0 and self.pcheck:
+            self.set_profile_check(False)       # Profile Check belongs to the Prepare page
         self._update_radius()
         self.stack.setCurrentIndex(i)
         self.tb_stack.setCurrentIndex(i)
-        self.viewer.square = i == 0
+        if i != self._page:                     # the viewer mode is kept per page (genuine)
+            self.view_modes[self._page] = self.viewer.mode()
+            self._page = i
+        self.viewer.set_mode(self.view_modes[i])
+        self.viewer.set_emphasis(i == 0)        # Enhanced emphasis on the Prepare page only
+        self.viewer.set_select_limits(512 if i == 0 else 1280, i == 0)
         self._sync_selection()
         self.display()
         self.schedule()
@@ -403,8 +468,10 @@ class MainWindow(QMainWindow):
         for k, a in self.actions.items():
             if k.startswith("mode_") and k != "mode_button":
                 a.setChecked(k == f"mode_{self.viewer.mode()}")
-            elif k.startswith("split_") and k[6:] in SPLITS:
-                a.setChecked(k == f"split_{self.viewer.split()}")
+            elif k.startswith("split_"):
+                if k[6:] in SPLITS:
+                    a.setChecked(k == f"split_{self.viewer.split()}")
+                a.setEnabled(self.viewer.mode() != "Normal")    # genuine: no split in Normal
 
     def cycle_split(self, d):
         i = SPLITS.index(self.viewer.split())
@@ -488,6 +555,8 @@ class MainWindow(QMainWindow):
             if not frames:
                 self.say("no decodable video frames")
                 return
+            self.set_profile_check(False)
+            self._pc_cache.clear()
             self.src, self.info, self.frames = path, info, frames
             self.matrix = matrix
             self.fmt, self.depth_used = fmt, depth
@@ -589,12 +658,18 @@ class MainWindow(QMainWindow):
         if self.frames is None:
             return
         t = self.timeline.frame()
-        orig = self.engine.to_rgb(tuple(np.asarray(p, np.float32) for p in self.frames[t]))
+        orig = self.frame_rgb(t)
         crop = self.crop()
         filt = self.filt_cache.get((t, self.gen, crop)) if self.previewing() else None
-        self.viewer.set_images(orig.astype(np.uint8), None if filt is None else filt.astype(np.uint8),
-                               crop if filt is not None else None, (self.info["rotation"] // 90) % 4)
+        self.viewer.set_images(orig, filt, crop if filt is not None else None, (self.info["rotation"] // 90) % 4)
         self.viewer.set_show_filtered(self.previewing())
+
+    def frame_rgb(self, t):
+        """Float RGB (0..255, coded orientation) of frame t, as the viewer shows it (cached for one frame)."""
+        if self._cur_rgb is None or self._cur_rgb[0] != (t, id(self.engine)):
+            rgb = self.engine.to_rgb(tuple(np.asarray(p, np.float32) for p in self.frames[t])).astype(np.float32)
+            self._cur_rgb = ((t, id(self.engine)), rgb)
+        return self._cur_rgb[1]
 
     def request_preview(self):
         if self.frames is None or not self.previewing():
@@ -607,7 +682,7 @@ class MainWindow(QMainWindow):
         if (t, gen, crop) in self.filt_cache:
             self.display()
             return
-        P = self.state.backend()
+        P = self._nlc_params if getattr(self, "_nlc_params", None) else self.state.backend()
         token = self.prof_token
         self.say(f"filtering frame {t}…")
 
@@ -632,6 +707,7 @@ class MainWindow(QMainWindow):
         self.display()
         self._sync_selection()
         self.schedule()
+        self.request_pcheck()
 
     def on_params(self, keys):
         P = self.state.params
@@ -658,6 +734,13 @@ class MainWindow(QMainWindow):
         pp.set_name(None if ps.base is None else f"Noise profile ({fi[0]}x{fi[1]}p)" if fi else "Noise profile",
                     ps.base is not None and self._profile_sig() != self.prof_clean)
         self.check_btn.setVisible(ps.base is not None)
+        pp.check.setEnabled(ps.base is not None)
+        self.actions["p_check"].setEnabled(ps.base is not None)
+        if self.pcheck:
+            if ps.base is None:
+                self.set_profile_check(False)
+            else:
+                self.pc_timer.start()           # new profile / Noise Level: recompute (thinned out)
         self.filter_page.panel.set_band_availability(None if eff is None else eff.get("levels"))
         if eff is None:
             self.prof_lbl.setText("no profile")
@@ -673,49 +756,82 @@ class MainWindow(QMainWindow):
         self.display()
         self.schedule()
 
-    def _sigma(self, f, y, x, h, w):
-        if self.frames is None or not 0 <= f < len(self.frames):
+    def _nl(self, f, rect):
+        """Noise Level (display.noise_level, genuine formula) of the coded rect (y0, x0, h, w) of frame f;
+        None if the rect is under 16 px (the genuine shows no value then) or the frame is unknown."""
+        if self.frames is None or not 0 <= f < len(self.frames) or rect is None or min(rect[2], rect[3]) < 16:
             return None
-        return backend.hh1_sigma(self.frames[f][0][y:y + h, x:x + w])
+        key = (f, tuple(rect), id(self.engine))
+        if key not in self._nl_cache:
+            y, x, h, w = rect
+            self._nl_cache[key] = D.noise_level(self.frame_rgb(f)[y:y + h, x:x + w])
+            while len(self._nl_cache) > 64:
+                self._nl_cache.popitem(last=False)
+        return self._nl_cache[key]
+
+    def _uniformity(self, f, rect):
+        """display.not_uniform of the coded rect of frame f (cached)."""
+        key = ("nu", f, tuple(rect), id(self.engine))
+        if key not in self._nl_cache:
+            y, x, h, w = rect
+            self._nl_cache[key] = D.not_uniform(self.frame_rgb(f)[y:y + h, x:x + w])
+            while len(self._nl_cache) > 64:
+                self._nl_cache.popitem(last=False)
+        return self._nl_cache[key]
 
     def _sync_selection(self):
-        """Selection overlay, its Noise Level label and the Noise Levels values of the panel."""
+        """Selection overlay, its Noise Level / Not Uniform labels and the Noise Levels of the panel."""
         if self.frames is None:
             return
         t = self.timeline.frame()
         base = self.state.profile.base
+        main_rect = None if base is None else area_rect(base["area"])
         main = None
         if base is not None:
-            y, x, s = base["area"][:3]
-            main = self._sigma(int(base.get("ui_frame", t)), y, x, s, s)
+            main = self._nl(int(base.get("ui_frame", t)), main_rect)
         sel = None
         if self.page() == 0:
-            rect = None if self.sel_area is None else (self.sel_area[0], self.sel_area[1], self.sel_area[2],
-                                                        self.sel_area[2])
-            label = ""
+            rect = self.sel_area
+            label, warn = "", []
             if rect is not None:
-                sel = self._sigma(t, *rect)
-                tune = self.state.profile.tune_value("all")
-                label = f"Noise Level: {sel:.1f} ({(tune - 1) * 100:+.0f}%)" if sel is not None else ""
-            self.viewer.set_selection(rect, "profile", label)
-            self.viewer.setToolTip("Noise Level label (repro): robust luma noise sigma of the selection, "
-                                   "median(|HH1|)/0.6745, and the profile's Overall Noise Level")
-            self.viewer.set_profile_region(None if base is None else (base["area"][0], base["area"][1],
-                                                                      base["area"][2], base["area"][2]))
+                sel = self._nl(t, rect)
+                label = "" if sel is None else f"Noise Level: {sel:.1f}"
+                if sel is not None and main:          # genuine " (%+d%%)": vs the Main Sample, toward zero
+                    label += f" ({int((sel / main - 1.0) * 100.0):+d}%)"
+                if min(rect[2], rect[3]) >= 16:
+                    bad, clip = self._uniformity(t, rect)
+                    warn = ([f"Not Uniform: {', '.join(bad)}"] if bad else []) + \
+                        ([f"Clipping: {', '.join(clip)}"] if clip else [])
+            self.viewer.set_selection(rect, "profile", label, warn)
+            self.viewer.setToolTip("Drag a rectangle over a uniform area (each side up to 512 px), drag inside "
+                                   "it to move it, click to remove it. Noise Level = genuine measure of the "
+                                   "selection's R, G, B (five levels)")
+            same_frame = base is not None and int(base.get("ui_frame", -1)) == t
+            self.viewer.set_main_sample(main_rect if same_frame else None)
         else:
             rect = self.preview_sel
             self.viewer.set_selection(rect, "preview")
             self.viewer.setToolTip("Hold the left mouse button to see the original frame; drag to select "
                                    "the preview area")
-            self.viewer.set_profile_region(None)
+            self.viewer.set_main_sample(None)
         self.viewer_bar.set_selection(rect)
         self.profile_page.panel.set_levels(main, sel)
 
     def _viewer_area(self, y, x, h, w):
         if self.page() == 0:
-            self.on_area(y, x, min(h, w))
+            self.on_area(y, x, h, w)
         else:
             self.set_preview_area(y, x, h, w)
+
+    def _viewer_changing(self, y, x, h, w):
+        """During a drag: the selection's size in the bar at once, its Noise Level at most every 100 ms."""
+        if self.page() == 0:
+            self.sel_area = (y, x, h, w)
+            self.viewer_bar.set_selection(self.sel_area)
+            if not self.sel_timer.isActive():
+                self.sel_timer.start()
+        else:
+            self.viewer_bar.set_selection((y, x, h, w))
 
     def _viewer_click(self):
         if self.page() == 0 and self.sel_area is not None:
@@ -723,16 +839,29 @@ class MainWindow(QMainWindow):
             self._update_profile_button()
             self._sync_selection()
 
-    def on_area(self, y, x, s):
-        self.sel_area = (y, x, s)
+    def _sel_menu(self, pos):
+        """The triangle at the selection's corner: Build Profile (Most Noisy Frame) / (Current Frame)."""
+        if self.page() != 0 or self.sel_area is None:
+            return None
+        m = QMenu(self)
+        m.setAttribute(Qt.WA_DeleteOnClose)
+        m.addAction("Build Profile (Most Noisy Frame)", lambda: self.build_profile(True))
+        m.addAction("Build Profile (Current Frame)", lambda: self.build_profile(False))
+        m.popup(pos)
+        return m
+
+    def on_area(self, y, x, h, w=None):
+        """Prepare page selection: rectangle (y0, x0, h, w); on_area(y, x, size) = a square."""
+        self.sel_area = (int(y), int(x), int(h), int(h if w is None else w))
         self._update_profile_button()
-        self.profile_page.panel.set_selection(self.sel_area)
         self._sync_selection()
 
     def set_preview_area(self, y, x, h, w):
-        """Preview area on the Adjust page (even coordinates, at least 64 px, inside the frame)."""
+        """Preview area on the Adjust page (genuine sides 47..1280; here even coordinates for the 4:2:0
+        crop, so 48..1280), inside the frame."""
         H, W = self.frames[0][0].shape
-        h, w = max(64, int(h)) // 2 * 2, max(64, int(w)) // 2 * 2
+        h = min(max(48, int(h)), 1280) // 2 * 2
+        w = min(max(48, int(w)), 1280) // 2 * 2
         h, w = min(h, H // 2 * 2), min(w, W // 2 * 2)
         y, x = min(max(0, int(y)), H - h) // 2 * 2, min(max(0, int(x)), W - w) // 2 * 2
         self.preview_sel = (y, x, h, w)
@@ -777,18 +906,78 @@ class MainWindow(QMainWindow):
             a.blockSignals(False)
 
     def noise_level_check(self, on):
-        """Genuine: Begin → shows the noise-reduced frame in the preview (mask mode).
+        """Genuine: Begin → shows the noise-reduced frame (spatial only, all bands 100%).
         The user adjusts Noise Level while watching the result in real time."""
         on = bool(on)
         if on:
-            # process the current frame and show the filtered result
-            self.say("Noise Level Check: adjusting Noise Level updates the preview in real time")
+            from nv_aft_v5 import assist_params
+            self._nlc_params = assist_params(dict(self.state.params), "profile_check")
+            self.say("Noise Level Check: spatial only, all bands 100% — "
+                     "adjust Noise Level while watching the result")
             self.invalidate()
             self.schedule()
         else:
+            self._nlc_params = None
             self.say("Noise Level Check: off")
-        # reuse the assist pipeline for the preview update on every slider change
         self._nlc_active = on
+
+    # ---------------- Profile Check ----------------
+    def set_profile_check(self, on):
+        """Begin / Finish of Profile Check from the panel, the toolbar or the menu (one state, three
+        displays). Needs a profile; switches to the Prepare page."""
+        on = bool(on) and self.state.profile.base is not None and self.frames is not None
+        was, self.pcheck = self.pcheck, on
+        if on and self.page() != 0:
+            self.tabs.setCurrentIndex(0)
+        self.profile_page.panel.set_check_active(on)
+        for w in (self.check_btn, self.actions["p_check"]):
+            w.blockSignals(True)
+            w.setChecked(on)
+            w.blockSignals(False)
+        self.viewer.set_pcheck(on)
+        if on:
+            self.say("Profile Check: Assist Image (repro: spatial filter only, 100% amounts)")
+            self.request_pcheck()
+        elif was:
+            self.pc_timer.stop()
+            self.runner.cancel("pcheck")
+            self.say("Profile Check: finished")
+
+    def _pc_key(self):
+        return (self.timeline.frame(), id(self.engine), self._profile_sig())
+
+    def request_pcheck(self):
+        """Assist Image of the current frame (cached; computed in the 'pcheck' worker slot, a newer
+        request replaces a queued one; the viewer keeps the previous image meanwhile)."""
+        if not self.pcheck or self.frames is None:
+            return
+        prof = self.state.effective_profile()
+        if prof is None:
+            return
+        key = self._pc_key()
+        if key in self._pc_cache:
+            self._pc_cache.move_to_end(key)
+            self.viewer.set_pcheck(True, self._pc_cache[key])
+            return
+        t, engine, P = key[0], self.engine, assist_params()
+        self.say(f"Profile Check: computing the Assist Image of frame {t}…")
+
+        def job(task):
+            return engine.assist(t, prof, P)
+
+        def done(tag, rgb):
+            self._pc_cache[tag] = rgb
+            while len(self._pc_cache) > 4:
+                self._pc_cache.popitem(last=False)
+            if self.pcheck and tag == self._pc_key():
+                self.viewer.set_pcheck(True, rgb)
+                self.say("Profile Check: Assist Image (repro: spatial filter only, 100% amounts)")
+
+        self.runner.submit("pcheck", key, job, done, lambda tag, msg: self._failed("pcheck", msg))
+
+    def _profile_mode(self):
+        m = str(self.prefs.get("profile_mode", "auto"))
+        return m if m in PROFILE_MODES else "auto"
 
     def _update_performance(self):
         P = self.state.params
@@ -864,7 +1053,7 @@ class MainWindow(QMainWindow):
         self.prof_req += 1
         req = self.prof_req
         frames, full_range, matrix = self.frames, self.full_range, self.matrix
-        mode = self.profile_page.panel.mode.currentText()
+        mode = self._profile_mode()
         cur = self.timeline.frame()
         self._busy("profile", True)
         self.say(f"{text}…")
@@ -907,11 +1096,33 @@ class MainWindow(QMainWindow):
         self._profile_job(noisy, None, "Auto Profile" + (" (Most Noisy Frame)" if noisy else " (Current Frame)"))
 
     def build_profile(self, noisy=False):
+        """Build Profile from the selection with the genuine size rules (FUN_000cfba0): under 32 px an
+        error, 32..127 px a confirmation (Use the small area / Cancel), otherwise at once.
+        Returns the message box shown, if any."""
         if self.sel_area is None:
-            self.say("Build Profile: drag a square over a flat area in the preview first")
-            return
-        self._profile_job(noisy, self.sel_area,
-                          "Build Profile" + (" (Most Noisy Frame)" if noisy else " (Current Frame)"))
+            self.say("Build Profile: drag a rectangle over a flat area in the preview first")
+            return None
+        area = tuple(self.sel_area)
+        text = "Build Profile" + (" (Most Noisy Frame)" if noisy else " (Current Frame)")
+        side = min(area[2], area[3])
+        if side < 32:
+            box = QMessageBox(QMessageBox.Warning, "Build Profile", "Too small area for building a noise profile; "
+                              "it should be at least 32x32 pixels.", QMessageBox.Ok, self)
+            box.setAttribute(Qt.WA_DeleteOnClose)
+            box.open()
+            return box
+        if side < 128:
+            box = QMessageBox(QMessageBox.Question, "Build Profile",
+                              f"The selected area ({area[3]}x{area[2]}) is small; an area of at least 128x128 "
+                              "pixels is recommended for building a noise profile.", parent=self)
+            use = box.addButton("Use the small area", QMessageBox.AcceptRole)
+            box.addButton("Cancel", QMessageBox.RejectRole)
+            box.setAttribute(Qt.WA_DeleteOnClose)
+            box.buttonClicked.connect(lambda b: self._profile_job(noisy, area, text) if b is use else None)
+            box.open()
+            return box
+        self._profile_job(noisy, area, text)
+        return None
 
     def auto_fine_tune(self):
         base = self.state.profile.base
@@ -952,8 +1163,8 @@ class MainWindow(QMainWindow):
         (self._busy_slots.add if on else self._busy_slots.discard)(slot)
         busy = bool(self._busy_slots)
         self.profile_page.panel.set_busy(busy)
-        for w in (self.auto_btn, self.actions["p_aft"]):
-            w.setEnabled(not busy)
+        self.actions["p_aft"].setEnabled(not busy)
+        self._update_profile_button()
 
     def auto_complete(self):
         new = self.state.profile.clone()
@@ -1048,15 +1259,47 @@ class MainWindow(QMainWindow):
             settings().setValue("default_profile", json.dumps(ps.to_json()))
             self.say(f"default profile: {path}")
 
-    def profile_check(self):
+    def profile_viewer(self):
+        """Profile > Profile Viewer… (genuine: "Profile viewer: details of current noise profile"): the
+        repro profile details — Profile mode (build_profile_v5 mode used by Auto / Build Profile, kept
+        in the preferences), sample area, FindFlatArea status, band ratios, the sigma graph and values."""
         eff = self.state.effective_profile()
+        base = self.state.profile.base
         dlg = QDialog(self)
-        dlg.setWindowTitle("Profile Check")
+        dlg.setWindowTitle("Profile Viewer")
         dlg.setAttribute(Qt.WA_DeleteOnClose)
         v = QVBoxLayout(dlg)
+        f = QFormLayout()
+        dlg.mode = QComboBox()
+        dlg.mode.addItems(PROFILE_MODES)
+        dlg.mode.setCurrentText(self._profile_mode())
+        dlg.mode.setToolTip("build_profile_v5 mode of Auto / Build Profile (repro): auto = single-frame curve + "
+                            "band shape from static pixels (default), spatial = genuine-style single frame, "
+                            "temporal = frame differences")
+
+        def set_mode(m):
+            self.prefs["profile_mode"] = m
+            settings().setValue("prefs/profile_mode", m)
+
+        dlg.mode.currentTextChanged.connect(set_mode)
+        f.addRow("Profile mode (repro):", dlg.mode)
+        if base is None:
+            area, match, ratios = "(no profile)", "—", "—"
+        else:
+            y, x, h, w = area_rect(base["area"])
+            area = f"{w}x{h} at (x {x}, y {y}) · frame {base.get('ui_frame', '?')}"
+            st = base.get("flat_status")
+            match = "manual area" if st is None else nv.FLAT_STATUS.get(st, str(st))
+            if base.get("aft_applied"):
+                match += " · AFT applied"
+            ratios = " ".join(f"{r:.2f}" for r in base["band_ratio"]["Y"])
+        f.addRow("Sample area:", QLabel(area))
+        f.addRow("Match:", QLabel(match))
+        f.addRow("Band ratios (Y, repro):", QLabel(ratios))
+        v.addLayout(f)
         g = NoiseGraph()
         g.setMinimumSize(520, 260)
-        g.set_profile(eff, self.state.profile.base)
+        g.set_profile(eff, base)
         v.addWidget(g)
         t = QTextEdit()
         t.setReadOnly(True)
@@ -1065,7 +1308,7 @@ class MainWindow(QMainWindow):
         else:
             st = eff.get("flat_status")
             lines = [f"device: {self.state.profile.device}", f"mode: {eff['mode']}  frame: {eff.get('ui_frame')}  "
-                     f"area (y, x, size): {eff['area']}  [{'manual' if st is None else nv.FLAT_STATUS.get(st, st)}]",
+                     f"area ({'y, x, h, w' if len(eff['area']) == 4 else 'y, x, size'}): {eff['area']}  [{'manual' if st is None else nv.FLAT_STATUS.get(st, st)}]",
                      f"static pixels: {eff.get('static_fraction', 0):.1%}  AFT: {bool(eff.get('aft_applied'))}",
                      "σ total @area: " + ", ".join(f"{k}={v:.3f}" for k, v in eff["sigma"].items()),
                      "profile Noise Level: " + ", ".join(f"{k} {(self.state.profile.tune_value(k) - 1) * 100:+.0f}%"
@@ -1078,7 +1321,7 @@ class MainWindow(QMainWindow):
             lines.append("Overall Profile Quality: not computed (genuine measure not decoded)")
             t.setPlainText("\n".join(lines))
         v.addWidget(t)
-        dlg.resize(640, 560)
+        dlg.resize(640, 620)
         dlg.show()
         return dlg
 

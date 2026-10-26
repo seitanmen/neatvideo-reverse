@@ -65,7 +65,7 @@ def apply_aft(prof, rgb, mode=0, area=None, matrix="bt709", band=0):
     prof: build_profile_v5() の戻り値 (dict)
     rgb:  (H, W, 3) float32 0..255
     mode: AFT モード (0=通常)
-    area: (y0, x0, size) — None なら prof["area"] を使う
+    area: (y0, x0, size) か長方形 (y0, x0, h, w) — None なら prof["area"] を使う
     band: 重みの計算に使う帯域 (0 = 最細帯域、既定)
 
     戻り値: AFT 適用後の prof (dict、curve が更新される)
@@ -74,11 +74,10 @@ def apply_aft(prof, rgb, mode=0, area=None, matrix="bt709", band=0):
     import nv_aft
 
     rgb = np.asarray(rgb, F32)
-    if area is None:
-        ay, ax, asz = prof["area"][:3]
-    else:
-        ay, ax, asz = area[:3]
-    area4 = (ax, ay, asz, asz)
+    a = prof["area"] if area is None else area
+    ay, ax, ah = a[:3]
+    aw = a[3] if len(a) == 4 else ah           # (y0, x0, size) or a rectangle (y0, x0, h, w)
+    area4 = (ax, ay, aw, ah)                   # nv_profile.build_profile: (x, y, w, h)
 
     # 1. BuildNoiseModel の生プロファイルを生成 (RGB 面のモデル q99 を含む)
     result = npr.build_profile(rgb, 1, area4)
@@ -131,3 +130,31 @@ def apply_aft(prof, rgb, mode=0, area=None, matrix="bt709", band=0):
     prof["aft_color_weights"] = cw
     prof["aft_band"] = band
     return prof
+
+
+def assist_params(P, mode="profile_check"):
+    """Profile Check / Noise Level Check 用のフィルタパラメータを返す。
+
+    本家の Assist Image は空間フィルタのみを全帯域 100% で掛けた結果を表示する。
+    これにより「空間フィルタが何を取り除くか」が可視化され、
+    ユーザーは Noise Level が適切かを判断できる。
+
+    P: 通常の v5_params() の戻り値
+    戻り値: Assist 用に変更したパラメータ dict
+    """
+    import copy
+    A = copy.deepcopy(P)
+    if mode == "profile_check":
+        # 空間フィルタのみ (時間フィルタはオフ)
+        A["temporal"] = 0.0
+        # 全帯域 100% (最大のノイズ除去)
+        A["band_amounts"] = {b: 1.0 for b in A["band_amounts"]}
+        # Noise Level はそのまま (プロファイルの推定値をそのまま使う)
+        # Mix なし
+        A["mix"] = 0.0
+    elif mode == "noise_level_check":
+        # 時間フィルタは有効のまま
+        # 空間フィルタのみ全帯域 100%
+        A["band_amounts"] = {b: 1.0 for b in A["band_amounts"]}
+        A["mix"] = 0.0
+    return A
