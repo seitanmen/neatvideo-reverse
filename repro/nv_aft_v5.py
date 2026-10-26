@@ -7,6 +7,7 @@
     f_c(lum) = √(Σ_j c_cj · f_j(lum))   (f_j = AFT の RGB 面乗数)
 """
 import os
+import struct
 import sys
 
 import numpy as np
@@ -129,6 +130,21 @@ def apply_aft(prof, rgb, mode=0, area=None, matrix="bt709", band=0):
     prof["aft_face_curves"] = [fc.tolist() for fc in face_curves]
     prof["aft_color_weights"] = cw
     prof["aft_band"] = band
+    # 曲線ビンの旗 (Quality 表示が本家の曲線バイトを再現するため。フィルタ計算には使わない。
+    # 2026-10-26: 本家 AFT は未測定ビンにだけ +0x1c マーカーを立てる (測定ビンは 0 のまま)。
+    # 全ビンに立てると Quality/Completeness が高く出る。旗は RGB 面 (R, G, B) 順)
+    _markers, _clips, _gt3s = [], [], []
+    for _j in range(3):
+        _mk, _cl, _gt = [], [], []
+        for _k in range(9):
+            _o = 0xbf44 + 0x120 * _j + 0x20 * _k
+            _mk.append(struct.unpack_from("<I", aft_bytes, _o + 0x1c)[0] != 0)
+            _cl.append(aft_bytes[_o + 0x1d] != 0)
+            _gt.append(aft_bytes[_o + 0x1e] != 0)
+        _markers.append(_mk)
+        _clips.append(_cl)
+        _gt3s.append(_gt)
+    prof["aft_bin_flags"] = {"marker": _markers, "clip": _clips, "gt3": _gt3s}
     return prof
 
 

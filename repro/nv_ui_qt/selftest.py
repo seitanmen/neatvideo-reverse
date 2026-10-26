@@ -598,24 +598,50 @@ def quality_checks(app, win, wait, idle, outdir):
     pct_aft = profile_quality(st.profile, win.frames, win.full_range, win.matrix)
     check("Quality: label matches recomputation",
           win.profile_page.panel.quality.text() == f"{pct_aft}%", f"{pct_aft}")
+    # AFT stores per-bin flags; markers only where the AFT run left them (measured bins
+    # keep 0). All-marked happens when nothing was measured (small/flat area); partial marking
+    # otherwise. The genuine fit (23/27 + exact +1/81 series) is in QUALITY.md 8.4-8.5.
+    flags = st.profile.base.get("aft_bin_flags")
+    n_marked = sum(1 for ch in flags["marker"] for v in ch) if flags else -1
+    check("Quality: AFT bin flags stored (3x9 bools each)",
+          flags is not None and len(flags["marker"]) == 3
+          and all(len(ch) == 9 for ch in flags["marker"])
+          and all(isinstance(v, bool) for ch in flags["marker"] for v in ch)
+          and 0 <= n_marked <= 27,
+          f"marked {n_marked}/27")
+    from nv_ui_qt.quality import profile_completeness, profile_numbers
+    comp_aft = profile_completeness(st.profile, win.frames, win.full_range, win.matrix)
+    check("Completeness: panel shows g x 100 for the AFT profile", wait(
+        app, lambda: idle() and win.profile_page.panel.completeness.text() not in ("", "n/a")),
+        win.profile_page.panel.completeness.text())
+    check("Completeness: label matches recomputation",
+          win.profile_page.panel.completeness.text() == f"{comp_aft}%", f"{comp_aft}")
+    qp, cp = profile_numbers(st.profile, win.frames, win.full_range, win.matrix)
+    check("Completeness: profile_numbers agrees with both labels", qp == pct_aft and cp == comp_aft)
     fresh_ps = copy.deepcopy(st.profile)
     fresh_ps.base = copy.deepcopy(st.profile.base)
     fresh_ps.base.pop("aft_applied", None)
     fresh_ps.base.pop("ui_pre_aft", None)
     pct_fresh = profile_quality(fresh_ps, win.frames, win.full_range, win.matrix)
-    check("Quality: AFT raises the value (s11 0.506 -> 1.0)", pct_fresh is not None and
+    comp_fresh = profile_completeness(fresh_ps, win.frames, win.full_range, win.matrix)
+    check("Quality: AFT raises the value (fresh s11 ~0.506 -> marked bins)", pct_fresh is not None and
           pct_fresh < pct_aft, f"fresh {pct_fresh} < aft {pct_aft}")
+    check("Completeness: fresh profile is 0-1% (unmarked bins, LZMA flag path at most)",
+          comp_fresh is not None and comp_fresh in (0, 1), f"{comp_fresh}")
     none_ps = copy.deepcopy(st.profile)
     none_ps.base = None
     check("Quality: n/a without a profile", profile_quality(none_ps, win.frames, win.full_range,
                                                             win.matrix) is None
-          and profile_quality(st.profile, None, win.full_range, win.matrix) is None)
-    # the Profile Viewer line
+          and profile_quality(st.profile, None, win.full_range, win.matrix) is None
+          and profile_completeness(none_ps, win.frames, win.full_range, win.matrix) is None)
+    # the Profile Viewer lines
     dlg = win.profile_viewer()
     txt = dlg.findChildren(__import__("PySide6.QtWidgets", fromlist=["QTextEdit"]).QTextEdit)[0].toPlainText()
     dlg.close()
     check("Quality: Profile Viewer shows the value",
-          f"Overall Profile Quality: {pct_aft}%" in txt, txt.splitlines()[-1])
+          f"Overall Profile Quality: {pct_aft}%" in txt, txt.splitlines()[-2:])
+    check("Completeness: Profile Viewer shows the value",
+          f"Completeness: {comp_aft}%" in txt, txt.splitlines()[-2:])
 
 
 def main(video, outdir):

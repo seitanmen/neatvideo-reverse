@@ -21,13 +21,26 @@ g sweeps the 27 curve bins (3 channels x 9) in (bin, channel) order, float32 acc
     elif next bin's byte 0 != 0          -> +1/81   (ch2 bin8 reads 0xc2a4 = LZMA success flag)
     else                                 -> +0
 and returns max(sum, 0).  A fresh profile marks nothing, so g = 1/81 (only the LZMA flag path);
-after AFT every bin carries the marker, so g = float32 27 * (1/27) accumulated = 0.999999762.
+after AFT the UNMEASURED bins carry the marker (measured bins keep marker 0:
+curve_post zeroes it, curve_fill write() sets it only on filled-in bins).
 
-The repro maps its own state onto the genuine curve bytes (assumption, see QUALITY.md 5: manual
-Fine-Tune writes level words without markers - not verifiable without running the genuine):
-    bin level word = factor[bin] * tune_all * tune_channel   (all 1.0 when untouched)
-    markers: all set when base["aft_applied"], else none
+Completeness = g * 100, shown as qRound(g * 100) + "%" next to Quality
+(RS 0xe2e20 / 0xe437c for the panels, 0x118ef8 / 0x119038 for Profile Viewer).
+
+The repro maps its own state onto the genuine curve bytes:
+    bin level word = factor[bin] * tune_all * tune_channel   (1.0 exactly when untouched)
+    markers / clip / >3.0 flags after AFT: stored per bin by nv_aft_v5.apply_aft
+        (prof["aft_bin_flags"], read from the AFT port's own bytes; older saved
+        profiles without it fall back to all-marked)
     fresh filled bin (+0x18 word = 1): byte +0x1d = clip flag of its plane
+Manual Fine-Tune writes level words without markers - confirmed by observation
+(2026-10-26, genuine 6.1.3 Pro Full frame: Reset -> Quality 35% / Completeness 0%,
+then 4 red-bin edits -> 36/36/37/37% and 1/2/4/5%: exactly +1/81 per edit;
++1/27 per edit would jump to Completeness 4% / Quality 37% on the first edit).
+Known gap: genuine Reset gives g = 0, while a fresh build gives g = 1/81
+(scales are 1.0 everywhere, so the +1/81 must vanish via 0xc2a4 = 0 after Reset;
+mechanism TBD - fresh-Build observation or static read of the Reset handler).
+Repro treats Reset like fresh (1/81): at most a 0.5-point boundary effect.
 Static analysis and verification: sandbox/omo/coord/verify_quality/static/QUALITY.md;
 quality_draft.genuine_g there is the same decode - keep the two in sync.
 """
@@ -157,6 +170,9 @@ def _curve_blob(ps, planes, full_range, matrix):
     means = [nb.mean_exact(p) for p in (R, G, B)]
     filled = [npv.curve_bin(m) for m in means]
     aft = bool(base.get("aft_applied"))
+    stored = base.get("aft_bin_flags") if aft else None    # per-bin flags from the AFT run
+    if stored is None and aft:
+        stored = {"marker": [[True] * 9] * 3}              # profiles saved before flags existed
     tune = ps.tune or {}
     chans = ("Y", "Cr", "Cb")                            # repro channel order (the genuine: R, G, B)
     tk = [float(tune.get("all", 1.0)) * float(tune.get(c, 1.0)) for c in chans]
@@ -166,8 +182,17 @@ def _curve_blob(ps, planes, full_range, matrix):
             lvl = F32(F32(ps.factors[c][k]) * F32(tk[c]))    # 1.0 exactly when untouched
             f32[e // 4:e // 4 + 6] = F32(1.0)
             f32[e // 4] = lvl                                # word 0 = the bin's level
-            if aft:
-                buf[e + 0x1c] = 1                            # AFT marks every bin (+1/27)
+            if stored is not None:
+                # the AFT run's own flags: markers only on unmeasured bins, clip kept
+                # where the run left it, >3.0 where its level exceeded it
+                if stored["marker"][c][k]:
+                    buf[e + 0x1c] = 1
+                if stored.get("clip", [[False] * 9] * 3)[c][k]:
+                    buf[e + 0x1d] = 1
+                if stored.get("gt3", [[False] * 9] * 3)[c][k]:
+                    buf[e + 0x1e] = 1
+            elif lvl > F32(3.0):
+                buf[e + 0x1e] = 1                            # manual edit above 3.0 (genuine flag)
         e = 0xbf44 + 0x120 * c + 0x20 * filled[c]
         if not aft:
             w32[(e + 0x18) // 4] = 1                         # the fresh profile's valid word
@@ -175,12 +200,27 @@ def _curve_blob(ps, planes, full_range, matrix):
     return buf
 
 
+def profile_numbers(ps, frames, full_range, matrix):
+    """(Quality %, Completeness %) - the two genuine percents (qRound(q*100), qRound(g*100)),
+    or (None, None) without a profile or without the frames in memory."""
+    if ps is None or ps.base is None or frames is None:
+        return None, None
+    blob = _curve_blob(ps, frames, full_range, matrix)
+    q = quality_from_blob(blob)
+    if q is None:
+        return None, None
+    return (int(np.floor(float(q) * 100.0 + 0.5)),
+            int(np.floor(float(genuine_g(blob)) * 100.0 + 0.5)))
+
+
 def profile_quality(ps, frames, full_range, matrix):
     """Overall Profile Quality in percent (int, qRound(q*100) as the panels compute it), or None.
     ps: ProfileState; frames: the in-memory frame list (None -> not computable)."""
-    if ps is None or ps.base is None or frames is None:
-        return None
-    q = quality_from_blob(_curve_blob(ps, frames, full_range, matrix))
-    if q is None:
-        return None
-    return int(np.floor(float(q) * 100.0 + 0.5))
+    qp, _ = profile_numbers(ps, frames, full_range, matrix)
+    return qp
+
+
+def profile_completeness(ps, frames, full_range, matrix):
+    """Completeness in percent (int, qRound(g*100) as the panels compute it), or None."""
+    _, cp = profile_numbers(ps, frames, full_range, matrix)
+    return cp

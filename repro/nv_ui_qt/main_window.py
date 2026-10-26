@@ -748,15 +748,18 @@ class MainWindow(QMainWindow):
                 self.nlc_timer.start()          # temporal settings: new mask (same key = from the cache)
 
     def _update_quality(self):
-        """Overall Profile Quality (quality.py = the genuine measure, decoded 2026-10-26) whenever
-        the profile, its factors / tune or the opened clip change.  Runs in a worker (the area's
-        model levels take a moment); n/a without a profile or without the frames in memory."""
+        """Overall Profile Quality + Completeness (quality.py = the genuine measures,
+        decoded 2026-10-26) whenever the profile, its factors / tune or the opened clip
+        change.  Runs in a worker (the area's model levels take a moment); n/a without
+        a profile or without the frames in memory."""
         ps = self.state.profile
         if ps.base is None or self.frames is None:
             self._quality_req = getattr(self, "_quality_req", 0) + 1
             self._quality_key = None          # a later identical profile must recompute again
             self._quality_pct = None
+            self._completeness_pct = None
             self.profile_page.panel.set_quality(None)
+            self.profile_page.panel.set_completeness(None)
             return
         key = (self._profile_sig(), self.matrix, bool(self.full_range), len(self.frames),
                getattr(self, "src", None))
@@ -768,13 +771,16 @@ class MainWindow(QMainWindow):
 
         def job(task):
             import nv_ui_qt.quality as qlt
-            return qlt.profile_quality(ps, frames, fr, mat)
+            return qlt.profile_numbers(ps, frames, fr, mat)
 
-        def done(tag, pct):
+        def done(tag, pair):
             if tag != self._quality_req:
                 return
-            self._quality_pct = pct
-            self.profile_page.panel.set_quality(pct)
+            qp, cp = pair
+            self._quality_pct = qp
+            self._completeness_pct = cp
+            self.profile_page.panel.set_quality(qp)
+            self.profile_page.panel.set_completeness(cp)
 
         self.runner.submit("quality", req, job, done, self._failed)
 
@@ -1452,6 +1458,9 @@ class MainWindow(QMainWindow):
             lines.append("Overall Profile Quality: " +
                          ("n/a" if self._quality_pct is None else f"{self._quality_pct}%") +
                          " (genuine measure, quality.py)")
+            lines.append("Completeness: " +
+                         ("n/a" if getattr(self, "_completeness_pct", None) is None
+                          else f"{self._completeness_pct}%") + " (genuine measure, quality.py)")
             t.setPlainText("\n".join(lines))
         v.addWidget(t)
         dlg.resize(640, 620)

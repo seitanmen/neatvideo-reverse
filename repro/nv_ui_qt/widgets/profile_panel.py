@@ -176,11 +176,19 @@ class ProfilePanel(QWidget):
         left.addWidget(QLabel("Quality"), 0, 0)
         self.quality = QLabel("n/a")
         self.quality.setAlignment(Qt.AlignCenter)
-        self.quality.setFixedWidth(58)
+        self.quality.setFixedWidth(52)
         self.quality.setStyleSheet("QLabel{" + DARK_BOX + "}")
         self.quality.setToolTip("Overall Profile Quality: curve completeness x sample uniformity x "
                                 "area size x clipping penalty (genuine measure, decoded 2026-10-26)")
         left.addWidget(self.quality, 0, 1, Qt.AlignRight)
+        left.addWidget(QLabel("Completeness"), 1, 0)
+        self.completeness = QLabel("n/a")
+        self.completeness.setAlignment(Qt.AlignCenter)
+        self.completeness.setFixedWidth(52)
+        self.completeness.setStyleSheet("QLabel{" + DARK_BOX + "}")
+        self.completeness.setToolTip("Completeness: the luminance-curve term g x 100 "
+                                      "(genuine measure, decoded 2026-10-26)")
+        left.addWidget(self.completeness, 1, 1, Qt.AlignRight)
         lt = QHBoxLayout()
         self.levels_title = QLabel("<b>Noise Levels</b>")
         lt.addWidget(self.levels_title)
@@ -188,7 +196,7 @@ class ProfilePanel(QWidget):
         self.levels_line.setFrameShape(QFrame.HLine)
         self.levels_line.setFrameShadow(QFrame.Sunken)
         lt.addWidget(self.levels_line, 1)
-        left.addLayout(lt, 1, 0, 1, 2)
+        left.addLayout(lt, 2, 0, 1, 2)
         self.l_main = QLabel("Main Sample")
         self.main_val = QLabel("-")
         self.l_sel = QLabel("Selection")
@@ -197,11 +205,11 @@ class ProfilePanel(QWidget):
             w.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
             w.setToolTip("Noise Level (genuine measure FUN_009b01d4): sqrt of the sum over five levels and "
                          "R, G, B of the squared mean local RMS of the area (Main Sample = the profile's area)")
-        left.addWidget(self.l_main, 2, 0)
-        left.addWidget(self.main_val, 2, 1)
-        left.addWidget(self.l_sel, 3, 0)
-        left.addWidget(self.sel_val, 3, 1)
-        left.setRowStretch(4, 1)
+        left.addWidget(self.l_main, 3, 0)
+        left.addWidget(self.main_val, 3, 1)
+        left.addWidget(self.l_sel, 4, 0)
+        left.addWidget(self.sel_val, 4, 1)
+        left.setRowStretch(5, 1)
         sh.addLayout(left, 1)
         sep = QFrame()
         sep.setFrameShape(QFrame.VLine)
@@ -362,3 +370,7 @@ class ProfilePanel(QWidget):
     def set_quality(self, pct):
         """Overall Profile Quality (genuine measure, quality.py): percent or None = not computed."""
         self.quality.setText("n/a" if pct is None else f"{pct}%")
+
+    def set_completeness(self, pct):
+        """Completeness (genuine measure, quality.py: g x 100): percent or None = not computed."""
+        self.completeness.setText("n/a" if pct is None else f"{pct}%")
