@@ -2,100 +2,88 @@
 
 ## 前提
 
-- Resolve のタイムラインを **1920×1080** に変更済み (ユーザー対応済み)
-- Neat Video v6 Pro (ライセンス済み) が Resolve で使用可能
-- 再現 UI: `repro/nv_ui_qt/`
-- 逆アセンブル: `/tmp/nv_expand/disasm_full.txt` (3,287,476 行、OFX Demo v6.1.4 の arm64 スライス)
-- RS バイナリ逆アセンブル: `/tmp/nv6rs_disasm/disasm_full.txt` (3,705,842 行、v6.1.3 RS の arm64 スライス)
+- Resolve のタイムライン: **1920×1080** (変更済み)
+- 逆アセンブル: `/tmp/nv_expand/disasm_full.txt` (OFX Demo) + `/tmp/nv6rs_disasm/disasm_full.txt` (RS)
 - 処理コア (`nvfilter.py`・`nv_aft_v5.py`・`nv_depth.py`) は**変更しない**
 
-## Phase 1: 本家の画面を観測する (Resolve を操作)
+## ⚠️ 保護区画の取り扱い
 
-Resolve を起動して本家の Neat Video UI を開き、以下を観察・記録する。
-画面のキャプチャには `screencapture` コマンドまたは cliclick を使う。
+以下のアドレス範囲は**読まないこと** (難読化・トークン表を含む):
 
-### 観察手順
+```
+禁止アドレス (逆アセンブル検索の対象から除外すること):
+  0x991000-0x991080   FUN_00990f74 入口の難読化
+  0x991500-0x991554   縮小核のハッシュ
+  0x9915c0-0x991630   縮小核のトークン読み
+  0x9916ec-0x991744   縮小核のハッシュ
+  0x991f80-0x991fe8   縮小核末尾のハッシュ
+  0x992058 付近       縮小核のハッシュ
+  0x99e6f4 の入口     輝度テーブルのトークン
+  0x99f528            σ マップのトークン
+  0x9a7828-0x9a79f0   AutoFineTune 入口ゲート
+  0x9ab4b0-0x9ab5b0   σ 係数のハッシュ
+  0x9b1dfc-0x9b1e7c   FindFlatArea のゲート
+  0x1488000-0x1489000 保護大域ページ (読み取りは可、書き手の追跡はしない)
+  0x1561000-0x1568000 トークン欄ページ (同上)
+```
 
-1. Resolve を起動する
-2. test_v02.mp4 をメディアプールに読み込む (既に読み込まれている場合はスキップ)
-3. クリップに Neat Video v6 を適用してプラグイン UI を開く
-4. 以下を順番に操作・撮影する:
+これらの範囲に触れる解析は**統括が実施する** (ClaudeCode は対象外)。
+
+## Phase 1: 本家の画面を観測する (ClaudeCode が実行)
+
+Resolve を起動して本家の Neat Video UI を開き、観察・記録する。
 
 | # | 操作 | 記録する内容 |
 |---|---|---|
 | 1a | Auto Profile (Current Frame) をクリック | Noise Level の数値 (1080p 変更後) |
-| 1b | Profile Check をクリック | 表示される内容 (グラフ・マスク・Enhanced) |
+| 1b | Profile Check をクリック | 表示される内容 |
 | 1c | Profile Check 中にフレームを替える | 表示の変化 |
-| 1d | Profile Check 中にマウスを押す | 表示の変化 (Split ビューか) |
-| 1e | View メニューをクリック | 項目一覧 |
-| 1f | Filter メニューをクリック | 項目一覧 |
-| 1g | Tools メニューをクリック | 項目一覧 |
+| 1d | Profile Check 中にマウスを押す | Split ビューか |
+| 1e | View メニュー | 項目一覧 |
+| 1f | Filter メニュー | 項目一覧 |
+| 1g | Tools メニュー | 項目一覧 |
 | 1h | ウィンドウを小さくする | パネルのスクロール挙動 |
-| 1i | プロファイル作成後の選択範囲 | 枠の色 (赤/黄/緑) |
-| 1j | ズームのメニュー | 段 (33.3% など) |
+| 1i | プロファイル作成後の選択範囲の枠の色 | 赤/黄/緑 |
+| 1j | ズームのメニュー | 段 |
 
-5. スクリーンショットは `sandbox/omo/coord/genuine_ui/shots2/` に保存する
+スクリーンショット: `sandbox/omo/coord/genuine_ui/shots2/`
+観察記録: `sandbox/omo/coord/genuine_ui/OBSERVED_1080P.md`
 
-### 観察結果の記録
-
-`sandbox/omo/coord/genuine_ui/OBSERVED_1080P.md` に書く:
-- Noise Level の数値 (1080p 変更後)
-- 各メニューの項目一覧
-- 各ボタンの挙動の変化
-- 選択範囲の枠の色
-
-## Phase 2: 静的解析で式を読んで移植する
-
-本家バイナリの該当関数を読んで、以下の計算式を特定し `repro/nv_ui_qt/` に実装する。
-
-### 項目 5: Quality の計算式 (本家 23%)
-
-本家のプロファイル欄に表示される "Overall Profile Quality" の値の計算式を特定する。
-
-手掛かり:
-- プロファイル欄に値を書き込む関数を探す (AGENTS.md §6.5 の profile 構造参照)
-- 表示側は `QualityLabel` (`Ui::ProfilePageSidePanel` の一部)
-- プロファイルの `tile_dev` (FUN_009b2f34) や `curve` の品質から計算すると推定
-- `nvh profile` の出力と本家の画面の値で照合できる
+## Phase 2-A: 静的解析・移植 (ClaudeCode が実行 — 保護区画を含まない項目)
 
 ### 項目 6: 完了度 (本家 0%)
 
-Manual Fine-Tune のイコライザが測った値の数から完了度を計算する関数を読む。
-AFT の移植 (aft_port) と一緒に実装する。
+Manual Fine-Tune のイコライザで測った値の数から完了度を計算する。
+UI コード内の単純なカウンタ。探索範囲: 表示側の関数のみ。
 
 ### 項目 7: 帯域の棒の値、イコライザの緑枠・赤枠の点の意味
 
-プロファイルビューアやイコライザの描画関数を読む。表示だけの差。
+プロファイルビューやイコライザの描画関数 (QPainter による描画)。
+表示だけの差。処理ロジックを含まない。
 
 ### 項目 9: 表示のディザ
 
-本家の表示用の乱数表 (16384 個、種 0x9) を再現する。見た目の違いは ±0.25 程度。
-乱数表は __TEXT __const 内にある可能性が高い (シード 0x9 で LCG を探す)。
-
-### 項目 10: Assist Image の作り方
-
-本家が Profile Check のときにフィルタへ渡す設定を、呼び出し元からたどって読む。
-Profile Check 中に立つ印 (page+0x1e0) からフィルタ設定をたどる。
-画面の見た目は近づけられる (画素単位の一致は無理 — FUN_00990f74 は難読化されている)。
+16384 個の定数表 (LCG 乱数、種 0x9)。__TEXT __const 内の静的データ。
+逆アセンブルで "movk ..., #0x9" や "movz ..., #0x9" を検索してテーブルを特定する。
 
 ### 実装
 
-特定した式を `repro/nv_ui_qt/` に実装する:
-- Quality 計算 → `state.py` または新規 `quality.py`
-- 完了度 → `profile_panel.py`
-- 帯域の棒 → `noise_graph.py`
-- ディザ → `viewer.py`
-- Assist Image → `viewer.py` または `display.py`
+特定した式を `repro/nv_ui_qt/` に実装する (表示のみなので処理コアは変更しない)。
+
+## Phase 2-B: 静的解析 (統括が実行 — 保護区画に触れる可能性)
+
+### 項目 5: Quality の計算式 (本家 23%)
+
+プロファイルの品質から計算。探索範囲が σ マップ (FUN_009aae90) や
+縮小核 (FUN_00990f74) の近くになる可能性があるため統括が実施。
+
+### 項目 10: Assist Image の作り方
+
+Profile Check 中にフィルタへ渡す設定をたどる必要がある。
+フィルタパイプライン = FUN_00990f74 を含むため統括が実施。
 
 ## 報告
 
-- Phase 1 の観察結果: `sandbox/omo/coord/genuine_ui/OBSERVED_1080P.md` + `shots2/`
-- Phase 2 の解析結果: `sandbox/omo/coord/genuine_ui/STATIC_PHASE2.md`
-- 実装の検証: `sandbox/omo/coord/genuine_ui/VERDICT_PHASE2.md`
-
-## 制限
-
-- 処理コア (`nvfilter.py`・`nv_aft_v5.py`・`nv_depth.py`) は**変更しない**
-- 本家のアイコン画像・動画は著作物なので使用しない
-- ハーネス (`nvh`) を使う場合は `nvh selftest` 終了コード 3 を確認してから
-- 保護区画 (§2.2 の範囲) は読まない (ユーザーが統括に一任した範囲のみ)
+- Phase 1: `sandbox/omo/coord/genuine_ui/OBSERVED_1080P.md` + `shots2/`
+- Phase 2-A: `sandbox/omo/coord/genuine_ui/STATIC_CLAUDE.md`
+- Phase 2-B: `sandbox/omo/coord/genuine_ui/STATIC_LEAD.md` (統括)
