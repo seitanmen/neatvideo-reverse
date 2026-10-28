@@ -172,8 +172,14 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
 - **既知の範囲**: AFT の取り消しは前段のプロファイル構築の間 (128² で 0.5〜1.6 秒) 効かない。
   x86_64 の dylib は未作成。verify_bridge は動画・ffmpeg・PySide6 が必要なため make verify には
   入れず別ターゲット (`make -C native lib` 後に `python3 native/verify_bridge.py`)。
-- **次 (N3)**: Qt C++ UI への移植 (nv_ui_qt のページ構成を Qt 6 C++ で再構築、N1 コアを直呼び)。
-  Windows は `.claude/tasks/native_windows_runbook.md` と native_windows.md (W1〜W5)。
+- **アプリ名**: 2026-10-29 に **MeatVideo** に改名 (bundle・launcher・scripts・docs)。
+  ウィンドウ内の題字は reproduction UI のまま。内部モジュール名 (nv_*) は不変。
+- **次 (N3)**: Qt C++ UI への移植 — 委託済み: `.claude/tasks/native_n3_qtui.md`
+  (N3a 骨格+Prepare / N3b Adjust+書き出し / N3c 残り。libnvcore の C ABI 直呼びで numpy 不使用)。
+- **W2 (libm)**: 委託済み: `.claude/tasks/native_w2_libm.md`
+  (alt libm ハーネスで語単位 diff を計測 → 統括がベンダー libm か文書化かを判定)。
+- **Windows**: `.claude/tasks/native_windows_runbook.md` (Windows ホストの Claude が実行中) と
+  native_windows.md (W1〜W5)。
 
 ### Windows 対応 (計画 2026-10-28。詳細と委託タスクは .claude/tasks/native_windows.md)
 
