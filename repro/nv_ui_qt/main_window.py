@@ -52,7 +52,8 @@ PROFILE_FILTER = "Repro noise profile (*.nvprof.json);;JSON (*.json)"
 PRESET_FILTER = "Repro filter preset (*.nvpreset.json);;JSON (*.json)"
 PREFS = {"jobs": max(1, (os.cpu_count() or 2) - 2), "crf": 16, "audio": "copy", "preview_area": 0.5,
          "auto_fine_tune": True,
-         "mem_gb": 4.0, "auto_profile": True, "depth": "8", "profile_mode": "auto"}
+         "mem_gb": 4.0, "auto_profile": True, "depth": "8", "profile_mode": "auto",
+         "native": True}     # native core (libnvcore.dylib, N2a; backend.set_native)
 PROFILE_MODES = ("auto", "spatial", "temporal")    # build_profile_v5 modes (repro, Profile Viewer)
 # Preferences > Bit depth: (label, --depth value); 8-bit = the original yuv420p path
 DEPTHS = (("8-bit (legacy yuv420p)", "8"), ("Source depth", "source"), ("10-bit", "10"), ("12-bit", "12"),
@@ -144,6 +145,7 @@ class MainWindow(QMainWindow):
         self.export = None
         self._busy_slots = set()
         self.prefs = self._load_prefs()
+        backend.set_native(self.prefs["native"])
         self.preset_name, self.preset_clean = "default", default_params()
         self.prof_clean = None
         self.play_start = 0
@@ -1685,6 +1687,12 @@ class MainWindow(QMainWindow):
         mem.setValue(float(self.prefs["mem_gb"]))
         auto = QCheckBox("Auto Profile when a video is opened")
         auto.setChecked(bool(self.prefs["auto_profile"]))
+        native = QCheckBox("Use the native core (libnvcore.dylib; same results, faster)")
+        native.setChecked(bool(self.prefs["native"]) and backend.native_available())
+        native.setEnabled(backend.native_available())
+        native.setToolTip("Profile search, Auto Fine-Tune and the frame filters through the C++ core (native/, "
+                          "bit-exact with the Python code); off = the Python code. Unavailable when the "
+                          "library is not found")
         depth = QComboBox()
         for label, val in DEPTHS:
             depth.addItem(label, val)
@@ -1699,6 +1707,7 @@ class MainWindow(QMainWindow):
         f.addRow("Preview cache: frames in memory (GB)", mem)
         f.addRow("Bit depth", depth)
         f.addRow(auto)
+        f.addRow(native)
         bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         bb.accepted.connect(dlg.accept)
         bb.rejected.connect(dlg.reject)
@@ -1709,6 +1718,9 @@ class MainWindow(QMainWindow):
             self.prefs.update(jobs=jobs.value(), crf=crf.value(), audio=audio.currentText(),
                               preview_area=area.value(), mem_gb=mem.value(), auto_profile=auto.isChecked(),
                               depth=str(depth.currentData()))
+            if native.isEnabled():          # without the library the stored choice is kept
+                self.prefs["native"] = native.isChecked()
+            backend.set_native(self.prefs["native"])
             s = settings()
             for k, v in self.prefs.items():
                 s.setValue(f"prefs/{k}", v)

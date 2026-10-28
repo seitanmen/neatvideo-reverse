@@ -40,6 +40,14 @@ native/lzma/**
 !native/lzma/*.h
 !native/lzma/*.md
 
+# packaging/ (.app の梱包。venv・ビルド物 (.venv/・build/・dist/) は除外)
+!packaging/
+packaging/**
+!packaging/*.py
+!packaging/*.spec
+!packaging/*.sh
+!packaging/README.md
+
 # analysis (ソースコード・ドキュメントのみ)
 !neatvideo_ofx_614/
 neatvideo_ofx_614/**

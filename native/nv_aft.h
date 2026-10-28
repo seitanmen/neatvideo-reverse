@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <vector>
 
 namespace nva {
@@ -61,18 +62,26 @@ double polyval_aft(double x, const double* c, int ncoef);
 // mode < 2: FUN_009b4e08 x 3 then FUN_009bdf30(0.2, 3.0, 0) x 3; mode 2: FUN_009b5408 x 3 into out3.
 void finish(uint8_t* prof, const Bins& bins, int mode, float out3[3]);
 
+// The cancel query of nv_aft._run_tiles (`cancel`; true = cancelled).  Empty: never asked.
+using Cancel = std::function<bool()>;
+
 // FUN_009b56f4 one-thread behaviour (nv_aft._run_tiles, fast = False).  rgb: H x W x 3 float32
 // (HWC); image2: the same layout or nullptr.  cancel_at: the 1-based index of the cancel query that
 // answers true (< 1: never).  threads > 1 runs the tiles in parallel; the bins are still appended in
 // slot order and the mode-2 skip is decided in that order, so the result does not depend on it.
+// cancel (used when cancel_at < 1): asked before each tile is taken, as nv_aft._run_tiles asks it
+// (ntiles queries without a cancel; none after the first true answer).  With threads > 1 the query and
+// the taking of the tile are one step under a lock (the same number of queries as one thread).  A true
+// answer gives CANCELLED (the tiles taken before it run and count in diag; the bins are dropped).
 int run_tiles(const float* rgb, int W, int H, const uint8_t* prof, int mode, const float* image2,
-              long cancel_at, int threads, Bins* bins, Diag* diag);
+              long cancel_at, int threads, Bins* bins, Diag* diag, const Cancel& cancel = Cancel());
 
 // nv_aft.auto_fine_tune: prof (0xc300 bytes) is rewritten in place (curves + byte 0x2d).
 // out3 receives the three FUN_009b5408 values for mode 2 with status OK (else untouched).
 // bins_out (optional) receives the bins of _run_tiles.
 int auto_fine_tune(const float* rgb, int W, int H, uint8_t* prof, int mode, const float* image2,
-                   long cancel_at, int threads, float out3[3], Diag* diag, Bins* bins_out = nullptr);
+                   long cancel_at, int threads, float out3[3], Diag* diag, Bins* bins_out = nullptr,
+                   const Cancel& cancel = Cancel());
 
 // repro/nv_aft_v5.apply_aft after the AFT call: the colour weights from the raw profile's model q99,
 // the 9 curve words of each face interpolated onto the v5 centres, f_c = sqrt(max(sum_j cw_cj f_j, 0)),

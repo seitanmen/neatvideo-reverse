@@ -10,6 +10,7 @@
 #include <atomic>
 #include <cmath>
 #include <cstring>
+#include <mutex>
 #include <thread>
 
 namespace nva {
@@ -492,7 +493,7 @@ void finish(uint8_t* prof, const Bins& bins, int mode, float out3[3]) {
 }
 
 int run_tiles(const float* rgb, int W, int H, const uint8_t* prof, int mode, const float* image2,
-              long cancel_at, int threads, Bins* bins, Diag* diag) {
+              long cancel_at, int threads, Bins* bins, Diag* diag, const Cancel& cancel) {
     if (W < 48 || H < 48) return TOO_SMALL;
     const int nx = W / 32, ny = H / 32, ntiles = nx * ny;
     std::vector<int> sy(ntiles), sx(ntiles);           // the slots (nv_aft._tiles)
@@ -530,8 +531,9 @@ int run_tiles(const float* rgb, int W, int H, const uint8_t* prof, int mode, con
         for (int k = 0; k < 9; ++k) (*bins)[ch][k].clear();
     // the cancel query is asked once before every tile: query cancel_at answers true, so the tiles
     // before it still run (and count in diag) and the bins are dropped
-    const bool cancelled = cancel_at >= 1 && cancel_at <= ntiles;
-    const int nrun = cancelled ? static_cast<int>(cancel_at - 1) : ntiles;
+    bool cancelled = cancel_at >= 1 && cancel_at <= ntiles;
+    int nrun = cancelled ? static_cast<int>(cancel_at - 1) : ntiles;
+    const bool ask = cancel_at < 1 && static_cast<bool>(cancel);   // the cancel callback
 
     std::vector<TileResult> res(ntiles);
     std::vector<char> run2(ntiles, 0);
@@ -543,6 +545,7 @@ int run_tiles(const float* rgb, int W, int H, const uint8_t* prof, int mode, con
     if (nt == 1) {
         float R[1024], G[1024], B[1024];
         for (int s = 0; s < nrun; ++s) {
+            if (ask && cancel()) { cancelled = true; nrun = s; break; }
             tile_stage1(c, sy[s], sx[s], R, G, B, &res[s]);
             if (res[s].outcome == T_CLIP || full(res[s])) continue;
             tile_stage2(c, sy[s], sx[s], R, G, B, &res[s]);
@@ -554,16 +557,30 @@ int run_tiles(const float* rgb, int W, int H, const uint8_t* prof, int mode, con
         // every non-clipped tile is modelled in parallel (stage 2 does not depend on the order);
         // the mode-2 skip is then decided in slot order and drops the results it skips
         std::atomic<int> next{0};
+        std::mutex mu;                      // the cancel query + the taking of a tile (ask only)
+        int taken = 0;
+        bool stop = false;
+        auto take = [&]() -> int {
+            if (!ask) {
+                const int s = next.fetch_add(1);
+                return s < nrun ? s : -1;
+            }
+            std::lock_guard<std::mutex> lk(mu);
+            if (stop || taken >= nrun) return -1;
+            if (cancel()) { stop = true; return -1; }
+            return taken++;
+        };
         std::vector<std::thread> pool;
         for (int t = 0; t < nt; ++t)
             pool.emplace_back([&] {
                 float R[1024], G[1024], B[1024];
-                for (int s; (s = next.fetch_add(1)) < nrun;) {
+                for (int s; (s = take()) >= 0;) {
                     tile_stage1(c, sy[s], sx[s], R, G, B, &res[s]);
                     if (res[s].outcome != T_CLIP) tile_stage2(c, sy[s], sx[s], R, G, B, &res[s]);
                 }
             });
         for (auto& th : pool) th.join();
+        if (stop) { cancelled = true; nrun = taken; }
         for (int s = 0; s < nrun; ++s) {
             if (res[s].outcome == T_CLIP || full(res[s])) continue;
             run2[s] = 1;
@@ -593,10 +610,10 @@ int run_tiles(const float* rgb, int W, int H, const uint8_t* prof, int mode, con
 }
 
 int auto_fine_tune(const float* rgb, int W, int H, uint8_t* prof, int mode, const float* image2,
-                   long cancel_at, int threads, float out3[3], Diag* diag, Bins* bins_out) {
+                   long cancel_at, int threads, float out3[3], Diag* diag, Bins* bins_out, const Cancel& cancel) {
     Bins local;
     Bins* bins = bins_out ? bins_out : &local;
-    const int st = run_tiles(rgb, W, H, prof, mode, image2, cancel_at, threads, bins, diag);
+    const int st = run_tiles(rgb, W, H, prof, mode, image2, cancel_at, threads, bins, diag, cancel);
     if (st == MODEL_ERROR) return st;
     if (st == OK) finish(prof, *bins, mode, out3);
     prof[0x2d] = 0;
