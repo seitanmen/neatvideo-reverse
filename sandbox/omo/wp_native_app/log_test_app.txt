@@ -1,0 +1,33 @@
+[PASS] codesign --verify --deep --strict: /Users/seitan/Desktop/work/reverse/.claude/worktrees/n2/packaging/dist/NeatVideoRepro.app: satisfies its Designated Requirement
+[PASS] frozen
+[PASS] numpy 2.1.3 / scipy 1.15.3 / Python 3.13 / PySide6 6.12 bundled
+[PASS] libnvcore.dylib loaded from Contents/Frameworks
+[PASS] native core enabled
+[PASS] ref_floor.npy read from the bundle (bit-equal, not recomputed)
+[PASS] libSystem pow through ctypes (nv_curve)
+[PASS] ffmpeg found
+[PASS] spawned child: same ref_floor path, not recomputed, same ffmpeg
+       lib /Users/seitan/Desktop/work/reverse/.claude/worktrees/n2/packaging/dist/NeatVideoRepro.app/Contents/Frameworks/libnvcore.dylib
+       ref_floor /Users/seitan/Desktop/work/reverse/.claude/worktrees/n2/packaging/dist/NeatVideoRepro.app/Contents/Frameworks/data/ref_floor.npy (0.0002 s; child 0.0526 s, child start 0.257 s)
+       ffmpeg /opt/homebrew/bin
+       run 1: startup 1.082 s (to the window), 1.121 s (process start to exit)
+       run 2: startup 1.001 s (to the window), 1.039 s (process start to exit)
+       run 3: startup 1.054 s (to the window), 1.093 s (process start to exit)
+       96/96 passed
+       elapsed 24 s; native_enabled True; STATS {'native': 106, 'fallback': 0}
+[PASS] self-test (native on): all passed, C calls > 0, no Python fallback
+       [PASS] AFT cancellable (child process terminated) 0.1s
+       96/96 passed
+       elapsed 166 s; native_enabled False; STATS {'native': 0, 'fallback': 0}
+[PASS] self-test (NV_NATIVE=0): all passed
+       dev 96/96 passed
+[PASS] st_on/export.mp4 == development export, byte for byte (509224 B)
+[PASS] st_on/export_tnoise.mp4 == development export, byte for byte (279293 B)
+[PASS] st_on/export10.mkv: decoded frames == development export (3 frames), same length
+[PASS] st_off/export.mp4 == development export, byte for byte (509224 B)
+[PASS] st_off/export_tnoise.mp4 == development export, byte for byte (279293 B)
+[PASS] st_off/export10.mkv: decoded frames == development export (3 frames), same length
+[PASS] launcher: ffmpeg search order and the not-found dialog (8/8 passed)
+[PASS] bundle unchanged (521 files hashed before and after)
+       size 187M
+0 failure(s)

@@ -42,6 +42,10 @@ struct V5Params {
 // spatial_v5: planes = (Y, Cb, Cr) float32 (chroma on any grid), rv = residual variance per plane
 std::vector<Plane> spatial_v5(const Plane planes[3], const V5Profile& prof, const Plane rv[3],
                               const V5Params& P);
+// the plane-c part of spatial_v5 (lum = gaussian_filter(Y, 1.0) of the Y plane; p, rv_c on plane c's grid):
+// spatial_v5(planes, ...)[c] == spatial_v5_plane(gauss1(planes[0]), planes[c], c, prof, rv[c], P)
+Plane spatial_v5_plane(const Plane& lum, const Plane& p, int c, const V5Profile& prof, const Plane& rv_c,
+                       const V5Params& P);
 // process_frame_v5's Mix: out = o + m * (src - o) when m > 0 (in place)
 void mix_v5(std::vector<Plane>& out, const Plane src[3], double m);
 

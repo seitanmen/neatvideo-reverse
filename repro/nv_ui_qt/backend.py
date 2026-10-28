@@ -11,6 +11,14 @@ Temporal Noise Level (P["t_noise"], UI Temporal > Temporal Noise > Noise Level):
 nv.temporal_v5 with noise_level x t_noise for the temporal stage only (the spatial stage keeps
 noise_level); at t_noise = 1 (or without the key) P is passed unchanged.
 
+Native core (N2a, Preferences > "Use the native core"): with libnvcore.dylib (repro/nv_native.py) the
+temporal / spatial kernels, the FindFlatArea search of build_profile and Auto Fine-Tune run in C++
+(bit-exact with the Python functions, native/verify_bridge.py); inputs the C ports do not reproduce fall
+back to the Python functions. set_native() switches it; NV_NATIVE=0 in the environment disables it, and
+set_native writes NV_NATIVE so that the export process and its frame workers follow the UI setting. With
+the native core, run_in_child(task, run_aft, ...) runs the AFT in this process (no child process), and
+task.cancelled is asked in the AFT tile loop.
+
 Noise Level Check (repro definition of the genuine's temporal filter mask; its formula is not decoded):
 temporal_mask() maps the luma residual noise variance rv of the temporal stage to
 m = clamp((1/rv - 1) / (1/rv_min - 1), 0, 1), rv_min = the variance when every neighbour of the window
@@ -18,13 +26,39 @@ has weight 1; PreviewEngine.mask() uses the same cached temporal result as the p
 """
 import collections
 import copy
+import os
 import threading
 
 import numpy as np
 
 import nvfilter as nv
 
+try:
+    import nv_native
+except Exception:       # noqa: BLE001 - a broken library or bridge must not stop the UI
+    nv_native = None
+
 CHANNEL_NAMES = ("Y", "Cb", "Cr")
+
+# ---------------- native core switch ----------------
+_NATIVE_FORCED_OFF = os.environ.get("NV_NATIVE", "1") == "0"
+_NATIVE = {"on": not _NATIVE_FORCED_OFF}
+
+
+def native_available():
+    """libnvcore.dylib was loaded (repro/nv_native.py)."""
+    return nv_native is not None and nv_native.AVAILABLE
+
+
+def native_enabled():
+    return _NATIVE["on"] and native_available()
+
+
+def set_native(on):
+    """Use the native core (when available) for the processing of this process and of the processes it
+    starts afterwards (NV_NATIVE in the environment). NV_NATIVE=0 at start-up keeps it off."""
+    _NATIVE["on"] = bool(on) and not _NATIVE_FORCED_OFF
+    os.environ["NV_NATIVE"] = "1" if _NATIVE["on"] else "0"
 
 
 def _uniform(P):
@@ -45,14 +79,24 @@ def _channel_params(P, c):
     return Q
 
 
+def _spatial(planes, prof, rv, P, only=None):
+    """nv.spatial_v5 (only = c: plane c of spatial_v5(planes[:c + 1], ...)), native when enabled."""
+    if native_enabled():
+        out = nv_native.spatial_v5(planes, prof, rv, P, only)
+        if out is not None:
+            return out if only is None else out[only]
+    if only is None:
+        return nv.spatial_v5(planes, prof, rv, P)
+    return nv.spatial_v5(list(planes[:only + 1]), prof, list(rv[:only + 1]), P)[only]
+
+
 def spatial_ui(planes, prof, rv, P):
     if not P.get("ui_spatial", True):
         return [np.asarray(p, np.float32) for p in planes]
     if _uniform(P):
-        return nv.spatial_v5(planes, prof, rv, P)
+        return _spatial(planes, prof, rv, P)
     # spatial_v5 handles planes[0..c]; only plane c of each call is kept
-    return [nv.spatial_v5(list(planes[:c + 1]), prof, list(rv[:c + 1]), _channel_params(P, c))[c]
-            for c in range(len(planes))]
+    return [_spatial(planes, prof, rv, _channel_params(P, c), c) for c in range(len(planes))]
 
 
 def temporal(window, ci, prof, P, flows=None):
@@ -60,6 +104,10 @@ def temporal(window, ci, prof, P, flows=None):
     lo, hi = max(0, ci - R), min(len(window), ci + R + 1)
     tn = float(P.get("t_noise", 1.0))
     Q = P if tn == 1.0 else dict(P, noise_level=P["noise_level"] * tn)
+    if native_enabled():
+        res = nv_native.temporal_v5(window[lo:hi], ci - lo, prof, Q, flows)
+        if res is not None:
+            return res
     return nv.temporal_v5(window[lo:hi], ci - lo, prof, Q, flows)
 
 
@@ -198,8 +246,9 @@ def profile_window(frames, f):
 
 def build_profile(frames, f, full_range, matrix, mode, area=None, cancel=None):
     f, planes, more = profile_window(frames, f)
-    prof = nv.build_profile_v5(planes, full_range, area=area, pair=more[0] if more else None, mode=mode,
-                               more=more, matrix=matrix, cancel=cancel)
+    build = nv_native.build_profile_v5 if native_enabled() else nv.build_profile_v5
+    prof = build(planes, full_range, area=area, pair=more[0] if more else None, mode=mode,
+                 more=more, matrix=matrix, cancel=cancel)
     prof["ui_frame"] = f
     return prof
 
@@ -247,8 +296,18 @@ def run_aft(base, planes, full_range, matrix, mode=0):
     """Auto Fine-Tune through nv_aft_v5.apply_aft (static AFT port; its factors were not compared
     with the genuine, Agents.md §6.5) on the profile frame `planes`. apply_aft multiplies the curve
     it is given, so it always starts from the curve before any earlier AFT (kept in
-    'ui_pre_aft'); pressing Auto Fine-Tune again gives the same result. Returns a new profile."""
+    'ui_pre_aft'); pressing Auto Fine-Tune again gives the same result. Returns a new profile.
+    With the native core enabled, nv_native.apply_aft (the same result) is used."""
+    return _run_aft(base, planes, full_range, matrix, mode)
+
+
+def _run_aft(base, planes, full_range, matrix, mode=0, cancel=None, native=None):
+    """run_aft; native: None = native_enabled(), True = the C path or None when it does not apply (no
+    Python fallback), False = nv_aft_v5.apply_aft. cancel: asked by the C path (nv_native.Cancelled)."""
     import nv_aft_v5
+    strict = native is True
+    if native is None:
+        native = native_enabled()
     prof = copy.deepcopy(base)
     pre = prof.pop("ui_pre_aft", None)
     if pre is not None:
@@ -256,7 +315,10 @@ def run_aft(base, planes, full_range, matrix, mode=0):
     keep = {"curve": copy.deepcopy(prof["curve"]), "sigma": dict(prof["sigma"])}
     rgb = np.clip(nv.yuv_to_rgb(tuple(np.asarray(p, np.float32) for p in planes), matrix, full_range),
                   0, 255).astype(np.float32)
-    prof = nv_aft_v5.apply_aft(prof, rgb, mode=mode)
+    res = nv_native.apply_aft(prof, rgb, mode=mode, cancel=cancel) if native else None
+    if res is None and strict:
+        return None
+    prof = res if res is not None else nv_aft_v5.apply_aft(prof, rgb, mode=mode)
     prof.pop("aft_reset", None)     # a run after Reset Fine-Tuning rewrites the curve flags
     prof["ui_pre_aft"] = keep
     return prof
@@ -268,7 +330,20 @@ class Cancelled(Exception):
 
 def run_in_child(task, fn, *args):
     """fn(*args) in a spawned child process that is terminated when task.cancelled is set (AFT
-    runs pure-Python code for seconds to a minute and cannot be interrupted in a thread)."""
+    runs pure-Python code for seconds to a minute and cannot be interrupted in a thread).
+    fn = run_aft with the native core enabled: runs here (about a second) and asks task.cancelled in
+    the AFT tile loop; inputs the C path does not reproduce go to the child process as before."""
+    if fn is run_aft and native_enabled():
+        if task.cancelled:
+            raise Cancelled("cancelled")
+        try:
+            res = _run_aft(*args, cancel=lambda: task.cancelled, native=True)
+        except nv_native.Cancelled:
+            raise Cancelled("cancelled") from None
+        if task.cancelled:
+            raise Cancelled("cancelled")
+        if res is not None:
+            return res
     import multiprocessing
     ctx = multiprocessing.get_context("spawn")
     pool = ctx.Pool(1)
