@@ -156,3 +156,12 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
   N2 委託済み: `.claude/tasks/native_n2_app.md` (N2a ctypes 速度ブリッジ libnvcore.dylib +
   repro/nv_native.py、backend に Preferences フラグで統合、Python 経路とビット一致必須 →
   N2b PyInstaller で .app 化。ffmpeg は同梱せず実行時に探索。以降 N3 (Qt C++ UI) → N4 (OFX)。
+
+### Windows 対応 (計画 2026-10-28。詳細と委託タスクは .claude/tasks/native_windows.md)
+
+基準点の整理: 「Python とビット一致」の基準点は arm64 macOS の numpy/scipy/Python の環境。
+Windows の numpy/scipy は演算順が違うため、Windows numpy との一致は目標にしない。
+Windows の目標は (1) C++ のクロスプラットフォーム決定論 (同一入力 → macOS と Windows で
+同じ出力。F4 の手法の延長) と (2) libm 差異 (pow/tanf/atan2/sincos) の解消か文書化。
+タスク: W1 CMake 化 + CI (N2 と並行可) → W2 libm 対策 → W3 Windows 検証 → W4 .exe 梱包 →
+W5 Windows OFX (N3 の後)。
