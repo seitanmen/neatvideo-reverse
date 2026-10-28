@@ -1,4 +1,4 @@
-# PyInstaller spec of NeatVideoRepro.app (N2b). Build with packaging/build_app.sh (README.md).
+# PyInstaller spec of MeatVideo.app (N2b). Build with packaging/build_app.sh (README.md).
 # onedir .app for arm64: the repro modules (traced from the launcher) and the AFT port go into the PYZ,
 # native/libnvcore.dylib into Contents/Frameworks (= sys._MEIPASS, where repro/nv_native.py looks first),
 # data/ref_floor.npy into Contents/Resources/data (linked from Frameworks/data; packaging/main.py points
@@ -53,7 +53,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="NeatVideoRepro",
+    name="MeatVideo",
     debug=False,
     strip=False,
     upx=False,
@@ -63,16 +63,16 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
 )
-coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="NeatVideoRepro")
+coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="MeatVideo")
 app = BUNDLE(
     coll,
-    name="NeatVideoRepro.app",
+    name="MeatVideo.app",
     icon=None,
-    bundle_identifier="local.nvrepro.NeatVideoRepro",
+    bundle_identifier="local.nvrepro.MeatVideo",
     version="0.2.0",
     info_plist={
-        "CFBundleName": "NeatVideoRepro",
-        "CFBundleDisplayName": "NeatVideoRepro",
+        "CFBundleName": "MeatVideo",
+        "CFBundleDisplayName": "MeatVideo",
         "NSHighResolutionCapable": True,
         "LSMinimumSystemVersion": "26.0",     # the PySide6 6.12 wheels (and libnvcore) are built for 26.0
         "LSArchitecturePriority": ["arm64"],

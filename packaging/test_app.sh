@@ -1,5 +1,5 @@
 #!/bin/bash
-# Automated checks of packaging/dist/NeatVideoRepro.app (README.md). No window is shown: everything runs
+# Automated checks of packaging/dist/MeatVideo.app (README.md). No window is shown: everything runs
 # with QT_QPA_PLATFORM=offscreen and the bundle's executable is started directly (no `open`).
 #   packaging/test_app.sh [OUTDIR] [--full]
 #   OUTDIR  default packaging/build/test_app (settings, profiles, short lossless exports, logs)
@@ -8,8 +8,8 @@
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$HERE")"
-APP="$HERE/dist/NeatVideoRepro.app"
-EXE="$APP/Contents/MacOS/NeatVideoRepro"
+APP="$HERE/dist/MeatVideo.app"
+EXE="$APP/Contents/MacOS/MeatVideo"
 OUT="$HERE/build/test_app"
 FULL=0
 for a in "$@"; do
@@ -100,7 +100,7 @@ if [ $FULL = 1 ]; then
     fi
 fi
 
-# 6. exports == the development environment's (native on). The exports run as `NeatVideoRepro -m
+# 6. exports == the development environment's (native on). The exports run as `MeatVideo -m
 # nv_ui_qt.export`, frames in spawned ProcessPoolExecutor workers of the frozen app.
 (cd "$ROOT/repro" && "$PYTHON" -m nv_ui_qt.selftest "$VIDEO" "$OUT/st_dev" > "$OUT/selftest_dev.txt" 2>&1)
 grep -E "passed" "$OUT/selftest_dev.txt" | sed 's/^/       dev /'

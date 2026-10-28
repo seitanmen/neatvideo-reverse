@@ -1,13 +1,13 @@
-"""NeatVideoRepro.app launcher (PyInstaller entry, N2b).
+"""MeatVideo.app launcher (PyInstaller entry, N2b).
 
-    NeatVideoRepro [video]                     the Qt UI (python3 -m nv_ui_qt.main [video])
-    NeatVideoRepro --ofx W H ...               OFX host mode (nv_ui_qt.main, unchanged)
-    NeatVideoRepro -m nv_ui_qt.export ARGS     the export process the UI starts (worker.ExportProcess runs
+    MeatVideo [video]                     the Qt UI (python3 -m nv_ui_qt.main [video])
+    MeatVideo --ofx W H ...               OFX host mode (nv_ui_qt.main, unchanged)
+    MeatVideo -m nv_ui_qt.export ARGS     the export process the UI starts (worker.ExportProcess runs
                                                sys.executable -m nv_ui_qt.export; frozen, sys.executable is
                                                this launcher, which cannot take -m)
-    NeatVideoRepro --selftest VIDEO OUTDIR     nv_ui_qt.selftest with the bundled Python (offscreen by default);
+    MeatVideo --selftest VIDEO OUTDIR     nv_ui_qt.selftest with the bundled Python (offscreen by default);
                                                prints nv_native.STATS at the end
-    NeatVideoRepro --info                      bundle diagnostics (library, ref_floor, versions, ffmpeg) as JSON
+    MeatVideo --info                      bundle diagnostics (library, ref_floor, versions, ffmpeg) as JSON
 
 Done here so that repro/ is not changed (every process, including the spawned multiprocessing children,
 runs this file first):
@@ -155,7 +155,7 @@ def _ui(args):
     if not os.environ.get("NV_FFMPEG_DIR"):
         QMessageBox.critical(
             None, "ffmpeg not found",
-            "ffmpeg and ffprobe were not found.\n\nNeatVideoRepro reads and writes video with them; they are not "
+            "ffmpeg and ffprobe were not found.\n\nMeatVideo reads and writes video with them; they are not "
             "bundled. Install them (e.g. `brew install ffmpeg`), or name the ffmpeg binary in the environment "
             "variable NV_FFMPEG or as ffmpeg=<path> under [prefs] in ~/.config/NeatRepro/nv_ui_qt.ini, then "
             "start the app again.\n\nLooked in: " + ", ".join(FFMPEG_DIRS + ("PATH",)))

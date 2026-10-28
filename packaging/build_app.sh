@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds packaging/dist/NeatVideoRepro.app (README.md). Usage: packaging/build_app.sh
+# Builds packaging/dist/MeatVideo.app (README.md). Usage: packaging/build_app.sh
 #   PYTHON=<python3 with numpy 2.1.3 / scipy 1.15.3 / PySide6 6.12> (default: python3 on PATH)
 # The venv (packaging/.venv) shares the base site-packages (--system-site-packages) and adds only
 # PyInstaller, so the bundled numpy / scipy are the ones the bit-exact checks were made with.
@@ -38,7 +38,7 @@ VENV_SITE="$("$VENV/bin/python" -c 'import sysconfig; print(sysconfig.get_paths(
 PYTHONPATH="$VENV_SITE" "$BASE_PY" "$HERE/pyi_build.py" --noconfirm --clean --log-level WARN \
     --distpath "$HERE/dist" --workpath "$HERE/build" "$HERE/nvrepro.spec"
 
-APP="$HERE/dist/NeatVideoRepro.app"
+APP="$HERE/dist/MeatVideo.app"
 codesign --force --deep -s - "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 du -sh "$APP"

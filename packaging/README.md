@@ -1,4 +1,4 @@
-# NeatVideoRepro.app の梱包 (N2b)
+# MeatVideo.app の梱包 (N2b)
 
 repro の Qt UI (`python3 -m nv_ui_qt.main`) を PyInstaller でスタンドアロンの `.app` にする。
 Python・numpy・scipy・PySide6 と N2a の `native/libnvcore.dylib` を同梱するので、配布先に Python は要らない。
@@ -16,7 +16,7 @@ ffmpeg は同梱しない (GPL)。仕様は `.claude/tasks/native_n2_app.md` の
 ## ビルド
 
 ```sh
-packaging/build_app.sh          # → packaging/dist/NeatVideoRepro.app (約 190 MB、約 1 分)
+packaging/build_app.sh          # → packaging/dist/MeatVideo.app (約 190 MB、約 1 分)
 ```
 
 - 初回は `packaging/.venv` (`--system-site-packages`) を作り、PyInstaller 6.22.3 だけを入れる。ベース環境には何も入れない。
@@ -74,8 +74,8 @@ repro のファイルは変更していない。
 
 - アドホック署名だけで、Developer ID の署名も公証 (notarization) もしていない。ダウンロードした (quarantine 属性の付いた) `.app`
   は Gatekeeper に止められる。初回は Finder で右クリック → 開く。macOS 15 以降でこれが効かないときは、一度開こうとした後に
-  システム設定 → プライバシーとセキュリティ → 「このまま開く」。ターミナルなら `xattr -dr com.apple.quarantine NeatVideoRepro.app`。
-- 配布するなら zip にする (`ditto -c -k --keepParent NeatVideoRepro.app NeatVideoRepro.zip`)。シンボリックリンクと署名が保たれる。
+  システム設定 → プライバシーとセキュリティ → 「このまま開く」。ターミナルなら `xattr -dr com.apple.quarantine MeatVideo.app`。
+- 配布するなら zip にする (`ditto -c -k --keepParent MeatVideo.app MeatVideo.zip`)。シンボリックリンクと署名が保たれる。
 - 配布先には ffmpeg / ffprobe を別に入れてもらう (`brew install ffmpeg`)。
 - 結果のビット一致の照合は、このビルド環境と同じ版の numpy/scipy (同梱) と、実行する macOS の libSystem の libm
   (atan2・sincos・pow・tanf などを Python も C++ も同じものを呼ぶ) に依存する。macOS 26.6.1 以外の OS 版での照合はしていない。
