@@ -1,0 +1,25 @@
+== capture: verify_band.py
+  real  band_levels  : 108/108 bit-exact
+5706/5706 bit-exact
+time: Python 19.9 s (3 procs), C++ 1.05 s (one process); nv_band_test: model 0.321 s, band 0.314 s, quantile 0.012 s, mean/std 0.000 s
+== capture: verify_curve.py
+tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright)
+total 46.3 s: ALL BIT-EXACT
+== capture: verify_model.py
+1244/1244 bit-exact (218 planes x sets; 254 runs with NaN in the input; 5095424 words compared)
+time: Python 0.1 s (cache + 0 computed), C++ 55.34 s wall (nv_model_test: 1244 cases, model_full 54.953 s)
+  ub geometry cfg 0: 100 placements (10 x 10 dx / dy intervals of the sides 84..1536): no block without a qualifying bin
+  ub geometry cfg 1: 324 placements (18 x 18 dx / dy intervals of the sides 84..1536): no block without a qualifying bin
+  ub direct ad1ae0: 28/28 identical (pad: 8/8, bins: 8/8, ok: 12/12; pad / bins = NotImplementedError on both sides)
+== capture: verify_flat.py, verify_flat_cancel.py
+  time: Python (incl. intermediates, 3 procs, wall) 57.1 s; C++ -j 1 50.2 s, -j 3 21.5 s (incl. blob I/O)
+total 131.8 s: ALL BIT-EXACT
+cancel: 676/676 checks identical; Python 60.3 s, C++ 98.2 s (wall)
+total 159.7 s: ALL IDENTICAL
+  DIFFER [band] c.WRZxqpZq   cancel_at=: nv_band_test_x86 (rc 0 vs 0; /Users/seitan/Desktop/work/reverse/.claude/worktrees/n1fix/sandbox/omo/wp_native_portable/x86/cap/band/c.WRZxqpZq/out /Users/seitan/Desktop/work/reverse/.claude/worktrees/n1fix/sandbox/omo/wp_native_portable/x86/cap/band/c.WRZxqpZq/out_x86 differ: char 54558732, line 386)
+band: 0/1 commands byte-identical (arm64 asm / arm64 portable / x86_64 / ref: 1 compared, 0 skipped; 58114944 output bytes per binary; 6 s)
+curve: 5/5 commands byte-identical (arm64 asm / arm64 portable / x86_64 / ref: 5 compared, 0 skipped; 3564730 output bytes per binary; 117 s)
+model: 2/2 commands byte-identical (arm64 asm / arm64 portable / x86_64 / ref: 1 compared, 1 skipped; 20387008 output bytes per binary; 319 s)
+flat: 494/494 commands byte-identical (arm64 asm / arm64 portable / x86_64 / ref: 66 compared, 428 skipped; 203182888 output bytes per binary; 1330 s)
+total: 501/502 commands identical: 1 DIFFER
+native/verify_x86.sh --ref  --keep  3050.70s user 118.10s system 144% cpu 36:33.11 total

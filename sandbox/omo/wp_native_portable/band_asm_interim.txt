@@ -1,0 +1,9 @@
+  ms    mean/std     : 1080/1080 bit-exact
+  quant quantile     : 1080/1080 bit-exact
+  rand  model_levels : 1665/1665 bit-exact
+  rand  band_levels  : 1665/1665 bit-exact
+  real  model_levels : 108/108 bit-exact
+  real  band_levels  : 108/108 bit-exact
+5706/5706 bit-exact
+time: Python 14.8 s (4 procs), C++ 1.02 s (one process); nv_band_test: model 0.312 s, band 0.322 s, quantile 0.012 s, mean/std 0.000 s
+  57.89s user 5.56s system 381% cpu 16.652 total

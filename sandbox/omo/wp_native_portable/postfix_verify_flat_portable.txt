@@ -1,0 +1,5 @@
+flat: 181 cases (60 real frame x mode, 81 synthetic, 40 fuzz; 32 deep)
+flat: 362/362 case runs bit-exact (result + steps + curve + reduce + candidates + placed/IsClip + trace + structs)
+  per run: 17730 candidates, 17109 scored candidates, 1293 x 3 structs (deep); statuses {0: 41, 1: 60, 2: 65, 3: 13, 4: 2}
+  time: Python (incl. intermediates, 3 procs, wall) 58.4 s; C++ -j 1 144.1 s, -j 3 54.3 s (incl. blob I/O)
+total 259.5 s: ALL BIT-EXACT

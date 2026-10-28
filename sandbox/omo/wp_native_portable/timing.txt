@@ -1,0 +1,48 @@
+== base
+band: nv_band_test: model 0.020 s, band 0.000 s, quantile 0.000 s, mean/std 0.000 s
+band: nv_band_test: model 0.019 s, band 0.000 s, quantile 0.000 s, mean/std 0.000 s
+band: nv_band_test: model 0.018 s, band 0.000 s, quantile 0.000 s, mean/std 0.000 s
+curve: 1920x1080 -j 1: 0.492 s
+curve: 1920x1080 -j 1: 0.508 s
+curve: 1920x1080 -j 1: 0.489 s
+curve: 1920x1080 -j 1: 0.485 s
+curve: 1920x1080 -j 1: 0.485 s
+model: 128 128 -1 0.149093
+model: 320 320 -1 0.812124
+flat: 1920x1080 mode 1 -j 1: best 0.814 s, mean 0.815 s over 3 (curve alone best 0.487 s) (region 832,0 128x128 status 0)
+== asm
+band: nv_band_test: model 0.019 s, band 0.000 s, quantile 0.000 s, mean/std 0.000 s
+band: nv_band_test: model 0.019 s, band 0.000 s, quantile 0.000 s, mean/std 0.000 s
+band: nv_band_test: model 0.019 s, band 0.000 s, quantile 0.000 s, mean/std 0.000 s
+curve: 1920x1080 -j 1: 0.503 s
+curve: 1920x1080 -j 1: 0.494 s
+curve: 1920x1080 -j 1: 0.492 s
+curve: 1920x1080 -j 1: 0.494 s
+curve: 1920x1080 -j 1: 0.492 s
+model: 128 128 -1 0.148566
+model: 320 320 -1 0.809897
+flat: 1920x1080 mode 1 -j 1: best 0.839 s, mean 0.851 s over 3 (curve alone best 0.492 s) (region 832,0 128x128 status 0)
+== p
+band: nv_band_test: model 0.041 s, band 0.000 s, quantile 0.000 s, mean/std 0.000 s
+band: nv_band_test: model 0.041 s, band 0.000 s, quantile 0.000 s, mean/std 0.000 s
+band: nv_band_test: model 0.040 s, band 0.000 s, quantile 0.000 s, mean/std 0.000 s
+curve: 1920x1080 -j 1: 1.784 s
+curve: 1920x1080 -j 1: 1.783 s
+curve: 1920x1080 -j 1: 1.783 s
+curve: 1920x1080 -j 1: 1.776 s
+curve: 1920x1080 -j 1: 1.776 s
+model: 128 128 -1 0.203223
+model: 320 320 -1 1.233766
+flat: 1920x1080 mode 1 -j 1: best 2.404 s, mean 2.415 s over 3 (curve alone best 1.777 s) (region 832,0 128x128 status 0)
+== x86
+band: nv_band_test: model 0.067 s, band 0.000 s, quantile 0.000 s, mean/std 0.000 s
+band: nv_band_test: model 0.070 s, band 0.000 s, quantile 0.000 s, mean/std 0.000 s
+band: nv_band_test: model 0.070 s, band 0.000 s, quantile 0.000 s, mean/std 0.000 s
+curve: 1920x1080 -j 1: 2.263 s
+curve: 1920x1080 -j 1: 2.254 s
+curve: 1920x1080 -j 1: 2.261 s
+curve: 1920x1080 -j 1: 2.266 s
+curve: 1920x1080 -j 1: 2.260 s
+model: 128 128 -1 0.326767
+model: 320 320 -1 1.935517
+flat: 1920x1080 mode 1 -j 1: best 3.273 s, mean 3.279 s over 3 (curve alone best 2.252 s) (region 832,0 128x128 status 0)

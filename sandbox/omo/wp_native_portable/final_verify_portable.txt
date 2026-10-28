@@ -1,0 +1,53 @@
+  ms    mean/std     : 1080/1080 bit-exact
+  quant quantile     : 1080/1080 bit-exact
+  rand  model_levels : 1665/1665 bit-exact
+  rand  band_levels  : 1665/1665 bit-exact
+  real  model_levels : 108/108 bit-exact
+  real  band_levels  : 108/108 bit-exact
+5706/5706 bit-exact
+time: Python 19.5 s (3 procs), C++ 1.87 s (one process); nv_band_test: model 0.729 s, band 0.724 s, quantile 0.015 s, mean/std 0.004 s
+curve: 8 real frames + 19 synthetic + 520 fuzz images
+  C++ -j 1: 29.8 s for 547 images (Python, 3 procs: 20.9 s)
+  C++ -j 3: 11.1 s for 547 images (Python, 3 procs: 20.9 s)
+curve: 1094/1094 curves bit-exact (xs + ys), histograms 1094/1094 (178 cases with NaN in ys)
+clip: 4000/4000 IsClip values bit-exact
+interp: 20554/20554 queries bit-exact (640 tables)
+tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright)
+total 75.6 s: ALL BIT-EXACT
+  levels set -1  : 8/8 bit-exact
+  levels set 0-4 : 8/8 bit-exact
+  rand   set -1  : 148/148 bit-exact
+  rand   set 0-4 : 708/708 bit-exact
+  real   set -1  : 56/56 bit-exact
+  real   set 0-4 : 280/280 bit-exact
+  tail   set -1  : 6/6 bit-exact
+  tail   set 0-4 : 30/30 bit-exact
+1244/1244 bit-exact (218 planes x sets; 254 runs with NaN in the input; 5095424 words compared)
+time: Python 0.2 s (cache + 0 computed), C++ 78.83 s wall (nv_model_test: 1244 cases, model_full 78.449 s)
+  ub geometry cfg 0: 100 placements (10 x 10 dx / dy intervals of the sides 84..1536): no block without a qualifying bin
+  ub geometry cfg 1: 324 placements (18 x 18 dx / dy intervals of the sides 84..1536): no block without a qualifying bin
+  ub direct ad1ae0: 28/28 identical (pad: 8/8, bins: 8/8, ok: 12/12; pad / bins = NotImplementedError on both sides)
+flat: 181 cases (60 real frame x mode, 81 synthetic, 40 fuzz; 32 deep)
+flat: 362/362 case runs bit-exact (result + steps + curve + reduce + candidates + placed/IsClip + trace + structs)
+  per run: 17730 candidates, 17109 scored candidates, 1293 x 3 structs (deep); statuses {0: 41, 1: 60, 2: 65, 3: 13, 4: 2}
+  time: Python (incl. intermediates, 3 procs, wall) 58.6 s; C++ -j 1 145.2 s, -j 3 54.6 s (incl. blob I/O)
+total 261.1 s: ALL BIT-EXACT
+test_v02.mp4 n=0 mode 1                          1920x1080: uncancelled (832, 0, 128, 128, 0), 247 queries (241 curve + 6 sizes); k = 14 values x -j [1, 3]: ok (status 5 on 12, 5 with a partial square)
+test_v02.mp4 n=312 mode 1                        1920x1080: uncancelled (832, 0, 128, 128, 0), 247 queries (241 curve + 6 sizes); k = 14 values x -j [1, 3]: ok (status 5 on 12, 5 with a partial square)
+test_v02.mp4 n=576 mode 1                        1920x1080: uncancelled (488, 864, 64, 64, 2), 247 queries (241 curve + 6 sizes); k = 14 values x -j [1, 3]: ok (status 5 on 12, 5 with a partial square)
+test_v02.mp4 n=700 mode 1                        1920x1080: uncancelled (800, 0, 128, 128, 0), 247 queries (241 curve + 6 sizes); k = 14 values x -j [1, 3]: ok (status 5 on 12, 5 with a partial square)
+test.mp4 n=0 mode 1                              640x360: uncancelled (376, 296, 64, 64, 2), 35 queries (29 curve + 6 sizes); k = 14 values x -j [1, 3]: ok (status 5 on 12, 5 with a partial square)
+test.mp4 n=300 mode 1                            640x360: uncancelled (416, 288, 48, 48, 2), 35 queries (29 curve + 6 sizes); k = 14 values x -j [1, 3]: ok (status 5 on 12, 5 with a partial square)
+test.mp4 n=450 mode 1                            640x360: uncancelled (176, 208, 48, 48, 2), 35 queries (29 curve + 6 sizes); k = 14 values x -j [1, 3]: ok (status 5 on 12, 5 with a partial square)
+test.mp4 n=750 mode 1                            640x360: uncancelled (392, 288, 48, 48, 2), 35 queries (29 curve + 6 sizes); k = 14 values x -j [1, 3]: ok (status 5 on 12, 5 with a partial square)
+test_v02.mp4 n=312 mode 0                        1920x1080: uncancelled (896, 0, 128, 128, 0), 247 queries (241 curve + 6 sizes); k = 14 values x -j [1, 3]: ok (status 5 on 12, 5 with a partial square)
+test_v02.mp4 n=312 mode 2                        1920x1080: uncancelled (896, 0, 128, 128, 0), 247 queries (241 curve + 6 sizes); k = 14 values x -j [1, 3]: ok (status 5 on 12, 5 with a partial square)
+test.mp4 n=300 mode 0                            640x360: uncancelled (120, 272, 48, 48, 2), 35 queries (29 curve + 6 sizes); k = 14 values x -j [1, 3]: ok (status 5 on 12, 5 with a partial square)
+test.mp4 n=300 mode 2                            640x360: uncancelled (416, 288, 48, 48, 2), 35 queries (29 curve + 6 sizes); k = 14 values x -j [1, 3]: ok (status 5 on 12, 5 with a partial square)
+test_v02.mp4 n=312 mode 1, explicit noise table  1920x1080: uncancelled (832, 0, 128, 128, 0), 6 queries (0 curve + 6 sizes); k = 8 values x -j [1, 3]: ok (status 5 on 6, 5 with a partial square)
+test.mp4 n=300 mode 1, explicit noise table      640x360: uncancelled (416, 288, 48, 48, 2), 6 queries (0 curve + 6 sizes); k = 8 values x -j [1, 3]: ok (status 5 on 6, 5 with a partial square)
+noise 200x150 mode 1                             200x150: uncancelled (0, 0, 128, 128, 0), 11 queries (7 curve + 4 sizes); k = 13 values x -j [1, 3]: ok (status 5 on 11, 3 with a partial square)
+noise 64x64 mode 1                               64x64: uncancelled (0, 0, 64, 64, 2), 4 queries (2 curve + 2 sizes); k = 6 values x -j [1, 3]: ok (status 5 on 4, 1 with a partial square)
+noise 96x400 mode 1                              400x96: uncancelled (64, 0, 96, 96, 2), 9 queries (6 curve + 3 sizes); k = 11 values x -j [1, 3]: ok (status 5 on 9, 2 with a partial square)
+cancel: 676/676 checks identical; Python 60.3 s, C++ 261.6 s (wall)
+total 323.1 s: ALL IDENTICAL

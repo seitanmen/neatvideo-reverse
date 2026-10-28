@@ -1,0 +1,6 @@
+flat: 181 cases (60 real frame x mode, 81 synthetic, 40 fuzz; 32 deep)
+flat: 362/362 case runs bit-exact (result + steps + curve + reduce + candidates + placed/IsClip + trace + structs)
+  per run: 17730 candidates, 17109 scored candidates, 1293 x 3 structs (deep); statuses {0: 41, 1: 60, 2: 65, 3: 13, 4: 2}
+  time: Python (incl. intermediates, 3 procs, wall) 59.0 s; C++ -j 1 50.3 s, -j 3 20.9 s (incl. blob I/O)
+total 133.0 s: ALL BIT-EXACT
+python3 native/verify_flat.py --jobs 3  227.36s user 22.19s system 187% cpu 2:13.13 total
