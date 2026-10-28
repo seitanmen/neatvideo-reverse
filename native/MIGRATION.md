@@ -153,3 +153,6 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
 - `make -C native verify` で 11 本 (N0 + N1a〜i + F1) を通しで照合できる。x86 との比較は `make -C native portable x86 && native/verify_x86.sh`
   (Rosetta 2 で数時間かかる)。
 - **次**: N1 は完了。N2 (.app 梱包。N1 の C++ 部品を ctypes から呼ぶ速度版への差し替え) に進める。
+  N2 委託済み: `.claude/tasks/native_n2_app.md` (N2a ctypes 速度ブリッジ libnvcore.dylib +
+  repro/nv_native.py、backend に Preferences フラグで統合、Python 経路とビット一致必須 →
+  N2b PyInstaller で .app 化。ffmpeg は同梱せず実行時に探索。以降 N3 (Qt C++ UI) → N4 (OFX)。
