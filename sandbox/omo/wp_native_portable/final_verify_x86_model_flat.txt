@@ -1,0 +1,15 @@
+== capture: verify_model.py
+1244/1244 bit-exact (218 planes x sets; 254 runs with NaN in the input; 5095424 words compared)
+time: Python 0.2 s (cache + 0 computed), C++ 56.52 s wall (nv_model_test: 1244 cases, model_full 56.464 s)
+  ub geometry cfg 0: 100 placements (10 x 10 dx / dy intervals of the sides 84..1536): no block without a qualifying bin
+  ub geometry cfg 1: 324 placements (18 x 18 dx / dy intervals of the sides 84..1536): no block without a qualifying bin
+  ub direct ad1ae0: 28/28 identical (pad: 8/8, bins: 8/8, ok: 12/12; pad / bins = NotImplementedError on both sides)
+== capture: verify_flat.py, verify_flat_cancel.py
+  time: Python (incl. intermediates, 3 procs, wall) 59.4 s; C++ -j 1 51.7 s, -j 3 21.9 s (incl. blob I/O)
+total 135.8 s: ALL BIT-EXACT
+cancel: 676/676 checks identical; Python 143.3 s, C++ 176.0 s (wall)
+total 329.3 s: ALL IDENTICAL
+model: 2/2 commands byte-identical (arm64 asm / arm64 portable / x86_64; 20387008 output bytes per binary; 20240 s)
+flat: 494/494 commands byte-identical (arm64 asm / arm64 portable / x86_64; 203182888 output bytes per binary; 28791 s)
+total: 496/496 commands identical: ALL IDENTICAL
+bash $W/native/verify_x86.sh --only model,flat  3477.08s user 125.00s system 5% cpu 16:42:32.50 total

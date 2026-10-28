@@ -1,0 +1,9 @@
+curve: 8 real frames + 19 synthetic + 520 fuzz images
+  C++ -j 1: 8.6 s for 547 images (Python, 4 procs: 16.6 s)
+  C++ -j 4: 2.7 s for 547 images (Python, 4 procs: 16.6 s)
+curve: 1094/1094 curves bit-exact (xs + ys), histograms 1094/1094 (178 cases with NaN in ys)
+clip: 4000/4000 IsClip values bit-exact
+interp: 20554/20554 queries bit-exact (640 tables)
+tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright)
+total 41.9 s: ALL BIT-EXACT
+  89.99s user 12.17s system 243% cpu 42.035 total

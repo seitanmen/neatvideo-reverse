@@ -1,0 +1,2 @@
+band: 1/1 commands byte-identical (arm64 asm / arm64 portable / x86_64 / ref: 1 compared, 0 skipped; 58114944 output bytes per binary; 6 s)
+curve: 5/5 commands byte-identical (arm64 asm / arm64 portable / x86_64 / ref: 5 compared, 0 skipped; 3564730 output bytes per binary; 116 s)

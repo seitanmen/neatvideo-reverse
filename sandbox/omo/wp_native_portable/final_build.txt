@@ -1,0 +1,15 @@
+rm -rf nv_quality_test tmp_blobs.bin tmp_results.bin nv_band_test nv_curve_test \
+	       nv_lzma_test lzma/obj nv_flat_test nv_model_test nv_v5_test \
+	       nv_band_test_p nv_curve_test_p nv_flat_test_p nv_model_test_p nv_band_test_x86 nv_curve_test_x86 nv_flat_test_x86 nv_model_test_x86
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra -o nv_quality_test main.cpp nv_quality.cpp
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra  -o nv_band_test nv_band_main.cpp nv_band.cpp nv_portable.cpp
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra  -o nv_curve_test nv_curve_main.cpp nv_curve.cpp nv_linekernel.cpp nv_portable.cpp -lpthread
+clang -O2 -ffp-contract=off -fno-fast-math -D_7ZIP_ST -Wall -Wextra -Wno-self-assign -Wno-unused-but-set-variable -Wno-misleading-indentation -c -o lzma/obj/LzmaLib.o lzma/LzmaLib.c
+clang -O2 -ffp-contract=off -fno-fast-math -D_7ZIP_ST -Wall -Wextra -Wno-self-assign -Wno-unused-but-set-variable -Wno-misleading-indentation -c -o lzma/obj/LzmaEnc.o lzma/LzmaEnc.c
+clang -O2 -ffp-contract=off -fno-fast-math -D_7ZIP_ST -Wall -Wextra -Wno-self-assign -Wno-unused-but-set-variable -Wno-misleading-indentation -c -o lzma/obj/LzmaDec.o lzma/LzmaDec.c
+clang -O2 -ffp-contract=off -fno-fast-math -D_7ZIP_ST -Wall -Wextra -Wno-self-assign -Wno-unused-but-set-variable -Wno-misleading-indentation -c -o lzma/obj/LzFind.o lzma/LzFind.c
+clang -O2 -ffp-contract=off -fno-fast-math -D_7ZIP_ST -Wall -Wextra -Wno-self-assign -Wno-unused-but-set-variable -Wno-misleading-indentation -c -o lzma/obj/Alloc.o lzma/Alloc.c
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra -D_7ZIP_ST -o nv_lzma_test nv_lzma_main.cpp nv_lzma.cpp lzma/obj/LzmaLib.o lzma/obj/LzmaEnc.o lzma/obj/LzmaDec.o lzma/obj/LzFind.o lzma/obj/Alloc.o
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra  -o nv_flat_test nv_flat_main.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp nv_linekernel.cpp nv_portable.cpp -lpthread
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra  -o nv_model_test nv_model_main.cpp nv_model.cpp nv_band.cpp nv_linekernel.cpp nv_portable.cpp
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra -o nv_v5_test nv_v5_main.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp -lpthread
