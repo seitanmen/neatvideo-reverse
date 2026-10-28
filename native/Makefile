@@ -31,7 +31,7 @@ SDK_SRC = lzma/LzmaLib.c lzma/LzmaEnc.c lzma/LzmaDec.c lzma/LzFind.c lzma/Alloc.
 SDK_OBJ = $(SDK_SRC:lzma/%.c=lzma/obj/%.o)
 SDK_HDR = $(wildcard lzma/*.h)
 
-all: nv_quality_test nv_band_test nv_curve_test nv_lzma_test nv_flat_test nv_model_test nv_v5_test \
+all: nv_quality_test nv_band_test nv_curve_test nv_lzma_test nv_flat_test nv_model_test nv_v5_test lib \
      nv_profile_test nv_aft_test
 
 nv_quality_test: main.cpp nv_quality.cpp nv_quality.h

@@ -152,10 +152,28 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
   これは検証ハーネス側の性質で、C++ の移植の性質ではない。numpy/scipy/Python を更新したら照合をやり直す。
 - `make -C native verify` で 11 本 (N0 + N1a〜i + F1) を通しで照合できる。x86 との比較は `make -C native portable x86 && native/verify_x86.sh`
   (Rosetta 2 で数時間かかる)。
-- **次**: N1 は完了。N2 (.app 梱包。N1 の C++ 部品を ctypes から呼ぶ速度版への差し替え) に進める。
-  N2 委託済み: `.claude/tasks/native_n2_app.md` (N2a ctypes 速度ブリッジ libnvcore.dylib +
-  repro/nv_native.py、backend に Preferences フラグで統合、Python 経路とビット一致必須 →
-  N2b PyInstaller で .app 化。ffmpeg は同梱せず実行時に探索。以降 N3 (Qt C++ UI) → N4 (OFX)。
+### N2 完了 (2026-10-28。REPORT は wp_native_bridge/ と wp_native_app/)
+
+- **N2a ctypes 速度ブリッジ**: `native/nvcore_c.{h,cpp}` → `libnvcore.dylib`、
+  `repro/nv_native.py` (ctypes ラッパ、dylib なしで Python に自動フォールバック)、
+  backend に Preferences「native core」フラグ (既定 ON)。verify_bridge: curve 20/20・
+  profile 9/9・AFT 26/26 (999,732 語)・frame 72/72 (306,334,381 語)・cancel 23/23・
+  fallback 9/9、**全語ビット一致**。自己試験 96/96 (ON/OFF)、書き出しバイト一致。
+  速度 (1080p 1 スレッド): AFT 46.8→2.05 秒 (4 スレッド 0.61)、フレーム 2.03→0.57 秒、
+  プロファイル構築 2.38→1.70 秒 (C 化は領域探索のみ。残りは N1 部品がまだ無い)。
+  N1 コードの変更: AFT に取り消し問い合わせを追加、空間段から面ごとの関数を抽出
+  (11 本で回帰なし)。
+- **N2b PyInstaller .app**: `packaging/` (spec・build_app.sh・test_app.sh・ランチャ)。
+  arm64・187 MB・最低 macOS 26 (同梱 PySide6 6.12 に合わせる)。ffmpeg は同梱せず
+  NV_FFMPEG → prefs/ffmpeg → PATH の順で探索。test_app.sh: バンドル内自己試験 96/96
+  (NV_NATIVE=0 でも 96/96)、書き出しバイト一致 (10 ビット mkv は復号フレーム一致、
+  UID+CRC 44 バイトのみ差)、バンドル無変更。起動 1.0〜1.1 秒。
+  nv_ui.py と v1〜v4 の旧スクリプトは同梱しない。
+- **既知の範囲**: AFT の取り消しは前段のプロファイル構築の間 (128² で 0.5〜1.6 秒) 効かない。
+  x86_64 の dylib は未作成。verify_bridge は動画・ffmpeg・PySide6 が必要なため make verify には
+  入れず別ターゲット (`make -C native lib` 後に `python3 native/verify_bridge.py`)。
+- **次 (N3)**: Qt C++ UI への移植 (nv_ui_qt のページ構成を Qt 6 C++ で再構築、N1 コアを直呼び)。
+  Windows は `.claude/tasks/native_windows_runbook.md` と native_windows.md (W1〜W5)。
 
 ### Windows 対応 (計画 2026-10-28。詳細と委託タスクは .claude/tasks/native_windows.md)
 

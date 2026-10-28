@@ -568,6 +568,16 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   プロファイル 128² 17→1.3 秒、AFT 1080p 22〜37→0.5〜0.8 秒。詳細は native/MIGRATION.md。
 - N1i の源の Python (aft_port) は本家との照合がタイル順のみ。N1f/N1i/N1g/N1h の照合は
   numpy 2.1.3 / scipy 1.15.3 / Python 3.13 (arm64) が前提。
+- **N2 完了 (2026-10-28)**: N2a ctypes 速度ブリッジ (native/nvcore_c.{h,cpp} → libnvcore.dylib、
+  repro/nv_native.py、backend の Preferences「native core」フラグで統合。verify_bridge 全語一致:
+  curve 20/profile 9/AFT 26/frame 72 (3 億語)/cancel 23/fallback 9。自己試験 96/96 ON/OFF、
+  書き出しバイト一致。AFT 46.8→2.05 秒 (4 スレッド 0.61)、フレーム 2.03→0.57 秒、
+  プロファイル構築 2.38→1.70 秒 — C 化は領域探索のみ)、N2b PyInstaller .app (packaging/、
+  arm64 187 MB・最低 macOS 26・ffmpeg は同梱せず NV_FFMPEG→prefs→PATH。バンドル内自己試験
+  96/96 ON/OFF、書き出しバイト一致)。N1 コードへの変更: AFT に取り消し問い合わせ、
+  空間段の面ごと関数の抽出 (回帰なし)。既知: AFT 取り消しはプロファイル構築中は効かない、
+  x86_64 dylib 未作成。verify_bridge は `make -C native lib` 後に `python3 native/verify_bridge.py`
+  (動画・ffmpeg・PySide6 が必要)。詳細は native/MIGRATION.md。
 
 ## 8. 共同作業ルール (複数エージェント共有)
 
