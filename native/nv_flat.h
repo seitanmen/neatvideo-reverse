@@ -10,9 +10,8 @@
 // Uses nv_band (N1a: band_levels, box_rows / box_cols) and nv_curve (N1b: genuine_noise_curve,
 // is_clip_genuine, CurveInterp).  Build with -ffp-contract=off -fno-fast-math.
 //
-// Not ported: the cancel query (status 5 from a cancel; the C++ never cancels.  Status 5 is only
-// returned when EstimateNoiseLevelCurve fails, which nvc::genuine_noise_curve does only for frames
-// under 48 px, a path FindFlatArea never reaches) and the trace dict's Python types.
+// The cancel query (status 5, nv_flat's `cancel` / `curve` arguments) is ported: see
+// find_flat_area_genuine.  Not ported: the trace dict's Python types.
 #pragma once
 
 #include <cstddef>
@@ -81,15 +80,22 @@ struct Diag {
 
 struct Result {
     int x, y, w, h, status;          // status as nv_flat (0 ok, 1 nothing found, 2 small, 3 not
-                                     // flat, 4 clipped, 5 curve failed); -1 for a mode outside 0..3
+                                     // flat, 4 clipped, 5 cancelled); -1 for a mode outside 0..3
 };
 
-// find_flat_area_genuine(rgb, noise_at, mode).  noise: the interpolator to use, or nullptr to run
-// nvc::genuine_noise_curve on rgb where the genuine runs EstimateNoiseLevelCurve (after the size
-// table), with `threads` threads (the curve's bits do not depend on it).  threads > 1 also measures
-// the candidate squares of a size in parallel (the selection stays sequential: same result).
+// find_flat_area_genuine(rgb, noise_at, mode, cancel=..., curve=...).  noise: the interpolator to use,
+// or nullptr to run nvc::genuine_noise_curve on rgb where the genuine runs EstimateNoiseLevelCurve
+// (after the size table; as nv_flat's `curve` argument), with `threads` threads (the curve's bits do
+// not depend on it).  threads > 1 also measures the candidate squares of a size in parallel (the
+// selection stays sequential: same result).
+// cancel (empty: never asked): with noise == nullptr the curve asks it tiles + 1 times
+// (nvc::genuine_noise_curve); a cancel there gives (0, 0, 0, 0, 5).  Then it is asked at the start of
+// every size from i0 on; a cancel there gives status 5 with the best square of the earlier sizes as
+// it stands (before the cut of sides over 512), or zeros if there is none yet (nv_flat: "outputs as
+// written so far").  No query follows the first true answer; nothing is asked on the paths that end
+// before the curve (status 1).
 Result find_flat_area_genuine(const float* rgb, int W, int H, int stride_c, int mode,
                               const nvc::CurveInterp* noise = nullptr, int threads = 1,
-                              Diag* diag = nullptr);
+                              Diag* diag = nullptr, const nvc::Cancel& cancel = nvc::Cancel());
 
 }  // namespace nvf

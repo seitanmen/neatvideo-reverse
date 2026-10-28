@@ -4,9 +4,12 @@
 // code line by line.  The Python fadd / fsub / fmul / fdiv / fma32 of these modules always give the
 // AArch64 FPProcessNaNs result of (a, b) (resp. (c, a, b) for fma32), i.e. what a single FADD / FSUB /
 // FMUL / FDIV / FMADD instruction with that operand order returns; A / S / M / D / FMA below are
-// exactly those instructions (inline asm, so the compiler can neither commute nor fold them).
+// exactly those instructions (nv_portable: inline asm on AArch64, so the compiler can neither commute
+// nor fold them, or their results written out in the portable build).
 
 #include "nv_model.h"
+#include "nv_linekernel.h"
+#include "nv_portable.h"
 
 #include "nv_band.h"
 
@@ -24,86 +27,31 @@
 
 #include <math.h>   // atan2, __sincos_stret (libSystem)
 
-#if defined(__aarch64__)
-#include <arm_neon.h>
-#endif
 
 namespace nvm {
 
 namespace {
 
 // ------------------------------------------------------------------------------ float helpers
-inline float bits(uint32_t u) { float f; std::memcpy(&f, &u, 4); return f; }
-inline uint32_t ubits(float f) { uint32_t u; std::memcpy(&u, &f, 4); return u; }
+using nvp::bits;
+using nvp::ubits;
+using nvp::opaque;   // keeps x * 1.0 / fma(x, 1.0, 0.0) as real operations
+using nvp::quiet;
 inline bool isnanf_(float x) { return x != x; }
-inline float quiet(float x) { return bits(ubits(x) | 0x00400000u); }
 
-// A value the compiler cannot see through (keeps x * 1.0 / fma(x, 1.0, 0.0) as real operations).
-inline float opaque(float x) {
-#if defined(__aarch64__)
-    __asm__ volatile("" : "+w"(x));
-#else
-    __asm__ volatile("" : "+x"(x));
-#endif
-    return x;
-}
-
-// FPProcessNaNs(a, b) / FPProcessNaNs3(a, b, c), DN = 0 (portable fallback only)
-[[maybe_unused]] inline float process_nans(float a, float b) {
-    const uint32_t ua = ubits(a), ub = ubits(b);
-    const bool na = isnanf_(a), nb = isnanf_(b);
-    if (na && !(ua & 0x00400000u)) return quiet(a);
-    if (nb && !(ub & 0x00400000u)) return quiet(b);
-    return na ? a : b;
-}
-
-#if defined(__aarch64__)
-inline float A(float a, float b) { float r; __asm__("fadd %s0, %s1, %s2" : "=w"(r) : "w"(a), "w"(b)); return r; }
-inline float S(float a, float b) { float r; __asm__("fsub %s0, %s1, %s2" : "=w"(r) : "w"(a), "w"(b)); return r; }
-inline float M(float a, float b) { float r; __asm__("fmul %s0, %s1, %s2" : "=w"(r) : "w"(a), "w"(b)); return r; }
-inline float D(float a, float b) { float r; __asm__("fdiv %s0, %s1, %s2" : "=w"(r) : "w"(a), "w"(b)); return r; }
-// fma32(a, b, c) = FMADD d = a*b + c: FPMulAdd(addend c, a, b), NaNs as FPProcessNaNs3(c, a, b)
-inline float FMA(float a, float b, float c) {
-    float r;
-    __asm__("fmadd %s0, %s1, %s2, %s3" : "=w"(r) : "w"(a), "w"(b), "w"(c));
-    return r;
-}
-inline float SQRT(float a) { float r; __asm__("fsqrt %s0, %s1" : "=w"(r) : "w"(a)); return r; }
-inline float FRECPE(float x) { return vrecpes_f32(x); }
-inline float FRECPS(float a, float b) { return vrecpss_f32(a, b); }
-#else
-// Non-AArch64: finite results are the same; NaN payloads are only emulated, not guaranteed.
-inline float A(float a, float b) { return (isnanf_(a) || isnanf_(b)) ? process_nans(a, b) : a + b; }
-inline float S(float a, float b) { return (isnanf_(a) || isnanf_(b)) ? process_nans(a, b) : a - b; }
-inline float M(float a, float b) { return (isnanf_(a) || isnanf_(b)) ? process_nans(a, b) : a * b; }
-inline float D(float a, float b) { return (isnanf_(a) || isnanf_(b)) ? process_nans(a, b) : a / b; }
-inline float FMA(float a, float b, float c) { return std::fma(a, b, c); }
-inline float SQRT(float a) { return isnanf_(a) ? quiet(a) : std::sqrt(a); }
-float FRECPE(float) { throw std::logic_error("FRECPE emulation not built (AArch64 only)"); }
-float FRECPS(float, float) { throw std::logic_error("FRECPS emulation not built (AArch64 only)"); }
-#endif
-
+// One FADD / FSUB / FMUL / FDIV / FMADD (a*b + c) / FSQRT / FRECPE / FRECPS / FMIN / FMAX with this
+// operand order, or its result written out (nv_portable).
+inline float A(float a, float b) { return nvp::add(a, b); }
+inline float S(float a, float b) { return nvp::sub(a, b); }
+inline float M(float a, float b) { return nvp::mul(a, b); }
+inline float D(float a, float b) { return nvp::div(a, b); }
+inline float FMA(float a, float b, float c) { return nvp::fma(a, b, c); }
+inline float SQRT(float a) { return nvp::sqrt(a); }
+inline float FRECPE(float x) { return nvp::frecpe(x); }
+inline float FRECPS(float a, float b) { return nvp::frecps(a, b); }
 // nv_pixnoise._fminmax: FMIN / FMAX (x op1, c op2), NaNs as FPProcessNaNs(x, c)
-inline float fmin_arm(float x, float c) {
-    if (isnanf_(x) || isnanf_(c)) {
-        const uint32_t ux = ubits(x), uc = ubits(c);
-        if (isnanf_(x) && !(ux & 0x00400000u)) return quiet(x);
-        if (isnanf_(c) && !(uc & 0x00400000u)) return quiet(c);
-        return isnanf_(x) ? x : c;
-    }
-    if (x == 0.0f && c == 0.0f) return (std::signbit(x) || std::signbit(c)) ? -0.0f : 0.0f;
-    return x < c ? x : c;
-}
-inline float fmax_arm(float x, float c) {
-    if (isnanf_(x) || isnanf_(c)) {
-        const uint32_t ux = ubits(x), uc = ubits(c);
-        if (isnanf_(x) && !(ux & 0x00400000u)) return quiet(x);
-        if (isnanf_(c) && !(uc & 0x00400000u)) return quiet(c);
-        return isnanf_(x) ? x : c;
-    }
-    if (x == 0.0f && c == 0.0f) return (std::signbit(x) && std::signbit(c)) ? -0.0f : 0.0f;
-    return x > c ? x : c;
-}
+inline float fmin_arm(float x, float c) { return nvp::fmin(x, c); }
+inline float fmax_arm(float x, float c) { return nvp::fmax(x, c); }
 
 // FMAXNM(x, c) with a constant c > 0 (nv_band.fmaxnm: a NaN gives c)
 inline float fmaxnm(float x, float c) { return (isnanf_(x) || x < c) ? c : x; }
@@ -148,16 +96,8 @@ const float C_100001 = bits(0x3f800054u);
 // nv_model_bm
 const float Q50 = bits(0x3f000000u);
 const float Q85 = bits(0x3f59999au);
-// nv_lines
-const float F_0_01 = bits(0x3c23d70au);
-const float F_PI = bits(0x40490fdbu);
-const float F_HALF_PI = bits(0x3fc90fdbu);
-const float F_NEG_HALF_PI = bits(0xbfc90fdbu);
-const float F_0_26 = bits(0x3e851eb8u);
-const double QUARTER_PI_D = 0.7853981633974483;
 
 // libSystem functions through volatile pointers (no constant folding / rewriting)
-float (*volatile g_tanf)(float) = &::tanf;
 double (*volatile g_atan2)(double, double) = &::atan2;
 struct __double2 (*volatile g_sincos)(double) = &::__sincos_stret;
 
@@ -216,75 +156,13 @@ SetDef make_set(int s) {
 const int OFF_DC = 0xdc, OFF_A = 0x140, OFF_R = 0x780, OFF_B = 0x7e4, OFF_C = 0xe24, P_OFF = 0x1464;
 
 // ------------------------------------------------------------------------------ nv_lines
-struct LineKernel {
-    int W = 0, H = 0;
-    bool horiz = false, vert = false;
-    int flag = 0;
-    std::vector<int32_t> idx;
-    std::vector<int32_t> loff, lstart, lcount;
-    // entry-major plan of the oriented kernels (as nv_lines.LinePlan)
-    int m = 0, L = 0;
-    std::vector<int32_t> G, inv;
-};
+// An oriented kernel with its entry-major plan (nv_linekernel, shared with nv_curve)
+struct LineKernel : nvl::LineKernel, nvl::LinePlan {};
 
-// nv_lines.LineKernel.__init__ (FUN_00990448)
+// nv_lines.LineKernel.__init__ (FUN_00990448) + nv_lines.LinePlan
 void make_kernel(LineKernel& k, int W, int H, float a) {
-    if (!(1 <= W && W <= 512 && 1 <= H && H <= 512)) throw std::invalid_argument("LineKernel side out of 1..512");
-    k.W = W;
-    k.H = H;
-    k.horiz = std::fabs(a) < F_0_01;
-    if (k.horiz) return;
-    k.vert = std::fabs(a + F_NEG_HALF_PI) < F_0_01;
-    if (k.vert) return;
-    const float folded = a > F_HALF_PI ? (F_PI - a) : a;
-    int n, limit, stride;
-    float t;
-    if (static_cast<double>(folded) <= QUARTER_PI_D) {
-        k.flag = 1; n = W; limit = H; stride = W;
-        t = g_tanf(folded);
-    } else {
-        k.flag = 0; n = H; limit = W; stride = 1;
-        t = g_tanf(F_HALF_PI - folded);
-    }
-    std::vector<int64_t> off(n);
-    for (int i = 0; i < n; ++i) {
-        const float v = t * static_cast<float>(i);
-        off[i] = static_cast<int64_t>(std::nearbyint(v + F_0_26));   // fmul, fadd, frintn, fcvtzs
-    }
-    for (int i = 1; i < n; ++i)
-        if (off[i] < off[i - 1]) throw std::invalid_argument("non-monotone line offsets");
-    const int64_t maxoff = off[n - 1];
-    for (int64_t base = -maxoff; base < limit; ++base) {
-        const int64_t start = std::lower_bound(off.begin(), off.end(), -base) - off.begin();
-        const int64_t end = (std::lower_bound(off.begin(), off.end(), limit - base) - off.begin()) - 1;
-        k.loff.push_back(static_cast<int32_t>(base * stride));
-        k.lstart.push_back(static_cast<int32_t>(start));
-        k.lcount.push_back(static_cast<int32_t>(end - start + 1));
-    }
-    k.idx.resize(n);
-    for (int i = 0; i < n; ++i) {
-        if (k.flag) {
-            const int64_t col = a <= F_HALF_PI ? i : (W - 1 - i);
-            k.idx[i] = static_cast<int32_t>(col + static_cast<int64_t>(W) * off[i]);
-        } else {
-            const int64_t row = a <= F_HALF_PI ? i : (H - 1 - i);
-            k.idx[i] = static_cast<int32_t>(row * W + off[i]);
-        }
-    }
-    const int HW = W * H;
-    k.L = static_cast<int>(k.loff.size());
-    for (int c : k.lcount) k.m = std::max(k.m, c);
-    k.G.assign(static_cast<size_t>(k.m) * k.L, HW);
-    k.inv.assign(HW, -1);
-    for (int l = 0; l < k.L; ++l)
-        for (int j = 0; j < k.lcount[l]; ++j) {
-            const int pix = k.loff[l] + k.idx[k.lstart[l] + j];
-            if (pix < 0 || pix >= HW || k.inv[pix] != -1) throw std::logic_error("lines do not partition the plane");
-            k.G[static_cast<size_t>(j) * k.L + l] = pix;
-            k.inv[pix] = j * k.L + l;
-        }
-    for (int v : k.inv)
-        if (v < 0) throw std::logic_error("lines do not cover the plane");
+    static_cast<nvl::LineKernel&>(k) = nvl::make_kernel(W, H, a);
+    if (!k.horiz && !k.vert) static_cast<nvl::LinePlan&>(k) = nvl::make_plan(k);
 }
 
 struct KernelList {
@@ -633,7 +511,7 @@ std::vector<LevelInfo> level_info(int W, int H, const uint32_t* words, int level
         bool small;
         borders(Wk, Hk, 4, 32, &bx, &by, &small);
         if (!small && k) {
-            const float r = std::fabs(bits(words[5 + k]) / bits(words[4 + k]));
+            const float r = std::fabs(D(bits(words[5 + k]), bits(words[4 + k])));
             if (r < C05) fac = C05;
             else fac = fmin_arm(r, C1);
         }
@@ -1248,6 +1126,9 @@ bool ad1ae0(const Img& clean, const Img& Ai, int c, float* q0, float* q1) {
     const int bs = g.bs, step = g.step, pad = g.pad;
     const Table& tab = table(c);
     const int H = Ai.H, W = Ai.W, Wp = W + 2 * pad, Hp = H + 2 * pad;
+    // nv_model_bm.pad_mirror raises NotImplementedError for pad >= side (the edge-replicating branch of
+    // FUN_0097ef28, not ported); model_full never gets here (FUN_00ad319c passes sides >= 84)
+    if (pad >= H || pad >= W) return false;
     // 1 - 2: direction selection on the u8 image of A
     const U8Img u = image_u8(Ai);
     const std::vector<uint8_t> U = pad_mirror(u.d, W, H, pad);
@@ -1384,6 +1265,15 @@ bool ad319c(uint32_t* words, const Vec& band_k, const Vec& M_k, int W, int H, in
 }
 
 }  // namespace
+
+// ============================================================================== nv_model_bm.ad1ae0
+int bm_quantiles(const float* clean, const float* A, int W, int H, int cfg, float q[2]) {
+    if (cfg < 0 || cfg > 1 || W < 1 || H < 1) return BAD_ARGUMENT;
+    Img c(W, H), a(W, H);
+    std::memcpy(c.d.data(), clean, sizeof(float) * c.d.size());
+    std::memcpy(a.d.data(), A, sizeof(float) * a.d.size());
+    return ad1ae0(c, a, cfg, &q[0], &q[1]) ? OK : NOT_IMPLEMENTED;
+}
 
 // ============================================================================== nv_model.model_full
 int model_full(const float* plane, int W, int H, int set_, uint32_t* words, int levels) {

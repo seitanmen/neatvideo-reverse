@@ -49,13 +49,36 @@ N4. OFX プラグイン化
 
 現状
 ----
-- N0 完了: native/nv_quality.{h,cpp} (Quality 一式: genuine_g / flatness / penalty / size 項) +
-  native/verify_quality.py (乱数・境界・NaN の 4000〜20000 ブロック)。
-  `make -C native && python3 native/verify_quality.py [N]` で Python と**ビット一致**を確認
-  (2026-10-26: 20000/20000)。移植時に見つかった落とし穴を MIGRATION.md の規約に反映済み:
-  float 定数は必ず Python 側のビットパターンから持ってくる (手計算の 16 進は誤る: −0.25 は
-  0xBE800000)、fmaxnm の NaN 経路は C の比較では書き足さない (isnan を明示)、
-  most vexing parse に注意。
+**N1 完了 (2026-10-28)。** N1a〜N1i の 9 部品 + 残件解決 F1〜F4 すべてが Python とビット一致。
+`make -C native verify` (11 本) 全件一致、クリーンビルド警告 0。独立検証 9 件 APPROVE
+(coord/native_n1/ と native_n1b/ と native_n1c/)。速度目安 (arm64 1 スレッド):
+プロファイル 128² 17→1.3 秒、AFT 1080p 22〜37→0.5〜0.8 秒、曲線 1080p 0.49 秒 (4 スレッド 0.13)、
+領域探索 0.81 秒 (F4 後に約 +3%)、process_frame_v5 全体 2.1→0.55 秒。LZMA は約 100 倍。
+
+### F1〜F4 (2026-10-28 完了。REPORT は wp_native_{flat_cancel,model_ub,linekernel,portable}/、独立検証は coord/native_n1c/VERDICT_f1f4.md)
+
+- **F1 取り消し**: `NV_FLAT_CANCEL_AT` 方式のホストで 676/676 (状態 5・問い合わせ回数・部分的な
+  正方形も一致)。タスク文の「領域は書かない」は誤りで、**repro と本家の観測どおりそれまでの
+  最良の正方形を返す**のが正 (AGENTS.md §6.5、独立検証者も妥当と判断)。
+- **F2 未到達経路**: 両経路とも Python と同じ明示的エラーに統一 (追加 28/28 + 88 件)。
+  本家では未定義動作 (<32px のタイル外読み・方向ビン不在のリスト未初期化) なので一致対象は repro。
+- **F3 線カーネル共通化**: `native/nv_linekernel.{h,cpp}` に抜き出し。変更前後で全照合一致、
+  変更前のバイナリともバイト一致。
+- **F4 アーキ非依存**: `native/nv_portable.{h,cpp}` (NaN 優先の明示選択 + ソフト FRECPE/FRECPS) に
+  統一。`make portable` (-DNV_PORTABLE) も Python と全件一致。**x86_64 (Rosetta 2) の出力は
+  arm64 とバイト一致** (帯域・曲線・モデル・領域探索。nv_flat.cpp の 2 行が portable 経由から
+  もれていたのを修正 — inf−inf の NaN 符号が x86 のみ食い違い、修正で解消)。arm64 の既定の
+  速度は F4 前とほぼ同じ。
+- **既知の範囲・前提**:
+  - x86 照合済みは N1a/N1b/N1d/N1e。nv_ndimage (N1g/h) にはアーキ依存が残り、N1f/N1i の
+    独自部分は x86 未照合。
+  - N1f はエラー時に出力バッファへ途中書き込みが残る (状態 OK 以外ではバッファを読まない前提)。
+  - N1i の源の Python 実装は本家との照合がタイル順のみ (C++ はその Python とビット一致)。
+    色結合は Python 3.12+ の sum() の挙動を再現。
+  - N1f/N1i/N1g/N1h の照合は numpy 2.1.3 / scipy 1.15.3 / Python 3.13 (arm64) が前提
+    (更新時は照合やり直し)。
+
+### N1 の履歴
 
 N1 の委託分割: `.claude/tasks/native_n1_split.md` (N1a 帯域測度 / N1b ノイズ曲線 /
 N1c LZMA (SDK 9.20 の C ソースを流用) / N1d 領域探索 / N1e モデル / N1f プロファイル /
@@ -72,9 +95,12 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
 - `make -C native verify` で 4 本を通しで照合できる。
 - **移植の重要な知見** (以降の N1d〜N1i も従う):
   - clang -O2 は fast-math なしでも可換演算の被演算子順を入れ替える。NaN のビット列が
-    Python と変わるため、N1a/N1b は画素処理の加減乗算をインラインアセンブラで順固定
-    (AArch64 前提。x86 では NaN を含む入力のビット一致は保証しない。`-DNVC_PORTABLE` で
-    ソフトウェア版に落ちる経路あり)
+    Python と変わるため、画素処理の演算は `native/nv_portable.h` (F4) 経由にする。AArch64 の既定は
+    1 演算 1 命令のインラインアセンブラ、`-DNV_PORTABLE` と非 AArch64 は FPProcessNaNs・既定 NaN
+    0x7fc00000・ソフトウェア FRECPE/FRECPS を明示的に書いた版 (旧 `-DNVC_PORTABLE` も別名で受ける)。
+    N1a/b/d/e は x86_64 (Rosetta 2) の出力が arm64 とバイト一致する (`native/verify_x86.sh`)
+  - x86 では素の C++ の 0/0・inf−inf・std::fma (libm の fmaf) が符号付きの既定 NaN 0xffc00000 になる。
+    NaN が生じ得る 2 変数の演算は、std::fma も含めてすべて nvp 経由にする (F4 で 2 件見つかった)
   - numpy のスカラー演算は NaN の優先被演算子が演算と型で違う (add は配列=第 1/スカラー第 2 など)。
     Python 側の型を読んで C++ 側で明示的に選ぶ
   - libm の pow/tan は volatile 関数ポインタ経由 (定数畳み込み防止)
@@ -84,10 +110,10 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
 
 - **N1d 領域探索** `native/nv_flat.{h,cpp}` (N1a・N1b を利用): 181 ケース × (-j 1, -j 3) = 362/362 ビット一致
   (実写 20 フレーム × 色モード 0..2、合成 81、乱数 40。縮小面・候補・trace・帯域測度の構造体まで比較)。
-  1080p 0.81 秒 / 3 スレッド 0.34 秒 (Python 1.58 秒)。取り消し (状態 5) は未移植。
+  1080p 0.81 秒 / 3 スレッド 0.34 秒 (Python 1.58 秒)。取り消し (状態 5) は未移植。→ F1 で移植 (下記)。
 - **N1e 1 面モデル** `native/nv_model.{h,cpp}` (4096 語すべて、族 A/R/dc/B/C・FUN_00ad319c・FUN_00ad1ae0): 1244/1244 ビット一致。
   本家の nvh model ダンプ (キャッシュ) とも 753/753 一致。8〜13 倍 (スカラー asm、未ベクトル化)。
-  線カーネルは nv_curve.cpp と重複 (共通化は未了)。非 AArch64 は未対応 (FRECPE のソフト版なし)。
+  線カーネルは nv_curve.cpp と重複 (共通化は未了)。非 AArch64 は未対応 (FRECPE のソフト版なし)。→ どちらも F3/F4 で解消 (下記)。
 - **N1h 空間カーネル** `native/nv_spatial.{h,cpp}` + 共通部品 `native/nv_ndimage.{h,cpp}`: 1287/1287 ビット一致。1080p 約 1.7 倍。
 - **N1g 時間カーネル** `native/nv_temporal.{h,cpp}` (動き推定・dense_flow・warp・類似度 v5/pyramid・rv、process_frame_v5 全体も):
   474/474 ビット一致。1080p の process_frame_v5 2.1 秒 → 0.55 秒 (1 スレッド)。
@@ -97,6 +123,33 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
 - **API の前提**: パラメータは Python の float と同じく演算前に float32 にする (NEP 50。np.float64 を混ぜると Python 側が倍精度になる)。
   pyramid は Y の帯域が 3 段以上を前提 (Python は 3 段未満で IndexError、C++ は 0 埋め)。
 - `make -C native verify` で 8 本 (N0 + N1a〜e・g・h) を通しで照合できる (2026-10-27: クリーンビルド警告 0、全件一致)。
-- **次**: N1f (プロファイル: N1c・N1d・N1e 済み) と N1i (AFT: N1a・N1e 済み) が解放済み。
-  残件 (取り消し未移植・N1e の未到達経路・線カーネル重複・非 AArch64) の解決タスクは
-  `.claude/tasks/native_n1_fixes.md` (F1〜F4)。N1f/N1i と並行で委託してよい。
+- 残件 (取り消し未移植・N1e の未到達経路・線カーネル重複・非 AArch64) は F1〜F4 で解決 (下記)。
+
+### N1f/N1i と F1〜F4 (2026-10-28 完了。REPORT は sandbox/omo/wp_native_{profile,aft,flat_cancel,model_ub,linekernel,portable}/、独立検証は coord/native_n1c/VERDICT_{n1f,n1i,f1f4}.md で 6 件 APPROVE)
+
+- **N1f プロファイル** `native/nv_profile.{h,cpp}` (N1a〜N1e を利用): 39/39 のプロファイルで 0xc300 バイト全部がビット一致
+  (実写 21・合成 18。ヒープポインタ 0x00..0x17 は双方 0)。独立検証者の新しい入力 33/33 + エラー状態 6/6。
+  reference_floor は `data/ref_floor.npy` を読む (計算版 `nvp::compute_reference_floor` も npy と 51/51 一致)。
+  128² で 1 スレッド 1.27 秒 / 3 スレッド 0.45 秒 (Python 17 秒)。時間のほぼすべてが N1e の model_full。
+  状態が OK 以外のとき出力バッファは途中まで書かれている (読まないこと)。
+- **N1i AutoFineTune** `native/nv_aft.{h,cpp}` (aft_port の nv_aft.py + nv_aft_v5.apply_aft の結合部): タイル順 4097・類似度 3000・
+  後処理 3000・AFT 67 (-j 1/-j 3)・結合 69、すべてビット一致。独立検証者の新しい入力 16 + 追加 4 + 結合 204 + タイル順 41。
+  1080p で 1 スレッド 0.5〜0.8 秒 (Python 22〜37 秒)。正は aft_port の Python (本家と照合したのはタイル順だけ)。
+  結合部は CPython 3.12 以降の `sum()` の Neumaier 補償加算を再現している (Python を下げると期待値が変わる)。
+- **F1 取り消し**: `nvf::find_flat_area_genuine(..., diag, cancel)` と `nvc::genuine_noise_curve(..., threads, cancel)`
+  (`nvc::Cancel = std::function<bool()>`)。問い合わせは曲線がタイル数 + 1 回、各サイズの先頭に 1 回で、複数スレッドでも回数は 1 スレッドと同じ。
+  サイズ段の取り消しはそれまでの最良の正方形 (切り詰め前) を返す (repro どおり。タスク文の「書かない」とは異なり、本家の観測とは整合)。
+  `verify_flat_cancel.py` 676/676。
+- **F2**: nv_model_bm の 2 経路 (pad ≥ 辺の端複製・条件を満たす方向ビンなし) は model_full から到達しない (ad1ae0 の辺 ≥ 84。幾何の全数検査)。
+  pad ≥ 辺は本家では定義済みの分岐 (未移植)、方向ビンなしは本家ではリスト未初期化。C++ は両方 NOT_IMPLEMENTED で Python の NotImplementedError と一致
+  (`nvm::bm_quantiles` の直接照合 28/28、verify_model.py の ub_checks)。
+- **F3**: 線カーネルを `native/nv_linekernel.{h,cpp}` に一本化 (挙動不変、全照合一致)。
+- **F4**: `native/nv_portable.{h,cpp}` に浮動小数点演算を集約 (N1a/b/d/e)。arm64 の portable 版も Python と全件一致、
+  x86_64 は arm64 とバイト一致 (band・curve・model・flat・flat_cancel の全コマンド)。asm 経路の速さは不変 (flat は +3%)、
+  portable は curve で約 3.6 倍遅い。残るアーキ依存: nv_ndimage (N1g/N1h) の asm とその非 AArch64 代替 (NaN の規則なし)、libm の expf。
+  N1f・N1i は N1a/b/e と同じヘルパを使う部分のほかに独自の asm (numpy スカラーの NaN 優先) を持ち、x86 は未照合。
+- **照合の前提 (再掲)**: N1g/N1h/N1f/N1i の期待値は numpy 2.1.3・scipy 1.15.3・Python 3.13 (arm64) の演算順に依存する。
+  これは検証ハーネス側の性質で、C++ の移植の性質ではない。numpy/scipy/Python を更新したら照合をやり直す。
+- `make -C native verify` で 11 本 (N0 + N1a〜i + F1) を通しで照合できる。x86 との比較は `make -C native portable x86 && native/verify_x86.sh`
+  (Rosetta 2 で数時間かかる)。
+- **次**: N1 は完了。N2 (.app 梱包。N1 の C++ 部品を ctypes から呼ぶ速度版への差し替え) に進める。

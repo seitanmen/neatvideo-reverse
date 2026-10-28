@@ -14,33 +14,20 @@
 #include <thread>
 
 #include "nv_band.h"
+#include "nv_portable.h"
 
 namespace nvf {
 
 namespace {
 
-inline float bits(uint32_t u) { float f; std::memcpy(&f, &u, 4); return f; }
+using nvp::bits;
 
-// fadd / fmul with the operand order kept (LLVM commutes fadd / fmul operands even without
-// fast-math; the first operand's NaN propagates on AArch64).
-inline float A(float a, float b) {
-#if defined(__aarch64__)
-    float r;
-    __asm__("fadd %s0, %s1, %s2" : "=w"(r) : "w"(a), "w"(b));
-    return r;
-#else
-    return a + b;
-#endif
-}
-inline float M(float a, float b) {
-#if defined(__aarch64__)
-    float r;
-    __asm__("fmul %s0, %s1, %s2" : "=w"(r) : "w"(a), "w"(b));
-    return r;
-#else
-    return a * b;
-#endif
-}
+// fadd / fmul / fsub / fdiv with the operand order kept (nv_portable; LLVM commutes fadd / fmul operands
+// even without fast-math; the first operand's NaN propagates on AArch64).
+inline float A(float a, float b) { return nvp::add(a, b); }
+inline float M(float a, float b) { return nvp::mul(a, b); }
+inline float SUB(float a, float b) { return nvp::sub(a, b); }
+inline float D(float a, float b) { return nvp::div(a, b); }
 // numpy float32 scalar arithmetic: the second operand's NaN.
 inline float AS(float a, float b) { return A(b, a); }
 inline float MS(float a, float b) { return M(b, a); }
@@ -150,7 +137,7 @@ void reduce_planes(const float* rgb, int W, int H, int stride_c, int s, float* R
 void luma_601(const float* R, const float* G, const float* B, size_t n, float* out) {
     const float a = bits(LUMA_BITS[0]), b = bits(LUMA_BITS[1]), c = bits(LUMA_BITS[2]);
     const size_t m = n & ~static_cast<size_t>(3);
-    for (size_t i = 0; i < m; ++i) out[i] = std::fma(B[i], c, std::fma(G[i], b, M(a, R[i])));
+    for (size_t i = 0; i < m; ++i) out[i] = nvp::fma(B[i], c, nvp::fma(G[i], b, M(a, R[i])));
     for (size_t i = m; i < n; ++i) out[i] = A(A(M(R[i], a), M(G[i], b)), M(B[i], c));
 }
 
@@ -167,7 +154,7 @@ void candidates(const float* luma, int W, int H, int rx, int ry, int step, int64
     std::vector<float> Abuf(n), T(n), sc(n), Mb(n);
     box(luma, W, H, step, 0, true, T.data());
     box(T.data(), W, H, step, 0, false, Abuf.data());                 // A
-    for (size_t i = 0; i < n; ++i) T[i] = luma[i] - Abuf[i];          // L - A
+    for (size_t i = 0; i < n; ++i) T[i] = SUB(luma[i], Abuf[i]);      // L - A
     box(T.data(), W, H, 1, 1, true, sc.data());
     box(sc.data(), W, H, 1, 1, false, T.data());                      // t
     for (size_t i = 0; i < n; ++i) T[i] = T[i] * T[i];                // t * t
@@ -234,8 +221,8 @@ void transform(float* p0, float* p1, float* p2, size_t n, int mode) {
         luma_601(p0, p1, p2, n, Y.data());
         for (size_t i = 0; i < n; ++i) {
             const float y = Y[i];
-            const float cr = (p0[i] - y) * CR_K;
-            const float cb = (p2[i] - y) * CB_K;
+            const float cr = SUB(p0[i], y) * CR_K;
+            const float cb = SUB(p2[i], y) * CB_K;
             p0[i] = y;
             p1[i] = cr;
             p2[i] = cb;
@@ -243,8 +230,8 @@ void transform(float* p0, float* p1, float* p2, size_t n, int mode) {
     } else if (mode == 2) {
         for (size_t i = 0; i < n; ++i) {
             const float y = A(A(p0[i], p1[i]), p2[i]) / C3;
-            const float d0 = (p0[i] - y) * C0_75;
-            const float d2 = (p2[i] - y) * C0_75;
+            const float d0 = SUB(p0[i], y) * C0_75;
+            const float d2 = SUB(p2[i], y) * C0_75;
             p0[i] = y;
             p1[i] = d0;
             p2[i] = d2;
@@ -276,7 +263,7 @@ float flatness(const uint32_t* st, bool luma) {
                 if (vj > f) f = vj;
             }
         }
-        const float r = std::fabs(q99 / word_f(st, 10 + k)) / lim;
+        const float r = std::fabs(D(q99, word_f(st, 10 + k))) / lim;
         if (r > f) f = r;
         tot = AS(tot, f);
         n += 1;
@@ -303,10 +290,10 @@ void level_terms(const uint32_t* const st[3], float* Eo, float* Ro) {
         const float Lk = AS(AS(std::fabs(m[0][k]), std::fabs(m[1][k])), std::fabs(m[2][k]));
         if (k == 1) {
             E = AS(E, AS(Lk, Lk));
-            R = AS(Lp / Lk, 0.0f);
+            R = AS(D(Lp, Lk), 0.0f);
         } else {
             E = AS(E, MS(Lk, weights[k]));
-            R = AS(R, Lp / Lk);
+            R = AS(R, D(Lp, Lk));
         }
         Lp = Lk;
         n = k + 1;
@@ -319,7 +306,7 @@ void level_terms(const uint32_t* const st[3], float* Eo, float* Ro) {
 
 float score(float E, float R, float nz, const float fl[3], float b, int nclip, int penalty, float factor) {
     float t = MS(MS(fl[0], fl[1]), fl[2]);
-    t = MS(t, E / nz);
+    t = MS(t, D(E, nz));
     t = MS(t, AS(MS(std::fabs(AS(b, CM96)), C1_512), C1));
     t = MS(t, AS(static_cast<float>(penalty), C1));
     t = MS(AS(MS(static_cast<float>(nclip), C4), C1), t);
@@ -357,7 +344,8 @@ void measure(const float* rgb, int W, int stride_c, const Cand& c, int mode, uin
 }  // namespace
 
 Result find_flat_area_genuine(const float* rgb, int W, int H, int stride_c, int mode,
-                              const nvc::CurveInterp* noise, int threads, Diag* diag) {
+                              const nvc::CurveInterp* noise, int threads, Diag* diag,
+                              const nvc::Cancel& cancel) {
     if (mode < 0 || mode > 3) return {0, 0, 0, 0, -1};
     int s = 7;
     long long w = 0, h = 0;
@@ -392,7 +380,7 @@ Result find_flat_area_genuine(const float* rgb, int W, int H, int stride_c, int 
     std::vector<nvc::CurveInterp> own;
     if (!noise) {
         if (diag) diag->curve_run = true;
-        if (!nvc::genuine_noise_curve(rgb, W, H, stride_c, &cres, threads)) return {0, 0, 0, 0, 5};
+        if (!nvc::genuine_noise_curve(rgb, W, H, stride_c, &cres, threads, cancel)) return {0, 0, 0, 0, 5};
         if (diag) {
             diag->curve_ok = true;
             std::memcpy(diag->curve_xs, cres.xs, sizeof cres.xs);
@@ -423,6 +411,7 @@ Result find_flat_area_genuine(const float* rgb, int W, int H, int stride_c, int 
     std::vector<float> plane;
     std::vector<uint32_t> structs;
     for (int si = i0; si < tb->n; ++si) {
+        if (cancel && cancel()) return {best[0], best[1], best[2], best[3], 5};   // zeros if no best yet
         const int S = tb->sizes[si];
         int r = static_cast<int>(M(A(static_cast<float>(S) / static_cast<float>(s), CM1), C0_5));
         r = r > 1 ? r : 1;

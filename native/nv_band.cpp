@@ -3,6 +3,7 @@
 // payloads) follows the Python code line by line.
 
 #include "nv_band.h"
+#include "nv_portable.h"
 
 #include <algorithm>
 #include <cmath>
@@ -13,51 +14,21 @@ namespace nvb {
 
 namespace {
 
-inline float bits(uint32_t u) { float f; std::memcpy(&f, &u, 4); return f; }
-inline uint32_t ubits(float f) { uint32_t u; std::memcpy(&u, &f, 4); return u; }
+using nvp::bits;
+using nvp::ubits;
+using nvp::opaque;   // keeps x * 1.0 / fma(x, 1.0, c) as real operations
 
-// A value the compiler cannot see through: keeps x * 1.0 / fma(x, 1.0, c) as real operations
-// (LLVM folds them, which changes signalling-NaN quieting and NaN operand priority).
-inline float opaque(float x) {
-#if defined(__aarch64__)
-    __asm__ volatile("" : "+w"(x));
-#else
-    __asm__ volatile("" : "+x"(x));
-#endif
-    return x;
-}
-
-// a + b / a * b with the operand order kept.  LLVM may commute the operands of fadd / fmul
-// (Reassociate's operand canonicalisation runs without fast-math), and the operand order decides
-// which NaN propagates when both are NaN (FPProcessNaNs: first operand first, as numpy computes
-// it).  Used wherever both operands can be NaN; products with a constant or a square are plain.
-inline float A(float a, float b) {
-#if defined(__aarch64__)
-    float r;
-    __asm__("fadd %s0, %s1, %s2" : "=w"(r) : "w"(a), "w"(b));
-    return r;
-#else
-    return a + b;
-#endif
-}
-inline float M(float a, float b) {
-#if defined(__aarch64__)
-    float r;
-    __asm__("fmul %s0, %s1, %s2" : "=w"(r) : "w"(a), "w"(b));
-    return r;
-#else
-    return a * b;
-#endif
-}
-inline double AD(double a, double b) {
-#if defined(__aarch64__)
-    double r;
-    __asm__("fadd %d0, %d1, %d2" : "=w"(r) : "w"(a), "w"(b));
-    return r;
-#else
-    return a + b;
-#endif
-}
+// a + b / a - b / a * b / a / b with the operand order kept (nv_portable: one AArch64 instruction, or
+// its result written out).  LLVM may commute the operands of fadd / fmul (Reassociate's operand
+// canonicalisation runs without fast-math), and the operand order decides which NaN propagates when
+// both are NaN (FPProcessNaNs: first operand first, as numpy computes it); x86 also differs in the
+// NaN of an invalid operation.  Used wherever both operands can be NaN or the operation can be
+// invalid; products / sums with a finite non-zero constant are plain.
+inline float A(float a, float b) { return nvp::add(a, b); }
+inline float SUB(float a, float b) { return nvp::sub(a, b); }   // (S is a buffer name below)
+inline float M(float a, float b) { return nvp::mul(a, b); }
+inline float D(float a, float b) { return nvp::div(a, b); }
+inline double AD(double a, double b) { return nvp::add(a, b); }
 
 // numpy float32 *scalar* arithmetic (the scalar code of nv_band.quantile / probit) propagates the
 // second operand's NaN: with numpy 2.1.3 on arm64, np.float32 a + b and a * b behave as
@@ -132,8 +103,8 @@ void lanes_run(const float* X, ptrdiff_t xs, float* O, ptrdiff_t os, int n, int 
         }
         if (mode == 0) {
             for (int l = 0; l < L; ++l) {
-                float t = first[l] * fr;
-                t = A(t, last[l] * frn);
+                float t = M(first[l], fr);
+                t = A(t, M(last[l], frn));                // frn = 0 when n == r + 1: inf * 0
                 S[l] = A(S[l], t);
             }
             for (int j = 0; j < n; ++j) {
@@ -141,7 +112,7 @@ void lanes_run(const float* X, ptrdiff_t xs, float* O, ptrdiff_t os, int n, int 
                 for (int l = 0; l < L; ++l) {
                     o[l] = recip * S[l];
                     S[l] = A(last[l], S[l]);
-                    S[l] = S[l] - first[l];
+                    S[l] = SUB(S[l], first[l]);
                 }
             }
         } else {
@@ -157,14 +128,14 @@ void lanes_run(const float* X, ptrdiff_t xs, float* O, ptrdiff_t os, int n, int 
         for (int l = 0; l < L; ++l) S[l] = A(S[l], x[l]);
     }
     if (mode == 0)
-        for (int l = 0; l < L; ++l) S[l] = A(first[l] * fr1, S[l]);
+        for (int l = 0; l < L; ++l) S[l] = A(M(first[l], fr1), S[l]);
     const int g = std::min(r, n - r - 1);
     for (int j = 0; j <= g; ++j) {                         // growing: right end inside
         const float* x = Xk(j + r);
         float* o = Ok(j);
         for (int l = 0; l < L; ++l) {
             S[l] = A(S[l], x[l]);
-            if (mode == 0) S[l] = S[l] - first[l];
+            if (mode == 0) S[l] = SUB(S[l], first[l]);
             o[l] = recip * S[l];
         }
     }
@@ -174,7 +145,7 @@ void lanes_run(const float* X, ptrdiff_t xs, float* O, ptrdiff_t os, int n, int 
             for (int l = 0; l < L; ++l) {
                 if (mode == 0) {
                     S[l] = A(last[l], S[l]);
-                    S[l] = S[l] - first[l];
+                    S[l] = SUB(S[l], first[l]);
                 }
                 o[l] = recip * S[l];
             }
@@ -189,7 +160,7 @@ void lanes_run(const float* X, ptrdiff_t xs, float* O, ptrdiff_t os, int n, int 
                 float* o = Ok(j);
                 for (int l = 0; l < L; ++l) {
                     S[l] = A(S[l], xa[l]);
-                    S[l] = S[l] - xb[l];
+                    S[l] = SUB(S[l], xb[l]);
                     o[l] = recip * S[l];
                 }
             }
@@ -200,10 +171,10 @@ void lanes_run(const float* X, ptrdiff_t xs, float* O, ptrdiff_t os, int n, int 
                             *b3 = Xk(j - r + 2);
                 float *o0 = Ok(j), *o1 = Ok(j + 1), *o2 = Ok(j + 2), *o3 = Ok(j + 3);
                 for (int l = 0; l < L; ++l) {
-                    const float d0 = a0[l] - b0[l];
-                    const float d1 = a1[l] - b1[l];
-                    const float d2 = a2[l] - b2[l];
-                    const float d3 = a3[l] - b3[l];
+                    const float d0 = SUB(a0[l], b0[l]);
+                    const float d1 = SUB(a1[l], b1[l]);
+                    const float d2 = SUB(a2[l], b2[l]);
+                    const float d3 = SUB(a3[l], b3[l]);
                     const float p1 = A(d0, d1);
                     const float p2 = A(d2, p1);
                     const float t = A(d2, d3);
@@ -222,7 +193,7 @@ void lanes_run(const float* X, ptrdiff_t xs, float* O, ptrdiff_t os, int n, int 
                 float* o = Ok(j);
                 for (int l = 0; l < L; ++l) {
                     S[l] = A(S[l], xa[l]);
-                    S[l] = S[l] - xb[l];
+                    S[l] = SUB(S[l], xb[l]);
                     o[l] = recip * S[l];
                 }
             }
@@ -234,9 +205,9 @@ void lanes_run(const float* X, ptrdiff_t xs, float* O, ptrdiff_t os, int n, int 
         for (int l = 0; l < L; ++l) {
             if (mode == 0) {
                 S[l] = A(last[l], S[l]);
-                S[l] = S[l] - xb[l];
+                S[l] = SUB(S[l], xb[l]);
             } else {
-                S[l] = S[l] - xb[l];
+                S[l] = SUB(S[l], xb[l]);
             }
             o[l] = recip * S[l];
         }
@@ -433,7 +404,7 @@ float mean_exact(const float* v, size_t n) {
         for (size_t j = m8; j < rem; ++j) s = A(s, T[j]);
         d = AD(d, static_cast<double>(s));
     }
-    return static_cast<float>(d / static_cast<double>(n));
+    return static_cast<float>(nvp::div(d, static_cast<double>(n)));   // n = 0: 0 / 0, the default NaN
 }
 
 float std_exact(const float* v, size_t n, float m) {
@@ -444,8 +415,8 @@ float std_exact(const float* v, size_t n, float m) {
         float acc[8] = {0, 0, 0, 0, 0, 0, 0, 0};
         for (size_t i = 0; i < BLOCK / 8; ++i)
             for (int j = 0; j < 8; ++j) {
-                const float dd = x[8 * i + j] - m;
-                acc[j] = std::fma(dd, dd, acc[j]);         // FMLA
+                const float dd = SUB(x[8 * i + j], m);
+                acc[j] = nvp::fma(dd, dd, acc[j]);         // FMLA
             }
         d = AD(d, static_cast<double>(reduce8(acc)));
     }
@@ -456,17 +427,17 @@ float std_exact(const float* v, size_t n, float m) {
         float acc[8] = {0, 0, 0, 0, 0, 0, 0, 0};
         for (size_t i = 0; i < m8 / 8; ++i)
             for (int j = 0; j < 8; ++j) {
-                const float dd = T[8 * i + j] - m;
-                acc[j] = std::fma(dd, dd, acc[j]);
+                const float dd = SUB(T[8 * i + j], m);
+                acc[j] = nvp::fma(dd, dd, acc[j]);
             }
         float s = reduce8(acc);
         for (size_t j = m8; j < rem; ++j) {
-            const float t = T[j] - m;
+            const float t = SUB(T[j], m);
             s = A(s, t * t);
         }
         d = AD(d, static_cast<double>(s));
     }
-    return static_cast<float>(std::sqrt(d / static_cast<double>(n)));
+    return static_cast<float>(nvp::sqrt(nvp::div(d, static_cast<double>(n))));
 }
 
 float probit(float q) {
@@ -581,10 +552,10 @@ void cv(const float* E, int w, int h, float m, float* out8) {
         const size_t n = static_cast<size_t>(h) * w;
         d.resize(n);
         const size_t k = n & ~static_cast<size_t>(3);
-        for (size_t i = 0; i < k; ++i) d[i] = std::fma(X[i], one, nm);      // FUN_009ee3fc FMLA
-        for (size_t i = k; i < n; ++i) d[i] = A(X[i] * one, nm);
+        for (size_t i = 0; i < k; ++i) d[i] = nvp::fma(X[i], one, nm);      // FUN_009ee3fc FMLA
+        for (size_t i = k; i < n; ++i) d[i] = A(M(X[i], one), nm);
         for (size_t i = 0; i < n; ++i) d[i] = d[i] * d[i];
-        out8[j] = std::sqrt(mean_exact(d.data(), n)) / m;
+        out8[j] = D(std::sqrt(mean_exact(d.data(), n)), m);   // inf / inf when m = inf
         if (j < 7) {
             nxt.resize(static_cast<size_t>(h >> 1) * (w >> 1));
             down2(X.data(), w, h, nxt.data());
@@ -637,7 +608,7 @@ void band_from(const float* lo, int Wc, int Hc, const float* src, int W2, int H2
     if (Hc < 2 || Wc < 4) {                    // nv_pixnoise.band_from_bm scalar path
         std::vector<float> up(N);
         up2_scalar(lo, Wc, Hc, oddW, oddH, up.data());
-        for (size_t i = 0; i < N; ++i) out[i] = src[i] - up[i];
+        for (size_t i = 0; i < N; ++i) out[i] = SUB(src[i], up[i]);
         return;
     }
     const int W2c = 2 * Wc;
@@ -670,14 +641,14 @@ void band_from(const float* lo, int Wc, int Hc, const float* src, int W2, int H2
     for (int r = 0; r < 2 * Hc; ++r) {
         float* o = U(r);
         const float* s = src + static_cast<ptrdiff_t>(r) * W2;
-        for (int c = 0; c < W2c; ++c) o[c] = s[c] - o[c];
+        for (int c = 0; c < W2c; ++c) o[c] = SUB(s[c], o[c]);
     }
     if (oddW) {
         const int c = W2c;
         for (int r = 0; r < 2 * Hc; ++r) {
             float* o = U(r);
             const float* s = src + static_cast<ptrdiff_t>(r) * W2;
-            o[c] = A(o[c - 1] - s[c - 1], s[c]);
+            o[c] = A(SUB(o[c - 1], s[c - 1]), s[c]);
         }
     }
     if (oddH) {
@@ -686,7 +657,7 @@ void band_from(const float* lo, int Wc, int Hc, const float* src, int W2, int H2
         const float* op = U(r - 1);
         const float* s = src + static_cast<ptrdiff_t>(r) * W2;
         const float* sp = src + static_cast<ptrdiff_t>(r - 1) * W2;
-        for (int c = 0; c < W2; ++c) o[c] = A(op[c] - sp[c], s[c]);
+        for (int c = 0; c < W2; ++c) o[c] = A(SUB(op[c], sp[c]), s[c]);
     }
 }
 
@@ -709,7 +680,7 @@ void model_levels(const float* plane, int W, int H, uint32_t* out, int levels) {
         local_rms_crop(src.data(), Wk, Hk, bx, by, lo, crop, a, b);
         measure(crop, Wk - 2 * bx, Hk - 2 * by, out, k);
         if (k) {                               // 0x995db0: fdiv, fabs, fmin 1.0, fcmp 0.5 / fcsel mi
-            const float r = std::fabs(bits(out[5 + k]) / bits(out[4 + k]));
+            const float r = std::fabs(D(bits(out[5 + k]), bits(out[4 + k])));
             fac = r < C0_5 ? C0_5 : (std::isnan(r) ? r : (r < C1 ? r : C1));
         }
         src.swap(lo);

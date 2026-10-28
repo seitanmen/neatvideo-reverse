@@ -2,6 +2,11 @@
 //
 //   nv_flat_test flat IN OUT [-j N]      run every case of IN, write the results and diagnostics to OUT
 //   nv_flat_test time IN [-j N] [REPS]   time find_flat_area_genuine (curve included) on the cases of IN
+//   nv_flat_test cancel IN OUT [-j N]    every case of IN with the counting cancel query of the
+//                                        environment variable NV_FLAT_CANCEL_AT=k (true from the k-th
+//                                        query on; 0 or unset: never true, only counted), as
+//                                        neatvideo_ofx_614/analysis/noise/verify_cancel.py's Counter
+//                                        (native/verify_flat_cancel.py)
 //
 // IN:  u64 ncases, then per case: i32 W, H, mode, flags (bit 0: an explicit noise table follows,
 //      bit 1: keep the band-measure structs of the scored candidates); [bit 0: i32 n, n f64 xs,
@@ -12,6 +17,7 @@
 //        i32 nplaced, per placed candidate: i32 x0, y0, cw, ch; 3 f32 IsClip;
 //      i32 ntrace, per scored candidate: i32 size, i, x, y, w, h, ncl, pen; 8 f32 mean, nz, fl0..2, E, R,
 //        score; i32 nwords, nwords u32 (3 x 4096 struct words with flag bit 1, else 0).
+// OUT of cancel: per case i32 x, y, w, h, status, number of cancel queries.
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
@@ -113,6 +119,29 @@ int run_flat(const char* in, const char* out, int threads) {
     return 0;
 }
 
+int run_cancel(const char* in, const char* out, int threads) {
+    const char* env = std::getenv("NV_FLAT_CANCEL_AT");
+    const long k = env ? std::atol(env) : 0;
+    Input inp(in);
+    FILE* f = std::fopen(out, "wb");
+    if (!f) { std::perror(out); return 2; }
+    Case c;
+    while (inp.next(c)) {
+        long n = 0;                     // the Counter of verify_cancel.py (queries come one at a time)
+        const nvc::Cancel cancel = [&n, k]() {
+            ++n;
+            return k > 0 && n >= k;
+        };
+        std::unique_ptr<nvc::CurveInterp> table;
+        if (c.flags & 1) table.reset(new nvc::CurveInterp(c.txs.data(), c.tys.data(), static_cast<int>(c.txs.size())));
+        const nvf::Result res =
+            nvf::find_flat_area_genuine(c.rgb.data(), c.W, c.H, 3, c.mode, table.get(), threads, nullptr, cancel);
+        for (int v : {res.x, res.y, res.w, res.h, res.status, static_cast<int>(n)}) put<int32_t>(f, v);
+    }
+    std::fclose(f);
+    return 0;
+}
+
 int run_time(const char* in, int threads, int reps) {
     Input inp(in);
     Case c;
@@ -145,7 +174,7 @@ int run_time(const char* in, int threads, int reps) {
 
 int main(int argc, char** argv) {
     if (argc < 3) {
-        std::fprintf(stderr, "usage: %s flat IN OUT [-j N] | time IN [-j N] [REPS]\n", argv[0]);
+        std::fprintf(stderr, "usage: %s flat IN OUT [-j N] | cancel IN OUT [-j N] | time IN [-j N] [REPS]\n", argv[0]);
         return 2;
     }
     const std::string cmd = argv[1];
@@ -158,6 +187,7 @@ int main(int argc, char** argv) {
             pos.push_back(argv[i]);
     }
     if (cmd == "flat" && pos.size() == 2) return run_flat(pos[0], pos[1], threads);
+    if (cmd == "cancel" && pos.size() == 2) return run_cancel(pos[0], pos[1], threads);
     if (cmd == "time" && !pos.empty()) return run_time(pos[0], threads, pos.size() > 1 ? std::atoi(pos[1]) : 3);
     std::fprintf(stderr, "bad arguments\n");
     return 2;

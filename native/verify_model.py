@@ -344,6 +344,128 @@ def genuine_cases():
     return out, missing
 
 
+# ------------------------------------------------------------------------------- explicit-error paths (F2)
+def _bm_valid_rows(c, sizes):
+    """Validity masks over tab.list1 of every (x interval, y interval) of block placements that occur in the
+    sides `sizes` (the rule of sad_grid: X + dx >= 0, X + dx + bs <= Wp, X = pad + x0 = positions(n, step)
+    and Wp = n + 2 pad).  Rows of costs 0 (valid) / INF: best_direction_all's qualification depends on the
+    INF count per bin only, not on the cost values."""
+    import nv_model_bm as bm
+    g = bm.CFG[c]
+    bs, step, pad, r = g["bs"], g["step"], g["pad"], g["r28"]
+    L = bm.table(c).list1                              # offsets within [-r, r]^2: the ranges are clipped to it
+    ivs = set()
+    for n in sizes:
+        for X in bm.positions(n, step):                # dx range with X + dx >= 0 and X + dx + bs <= n + 2 pad
+            ivs.add((max(-r, -X), min(r, n + 2 * pad - bs - X)))
+    ivs = sorted(ivs)
+    rows = []
+    for lx, hx in ivs:
+        okx = (L[:, 0] >= lx) & (L[:, 0] <= hx)
+        for ly, hy in ivs:
+            ok = okx & (L[:, 1] >= ly) & (L[:, 1] <= hy)
+            rows.append(np.where(ok, 0, bm.INF))
+    return np.array(rows, np.int64), len(ivs)
+
+
+def ub_checks(exe):
+    """The two not-ported paths of nv_model_bm (sandbox/omo/wp_native_model_ub/REPORT.md):
+    (1) model_full cannot reach them: FUN_00ad319c calls ad1ae0 only with sides >= 84 (min side * 3 >= 83,
+        3 x 3 tiled below 89 x 89), above every padding (4 / 8), and with sides >= 84 every block has a
+        qualifying direction bin.  Checked over all block placements of the sides 84..1536 (the tiled
+        sides reach 3 x 512) with the Python port's own best_direction_all; the same reconstruction is
+        checked against sad_grid's INF mask and must predict the failures of small sides (the check is not
+        vacuous);
+    (2) where reached (ad1ae0 on its own, small planes), the C++ (nv_model_test bm) gives the same explicit
+        error as the Python port (NotImplementedError -> status 1) and the same quantile bits otherwise."""
+    import warnings
+    warnings.simplefilter("ignore")
+    import nv_model_bm as bm
+    bad = 0
+    for c in (0, 1):
+        g = bm.CFG[c]
+        tab = bm.table(c)
+        rows, niv = _bm_valid_rows(c, range(84, 1537))
+        try:
+            bm.best_direction_all(rows, tab, g["n8"] - 1)
+            geo = "no block without a qualifying bin"
+        except NotImplementedError as e:
+            geo = f"FAILED: {e}"
+            bad += 1
+        # the reconstruction against sad_grid's INF mask (zero image), and its failures on small sides
+        for (W, H) in ((84, 84), (89, 97), (101, 333), (17, 20), (9, 30)):
+            pad = g["pad"]
+            xs, ys = bm.positions(W, g["step"]), bm.positions(H, g["step"])
+            grid = [(x - pad, y - pad) for y in ys for x in xs]
+            C = bm.sad_grid(np.zeros((H + 2 * pad, W + 2 * pad), np.uint8), grid, g["bs"], g["r28"], pad, tab.list1)
+            L = tab.list1
+            R = []
+            for y in ys:
+                for x in xs:
+                    ok = ((L[:, 0] >= -x) & (L[:, 0] <= W + 2 * pad - g["bs"] - x)
+                          & (L[:, 1] >= -y) & (L[:, 1] <= H + 2 * pad - g["bs"] - y))
+                    R.append(np.where(ok, 0, bm.INF))
+            same = np.array_equal(np.array(R) == bm.INF, C == bm.INF)
+            try:
+                bm.best_direction_all(np.array(R), tab, g["n8"] - 1)
+                fails = False
+            except NotImplementedError:
+                fails = True
+            small = min(W, H) < 84
+            if not same or fails != (small and min(W, H) <= (12 if c == 0 else 28)):
+                bad += 1
+                print(f"  ub geometry cfg {c} {W}x{H}: INF mask {'same' if same else 'DIFFERENT'}, "
+                      f"failure {fails}  MISMATCH")
+        print(f"  ub geometry cfg {c}: {len(rows)} placements ({niv} x {niv} dx / dy intervals of the sides 84..1536): "
+              f"{geo}")
+    # (2) direct calls: Python bm.ad1ae0 vs nvm::bm_quantiles
+    rng = np.random.default_rng(0xB10C)
+    cases = []
+    for c, W, H, kind in ((1, 6, 40, "pad"), (1, 40, 8, "pad"), (0, 4, 4, "pad"), (0, 30, 3, "pad"),
+                          (1, 20, 20, "bins"), (1, 17, 28, "bins"), (0, 10, 12, "bins"), (0, 9, 9, "bins"),
+                          (0, 14, 14, "ok"), (1, 29, 29, "ok"), (0, 84, 84, "ok"), (1, 84, 84, "ok"),
+                          (1, 89, 120, "ok"), (0, 97, 61, "ok")):
+        for style in ("normal", "periodic_nan"):
+            cases.append((c, W, H, kind, style, make_plane(rng, W, H, "normal" if style == "normal" else "coloured"),
+                          make_plane(rng, W, H, style)))
+    exp = []
+    for c, W, H, kind, style, clean, A in cases:
+        try:
+            with np.errstate(all="ignore"):
+                q = bm.ad1ae0(clean, A, c)
+            exp.append((0, np.array(q, F32)))
+        except NotImplementedError:
+            exp.append((1, None))
+    inp = os.path.join(TMP, f"model_bm_{os.getpid()}.bin")
+    outp = os.path.join(TMP, f"model_bm_{os.getpid()}.out")
+    with open(inp, "wb") as f:
+        f.write(struct.pack("<Q", len(cases)))
+        for c, W, H, kind, style, clean, A in cases:
+            f.write(struct.pack("<IIi", W, H, c) + clean.tobytes() + A.tobytes())
+    r = subprocess.run([exe, "bm", inp, outp], capture_output=True, text=True)
+    if r.returncode:
+        raise SystemExit(f"{exe} bm failed ({r.returncode}): {r.stderr[-500:]}")
+    res = np.fromfile(outp, U32).reshape(len(cases), 3)
+    os.remove(inp)
+    os.remove(outp)
+    nok = 0
+    kinds = {}
+    for (c, W, H, kind, style, _, _), (est, eq), row in zip(cases, exp, res):
+        want = 0 if kind == "ok" else 1
+        good = int(row[0]) == est == want and (est or np.array_equal(row[1:], eq.view(U32)))
+        nok += good
+        kinds.setdefault(kind, [0, 0])
+        kinds[kind][0] += 1
+        kinds[kind][1] += good
+        if not good:
+            print(f"  ub direct cfg {c} {W}x{H} {style} ({kind}): Python status {est} {eq}, C++ {int(row[0])} "
+                  f"{row[1:].view(F32)}  MISMATCH")
+    bad += len(cases) - nok
+    print(f"  ub direct ad1ae0: {nok}/{len(cases)} identical (" + ", ".join(
+        f"{k}: {v[1]}/{v[0]}" for k, v in kinds.items()) + "; pad / bins = NotImplementedError on both sides)")
+    return bad
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true")
@@ -407,6 +529,8 @@ def main():
               f"input; {sum(1 for e in exp if e[0] == 0) * WORDS} words compared)"
               + ("" if bad == 0 else f"  ({bad} MISMATCHES)"))
         print(f"time: Python {t_py:.1f} s (cache + {len(todo)} computed), C++ {t_cpp:.2f} s wall ({msg})")
+    if not a.only_genuine:
+        bad += ub_checks(a.exe)
     if a.genuine or a.only_genuine:
         g, missing = genuine_cases()
         res, t_cpp, msg = run_cpp(a.exe, [(p.shape[1], p.shape[0], s, 5, p) for (_, p, s, _) in g], "genuine")

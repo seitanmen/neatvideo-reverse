@@ -7,8 +7,8 @@ CXXFLAGS ?= -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra
 
 all: nv_curve_test
 
-nv_curve_test: nv_curve_main.cpp nv_curve.cpp nv_curve.h
-	$(CXX) $(CXXFLAGS) -o $@ nv_curve_main.cpp nv_curve.cpp -lpthread
+nv_curve_test: nv_curve_main.cpp nv_curve.cpp nv_curve.h nv_linekernel.cpp nv_linekernel.h nv_portable.cpp nv_portable.h
+	$(CXX) $(CXXFLAGS) -o $@ nv_curve_main.cpp nv_curve.cpp nv_linekernel.cpp nv_portable.cpp -lpthread
 
 verify: nv_curve_test
 	python3 verify_curve.py

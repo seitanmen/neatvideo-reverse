@@ -7,12 +7,16 @@
 #   make -C native && python3 native/verify_curve.py     (N1b)
 #   make -C native && python3 native/verify_lzma.py      (N1c)
 #   make -C native && python3 native/verify_flat.py      (N1d)
+#   make -C native && python3 native/verify_flat_cancel.py  (N1d status 5, F1)
 #   make -C native && python3 native/verify_model.py     (N1e)
 #   make -C native && python3 native/verify_temporal.py  (N1g)
 #   make -C native && python3 native/verify_spatial.py   (N1h)
+#   make -C native && python3 native/verify_profile.py   (N1f)
+#   make -C native && python3 native/verify_aft.py       (N1i)
 #   make -C native verify                                 (all of the above)
+#   make -C native portable x86 && native/verify_x86.sh  (F4: portable build, x86_64 vs arm64 bytes)
 #
-# Makefile.band / .curve / .lzma / .flat / .model / .v5 are the per-task makefiles the workers wrote;
+# Makefile.band / .curve / .lzma / .flat / .model / .v5 / .profile / .aft are the per-task makefiles the workers wrote;
 # the rules below are the same.
 
 CXX ?= clang++
@@ -26,18 +30,29 @@ SDK_SRC = lzma/LzmaLib.c lzma/LzmaEnc.c lzma/LzmaDec.c lzma/LzFind.c lzma/Alloc.
 SDK_OBJ = $(SDK_SRC:lzma/%.c=lzma/obj/%.o)
 SDK_HDR = $(wildcard lzma/*.h)
 
-all: nv_quality_test nv_band_test nv_curve_test nv_lzma_test nv_flat_test nv_model_test nv_v5_test
+all: nv_quality_test nv_band_test nv_curve_test nv_lzma_test nv_flat_test nv_model_test nv_v5_test \
+     nv_profile_test nv_aft_test
 
 nv_quality_test: main.cpp nv_quality.cpp nv_quality.h
 	$(CXX) $(CXXFLAGS) -o $@ main.cpp nv_quality.cpp
 
+# nv_portable: the float operations with the AArch64 result on every architecture (N1a / N1b / N1d / N1e);
+# nv_linekernel: the line kernels of FUN_00990448 (repro/nv_lines.py), shared by N1b and N1e.
+# The four binaries below also build as <name>_p (-DNV_PORTABLE: the portable operations on arm64,
+# `make portable`) and <name>_x86 (x86_64, run by Rosetta 2, `make x86`; native/verify_x86.sh).
+PT = nv_portable.cpp nv_portable.h
+LK = nv_linekernel.cpp nv_linekernel.h
+SUF ?=
+XFLAGS ?=
+PORT_BINS = nv_band_test nv_curve_test nv_flat_test nv_model_test
+
 # N1a: 5-level band measure (repro/nv_band.py)
-nv_band_test: nv_band_main.cpp nv_band.cpp nv_band.h
-	$(CXX) $(CXXFLAGS) -o $@ nv_band_main.cpp nv_band.cpp
+nv_band_test$(SUF): nv_band_main.cpp nv_band.cpp nv_band.h $(PT)
+	$(CXX) $(CXXFLAGS) $(XFLAGS) -o $@ nv_band_main.cpp nv_band.cpp nv_portable.cpp
 
 # N1b: EstimateNoiseLevelCurve (repro/nv_curve.py + nv_pixnoise.py + nv_lines.py)
-nv_curve_test: nv_curve_main.cpp nv_curve.cpp nv_curve.h
-	$(CXX) $(CXXFLAGS) -o $@ nv_curve_main.cpp nv_curve.cpp -lpthread
+nv_curve_test$(SUF): nv_curve_main.cpp nv_curve.cpp nv_curve.h $(LK) $(PT)
+	$(CXX) $(CXXFLAGS) $(XFLAGS) -o $@ nv_curve_main.cpp nv_curve.cpp nv_linekernel.cpp nv_portable.cpp -lpthread
 
 # N1c: LZMA (repro/nv_lzma.py) over the SDK 9.20 sources
 lzma/obj/%.o: lzma/%.c $(SDK_HDR)
@@ -48,12 +63,12 @@ nv_lzma_test: nv_lzma_main.cpp nv_lzma.cpp nv_lzma.h $(SDK_OBJ)
 	$(CXX) $(CXXFLAGS) -D_7ZIP_ST -o $@ nv_lzma_main.cpp nv_lzma.cpp $(SDK_OBJ)
 
 # N1d: FindFlatArea (repro/nv_flat.py) over N1a + N1b
-nv_flat_test: nv_flat_main.cpp nv_flat.cpp nv_flat.h nv_band.cpp nv_band.h nv_curve.cpp nv_curve.h
-	$(CXX) $(CXXFLAGS) -o $@ nv_flat_main.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp -lpthread
+nv_flat_test$(SUF): nv_flat_main.cpp nv_flat.cpp nv_flat.h nv_band.cpp nv_band.h nv_curve.cpp nv_curve.h $(LK) $(PT)
+	$(CXX) $(CXXFLAGS) $(XFLAGS) -o $@ nv_flat_main.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp nv_linekernel.cpp nv_portable.cpp -lpthread
 
 # N1e: BuildNoiseModel per-plane model, all 4096 words (repro/nv_model.py + _special + _bm) over N1a
-nv_model_test: nv_model_main.cpp nv_model.cpp nv_model.h nv_band.cpp nv_band.h
-	$(CXX) $(CXXFLAGS) -o $@ nv_model_main.cpp nv_model.cpp nv_band.cpp
+nv_model_test$(SUF): nv_model_main.cpp nv_model.cpp nv_model.h nv_band.cpp nv_band.h $(LK) $(PT)
+	$(CXX) $(CXXFLAGS) $(XFLAGS) -o $@ nv_model_main.cpp nv_model.cpp nv_band.cpp nv_linekernel.cpp nv_portable.cpp
 
 # N1g / N1h: v5 temporal and spatial kernels (repro/nvfilter.py temporal_v5 / spatial_v5 /
 # process_frame_v5); nv_ndimage reproduces the scipy 1.15.3 / numpy 2.1.3 primitives they use
@@ -63,18 +78,48 @@ V5_HDR = nv_ndimage.h nv_spatial.h nv_temporal.h
 nv_v5_test: $(V5_SRC) $(V5_HDR)
 	$(CXX) $(CXXFLAGS) -o $@ $(V5_SRC) -lpthread
 
+# N1f: BuildNoiseModel profile, the 0xc300-byte object (repro/nv_profile.py + nv_mcstats + nv_refnoise)
+# over N1a-N1e
+PROF_SRC = nv_profile_main.cpp nv_profile.cpp nv_model.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp \
+           nv_linekernel.cpp nv_portable.cpp nv_lzma.cpp
+PROF_HDR = nv_profile.h nv_model.h nv_flat.h nv_band.h nv_curve.h nv_linekernel.h nv_portable.h nv_lzma.h
+
+nv_profile_test: $(PROF_SRC) $(PROF_HDR) $(SDK_OBJ)
+	$(CXX) $(CXXFLAGS) -D_7ZIP_ST -o $@ $(PROF_SRC) $(SDK_OBJ) -lpthread
+
+# N1i: AutoFineTune (aft_port/src/nv_aft.py) + the nv_aft_v5.apply_aft combination over N1a/N1b/N1e/N1g
+AFT_SRC = nv_aft_main.cpp nv_aft.cpp nv_band.cpp nv_curve.cpp nv_model.cpp nv_ndimage.cpp \
+          nv_linekernel.cpp nv_portable.cpp
+AFT_HDR = nv_aft.h nv_band.h nv_curve.h nv_model.h nv_ndimage.h nv_linekernel.h nv_portable.h
+
+nv_aft_test: $(AFT_SRC) $(AFT_HDR)
+	$(CXX) $(CXXFLAGS) $(MUTFLAGS) -o $@ $(AFT_SRC) -lpthread
+
+portable:
+	$(MAKE) SUF=_p XFLAGS=-DNV_PORTABLE $(PORT_BINS:%=%_p)
+
+x86:
+	$(MAKE) SUF=_x86 XFLAGS="-arch x86_64" $(PORT_BINS:%=%_x86)
+
+# JOBS=N passes --jobs N to the scripts that take it (default: each script's own default)
+VJ = $(if $(JOBS),--jobs $(JOBS))
+
 verify: all
 	python3 verify_quality.py
-	python3 verify_band.py
-	python3 verify_curve.py
-	python3 verify_lzma.py
-	python3 verify_flat.py
-	python3 verify_model.py
-	python3 verify_temporal.py
-	python3 verify_spatial.py
+	python3 verify_band.py $(VJ)
+	python3 verify_curve.py $(VJ)
+	python3 verify_lzma.py $(VJ)
+	python3 verify_flat.py $(VJ)
+	python3 verify_flat_cancel.py $(VJ)
+	python3 verify_model.py $(VJ)
+	python3 verify_temporal.py $(VJ)
+	python3 verify_spatial.py $(VJ)
+	python3 verify_profile.py $(VJ)
+	python3 verify_aft.py $(VJ)
 
 clean:
 	rm -rf nv_quality_test tmp_blobs.bin tmp_results.bin nv_band_test nv_curve_test \
-	       nv_lzma_test lzma/obj nv_flat_test nv_model_test nv_v5_test
+	       nv_lzma_test lzma/obj nv_flat_test nv_model_test nv_v5_test nv_profile_test nv_aft_test \
+	       $(PORT_BINS:%=%_p) $(PORT_BINS:%=%_x86)
 
-.PHONY: all verify clean
+.PHONY: all portable x86 verify clean

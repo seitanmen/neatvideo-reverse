@@ -9,8 +9,8 @@ CXXFLAGS ?= -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra
 
 all: nv_model_test
 
-nv_model_test: nv_model_main.cpp nv_model.cpp nv_model.h nv_band.cpp nv_band.h
-	$(CXX) $(CXXFLAGS) -o $@ nv_model_main.cpp nv_model.cpp nv_band.cpp
+nv_model_test: nv_model_main.cpp nv_model.cpp nv_model.h nv_band.cpp nv_band.h nv_linekernel.cpp nv_linekernel.h nv_portable.cpp nv_portable.h
+	$(CXX) $(CXXFLAGS) -o $@ nv_model_main.cpp nv_model.cpp nv_band.cpp nv_linekernel.cpp nv_portable.cpp
 
 verify: nv_model_test
 	python3 verify_model.py

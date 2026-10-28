@@ -7,8 +7,8 @@ CXXFLAGS ?= -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra
 
 all: nv_band_test
 
-nv_band_test: nv_band_main.cpp nv_band.cpp nv_band.h
-	$(CXX) $(CXXFLAGS) -o $@ nv_band_main.cpp nv_band.cpp
+nv_band_test: nv_band_main.cpp nv_band.cpp nv_band.h nv_portable.cpp nv_portable.h
+	$(CXX) $(CXXFLAGS) -o $@ nv_band_main.cpp nv_band.cpp nv_portable.cpp
 
 verify: nv_band_test
 	python3 verify_band.py

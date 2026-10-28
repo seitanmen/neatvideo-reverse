@@ -157,6 +157,7 @@ int run_time(const char* inp, int jobs, int reps) {
     return 0;
 }
 
+#if defined(__aarch64__)
 uint32_t ub(float f) {
     uint32_t u;
     std::memcpy(&u, &f, 4);
@@ -167,6 +168,7 @@ float fb(uint32_t u) {
     std::memcpy(&f, &u, 4);
     return f;
 }
+#endif
 
 int run_recip_selftest(long count) {
 #if !defined(__aarch64__)

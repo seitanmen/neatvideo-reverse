@@ -11,6 +11,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <vector>
 
 namespace nvc {
@@ -28,11 +29,20 @@ struct CurveResult {
     int64_t counts[NBINS];  // per-bin pixel counts
 };
 
+// The cancel query (vtable slot 0 of the genuine's filter core; true = cancelled).  Empty: never asked.
+using Cancel = std::function<bool()>;
+
 // rgb: H x W pixels, `stride_c` floats per pixel (>= 3; channels 0..2 = R, G, B), row-major.
-// Returns false (and leaves *out untouched) when W or H < 48 (the genuine scheduler asserts).
+// Returns false (and leaves *out untouched) when W or H < 48 (the genuine scheduler asserts) or when
+// `cancel` reports a cancel (nv_curve.tile_histogram returning None: the genuine's curve fails).
 // threads > 1 processes tiles in parallel; the double sums are still added in scheduler order
 // (tile order, row-major inside the tile), so the result does not depend on `threads`.
-bool genuine_noise_curve(const float* rgb, int W, int H, int stride_c, CurveResult* out, int threads = 1);
+// cancel: asked before each tile is taken and once more after the last (nv_curve._cancelled, as the
+// worker FUN_009b76b0: tiles + 1 queries without a cancel); no query follows the first true answer.
+// With threads > 1 the query and the taking of the tile are one step under a lock, so the number of
+// queries is the same as with one thread (k for a cancel on the k-th query).
+bool genuine_noise_curve(const float* rgb, int W, int H, int stride_c, CurveResult* out, int threads = 1,
+                         const Cancel& cancel = Cancel());
 
 // FUN_009c6f88 (IsClip of a float plane of n values, row-major as nv_curve.is_clip_genuine ravels it).
 float is_clip_genuine(const float* v, size_t n);

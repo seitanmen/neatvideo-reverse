@@ -8,8 +8,8 @@ CXXFLAGS ?= -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra
 
 all: nv_flat_test
 
-nv_flat_test: nv_flat_main.cpp nv_flat.cpp nv_flat.h nv_band.cpp nv_band.h nv_curve.cpp nv_curve.h
-	$(CXX) $(CXXFLAGS) $(MUTFLAGS) -o $@ nv_flat_main.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp -lpthread
+nv_flat_test: nv_flat_main.cpp nv_flat.cpp nv_flat.h nv_band.cpp nv_band.h nv_curve.cpp nv_curve.h nv_linekernel.cpp nv_linekernel.h nv_portable.cpp nv_portable.h
+	$(CXX) $(CXXFLAGS) $(MUTFLAGS) -o $@ nv_flat_main.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp nv_linekernel.cpp nv_portable.cpp -lpthread
 
 verify: nv_flat_test
 	python3 verify_flat.py

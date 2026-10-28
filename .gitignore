@@ -30,6 +30,9 @@ native/**
 !native/Makefile.flat
 !native/Makefile.model
 !native/Makefile.v5
+!native/Makefile.profile
+!native/Makefile.aft
+!native/*.sh
 !native/MIGRATION.md
 !native/lzma/
 native/lzma/**

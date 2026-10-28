@@ -1,6 +1,8 @@
 // nv_curve.cpp - see nv_curve.h.  Every function names the Python function it ports; the
 // operation order (and operand order, which decides NaN payloads) follows the Python line by line.
 #include "nv_curve.h"
+#include "nv_linekernel.h"
+#include "nv_portable.h"
 
 #include <algorithm>
 #include <atomic>
@@ -14,31 +16,15 @@
 #include <thread>
 #include <utility>
 
-#if defined(__aarch64__) && !defined(NVC_PORTABLE)
-#include <arm_neon.h>
-#endif
 
 namespace nvc {
 
 namespace {
 
-inline float bits(uint32_t b) {
-    float f;
-    std::memcpy(&f, &b, 4);
-    return f;
-}
-inline uint32_t ubits(float f) {
-    uint32_t b;
-    std::memcpy(&b, &f, 4);
-    return b;
-}
+using nvp::bits;
+using nvp::ubits;
 
 // float32 constants, copied from the Python side's bit patterns
-const float F_0_01 = bits(0x3c23d70au);       // np.float32(0.01)
-const float F_PI = bits(0x40490fdbu);         // F32(3.1415927)
-const float F_HALF_PI = bits(0x3fc90fdbu);    // F32(1.5707964)
-const float F_NEG_HALF_PI = bits(0xbfc90fdbu);
-const float F_0_26 = bits(0x3e851eb8u);
 const float F_THIRD = bits(0x3eaaaaabu);      // 1/3 of FUN_009ece90
 const float F_0_75 = bits(0x3f400000u);
 const float F_0_25 = bits(0x3e800000u);
@@ -56,7 +42,6 @@ const float F_1_00001 = bits(0x3f800054u);
 const float F_CLIP_THR = bits(0x3ea8f5c3u);   // 0.33 (DAT_01244588)
 const float F_INV256 = bits(0x3b800000u);     // 0.00390625
 const float F_HALF = bits(0x3f000000u);
-const double QUARTER_PI_D = 0x1.921fb54442d18p-1;  // DAT_012436d0
 const float FLT_MAX_ = std::numeric_limits<float>::max();
 
 const uint32_t LUMA_BITS[3] = {0x3e99096cu, 0x3f162b6bu, 0x3dea7efau};  // 0.2989 0.5866 0.1145
@@ -76,25 +61,10 @@ const uint32_t REF_BITS[2][16] = {
      0x406c5975, 0x4030bbf8, 0x4029441c, 0x4026107a, 0x4039f6b7, 0x4026c12e, 0x4023c705, 0x402dacc0}};
 
 // libSystem functions through volatile pointers: the compiler must not constant-fold or rewrite
-// them (pow(x, 2.0) -> x*x, tanf of a constant angle folded at compile time).
+// them (pow(x, 2.0) -> x*x).
 double (*volatile g_pow)(double, double) = &::pow;
-float (*volatile g_tanf)(float) = &::tanf;
 
-// ------------------------------------------------------------------ AArch64 float helpers
-constexpr uint32_t QUIET = 0x00400000u;
-
-inline bool is_nan_bits(uint32_t u) { return (u & 0x7fffffffu) > 0x7f800000u; }
-
-// FPProcessNaNs(op1, op2) with DN = 0: the first signalling NaN (quieted), else the first quiet NaN.
-inline float process_nans2(float a, float b) {
-    const uint32_t ua = ubits(a), ub = ubits(b);
-    const bool na = is_nan_bits(ua), nb = is_nan_bits(ub);
-    if (na && !(ua & QUIET)) return bits(ua | QUIET);
-    if (nb && !(ub & QUIET)) return bits(ub | QUIET);
-    if (na) return a;
-    return b;
-}
-
+// ------------------------------------------------------------------ float helpers (nv_portable)
 // float64 operations of the curve stage with the NaN choice of the Python side made explicit (so neither
 // the compiler's operand order nor the ISA decides it).  When both operands are NaN:
 //   add1 / mul1: the first operand wins (AArch64 FPProcessNaNs(a, b)): CPython float ops, numpy array ops,
@@ -102,127 +72,32 @@ inline float process_nans2(float a, float b) {
 //   add2:        the second operand wins: numpy float64 SCALAR + and * (numpy's scalar math evaluates
 //                commutative ops as b op a; observed with numpy 2.1.3 / Python 3.13.5, arm64).
 // Only quiet NaNs reach this stage (the float32 -> float64 conversion quiets).
-inline bool is_nan_d(double x) { return x != x; }
-inline double nan_pick(double a, double b) {
-    uint64_t ua, ub;
-    std::memcpy(&ua, &a, 8);
-    std::memcpy(&ub, &b, 8);
-    const uint64_t q = 0x0008000000000000ULL;
-    double r;
-    if (is_nan_d(a) && !(ua & q)) { ua |= q; std::memcpy(&r, &ua, 8); return r; }
-    if (is_nan_d(b) && !(ub & q)) { ub |= q; std::memcpy(&r, &ub, 8); return r; }
-    return is_nan_d(a) ? a : b;
-}
-inline double add1(double a, double b) { return (is_nan_d(a) || is_nan_d(b)) ? nan_pick(a, b) : a + b; }
-inline double mul1(double a, double b) { return (is_nan_d(a) || is_nan_d(b)) ? nan_pick(a, b) : a * b; }
-inline double add2(double a, double b) { return (is_nan_d(a) || is_nan_d(b)) ? nan_pick(b, a) : a + b; }
+inline double add1(double a, double b) { return nvp::add(a, b); }
+inline double mul1(double a, double b) { return nvp::mul(a, b); }
+inline double add2(double a, double b) { return nvp::add(b, a); }
+inline double div1(double a, double b) { return nvp::div(a, b); }
+inline double sub1(double a, double b) { return nvp::sub(a, b); }
 
-#if !defined(__aarch64__) || defined(NVC_PORTABLE)
-// nv_pixnoise._fminmax: AArch64 FMIN / FMAX (x op1, c op2)
-inline float fmin_arm(float x, float c) {
-    if (std::isnan(x) || std::isnan(c)) return process_nans2(x, c);
-    if (x == 0.0f && c == 0.0f) return (std::signbit(x) || std::signbit(c)) ? -0.0f : 0.0f;
-    return x < c ? x : c;
-}
-inline float fmax_arm(float x, float c) {
-    if (std::isnan(x) || std::isnan(c)) return process_nans2(x, c);
-    if (x == 0.0f && c == 0.0f) return (std::signbit(x) && std::signbit(c)) ? -0.0f : 0.0f;
-    return x > c ? x : c;
-}
-
-#endif
-
-// nv_pixnoise.frecpe32 (software FPRecipEstimate, FPCR: RN, FZ = 0, DN = 0, AH = 0)
-float frecpe_soft(float x) {
-    const int64_t b = ubits(x);
-    const int64_t sign = b & 0x80000000LL;
-    int64_t exp = (b >> 23) & 0xff;
-    const int64_t frac = b & 0x7fffff;
-    if (exp == 255 && frac != 0) return bits(static_cast<uint32_t>(b | 0x400000));
-    if (exp == 255) return bits(static_cast<uint32_t>(sign));
-    if (exp == 0 && frac < (1 << 21)) return bits(static_cast<uint32_t>(sign | 0x7f800000));  // 0 and tiny
-    const int64_t mask52 = (int64_t(1) << 52) - 1;
-    int64_t fraction = frac << 29;
-    if (exp == 0) {
-        if ((fraction >> 51) & 1) {
-            fraction = (fraction << 1) & mask52;
-        } else {
-            fraction = (fraction << 2) & mask52;
-            exp = -1;
-        }
-    }
-    const int64_t scaled = (1 << 8) | ((fraction >> 44) & 0xff);
-    int64_t result_exp = 253 - exp;
-    const int64_t est = ((int64_t(1) << 19) / (scaled * 2 + 1) + 1) / 2;
-    int64_t fr = (est & 0xff) << 44;
-    if (result_exp == 0) fr = (int64_t(1) << 51) | (fr >> 1);
-    if (result_exp == -1) {
-        fr = (int64_t(1) << 50) | (fr >> 2);
-        result_exp = 0;
-    }
-    return bits(static_cast<uint32_t>(sign | ((result_exp & 0xff) << 23) | (fr >> 29)));
-}
-
-// nv_pixnoise.frecps32 (software FPRecipStepFused 2 - a*b, one rounding; inf*0 -> 2)
-float frecps_soft(float a, float b) {
-    const float na = bits(ubits(a) ^ 0x80000000u);
-    if ((std::isinf(na) && b == 0.0f) || (na == 0.0f && std::isinf(b))) return 2.0f;
-    if (std::isnan(na) || std::isnan(b)) return process_nans2(na, b);  // addend 2.0 is never NaN
-    return std::fma(na, b, 2.0f);
-}
-
-inline float frecpe(float x) {
-#if defined(__aarch64__) && !defined(NVC_PORTABLE)
-    return vrecpes_f32(x);
-#else
-    return frecpe_soft(x);
-#endif
-}
-inline float frecps(float a, float b) {
-#if defined(__aarch64__) && !defined(NVC_PORTABLE)
-    return vrecpss_f32(a, b);
-#else
-    return frecps_soft(a, b);
-#endif
-}
-
+using nvp::fcvtzs;   // float -> int64 with saturation: NaN -> 0
 // FMLA / FMADD: a*b + c with one rounding (FPMulAdd(addend = c, a, b))
-inline float fma32(float a, float b, float c) { return std::fma(a, b, c); }
-
-// fcvtzs (float -> int64) with saturation: NaN -> 0
-inline int64_t fcvtzs(float v) {
-    const double d = static_cast<double>(v);
-    if (d != d) return 0;
-    if (d >= 9223372036854775808.0) return std::numeric_limits<int64_t>::max();
-    if (d < -9223372036854775808.0) return std::numeric_limits<int64_t>::min();
-    return static_cast<int64_t>(d);
-}
+inline float fma32(float a, float b, float c) { return nvp::fma(a, b, c); }
 
 // ------------------------------------------------------------------ ordered float32 operations
 // clang -O2 (without fast-math) may swap the operands of a commutative fadd / fmul.  AArch64 returns the
 // first operand's NaN when both are NaN, so a swap changes the NaN bits whenever two NaNs of different
 // payload / sign meet.  Every add / sub / mul of the pixel pipeline therefore goes through FA / FS / FM:
-// one FADD / FSUB / FMUL in exactly the operand order of the Python (numpy array ops: first operand
-// first), as inline asm the compiler cannot commute or fold (x*1.0 stays a multiply).  F = float, V = 4
-// lanes; for_lanes runs a lane body over [0, L) in 4-wide chunks and a scalar remainder.
-// The portable build (non-AArch64 or -DNVC_PORTABLE) uses scalar code with the AArch64 NaN rule emulated.
-#if defined(__aarch64__) && !defined(NVC_PORTABLE)
-#define NVC_NEON 1
-using V = float32x4_t;
-inline V FA(V a, V b) { V r; __asm__("fadd %0.4s, %1.4s, %2.4s" : "=w"(r) : "w"(a), "w"(b)); return r; }
-inline V FS(V a, V b) { V r; __asm__("fsub %0.4s, %1.4s, %2.4s" : "=w"(r) : "w"(a), "w"(b)); return r; }
-inline V FM(V a, V b) { V r; __asm__("fmul %0.4s, %1.4s, %2.4s" : "=w"(r) : "w"(a), "w"(b)); return r; }
-inline V LD(const float* p, V) { return vld1q_f32(p); }
-inline void ST(float* p, V x) { vst1q_f32(p, x); }
-inline V DUP(float c, V) { return vdupq_n_f32(c); }
-inline float FA(float a, float b) { float r; __asm__("fadd %s0, %s1, %s2" : "=w"(r) : "w"(a), "w"(b)); return r; }
-inline float FS(float a, float b) { float r; __asm__("fsub %s0, %s1, %s2" : "=w"(r) : "w"(a), "w"(b)); return r; }
-inline float FM(float a, float b) { float r; __asm__("fmul %s0, %s1, %s2" : "=w"(r) : "w"(a), "w"(b)); return r; }
-#else
-#define NVC_NEON 0
-inline float FA(float a, float b) { return (std::isnan(a) || std::isnan(b)) ? process_nans2(a, b) : a + b; }
-inline float FS(float a, float b) { return (std::isnan(a) || std::isnan(b)) ? process_nans2(a, b) : a - b; }
-inline float FM(float a, float b) { return (std::isnan(a) || std::isnan(b)) ? process_nans2(a, b) : a * b; }
+// nv_portable's add / sub / mul, i.e. one FADD / FSUB / FMUL in exactly the operand order of the Python
+// (numpy array ops: first operand first) that the compiler cannot commute or fold (x*1.0 stays a
+// multiply), or its result written out in the portable build.  F = float, V = 4 lanes (AArch64 build
+// only, NVP_ASM); for_lanes runs a lane body over [0, L) in 4-wide chunks and a scalar remainder.
+template <class T> inline T FA(T a, T b) { return nvp::add(a, b); }
+template <class T> inline T FS(T a, T b) { return nvp::sub(a, b); }
+template <class T> inline T FM(T a, T b) { return nvp::mul(a, b); }
+#if NVP_ASM
+using V = nvp::V4;
+inline V LD(const float* p, V) { return nvp::load(p); }
+inline void ST(float* p, V x) { nvp::store(p, x); }
+inline V DUP(float c, V) { return nvp::dup(c); }
 #endif
 inline float LD(const float* p, float) { return *p; }
 inline void ST(float* p, float x) { *p = x; }
@@ -231,7 +106,7 @@ inline float DUP(float c, float) { return c; }
 template <class Fn>
 inline void for_lanes(int L, Fn&& f) {
     int l = 0;
-#if NVC_NEON
+#if NVP_ASM
     for (; l + 4 <= L; l += 4) f(l, V{});
 #endif
     for (; l < L; ++l) f(l, 0.0f);
@@ -249,67 +124,11 @@ struct Plane {
 };
 
 // ------------------------------------------------------------------ nv_lines
-struct LineKernel {
-    int W = 0, H = 0;
-    bool horiz = false, vert = false;
-    int flag = 0;
-    std::vector<int32_t> idx;                       // entries
-    std::vector<int32_t> loff, lstart, lcount;      // lines
-};
-
-// nv_lines.LineKernel.__init__ (FUN_00990448)
-LineKernel make_kernel(int W, int H, float a) {
-    if (!(1 <= W && W <= 512 && 1 <= H && H <= 512)) throw std::invalid_argument("LineKernel side out of 1..512");
-    LineKernel k;
-    k.W = W;
-    k.H = H;
-    k.horiz = std::fabs(a) < F_0_01;
-    if (k.horiz) return k;
-    k.vert = std::fabs(a + F_NEG_HALF_PI) < F_0_01;
-    if (k.vert) return k;
-    const float folded = a > F_HALF_PI ? (F_PI - a) : a;
-    int n, limit, stride;
-    float t;
-    if (static_cast<double>(folded) <= QUARTER_PI_D) {
-        k.flag = 1;
-        n = W;
-        limit = H;
-        stride = W;
-        t = g_tanf(folded);
-    } else {
-        k.flag = 0;
-        n = H;
-        limit = W;
-        stride = 1;
-        t = g_tanf(F_HALF_PI - folded);
-    }
-    std::vector<int64_t> off(n);
-    for (int i = 0; i < n; ++i) {
-        const float v = t * static_cast<float>(i);
-        off[i] = static_cast<int64_t>(std::rint(v + F_0_26));  // fmul, fadd, frintn, fcvtzs
-    }
-    for (int i = 1; i < n; ++i)
-        if (off[i] < off[i - 1]) throw std::invalid_argument("non-monotone line offsets");
-    const int64_t maxoff = off[n - 1];
-    for (int64_t base = -maxoff; base < limit; ++base) {
-        const int64_t start = std::lower_bound(off.begin(), off.end(), -base) - off.begin();
-        const int64_t end = (std::lower_bound(off.begin(), off.end(), limit - base) - off.begin()) - 1;
-        k.loff.push_back(static_cast<int32_t>(base * stride));
-        k.lstart.push_back(static_cast<int32_t>(start));
-        k.lcount.push_back(static_cast<int32_t>(end - start + 1));
-    }
-    k.idx.resize(n);
-    for (int i = 0; i < n; ++i) {
-        if (k.flag) {
-            const int64_t col = a <= F_HALF_PI ? i : (W - 1 - i);
-            k.idx[i] = static_cast<int32_t>(col + static_cast<int64_t>(W) * off[i]);
-        } else {
-            const int64_t row = a <= F_HALF_PI ? i : (H - 1 - i);
-            k.idx[i] = static_cast<int32_t>(row * W + off[i]);
-        }
-    }
-    return k;
-}
+// LineKernel / make_kernel and LinePlan / make_plan: nv_linekernel (shared with nv_model)
+using nvl::LineKernel;
+using nvl::LinePlan;
+using nvl::make_kernel;
+using nvl::make_plan;
 
 // nv_lines._box_lanes on L lanes at once: X and O are n x L (lane-contiguous), the running sum of every
 // lane goes along the n axis with exactly the per-lane operations of the reference (vectorised over lanes).
@@ -486,32 +305,6 @@ void box_cols(const float* X, int W, int H, int r, int mode, float* out) {
 void box2(const float* X, int W, int H, int r, int mode, float* out, float* tmp) {
     box_rows(X, W, H, r, mode, tmp);
     box_cols(tmp, W, H, r, mode, out);
-}
-
-// Entry-major plan of an oriented kernel (nv_lines.LinePlan): G[j*L + l] = pixel of entry j of line l
-// (HW = the -0.0 padding slot past the end of a line), inv[pixel] = j*L + l.
-struct LinePlan {
-    int m = 0, L = 0;
-    std::vector<int32_t> G, inv;
-};
-
-LinePlan make_plan(const LineKernel& K) {
-    LinePlan p;
-    const int HW = K.W * K.H;
-    p.L = static_cast<int>(K.loff.size());
-    for (int c : K.lcount) p.m = std::max(p.m, c);
-    p.G.assign(static_cast<size_t>(p.m) * p.L, HW);
-    p.inv.assign(HW, -1);
-    for (int l = 0; l < p.L; ++l)
-        for (int j = 0; j < K.lcount[l]; ++j) {
-            const int pix = K.loff[l] + K.idx[K.lstart[l] + j];
-            p.G[static_cast<size_t>(j) * p.L + l] = pix;
-            if (p.inv[pix] != -1) throw std::logic_error("lines do not partition the plane");
-            p.inv[pix] = j * p.L + l;
-        }
-    for (int v : p.inv)
-        if (v < 0) throw std::logic_error("lines do not cover the plane");
-    return p;
 }
 
 // nv_lines._general, mode 1 (the only mode FUN_00998d98 uses on oriented kernels), vectorised over the
@@ -729,23 +522,23 @@ void band_from(const float* lo, const float* src, int Wc, int Hc, int oddW, int 
 // opposite sign: the product keeps the order est * step of the genuine / numpy (FM).
 void ratio_eps(const float* a, const float* b, float eps, size_t n, float* out) {
     const size_t m = n & ~static_cast<size_t>(3);
-#if NVC_NEON
-    const float32x4_t ve = vdupq_n_f32(eps);
+#if NVP_ASM
+    const V ve = nvp::dup(eps);
     for (size_t i = 0; i < m; i += 4) {
-        const float32x4_t d = FA(ve, vld1q_f32(b + i));
-        const float32x4_t est = vrecpeq_f32(d);
-        const float32x4_t step = vrecpsq_f32(d, est);
-        vst1q_f32(out + i, FM(vld1q_f32(a + i), FM(est, step)));
+        const V d = FA(ve, nvp::load(b + i));
+        const V est = nvp::frecpe(d);
+        const V step = nvp::frecps(d, est);
+        nvp::store(out + i, FM(nvp::load(a + i), FM(est, step)));
     }
 #else
     for (size_t i = 0; i < m; ++i) {
         const float d = FA(eps, b[i]);
-        const float est = frecpe(d);
-        const float step = frecps(d, est);
+        const float est = nvp::frecpe(d);
+        const float step = nvp::frecps(d, est);
         out[i] = FM(a[i], FM(est, step));
     }
 #endif
-    for (size_t i = m; i < n; ++i) out[i] = a[i] / FA(b[i], eps);
+    for (size_t i = m; i < n; ++i) out[i] = nvp::div(a[i], FA(b[i], eps));
 }
 
 // nv_pixnoise.ramp (FUN_009ee93c)
@@ -765,12 +558,12 @@ void ramp(float a, float b, float va, float vb, const float* x, size_t n, float*
         hi = vb;
     }
     const size_t m = n & ~static_cast<size_t>(3);
-#if NVC_NEON
-    const float32x4_t vs = vdupq_n_f32(slope), vi = vdupq_n_f32(icpt), vh = vdupq_n_f32(hi), vl = vdupq_n_f32(lo);
+#if NVP_ASM
+    const V vs = nvp::dup(slope), vi = nvp::dup(icpt), vh = nvp::dup(hi), vl = nvp::dup(lo);
     for (size_t i = 0; i < m; i += 4)  // FMLA (addend icpt), FMIN hi, FMAX lo
-        vst1q_f32(y + i, vmaxq_f32(vminq_f32(vfmaq_f32(vi, vld1q_f32(x + i), vs), vh), vl));
+        nvp::store(y + i, nvp::fmax(nvp::fmin(nvp::fma(nvp::load(x + i), vs, vi), vh), vl));
 #else
-    for (size_t i = 0; i < m; ++i) y[i] = fmax_arm(fmin_arm(fma32(x[i], slope, icpt), hi), lo);
+    for (size_t i = 0; i < m; ++i) y[i] = nvp::fmax(nvp::fmin(fma32(x[i], slope, icpt), hi), lo);
 #endif
     for (size_t i = m; i < n; ++i) {
         float t = FA(icpt, FM(slope, x[i]));
@@ -1141,7 +934,7 @@ std::vector<double> cramer(const std::vector<std::vector<double>>& a, const std:
     for (int k = 0; k < n; ++k) {
         auto mk = a;
         for (int r = 0; r < n; ++r) mk[r][k] = b[r];
-        out.push_back(det(mk, n) / dd);
+        out.push_back(div1(det(mk, n), dd));
     }
     return out;
 }
@@ -1232,7 +1025,8 @@ void fill_curve(double* m) {
 }  // namespace
 
 // ------------------------------------------------------------------ driver
-bool genuine_noise_curve(const float* rgb, int W, int H, int stride_c, CurveResult* out, int threads) {
+bool genuine_noise_curve(const float* rgb, int W, int H, int stride_c, CurveResult* out, int threads,
+                         const Cancel& cancel) {
     if (W < MIN_TILE || H < MIN_TILE || stride_c < 3) return false;
     const auto tiles = tile_layout(W, H);
     const size_t nt = tiles.size();
@@ -1253,27 +1047,40 @@ bool genuine_noise_curve(const float* rgb, int W, int H, int stride_c, CurveResu
     if (threads <= 1) {
         Kept k;
         for (size_t t = 0; t < nt; ++t) {
+            if (cancel && cancel()) return false;   // nv_curve._cancelled before each tile
             process_tile(rgb, W, stride_c, tiles[t], &k);
             add(k);
         }
     } else {
-        std::atomic<size_t> next{0};
+        std::mutex mu;                               // guards next / cancelled / the cancel query
+        size_t next = 0;
+        bool cancelled = false;
         std::vector<std::thread> pool;
         for (int i = 0; i < threads; ++i)
             pool.emplace_back([&]() {
                 for (;;) {
-                    const size_t t = next.fetch_add(1);
-                    if (t >= nt) break;
+                    size_t t;
+                    {
+                        std::lock_guard<std::mutex> lk(mu);
+                        if (cancelled || next >= nt) break;
+                        if (cancel && cancel()) {
+                            cancelled = true;
+                            break;
+                        }
+                        t = next++;
+                    }
                     process_tile(rgb, W, stride_c, tiles[t], &kept[t]);
                 }
             });
         for (auto& th : pool) th.join();
+        if (cancelled) return false;
         for (size_t t = 0; t < nt; ++t) add(kept[t]);  // scheduler order, row-major within the tile
     }
+    if (cancel && cancel()) return false;            // the query that finds the scheduler empty
     // curve_means
     const int64_t thr = (static_cast<int64_t>(W) * H) >> 10;
     double m[NBINS];
-    for (int i = 0; i < NBINS; ++i) m[i] = counts[i] >= thr ? sums[i] / static_cast<double>(counts[i]) : -1.0;
+    for (int i = 0; i < NBINS; ++i) m[i] = counts[i] >= thr ? div1(sums[i], static_cast<double>(counts[i])) : -1.0;
     fill_curve(m);
     // smooth_curve
     double ys[NBINS];
@@ -1321,14 +1128,15 @@ double CurveInterp::operator()(double x) const {
         check = xs[j] <= x;
     }
     const double x0 = xs[k - 1];
-    const double t = (x - x0) / (xs[k] - x0);
-    return add1(mul1(ys[k - 1], 1.0 - t), mul1(t, ys[k]));  // Python floats
+    const double t = div1(sub1(x, x0), sub1(xs[k], x0));
+    return add1(mul1(ys[k - 1], sub1(1.0, t)), mul1(t, ys[k]));  // Python floats
 }
 
 // software FRECPE / FRECPS, exported for the self-test of the test driver
-float frecpe_software(float x) { return frecpe_soft(x); }
-float frecps_software(float a, float b) { return frecps_soft(a, b); }
-float frecpe_hardware(float x) { return frecpe(x); }
-float frecps_hardware(float a, float b) { return frecps(a, b); }
+// (the hardware forms are the CPU instructions on AArch64 in every build, the software forms elsewhere)
+float frecpe_software(float x) { return nvp::frecpe_soft(x); }
+float frecps_software(float a, float b) { return nvp::frecps_soft(a, b); }
+float frecpe_hardware(float x) { return nvp::frecpe_hw(x); }
+float frecps_hardware(float a, float b) { return nvp::frecps_hw(a, b); }
 
 }  // namespace nvc
