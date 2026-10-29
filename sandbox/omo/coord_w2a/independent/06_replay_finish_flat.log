@@ -1,0 +1,22 @@
+38631_3 nv_aft_test finish alt3: out3 bytes 149796000/149796000 words 37449000 DIFF 191 first [62309, 149594, 361909, 586475, 586491, 1048530, 1085843, 1185803]
+25537_1 nv_flat_test flat alt1: out3 bytes 6656496/6656496 words 1664124 DIFF 0
+25537_1 nv_flat_test flat alt2: out3 bytes 6656496/6656496 words 1664124 DIFF 0
+25537_2 nv_flat_test flat alt1: out3 bytes 6656496/6656496 words 1664124 DIFF 0
+25537_2 nv_flat_test flat alt2: out3 bytes 6656496/6656496 words 1664124 DIFF 0
+25537_9 nv_flat_test flat alt1: out3 bytes 984336/984336 words 246084 DIFF 0
+25537_9 nv_flat_test flat alt2: out3 bytes 984336/984336 words 246084 DIFF 0
+25537_16 nv_flat_test flat alt1: out3 bytes 331824/331824 words 82956 DIFF 0
+25537_16 nv_flat_test flat alt2: out3 bytes 331824/331824 words 82956 DIFF 0
+25537_23 nv_flat_test flat alt1: out3 bytes 39624712/39624712 words 9906178 DIFF 0
+25537_23 nv_flat_test flat alt2: out3 bytes 39624712/39624712 words 9906178 DIFF 0
+25537_32 nv_flat_test flat alt1: out3 bytes 6316/6316 words 1579 DIFF 0
+25537_32 nv_flat_test flat alt2: out3 bytes 6316/6316 words 1579 DIFF 0
+27559_1 nv_flat_test cancel alt1: out3 bytes 24/24 words 6 DIFF 0
+27559_1 nv_flat_test cancel alt2: out3 bytes 24/24 words 6 DIFF 0
+27559_1 nv_flat_test cancel alt3: out3 bytes 24/24 words 6 DIFF 0
+27559_100 nv_flat_test cancel alt1: out3 bytes 24/24 words 6 DIFF 0
+27559_100 nv_flat_test cancel alt2: out3 bytes 24/24 words 6 DIFF 0
+27559_100 nv_flat_test cancel alt3: out3 bytes 24/24 words 6 DIFF 0
+27559_300 nv_flat_test flat alt1: out3 bytes 554780/554780 words 138695 DIFF 0
+27559_300 nv_flat_test flat alt2: out3 bytes 554780/554780 words 138695 DIFF 0
+27559_300 nv_flat_test flat alt3: out3 bytes 554780/554780 words 138695 DIFF 2 first [27, 29]

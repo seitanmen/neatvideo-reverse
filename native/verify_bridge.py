@@ -25,6 +25,9 @@
 #            backend.run_in_child(task, run_aft) with a task cancelled during the AFT
 #   fallback NV_NATIVE_LIB=<missing> in a child process (AVAILABLE False, backend uses the Python path);
 #            NV_NATIVE=0; inputs the C path does not reproduce (np.float64 parameter, unknown similarity)
+#   prof5    (N3a, verify_bridge_prof5.py) nvc_build_profile_v5 / noisiest / hh1 / effective_profile vs backend
+#   ui       (N3a, verify_bridge_ui.py) the viewer display, selection measures, Quality and yuv_to_rgb vs
+#            nvfilter / nv_ui_qt.display / nv_ui_qt.quality
 #   --export denoise_video_v5 export (nv_ui_qt.export, CRF 0, 4 frames) with NV_NATIVE=1 and 0: same bytes
 #   --bench  timing table (1080p test_v02 n = 312, 1 thread)
 import argparse
@@ -645,7 +648,7 @@ def main():
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--tmp", default=TMP)
-    ap.add_argument("--only", default="curve,profile,aft,frame,cancel,fallback")
+    ap.add_argument("--only", default="curve,profile,aft,frame,cancel,fallback,prof5,ui,depth")
     ap.add_argument("--bench", action="store_true")
     ap.add_argument("--export", action="store_true")
     A = ap.parse_args()
@@ -703,6 +706,15 @@ def main():
                   f"{x['words'] - x['diffs']}/{x['words']} words", flush=True)
             for f in x["first"] if x["diffs"] else ():
                 print("      ", f)
+    # N3a groups (separate modules): prof5 = the build_profile_v5 port (nvcore_c_prof5.h), ui = the UI numerics
+    # (nvcore_c_ui.h); N3c: depth = the pixel-format conversions (nvcore_c_depth.h); each counts as one case here,
+    # its own output lists the items
+    for g, mod in (("prof5", "verify_bridge_prof5"), ("ui", "verify_bridge_ui"), ("depth", "verify_bridge_depth")):
+        if g in groups:
+            ok, tot = __import__(mod).run(TMP, A.jobs, A.quick)
+            x = result(g, f"{mod}.run ({ok}/{tot} items)", [tot, tot - ok, [] if ok == tot else [f"{tot - ok} items differ"]])
+            rows.append(x)
+            print(f"[{g}] {'OK ' if ok == tot else 'NG '} {x['label']}", flush=True)
     by = {}
     for x in rows:
         g = by.setdefault(x["group"], [0, 0, 0, 0])

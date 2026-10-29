@@ -1,0 +1,8 @@
+  depth formats  seed 1     67827098/67827098  0.7s
+  depth formats  seed 2     67826820/67826820  0.7s
+  depth formats  seed 3     67826810/67826810  0.4s
+  depth ofx      seed 11    1752305/1752305  0.0s
+  depth ofx      seed 12    1752349/1752349  0.0s
+  depth ofx      seed 13    1752365/1752365  0.0s
+  depth badfmt   seed 0     13/13  0.0s
+depth: 208737760/208737760 bit-exact

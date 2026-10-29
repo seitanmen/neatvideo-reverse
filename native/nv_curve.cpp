@@ -1,6 +1,7 @@
 // nv_curve.cpp - see nv_curve.h.  Every function names the Python function it ports; the
 // operation order (and operand order, which decides NaN payloads) follows the Python line by line.
 #include "nv_curve.h"
+#include "nv_libm.h"
 #include "nv_linekernel.h"
 #include "nv_portable.h"
 
@@ -62,7 +63,7 @@ const uint32_t REF_BITS[2][16] = {
 
 // libSystem functions through volatile pointers: the compiler must not constant-fold or rewrite
 // them (pow(x, 2.0) -> x*x).
-double (*volatile g_pow)(double, double) = &::pow;
+double (*volatile g_pow)(double, double) = NV_LIBM(pow, pow);
 
 // ------------------------------------------------------------------ float helpers (nv_portable)
 // float64 operations of the curve stage with the NaN choice of the Python side made explicit (so neither
@@ -1138,5 +1139,9 @@ float frecpe_software(float x) { return nvp::frecpe_soft(x); }
 float frecps_software(float a, float b) { return nvp::frecps_soft(a, b); }
 float frecpe_hardware(float x) { return nvp::frecpe_hw(x); }
 float frecps_hardware(float a, float b) { return nvp::frecps_hw(a, b); }
+
+// nv_pixnoise.up2 / ratio_eps for nv_ui (the viewer's BuildFreqImage, N3a): the functions above, unchanged
+void up2_ext(const float* lo, int Wc, int Hc, int oddW, int oddH, float* out) { up2(lo, Wc, Hc, oddW, oddH, out); }
+void ratio_eps_ext(const float* a, const float* b, float eps, size_t n, float* out) { ratio_eps(a, b, eps, n, out); }
 
 }  // namespace nvc

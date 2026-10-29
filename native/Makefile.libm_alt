@@ -1,0 +1,149 @@
+# W2a: the libm sensitivity builds (`make -C native libm-alt`).
+#
+# The same sources and flags as the default build (Makefile) plus -DNV_LIBM_ALT, libm_alt.cpp and the
+# openlibm / musl objects; the binaries go to libm_alt/bin/ under the default names (the default build
+# is not touched).  At run time NV_LIBM_ALT=0|1|2|3 picks system / openlibm / musl / naive (libm_alt.h).
+#
+#   make -C native libm-alt && python3 native/verify_libm_alt.py
+#
+# openlibm 0.8.8 and musl 1.2.6: only the needed .c / .h files, unmodified (openlibm/SOURCE.md,
+# musl/SOURCE.md).  Their own build scripts are not used.  Flags: the upstream ones that matter for the
+# results (-std=c99 -fno-builtin -fno-strict-aliasing; musl also -frounding-math, openlibm
+# -D__BSD_VISIBLE -DASSEMBLER) and ours (-O2 -ffp-contract=off -fno-fast-math).  The public names are
+# renamed by a forced include (libm_alt/*_rename.h) and `ld -r -exported_symbols_list` makes every other
+# symbol local, so nothing can bind in place of the system libm.  The two upstream warnings are silenced
+# by name (openlibm e_pow.c:134 -Wsign-compare; musl libm.h:175 -Wunused-but-set-variable, the volatile
+# store of fp_force_evall).  The few helpers the sources call from
+# the system libm (scalbn, floor, fabs, sqrt, rint) are exact functions (correctly rounded by definition).
+
+CXX ?= clang++
+CC = clang
+CXXFLAGS ?= -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra
+SDK_CFLAGS = -O2 -ffp-contract=off -fno-fast-math -D_7ZIP_ST -Wall -Wextra \
+             -Wno-self-assign -Wno-unused-but-set-variable -Wno-misleading-indentation
+SDK_SRC = lzma/LzmaLib.c lzma/LzmaEnc.c lzma/LzmaDec.c lzma/LzFind.c lzma/Alloc.c
+SDK_OBJ = $(SDK_SRC:lzma/%.c=lzma/obj/%.o)
+SDK_HDR = $(wildcard lzma/*.h)
+
+B = libm_alt/bin
+OBJ = libm_alt/obj
+LIBM_CFLAGS = -std=c99 -O2 -ffp-contract=off -fno-fast-math -fno-builtin -fno-strict-aliasing -Wall -Wextra
+
+OL_SRC = e_pow.c s_tanf.c k_tanf.c e_rem_pio2f.c k_rem_pio2.c e_atan2.c s_atan.c s_sin.c s_cos.c \
+         k_sin.c k_cos.c e_rem_pio2.c e_expf.c s_sincos.c
+OL_OBJ = $(OL_SRC:%.c=$(OBJ)/ol/%.o)
+OL_HDR = $(wildcard openlibm/include/*.h openlibm/src/*.h) libm_alt/openlibm_rename.h
+OL_CFLAGS = $(LIBM_CFLAGS) -D__BSD_VISIBLE -DASSEMBLER -Iopenlibm/include -Iopenlibm/src \
+            -include libm_alt/openlibm_rename.h -Wno-sign-compare
+
+MU_SRC = pow.c pow_data.c exp_data.c tanf.c __tandf.c __rem_pio2f.c __rem_pio2.c __rem_pio2_large.c \
+         atan2.c atan.c sin.c cos.c sincos.c __sin.c __cos.c expf.c exp2f_data.c __math_oflow.c \
+         __math_uflow.c __math_xflow.c __math_invalid.c __math_oflowf.c __math_uflowf.c __math_xflowf.c
+MU_OBJ = $(MU_SRC:%.c=$(OBJ)/mu/%.o)
+MU_ARCH = $(if $(filter arm64 aarch64,$(shell uname -m)),aarch64,generic)
+MU_HDR = $(wildcard musl/src/math/*.h musl/src/internal/*.h musl/arch/*/fp_arch.h libm_alt/musl_shim/*.h) \
+         libm_alt/musl_rename.h
+MU_CFLAGS = $(LIBM_CFLAGS) -frounding-math -Ilibm_alt/musl_shim -Imusl/src/internal -Imusl/arch/$(MU_ARCH) \
+            -include libm_alt/musl_shim/features.h -include libm_alt/musl_rename.h -Wno-unused-but-set-variable
+
+ALT = $(OBJ)/libm_alt.o $(OBJ)/openlibm.o $(OBJ)/musl.o
+AFLAGS = $(CXXFLAGS) -DNV_LIBM_ALT
+
+BINS = nv_quality_test nv_band_test nv_curve_test nv_lzma_test nv_flat_test nv_model_test nv_v5_test \
+       nv_profile_test nv_aft_test
+ULP = libm_alt/libm_ulp
+
+all: $(BINS:%=$(B)/%) $(B)/libnvcore.dylib $(ULP)
+
+$(OBJ)/ol/%.o: openlibm/src/%.c $(OL_HDR)
+	@mkdir -p $(OBJ)/ol
+	$(CC) $(OL_CFLAGS) -c -o $@ $<
+
+$(OBJ)/mu/%.o: musl/src/math/%.c $(MU_HDR)
+	@mkdir -p $(OBJ)/mu
+	$(CC) $(MU_CFLAGS) -c -o $@ $<
+
+$(OBJ)/openlibm.o: $(OL_OBJ) libm_alt/openlibm.exp
+	ld -r -exported_symbols_list libm_alt/openlibm.exp -o $@ $(OL_OBJ)
+
+$(OBJ)/musl.o: $(MU_OBJ) libm_alt/musl.exp
+	ld -r -exported_symbols_list libm_alt/musl.exp -o $@ $(MU_OBJ)
+
+$(OBJ)/libm_alt.o: libm_alt.cpp libm_alt.h
+	@mkdir -p $(OBJ)
+	$(CXX) $(CXXFLAGS) -c -o $@ libm_alt.cpp
+
+lzma/obj/%.o: lzma/%.c $(SDK_HDR)
+	@mkdir -p lzma/obj
+	$(CC) $(SDK_CFLAGS) -c -o $@ $<
+
+LH = nv_libm.h libm_alt.h $(ALT)
+PT = nv_portable.cpp nv_portable.h
+LK = nv_linekernel.cpp nv_linekernel.h
+
+$(B)/nv_quality_test: main.cpp nv_quality.cpp nv_quality.h $(LH)
+	@mkdir -p $(B)
+	$(CXX) $(AFLAGS) -o $@ main.cpp nv_quality.cpp $(ALT)
+
+$(B)/nv_band_test: nv_band_main.cpp nv_band.cpp nv_band.h $(PT) $(LH)
+	@mkdir -p $(B)
+	$(CXX) $(AFLAGS) -o $@ nv_band_main.cpp nv_band.cpp nv_portable.cpp $(ALT)
+
+$(B)/nv_curve_test: nv_curve_main.cpp nv_curve.cpp nv_curve.h $(LK) $(PT) $(LH)
+	@mkdir -p $(B)
+	$(CXX) $(AFLAGS) -o $@ nv_curve_main.cpp nv_curve.cpp nv_linekernel.cpp nv_portable.cpp $(ALT) -lpthread
+
+$(B)/nv_lzma_test: nv_lzma_main.cpp nv_lzma.cpp nv_lzma.h $(SDK_OBJ) $(LH)
+	@mkdir -p $(B)
+	$(CXX) $(AFLAGS) -D_7ZIP_ST -o $@ nv_lzma_main.cpp nv_lzma.cpp $(SDK_OBJ) $(ALT)
+
+$(B)/nv_flat_test: nv_flat_main.cpp nv_flat.cpp nv_flat.h nv_band.cpp nv_band.h nv_curve.cpp nv_curve.h $(LK) $(PT) $(LH)
+	@mkdir -p $(B)
+	$(CXX) $(AFLAGS) -o $@ nv_flat_main.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp nv_linekernel.cpp nv_portable.cpp \
+	    $(ALT) -lpthread
+
+$(B)/nv_model_test: nv_model_main.cpp nv_model.cpp nv_model.h nv_band.cpp nv_band.h $(LK) $(PT) $(LH)
+	@mkdir -p $(B)
+	$(CXX) $(AFLAGS) -o $@ nv_model_main.cpp nv_model.cpp nv_band.cpp nv_linekernel.cpp nv_portable.cpp $(ALT)
+
+V5_SRC = nv_v5_main.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp
+V5_HDR = nv_ndimage.h nv_spatial.h nv_temporal.h
+
+$(B)/nv_v5_test: $(V5_SRC) $(V5_HDR) $(LH)
+	@mkdir -p $(B)
+	$(CXX) $(AFLAGS) -o $@ $(V5_SRC) $(ALT) -lpthread
+
+PROF_SRC = nv_profile_main.cpp nv_profile.cpp nv_model.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp \
+           nv_linekernel.cpp nv_portable.cpp nv_lzma.cpp
+PROF_HDR = nv_profile.h nv_model.h nv_flat.h nv_band.h nv_curve.h nv_linekernel.h nv_portable.h nv_lzma.h
+
+$(B)/nv_profile_test: $(PROF_SRC) $(PROF_HDR) $(SDK_OBJ) $(LH)
+	@mkdir -p $(B)
+	$(CXX) $(AFLAGS) -D_7ZIP_ST -o $@ $(PROF_SRC) $(SDK_OBJ) $(ALT) -lpthread
+
+AFT_SRC = nv_aft_main.cpp nv_aft.cpp nv_band.cpp nv_curve.cpp nv_model.cpp nv_ndimage.cpp \
+          nv_linekernel.cpp nv_portable.cpp
+AFT_HDR = nv_aft.h nv_band.h nv_curve.h nv_model.h nv_ndimage.h nv_linekernel.h nv_portable.h
+
+$(B)/nv_aft_test: $(AFT_SRC) $(AFT_HDR) $(LH)
+	@mkdir -p $(B)
+	$(CXX) $(AFLAGS) -o $@ $(AFT_SRC) $(ALT) -lpthread
+
+LIB_SRC = nvcore_c.cpp nv_aft.cpp nv_profile.cpp nv_model.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp \
+          nv_linekernel.cpp nv_portable.cpp nv_lzma.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp
+LIB_HDR = nvcore_c.h nv_aft.h nv_profile.h nv_model.h nv_flat.h nv_band.h nv_curve.h nv_linekernel.h \
+          nv_portable.h nv_lzma.h nv_ndimage.h nv_spatial.h nv_temporal.h
+
+$(B)/libnvcore.dylib: $(LIB_SRC) $(LIB_HDR) $(SDK_OBJ) $(LH)
+	@mkdir -p $(B)
+	$(CXX) $(AFLAGS) -D_7ZIP_ST -dynamiclib -install_name @rpath/libnvcore.dylib \
+	    -o $@ $(LIB_SRC) $(SDK_OBJ) $(ALT) -lpthread
+
+# the function-level comparison (ULP distribution of every alt against the system libm)
+$(ULP): libm_alt/libm_ulp.cpp libm_alt.h $(ALT)
+	$(CXX) $(CXXFLAGS) -o $@ libm_alt/libm_ulp.cpp $(ALT) -lpthread
+
+clean:
+	rm -rf libm_alt/bin libm_alt/obj $(ULP)
+
+.PHONY: all clean

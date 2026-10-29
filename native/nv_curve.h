@@ -47,6 +47,11 @@ bool genuine_noise_curve(const float* rgb, int W, int H, int stride_c, CurveResu
 // FUN_009c6f88 (IsClip of a float plane of n values, row-major as nv_curve.is_clip_genuine ravels it).
 float is_clip_genuine(const float* v, size_t n);
 
+// nv_pixnoise.up2 (FUN_00993df0: (Hc, Wc) -> (2Hc + oddH, 2Wc + oddW)) and ratio_eps (FUN_009ee04c, a / (b + eps)
+// on n values) as the curve code uses them; exposed for nv_ui (N3a).
+void up2_ext(const float* lo, int Wc, int Hc, int oddW, int oddH, float* out);
+void ratio_eps_ext(const float* a, const float* b, float eps, size_t n, float* out);
+
 // FUN_00998d98 on one tile (debug / verification entry): luma W x H, weight in/out (W*H).
 // noise and bright receive W*H floats each.
 void pixnoise(const float* luma, int W, int H, float* weight, float* noise, float* bright);

@@ -1,0 +1,16 @@
+  comp  atrous        : 180/180 bit-exact (896736 words)
+  comp  curve         : 66/66 bit-exact (74950 words)
+  comp  down2         : 48/48 bit-exact (18336 words)
+  comp  exp           : 60/60 bit-exact (74728 words)
+  comp  gauss         : 66/66 bit-exact (89848 words)
+  comp  mapc          : 61/61 bit-exact (74735 words)
+  comp  median        : 60/60 bit-exact (74728 words)
+  comp  to_grid       : 144/144 bit-exact (77136 words)
+  comp  uniform       : 512/512 bit-exact (644672 words)
+  rand  spatial       : 60/60 bit-exact (638942 words)
+  real  spatial       : 30/30 bit-exact (139968000 words)
+1287/1287 bit-exact (455 cases with NaN in the expected output, 930522 NaN words, payloads compared)
+time: Python 7.8 s wall (2 procs, 7.8 s CPU), C++ 3.2 s (2 threads)
+real 44.65
+user 261.18
+sys 20.58

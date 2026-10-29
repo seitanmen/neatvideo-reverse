@@ -1,0 +1,51 @@
+== states
+  state_adjust.json: 19/19 fields equal, profile leaves equal, profile JSON text identical
+  state_auto.json: 19/19 fields equal, profile leaves equal, profile JSON text identical
+  state_build.json: 19/19 fields equal, profile leaves equal, profile JSON text identical
+  state_edited.json: 19/19 fields equal, profile leaves equal, profile JSON text identical
+  state_sel.json: 19/19 fields equal, profile leaves equal, profile JSON text identical
+  filter_adjust.json: 143 entries, identical
+  filter_beginner.json: 143 entries, identical
+  filter_edited.json: 143 entries, identical
+  filter_final.json: 143 entries, identical
+  filter_nlc.json: 143 entries, identical
+  filter_nlc40.json: 143 entries, identical
+  filter_nlc_off.json: 143 entries, identical
+  filter_redo1.json: 143 entries, identical
+  filter_saved.json: 143 entries, identical
+  filter_undo2.json: 143 entries, identical
+  preset.nvpreset.json: identical text
+  profile.nvprof.json: identical text
+  export_a.ui_params.json: identical text
+  export_a.ui_profile.json: identical text
+  export_b.ui_params.json: identical text
+  export_b.ui_profile.json: identical text
+  export_a.mp4: ok True/True, byte-identical (818365 B), side file equal
+  export_b.mp4: ok True/True, byte-identical (159549 B), side file equal
+  menus.json: 114 entries, 4 differences
+      $[2].items[19].enabled: True vs False
+      $[5].items[0].enabled: True vs False
+      $[5].items[2].enabled: True vs False
+      $[6].items: len 12 vs 13
+  toolbars.json: 10 entries, identical
+== panes
+  232/232 pane images byte-identical (52768512 pixels in all)
+== grabs
+  timeline.png: 0 of 60592 pixels differ (0.000%), max |diff| 0
+  viewer_build.png: 0 of 680928 pixels differ (0.000%), max |diff| 0
+  viewer_sel.png: 0 of 680928 pixels differ (0.000%), max |diff| 0
+  viewer_ycc_build.png: 0 of 680928 pixels differ (0.000%), max |diff| 0
+  win_adjust.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_adjust_area.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_adjust_beginner.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_adjust_edit.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_adjust_general.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_adjust_spatial.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_nlc.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_pcheck.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_perf.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_prepare_auto.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_prepare_build.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_prepare_sel.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+RESULT: EQUAL
+cmp exit 0

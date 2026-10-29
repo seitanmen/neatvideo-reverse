@@ -1,0 +1,73 @@
+make -C native libm-alt > $D/04_libm_alt_build.log 2>&1  26.31s user 2.56s system 100% cpu 28.728 total
+alt build exit=0
+0
+-rwxr-xr-x@ 1 seitan  staff  114472 10月 29 04:13 native/libm_alt/libm_ulp
+
+native/libm_alt/bin:
+total 4088
+drwxr-xr-x@ 12 seitan  staff     384 10月 29 04:13 .
+drwxr-xr-x@ 15 seitan  staff     480 10月 29 04:13 ..
+-rwxr-xr-x@  1 seitan  staff  410016 10月 29 04:13 libnvcore.dylib
+-rwxr-xr-x@  1 seitan  staff  272056 10月 29 04:13 nv_aft_test
+-rwxr-xr-x@  1 seitan  staff  112064 10月 29 04:12 nv_band_test
+-rwxr-xr-x@  1 seitan  staff  156384 10月 29 04:12 nv_curve_test
+-rwxr-xr-x@  1 seitan  staff  197472 10月 29 04:12 nv_flat_test
+-rwxr-xr-x@  1 seitan  staff  148016 10月 29 04:12 nv_lzma_test
+-rwxr-xr-x@  1 seitan  staff  188960 10月 29 04:12 nv_model_test
+-rwxr-xr-x@  1 seitan  staff  332528 10月 29 04:13 nv_profile_test
+-rwxr-xr-x@  1 seitan  staff   93408 10月 29 04:12 nv_quality_test
+-rwxr-xr-x@  1 seitan  staff  153768 10月 29 04:12 nv_v5_test
+--- nm -g openlibm.o / musl.o (defined, external)
+00000000000019b0 T _nv_ol_atan2
+000000000000203c T _nv_ol_cos
+0000000000002808 T _nv_ol_expf
+0000000000000000 T _nv_ol_pow
+0000000000001f40 T _nv_ol_sin
+0000000000002a28 T _nv_ol_sincos
+000000000000097c T _nv_ol_tanf
+00000000000016e0 T _nv_mu_atan2
+0000000000001cdc T _nv_mu_cos
+0000000000002134 T _nv_mu_expf
+0000000000000000 T _nv_mu_pow
+0000000000001bc8 T _nv_mu_sin
+0000000000001dec T _nv_mu_sincos
+00000000000004e8 T _nv_mu_tanf
+--- undefined in openlibm.o
+___stack_chk_fail
+___stack_chk_guard
+_fabs
+_floor
+_scalbn
+_sqrt
+--- undefined in musl.o
+___stack_chk_fail
+___stack_chk_guard
+_fabs
+_floor
+_scalbn
+--- libm imports of alt libnvcore.dylib
+___sincos_stret
+_atan
+_atan2
+_cos
+_exp
+_expf
+_fabs
+_floor
+_log
+_pow
+_scalbn
+_sin
+_sqrt
+_tanf
+--- libm imports of default libnvcore.dylib
+___sincos_stret
+_atan2
+_expf
+_floor
+_pow
+_tanf
+--- nv_ol_/nv_mu_ in alt dylib
+16
+--- default bins reference nv_ol?
+0

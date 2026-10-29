@@ -1,0 +1,109 @@
+=== verify_model
+  levels set -1  : 8/8 bit-exact
+  levels set 0-4 : 8/8 bit-exact
+  rand   set -1  : 148/148 bit-exact
+  rand   set 0-4 : 708/708 bit-exact
+  real   set -1  : 56/56 bit-exact
+  real   set 0-4 : 280/280 bit-exact
+  tail   set -1  : 6/6 bit-exact
+  tail   set 0-4 : 30/30 bit-exact
+1244/1244 bit-exact (218 planes x sets; 254 runs with NaN in the input; 5095424 words compared)
+time: Python 0.3 s (cache + 0 computed), C++ 56.82 s wall (nv_model_test: 1244 cases, model_full 56.393 s)
+  ub geometry cfg 0: 100 placements (10 x 10 dx / dy intervals of the sides 84..1536): no block without a qualifying bin
+  ub geometry cfg 1: 324 placements (18 x 18 dx / dy intervals of the sides 84..1536): no block without a qualifying bin
+  ub direct ad1ae0: 28/28 identical (pad: 8/8, bins: 8/8, ok: 12/12; pad / bins = NotImplementedError on both sides)
+=== verify_temporal
+  comp  blocksum : 120/120 bit-exact (1040 words)
+  comp  dense    : 44/44 bit-exact (421138 words)
+  comp  flow     : 44/44 bit-exact (6384 words)
+  comp  pyramid  : 24/24 bit-exact (107553 words)
+  comp  refine   : 120/120 bit-exact (11440 words)
+  comp  warp     : 16/16 bit-exact (71702 words)
+  rand  frame    : 16/16 bit-exact (166817 words, 21 flows compared)
+  rand  temporal : 48/48 bit-exact (1113646 words, 163 flows compared)
+  real  frame    : 6/6 bit-exact (8490400 words, 30 flows compared)
+  real  temporal : 36/36 bit-exact (101011680 words, 144 flows compared)
+474/474 bit-exact (147 cases with NaN in the expected output, 45933 NaN words, payloads compared)
+time: Python 15.8 s wall (3 procs, 39.6 s CPU), C++ 4.2 s (3 threads)
+=== verify_spatial
+  comp  atrous        : 180/180 bit-exact (896736 words)
+  comp  curve         : 66/66 bit-exact (74950 words)
+  comp  down2         : 48/48 bit-exact (18336 words)
+  comp  exp           : 60/60 bit-exact (74728 words)
+  comp  gauss         : 66/66 bit-exact (89848 words)
+  comp  mapc          : 61/61 bit-exact (74735 words)
+  comp  median        : 60/60 bit-exact (74728 words)
+  comp  to_grid       : 144/144 bit-exact (77136 words)
+  comp  uniform       : 512/512 bit-exact (644672 words)
+  rand  spatial       : 60/60 bit-exact (638942 words)
+  real  spatial       : 30/30 bit-exact (139968000 words)
+1287/1287 bit-exact (455 cases with NaN in the expected output, 930522 NaN words, payloads compared)
+time: Python 7.6 s wall (3 procs, 10.5 s CPU), C++ 2.5 s (3 threads)
+=== verify_profile
+reference parts:
+  reference noise n=65536 seed=0x12345678: bit-exact
+  reference noise n=1000 seed=0xdeadbeef: bit-exact
+  reference noise n=37 seed=0x0: bit-exact
+  reference floor (C++ computed) vs data/ref_floor.npy: 51/51 bit-exact  (compute_reference_floor: status 0, 0.473 s)
+ok       [real ] test_v02.mp4 n=100 128^2 @(268,76) mode 1  (LZMA ok)
+ok       [real ] test_v02.mp4 n=100 192^2 @(1071,444) mode 1  (LZMA ok)
+ok       [real ] test_v02.mp4 n=312 128^2 @(465,142) mode 1  (LZMA ok)
+ok       [real ] test_v02.mp4 n=312 192^2 @(915,399) mode 1  (LZMA ok)
+ok       [real ] test_v02.mp4 n=576 128^2 @(663,209) mode 1  (LZMA ok)
+ok       [real ] test_v02.mp4 n=576 192^2 @(760,355) mode 1  (LZMA ok)
+ok       [real ] test.mp4 n=0 128^2 @(245,67) mode 1  (LZMA ok)
+ok       [real ] test.mp4 n=0 192^2 @(156,58) mode 1  (LZMA ok)
+ok       [real ] test.mp4 n=300 128^2 @(302,83) mode 1  (LZMA ok)
+ok       [real ] test.mp4 n=300 192^2 @(116,50) mode 1  (LZMA ok)
+ok       [real ] test.mp4 n=450 128^2 @(358,99) mode 1  (LZMA ok)
+ok       [real ] test.mp4 n=450 192^2 @(76,42) mode 1  (LZMA ok)
+ok       [real2] test_v02.mp4 n=312 128x128 @(832,0) mode 0  (LZMA ok)
+ok       [real2] test_v02.mp4 n=312 128x128 @(832,0) mode 2  (LZMA ok)
+ok       [real2] test.mp4 n=300 128x128 @(200,120) mode 0  (LZMA ok)
+ok       [real2] test.mp4 n=450 128x128 @(400,160) mode 2  (LZMA ok)
+ok       [real2] test.mp4 n=0 96x96 @(100,100) mode 3  (LZMA ok)
+ok       [real2] test_v02.mp4 n=576 160x96 @(300,700) mode 1  (LZMA ok)
+ok       [real2] test.mp4 n=300 101x77 @(50,210) mode 1  (LZMA ok)
+ok       [real2] test_v02.mp4 n=100 64x200 @(1500,40) mode 2  (LZMA ok)
+ok       [real2] test_v02.mp4 n=312 320x200 @(600,300) mode 1  (LZMA ok)
+ok       [synth] NaN payloads 128^2  (LZMA ok)
+ok       [synth] NaN payload grid 128^2, no floor (a floor replaces NaNs)  (LZMA ok)
+ok       [synth] +-inf 128^2  (LZMA ok)
+ok       [synth] saturated R 128^2  (LZMA ok)
+ok       [synth] half white 128^2  (LZMA ok)
+ok       [synth] constant 128^2  (LZMA ok)
+ok       [synth] constant G 96^2  (LZMA ok)
+ok       [synth] int16 noise 128^2 (LZMA overflow)  (LZMA failed/off)
+ok       [synth] G-only int16 noise 128^2 (LZMA overflow at G)  (LZMA failed/off)
+ok       [synth] 64x36 (mc 32-stage fails)  (LZMA ok)
+ok       [synth] 32x32 minimum  (LZMA ok)
+ok       [synth] 48x40  (LZMA ok)
+ok       [synth] 31x64 side < 32 (NotImplementedError)  (NotImplementedError)
+ok       [synth] no floor, no LZMA 128^2  (LZMA ok)
+ok       [synth] no floor 96^2  (LZMA ok)
+ok       [synth] wide noise with -0 192^2  (LZMA ok)
+ok       [synth] negative / huge values 64^2  (LZMA ok)
+ok       [synth] ramp 100x60  (LZMA ok)
+  real  : 12/12 bit-exact (all 0xc300 bytes)
+  real2 : 9/9 bit-exact (all 0xc300 bytes)
+  synth : 18/18 bit-exact (all 0xc300 bytes) (status != 0 in Python: 1)
+39/39 profiles bit-exact
+time: Python build_profile 745.2 s in total (cached runs included; 0 computed now, wall 0.0 s), C++ 46.30 s wall (39 cases, build_profile 46.288 s (-j 1))
+  negative control test_v02.mp4 n=100 128^2 @(268,76) mode 1: inside +1 ulp (G): 5 bytes differ, first at 0x20b8; by part {'model G word 55..': 5} -> as expected
+  negative control test_v02.mp4 n=100 128^2 @(268,76) mode 1: outside +37 (left margin): identical -> as expected
+  negative control test_v02.mp4 n=100 192^2 @(1071,444) mode 1: inside +1 ulp (G): 11 bytes differ, first at 0x2228; by part {'model G word 55..': 10, 'tile_dev G': 1} -> as expected
+  negative control test_v02.mp4 n=100 192^2 @(1071,444) mode 1: outside +37 (left margin): identical -> as expected
+PASS
+=== verify_aft
+aft expected values: 67 cases (0.4 s)
+  nv_aft_test aft: 67 cases, 7.306 s (-j 1)
+  nv_aft_test aft: 67 cases, 3.106 s (-j 3)
+shuffle    4097/4097 OK
+sim        3000/3000 OK
+finish     3000/3000 OK
+aft -j 1   67/67 OK
+aft -j 3   67/67 OK
+combine    69/69 OK
+aft cases: 67 (accepted tiles per case: min 0, max 545, cases with accepted > 0: 54; statuses {0: 61, 1: 3, 2: 3})
+Python auto_fine_tune time (when computed): total 312.7 s
+total 21.3 s -> ALL BIT-EXACT

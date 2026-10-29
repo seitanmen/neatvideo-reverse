@@ -1,0 +1,15 @@
+## openlibm bundled files vs tarball
+openlibm: 25 files checked, 0 differ
+## musl bundled files vs tarball
+musl: 31 files checked, 0 differ
+## SOURCE.md sha table vs actual
+openlibm table rows:       25
+musl table rows:       31
+## license
+-rw-r--r--@ 1 seitan  staff  6196 10月 29 01:47 native/musl/COPYRIGHT
+-rw-r--r--@ 1 seitan  staff  5857 10月 29 01:47 native/openlibm/LICENSE.md
+musl_COPYRIGHT_identical
+260
+32:| `b870108ec5e7790e9f9919064f1b9421d62d5f9b0e6c230c6adf7ea2da62e97b` | `COPYRIGHT` |
+64:## License (COPYRIGHT of the release, full text)
+86:IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY

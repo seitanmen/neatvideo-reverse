@@ -4,6 +4,7 @@
 // clip.cpp}; the operand order of the compiled loops was read from `otool -tv` of the installed
 // _nd_image.cpython-313-darwin.so / _multiarray_umath.cpython-313-darwin.so.
 #include "nv_ndimage.h"
+#include "nv_libm.h"
 
 #include <cmath>
 
@@ -15,7 +16,7 @@ double FMAD(double n, double m, double a) { return std::fma(n, m, a); }
 #endif
 
 namespace {
-float (*volatile g_expf)(float) = ::expf;
+float (*volatile g_expf)(float) = NV_LIBM(expf, expf);
 double (*volatile g_floor)(double) = ::floor;
 
 // gaussian_filter(sigma=1.0, truncate=4.0) weights: _gaussian_kernel1d(1.0, 0, 4)[::-1] as float64

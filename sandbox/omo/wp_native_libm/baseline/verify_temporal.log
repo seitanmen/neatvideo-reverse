@@ -1,0 +1,15 @@
+  comp  blocksum : 120/120 bit-exact (1040 words)
+  comp  dense    : 44/44 bit-exact (421138 words)
+  comp  flow     : 44/44 bit-exact (6384 words)
+  comp  pyramid  : 24/24 bit-exact (107553 words)
+  comp  refine   : 120/120 bit-exact (11440 words)
+  comp  warp     : 16/16 bit-exact (71702 words)
+  rand  frame    : 16/16 bit-exact (166817 words, 21 flows compared)
+  rand  temporal : 48/48 bit-exact (1113646 words, 163 flows compared)
+  real  frame    : 6/6 bit-exact (8490400 words, 30 flows compared)
+  real  temporal : 36/36 bit-exact (101011680 words, 144 flows compared)
+474/474 bit-exact (147 cases with NaN in the expected output, 45933 NaN words, payloads compared)
+time: Python 20.5 s wall (2 procs, 36.6 s CPU), C++ 5.6 s (2 threads)
+real 40.50
+user 128.06
+sys 11.37

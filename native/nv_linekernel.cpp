@@ -1,5 +1,6 @@
 // nv_linekernel.cpp - see nv_linekernel.h (moved unchanged from nv_curve.cpp / nv_model.cpp).
 #include "nv_linekernel.h"
+#include "nv_libm.h"
 
 #include <algorithm>
 #include <cmath>
@@ -25,7 +26,7 @@ const float F_0_26 = bits(0x3e851eb8u);
 const double QUARTER_PI_D = 0x1.921fb54442d18p-1;  // DAT_012436d0
 
 // libSystem's tanf through a volatile pointer: the compiler must not constant-fold or rewrite it
-float (*volatile g_tanf)(float) = &::tanf;
+float (*volatile g_tanf)(float) = NV_LIBM(tanf, tanf);
 
 }  // namespace
 

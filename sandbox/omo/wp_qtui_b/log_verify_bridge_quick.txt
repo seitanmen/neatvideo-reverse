@@ -1,0 +1,141 @@
+[curve] OK  v02 n=312 noise_curve -j 1: 16/16 words  py 1.00s nat 0.556s
+[curve] OK  v02 n=312 noise_curve -j 3: 16/16 words  py 1.00s nat 0.187s
+[curve] OK  v02 n=312 find_flat_area -j 1 -> [0, 832, 128, 0]: 4/4 words  py 2.20s nat 1.317s
+[curve] OK  v02 n=312 find_flat_area -j 3 -> [0, 832, 128, 0]: 4/4 words  py 2.20s nat 0.527s
+[curve] OK  t n=300 noise_curve -j 1: 16/16 words  py 0.32s nat 0.077s
+[curve] OK  t n=300 noise_curve -j 3: 16/16 words  py 0.32s nat 0.020s
+[curve] OK  t n=300 find_flat_area -j 1 -> [288, 416, 48, 2]: 4/4 words  py 0.75s nat 0.144s
+[curve] OK  t n=300 find_flat_area -j 3 -> [288, 416, 48, 2]: 4/4 words  py 0.75s nat 0.068s
+[curve] OK  t n=304 noise_curve -j 1: 16/16 words  py 0.26s nat 0.058s
+[curve] OK  t n=304 noise_curve -j 3: 16/16 words  py 0.26s nat 0.021s
+[curve] OK  t n=304 find_flat_area -j 1 -> [0, 288, 48, 2]: 4/4 words  py 0.57s nat 0.147s
+[curve] OK  t n=304 find_flat_area -j 3 -> [0, 288, 48, 2]: 4/4 words  py 0.57s nat 0.069s
+[profile] OK  v02 n=312 auto -> area [0, 832, 128] status 0: 79/79 words  py 2.79s nat 1.539s
+[profile] OK  v02 n=312 spatial -> area [0, 832, 128] status 0: 78/78 words  py 2.64s nat 1.002s
+[profile] OK  v02 n=312 temporal -> area [0, 832, 128] status 0: 79/79 words  py 3.12s nat 0.857s
+[profile] OK  t n=300 auto -> area [288, 416, 48] status 2: 79/79 words  py 0.80s nat 0.176s
+[profile] OK  t n=304 auto -> area [0, 288, 48] status 2: 79/79 words  py 0.70s nat 0.422s
+[profile] OK  t n=302 temporal -> area [272, 120, 48] status 2: 79/79 words  py 0.76s nat 0.098s
+[profile] OK  v02 n=312 auto area [40, 60, 216, 512] -> area [40, 60, 216, 512] status None: 80/80 words  py 0.87s nat 0.881s
+[aft] OK  v02 n=312 run_aft mode 0 (area [0, 832, 128]): 222/222 words  py 49.17s nat 0.673s
+[aft] OK  v02 n=312 BuildNoiseModel blob 0xc300 -j 1: 49920/49920 words  py 13.88s nat 1.296s
+[aft] OK  v02 n=312 AFT blob mode 0 -j 1: 49920/49920 words  py 33.03s nat 0.770s
+[aft] OK  v02 n=312 BuildNoiseModel blob 0xc300 -j 3: 49920/49920 words  py 13.88s nat 0.501s
+[aft] OK  v02 n=312 AFT blob mode 0 -j 3: 49920/49920 words  py 33.03s nat 0.257s
+[aft] OK  t n=302 run_aft mode 0 (area [272, 120, 48]): 222/222 words  py 8.37s nat 0.147s
+[aft] OK  t n=302 BuildNoiseModel blob 0xc300 -j 1: 49920/49920 words  py 4.10s nat 0.331s
+[aft] OK  t n=302 AFT blob mode 0 -j 1: 49920/49920 words  py 3.67s nat 0.086s
+[aft] OK  t n=302 BuildNoiseModel blob 0xc300 -j 3: 49920/49920 words  py 4.10s nat 0.121s
+[aft] OK  t n=302 AFT blob mode 0 -j 3: 49920/49920 words  py 3.67s nat 0.029s
+[aft] OK  t n=300 run_aft mode 1 (area [288, 416, 48]): 222/222 words  py 7.83s nat 0.144s
+[frame] OK  v02 n=312 process_frame default: 3110400/3110400 words  py 2.22s nat 0.629s
+[frame] OK  v02 n=312 temporal default: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=312 temporal default: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=312 process_frame noise+: 3110400/3110400 words  py 2.25s nat 0.633s
+[frame] OK  v02 n=312 process_frame noise-: 3110400/3110400 words  py 2.22s nat 0.614s
+[frame] OK  v02 n=312 process_frame pyramid: 3110400/3110400 words  py 2.39s nat 0.782s
+[frame] OK  v02 n=312 temporal pyramid: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=312 temporal pyramid: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=312 process_frame perchan: 3110400/3110400 words  py 2.54s nat 0.661s
+[frame] OK  v02 n=312 process_frame mix_r1: 3110400/3110400 words  py 1.26s nat 0.387s
+[frame] OK  v02 n=312 process_frame temporal0: 3110400/3110400 words  py 0.23s nat 0.169s
+[frame] OK  v02 n=312 process_frame int_bs8: 3110400/3110400 words  py 2.42s nat 0.635s
+[frame] OK  v02 n=312 temporal int_bs8: out, rv, flows {}: 6480000/6480000 words
+[frame] OK  v02 n=312 temporal int_bs8: pre-filled flows: 6480000/6480000 words
+[frame] OK  v02 n=313 process_frame default (tuned profile): 3110400/3110400 words  py 2.33s nat 0.617s
+[frame] OK  v02 n=313 temporal default: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=313 temporal default: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=312 PreviewEngine crop [270, 480, 540, 960] + full + mask + assist: 23846400/23846400 words
+[frame] OK  t n=300 process_frame default: 345600/345600 words  py 0.24s nat 0.066s
+[frame] OK  t n=300 temporal default: out, rv, flows {}: 698240/698240 words
+[frame] OK  t n=300 temporal default: pre-filled flows: 698240/698240 words
+[frame] OK  t n=300 process_frame perchan: 345600/345600 words  py 0.33s nat 0.084s
+[frame] OK  t n=302 process_frame default: 345600/345600 words  py 0.26s nat 0.076s
+[frame] OK  t n=302 temporal default: out, rv, flows {}: 698240/698240 words
+[frame] OK  t n=302 temporal default: pre-filled flows: 698240/698240 words
+[frame] OK  t n=302 process_frame perchan: 345600/345600 words  py 0.30s nat 0.077s
+[frame] OK  t n=304 process_frame default: 345600/345600 words  py 0.26s nat 0.077s
+[frame] OK  t n=304 temporal default: out, rv, flows {}: 698240/698240 words
+[frame] OK  t n=304 temporal default: pre-filled flows: 698240/698240 words
+[frame] OK  t n=304 process_frame perchan: 345600/345600 words  py 0.31s nat 0.077s
+[frame] OK  t n=302 PreviewEngine crop [90, 160, 180, 320] + full + mask + assist: 2649600/2649600 words
+[frame] OK  concurrent native calls from 4 threads: ['frame', 'frame', 'aft', 'profile']: 6221101/6221101 words
+[cancel] OK  find_flat_area cancel at query 1 -j 1: [0, 0, 0, 5], 1 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 1 -j 3: [0, 0, 0, 5], 1 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 120 -j 1: [0, 0, 0, 5], 120 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 120 -j 3: [0, 0, 0, 5], 120 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 240 -j 1: [0, 0, 0, 5], 240 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 240 -j 3: [0, 0, 0, 5], 240 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 241 -j 1: [0, 0, 0, 5], 241 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 241 -j 3: [0, 0, 0, 5], 241 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 242 -j 1: [0, 0, 0, 5], 242 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 242 -j 3: [0, 0, 0, 5], 242 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 247 -j 1: [0, 832, 128, 5], 247 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 247 -j 3: [0, 832, 128, 5], 247 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query never -j 1: [0, 832, 128, 0], 247 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query never -j 3: [0, 832, 128, 0], 247 queries: 5/5 words
+[cancel] OK  AFT cancel at tile query 1 -j 1: Cancelled, 1 queries (Python 1; Python blob = raw with 0x2d = 0: True): 2/2 words
+[cancel] OK  AFT cancel at tile query 1 -j 3: Cancelled, 1 queries (Python 1; Python blob = raw with 0x2d = 0: True): 2/2 words
+[cancel] OK  AFT cancel at tile query 100 -j 1: Cancelled, 100 queries (Python 100; Python blob = raw with 0x2d = 0: True): 2/2 words
+[cancel] OK  AFT cancel at tile query 100 -j 3: Cancelled, 100 queries (Python 100; Python blob = raw with 0x2d = 0: True): 2/2 words
+[cancel] OK  AFT without cancel -j 1: 1980 queries (tiles 1980): 1/1 words
+[cancel] OK  AFT without cancel -j 3: 1980 queries (tiles 1980): 1/1 words
+[cancel] OK  run_in_child(task, run_aft) cancelled after 0 queries: Cancelled in 0.00 s: 1/1 words
+[cancel] OK  run_in_child(task, run_aft) cancelled after 2 queries: Cancelled in 0.47 s: 1/1 words
+[cancel] OK  run_in_child(task, run_aft) cancelled after 50 queries: Cancelled in 0.52 s: 1/1 words
+[fallback] OK  NV_NATIVE_LIB=<missing>: AVAILABLE, available, enabled, == process_frame_v5, STATS = False False False True {'native': 0, 'fallback': 0}: 1/1 words
+[fallback] OK  NV_NATIVE=0: AVAILABLE, available, enabled, == process_frame_v5, STATS = True True False True {'native': 0, 'fallback': 0}: 1/1 words
+[fallback] OK  default (library found): AVAILABLE, available, enabled, == process_frame_v5, STATS = True True True True {'native': 2, 'fallback': 0}: 1/1 words
+[fallback] OK  noise_level np.float64(1.1): Python path used (2 fallbacks), dtype float64: 345601/345601 words
+[fallback] OK  channel_noise Cb np.float32: Python path used (2 fallbacks), dtype float32: 345601/345601 words
+[fallback] OK  set_native(False) -> spawned child: native_enabled() = False: 1/1 words
+[fallback] OK  set_native(True) -> spawned child: native_enabled() = True: 1/1 words
+[fallback] OK  set_native(False) -> spawned child: native_enabled() = False: 1/1 words
+[fallback] OK  similarity 'bogus': ValueError: unknown similarity 'bogus' (expected 'v5' or 'pyramid'): 1/1 words
+ok   prof5 profile v02 f=2 auto None: 79 words  (py 1.31 s, C 1.60 s)
+ok   prof5 profile v02 f=2 spatial None: 78 words  (py 0.88 s, C 1.29 s)
+ok   prof5 profile v02 f=2 auto (40, 60, 216, 512): 80 words  (py 0.90 s, C 0.58 s)
+ok   prof5 profile v02 f=2 auto (100, 120, 64, 64): 79 words  (py 0.94 s, C 0.64 s)
+ok   prof5 profile v02 f=6 auto None: 79 words  (py 1.33 s, C 1.59 s)
+ok   prof5 profile v02 f=6 spatial None: 78 words  (py 0.97 s, C 1.32 s)
+ok   prof5 profile v02 f=6 auto (40, 60, 216, 512): 80 words  (py 0.90 s, C 0.62 s)
+ok   prof5 profile v02 f=6 auto (100, 120, 64, 64): 79 words  (py 0.94 s, C 0.58 s)
+ok   prof5 profile t f=2 auto None: 79 words  (py 0.17 s, C 0.22 s)
+ok   prof5 profile t f=2 spatial None: 78 words  (py 0.13 s, C 0.21 s)
+ok   prof5 profile t f=2 auto (40, 60, 216, 512): 80 words  (py 0.11 s, C 0.08 s)
+ok   prof5 profile t f=2 auto (100, 120, 64, 64): 79 words  (py 0.09 s, C 0.06 s)
+ok   prof5 profile t f=6 auto None: 79 words  (py 0.15 s, C 0.23 s)
+ok   prof5 profile t f=6 spatial None: 78 words  (py 0.12 s, C 0.22 s)
+ok   prof5 profile t f=6 auto (40, 60, 216, 512): 80 words  (py 0.12 s, C 0.09 s)
+ok   prof5 profile t f=6 auto (100, 120, 64, 64): 79 words  (py 0.09 s, C 0.07 s)
+prof5: 30/30 cases bit-exact
+[prof5] OK  verify_bridge_prof5.run (30/30 items)
+  ui video    ('v02:306', True)            554/554  13.5s
+  ui video    ('v02:307', True)            554/554  13.8s
+  ui video    ('t:298', True)              554/554  7.4s
+  ui video    ('t:299', True)              554/554  7.8s
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/n3a/repro/nv_ui_qt/backend.py:122: RuntimeWarning: divide by zero encountered in divide
+  return np.clip((1.0 / rv - 1.0) / (1.0 / rv_min - 1.0), 0.0, 1.0).astype(np.float32)
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/n3a/repro/nv_ui_qt/display.py:304: RuntimeWarning: invalid value encountered in multiply
+  return np.clip((1 - w) * (i * NLC_SEPIA) + w * (i * NLC_BLUE + NLC_BLUE_OFF), 0, 255).astype(F32)
+  ui synth    1                            4644/4644  13.0s
+  ui yuv      7                            720/720  0.1s
+  ui mix      3                            210/210  0.0s
+  ui floor    0                            2/2  0.9s
+  ui nlc      10                           526/526  1.0s
+  ui interp   5                            8016/8016  0.0s
+  ui quality  ('v02', 312, 12)             12/12  54.9s
+ui: 16346/16346 bit-exact
+[ui] OK  verify_bridge_ui.run (16346/16346 items)
+
+summary (cases ok/total, words equal/total):
+  curve     12/12 cases, 120/120 words
+  profile   7/7 cases, 553/553 words
+  aft       11/11 cases, 400026/400026 words
+  frame     32/32 cases, 117644461/117644461 words
+  cancel    23/23 cases, 83/83 words
+  fallback  9/9 cases, 691209/691209 words
+  prof5     1/1 cases, 30/30 words
+  ui        1/1 cases, 16346/16346 words
+ALL MATCH (327 s)
+exit 0

@@ -1,0 +1,24 @@
+23807_4 nv_curve_test interp alt2: out3 bytes 164432/164432 words 41108 DIFF 2 first [25888, 25898]
+23807_4 nv_curve_test interp alt2 funcs=tanf,atan2,sincos,expf: out3 bytes 164432/164432 words 41108 DIFF 0
+23807_4 nv_curve_test interp alt2 funcs=pow: out3 bytes 164432/164432 words 41108 DIFF 2 first [25888, 25898]
+23807_4 nv_curve_test interp alt1: out3 bytes 164432/164432 words 41108 DIFF 0
+23807_4 nv_curve_test interp alt0: out3 bytes 164432/164432 words 41108 DIFF 0
+23807_1 nv_curve_test curve alt2: out3 bytes 140579/140579 words 35145 DIFF 0
+23807_1 nv_curve_test curve alt3: out3 bytes 140579/140579 words 35145 DIFF 443 first [16, 18, 80, 144, 146, 209, 211, 606]
+34992_5 nv_profile_test -j alt1: out6 bytes 1947036/1947036 words 486759 DIFF 0
+34992_5 nv_profile_test -j alt2: out6 bytes 1947036/1947036 words 486759 DIFF 0
+34992_6 nv_profile_test -j alt1: out6 bytes 199696/199696 words 49924 DIFF 0
+34992_6 nv_profile_test -j alt2: out6 bytes 199696/199696 words 49924 DIFF 0
+38631_6 nv_aft_test combine alt1: out3 bytes 32085/32085 words 8022 DIFF 0
+38631_6 nv_aft_test combine alt2: out3 bytes 32085/32085 words 8022 DIFF 0
+38631_6 nv_aft_test combine alt3: out3 bytes 32085/32085 words 8022 DIFF 370 first [0, 4, 6, 16, 116, 120, 122, 132]
+38631_4 nv_aft_test aft alt1: out3 bytes 3411956/3411956 words 852989 DIFF 0
+38631_4 nv_aft_test aft alt2: out3 bytes 3411956/3411956 words 852989 DIFF 0
+38631_4 nv_aft_test aft alt3: out3 bytes 3411956/3411956 words 852989 DIFF 4 first [247596, 361888, 437716, 488335]
+38631_3 nv_aft_test finish alt1: out3 bytes 149796000/149796000 words 37449000 DIFF 0
+38631_3 nv_aft_test finish alt2: out3 bytes 149796000/149796000 words 37449000 DIFF 0
+32883_1 nv_model_test /Users/seitan/Desktop/work/reverse/.claude/worktrees/w2a/sandbox/omo/wp_native_model/tmp/model_cases_main_32883.bin alt1: out2 bytes 20386672/20386672 words 5096668 DIFF 0
+32883_1 nv_model_test /Users/seitan/Desktop/work/reverse/.claude/worktrees/w2a/sandbox/omo/wp_native_model/tmp/model_cases_main_32883.bin alt2: out2 bytes 20386672/20386672 words 5096668 DIFF 0
+38631_3 nv_aft_test finish alt3: RC MISMATCH def 0 alt 1: nv_aft_test: cannot open the output
+
+38631_3 nv_aft_test finish alt3: out3 bytes 149796000/0 words 37449000 DIFF 11505891 first [12241, 12242, 12243, 12244, 12245, 12246, 12247, 12249]

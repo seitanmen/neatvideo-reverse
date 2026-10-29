@@ -1,0 +1,21 @@
+=== verify_quality start 04:22:32
+4000/4000 bit-exact
+=== verify_quality exit=0 end 04:22:34
+=== verify_band start 04:22:34
+  ms    mean/std     : 1080/1080 bit-exact
+  quant quantile     : 1080/1080 bit-exact
+  rand  model_levels : 1665/1665 bit-exact
+  rand  band_levels  : 1665/1665 bit-exact
+  real  model_levels : 108/108 bit-exact
+  real  band_levels  : 108/108 bit-exact
+5706/5706 bit-exact
+time: Python 28.7 s (2 procs), C++ 1.01 s (one process); nv_band_test: model 0.303 s, band 0.315 s, quantile 0.012 s, mean/std 0.000 s
+=== verify_band exit=0 end 04:23:04
+=== verify_lzma start 04:23:04
+[python] 668 inputs (9277926 source bytes); planes 572, byte strings 96
+[python] byte equal: 667/667 (blob fits 651, overflow -1 17); C++ 1.67 s, Python 35.7 s wall (7.6 us/byte over 2 workers)
+[python] around the output limit n + 0x80 (stream length - n, fits): [(126, True), (126, True), (126, True), (127, True), (127, True), (127, True), (128, True), (128, True), (128, True), (129, False), (129, False), (129, False), (130, False), (130, False), (130, False)]
+  known divergence (empty input, not a genuine case; REPORT.md): 0 bytes: props 5d00000001 != 5d00100000; blob bytes differ
+[genuine] no saved blobs found; skipped
+TOTAL: 667/667 byte equal, 0 mismatches (39.0 s)
+=== verify_lzma exit=0 end 04:23:43

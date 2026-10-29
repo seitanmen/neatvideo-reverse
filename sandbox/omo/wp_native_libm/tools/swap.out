@@ -1,0 +1,13 @@
+[swap] (suite, alts) with differing outputs (replay): {'curve': [2, 3], 'flat': [3], 'flat_cancel': [3], 'temporal': [1, 2, 3], 'spatial': [1, 2, 3], 'aft': [3]}
+[swap] curve alt2: rc 1, 57 s: tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright) | total 56.8 s: 2 MISMATCHES
+[swap] curve alt3: rc 1, 86 s: tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright) | total 86.0 s: 7172 MISMATCHES
+[swap] flat alt3: rc 1, 162 s:   time: Python (incl. intermediates, 2 procs, wall) 78.4 s; C++ -j 1 51.4 s, -j 2 29.2 s (incl. blob I/O) | total 161.8 s: 154 MISMATCHES
+[swap] flat_cancel alt3: rc 0, 185 s: cancel: 676/676 checks identical; Python 77.4 s, C++ 106.0 s (wall) | total 184.6 s: ALL IDENTICAL
+[swap] temporal alt1: rc 1, 30 s: 434/474 bit-exact (147 cases with NaN in the expected output, 45933 NaN words, payloads compared) | time: Python 23.0 s wall (2 procs, 40.8 s CPU), C++ 5.5 s (2 threads)
+[swap] temporal alt2: rc 1, 29 s: 436/474 bit-exact (147 cases with NaN in the expected output, 45933 NaN words, payloads compared) | time: Python 22.4 s wall (2 procs, 40.1 s CPU), C++ 5.4 s (2 threads)
+[swap] temporal alt3: rc 1, 28 s: 436/474 bit-exact (147 cases with NaN in the expected output, 45933 NaN words, payloads compared) | time: Python 21.1 s wall (2 procs, 38.0 s CPU), C++ 5.2 s (2 threads)
+[swap] spatial alt1: rc 1, 13 s: 1266/1287 bit-exact (455 cases with NaN in the expected output, 930522 NaN words, payloads compared) | time: Python 8.1 s wall (2 procs, 8.0 s CPU), C++ 3.0 s (2 threads)
+[swap] spatial alt2: rc 1, 13 s: 1274/1287 bit-exact (455 cases with NaN in the expected output, 930522 NaN words, payloads compared) | time: Python 7.7 s wall (2 procs, 8.1 s CPU), C++ 3.4 s (2 threads)
+[swap] spatial alt3: rc 1, 16 s: 1274/1287 bit-exact (455 cases with NaN in the expected output, 930522 NaN words, payloads compared) | time: Python 10.4 s wall (2 procs, 10.5 s CPU), C++ 3.3 s (2 threads)
+[swap] aft alt3: rc 1, 22 s: Python auto_fine_tune time (when computed): total 304.0 s | total 21.9 s -> FAILURES
+done in 640 s (/Users/seitan/Desktop/work/reverse/.claude/worktrees/w2a/sandbox/omo/wp_native_libm/runs)

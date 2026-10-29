@@ -1,0 +1,47 @@
+## gitignore status of worker dirs
+sandbox/omo/wp_native_libm/runs/capture -> .gitignore:127:sandbox/omo/wp_*/**	sandbox/omo/wp_native_libm/runs/capture
+sandbox/omo/wp_native_libm/dl -> .gitignore:127:sandbox/omo/wp_*/**	sandbox/omo/wp_native_libm/dl
+sandbox/omo/wp_native_libm/REPORT.md -> .gitignore:129:!sandbox/omo/wp_*/**/*.md	sandbox/omo/wp_native_libm/REPORT.md
+native/libm_alt/bin -> .gitignore:49:native/libm_alt/**	native/libm_alt/bin
+native/libm_alt/obj -> .gitignore:49:native/libm_alt/**	native/libm_alt/obj
+native/libm_alt/libm_ulp -> .gitignore:49:native/libm_alt/**	native/libm_alt/libm_ulp
+ 16M	sandbox/omo/wp_native_libm/dl
+ 14G	sandbox/omo/wp_native_libm/runs/capture
+623M	sandbox/omo/wp_native_libm/runs/bridge
+119:# sandbox/omo (作業パッケージ)
+120:!sandbox/
+121:sandbox/**
+122:!sandbox/omo/
+123:sandbox/omo/**
+124:!sandbox/omo/*.md
+125:!sandbox/omo/*.sh
+126:!sandbox/omo/wp_*/
+127:sandbox/omo/wp_*/**
+128:!sandbox/omo/wp_*/**/*.py
+## gpg
+gpg not found
+gpg2 not found
+no gpg
+## make_verify_after.log tail
+total 21.6 s -> ALL BIT-EXACT
+
+real	11m44.597s
+user	15m2.359s
+sys	1m57.652s
+166
+## NV_LIBM_LOG demo on alt build (curve interp call, alt2)
+total 952
+drwxr-xr-x@  4 seitan  staff     128 10月 29 04:23 .
+drwxr-xr-x@ 25 seitan  staff     800 10月 29 04:23 ..
+-rw-r--r--@  1 seitan  staff  318304 10月 29 04:23 libm_args_5062.bin
+-rw-r--r--@  1 seitan  staff  164432 10月 29 04:23 out.bin
+{'func': 'pow', 'alt': 1, 'n': 19886, 'bitdiff': 1, 'max_ulp': 1, 'arg_at_max': 'pow(0x1.a51200c804f68p+6, 0x1p+1)', 'calls': 36356}
+{'func': 'pow', 'alt': 2, 'n': 19886, 'bitdiff': 3, 'max_ulp': 1, 'arg_at_max': 'pow(0x1.a51200c804f68p+6, 0x1p+1)', 'calls': 36356}
+{'func': 'pow', 'alt': 3, 'n': 19886, 'bitdiff': 8675, 'max_ulp': 160, 'arg_at_max': 'pow(0x1.7e43c8800759cp+996, 0x1p+0)', 'calls': 36356}
+{'func': 'tanf', 'alt': 1, 'n': 0, 'bitdiff': 0, 'max_ulp': 0, 'arg_at_max': '', 'calls': 0}
+{'func': 'tanf', 'alt': 2, 'n': 0, 'bitdiff': 0, 'max_ulp': 0, 'arg_at_max': '', 'calls': 0}
+{'func': 'tanf', 'alt': 3, 'n': 0, 'bitdiff': 0, 'max_ulp': 0, 'arg_at_max': '', 'calls': 0}
+## default binary ignores NV_LIBM_ALT (expect identical to def_3)
+DEFAULT_BIN_UNAFFECTED
+sandbox/omo/coord_w2a/independent/logdemo/out.bin sandbox/omo/wp_native_libm/runs/capture/curve/calls/23807_4/def_3 differ: char 103553, line 282
+ALT2_DIFFERS_AS_EXPECTED

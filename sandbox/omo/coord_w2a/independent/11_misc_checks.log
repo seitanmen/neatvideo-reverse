@@ -1,0 +1,58 @@
+## numpy float32 exp vs libm expf (ctypes) on 2M random negative args + spot
+np.exp vs libm expf differ: 0 / 200000
+numpy 2.1.3
+## np.exp in repro temporal
+223:                    rel = np.exp(-np.maximum(sad - 2.0 * sigma, 0) / (4.0 * sigma + 1e-6))
+922:            w = np.exp(-np.maximum(uniform_filter((wy - Y) ** 2, 5) / den - 1.0, 0.0) / max(P["threshold"], 1e-3))
+## __FP_FAST_FMA
+#define __FP_FAST_FMA 1
+#define __FP_FAST_FMAF 1
+## MIGRATION knowledge section
+96:- **移植の重要な知見** (以降の N1d〜N1i も従う):
+97-  - clang -O2 は fast-math なしでも可換演算の被演算子順を入れ替える。NaN のビット列が
+98-    Python と変わるため、画素処理の演算は `native/nv_portable.h` (F4) 経由にする。AArch64 の既定は
+99-    1 演算 1 命令のインラインアセンブラ、`-DNV_PORTABLE` と非 AArch64 は FPProcessNaNs・既定 NaN
+100-    0x7fc00000・ソフトウェア FRECPE/FRECPS を明示的に書いた版 (旧 `-DNVC_PORTABLE` も別名で受ける)。
+101-    N1a/b/d/e は x86_64 (Rosetta 2) の出力が arm64 とバイト一致する (`native/verify_x86.sh`)
+102-  - x86 では素の C++ の 0/0・inf−inf・std::fma (libm の fmaf) が符号付きの既定 NaN 0xffc00000 になる。
+103-    NaN が生じ得る 2 変数の演算は、std::fma も含めてすべて nvp 経由にする (F4 で 2 件見つかった)
+104-  - numpy のスカラー演算は NaN の優先被演算子が演算と型で違う (add は配列=第 1/スカラー第 2 など)。
+105-    Python 側の型を読んで C++ 側で明示的に選ぶ
+106-  - libm の pow/tan は volatile 関数ポインタ経由 (定数畳み込み防止)
+107-- **既知の差**: `repro/nv_lzma.py` は長さ 0 の入力で props が SDK と違う (C++ は SDK どおり。
+108-  本家の経路は 32px 以上なので不発生。N1f の照合では長さ 0 を除外)。
+109-### N1d/e/g/h (2026-10-27 完了。REPORT は sandbox/omo/wp_native_{flat,model,spatial,temporal}/、独立検証は coord/native_n1b/VERDICT.md で 4 件 APPROVE)
+110-
+111-- **N1d 領域探索** `native/nv_flat.{h,cpp}` (N1a・N1b を利用): 181 ケース × (-j 1, -j 3) = 362/362 ビット一致
+112-  (実写 20 フレーム × 色モード 0..2、合成 81、乱数 40。縮小面・候補・trace・帯域測度の構造体まで比較)。
+113-  1080p 0.81 秒 / 3 スレッド 0.34 秒 (Python 1.58 秒)。取り消し (状態 5) は未移植。→ F1 で移植 (下記)。
+114-- **N1e 1 面モデル** `native/nv_model.{h,cpp}` (4096 語すべて、族 A/R/dc/B/C・FUN_00ad319c・FUN_00ad1ae0): 1244/1244 ビット一致。
+115-  本家の nvh model ダンプ (キャッシュ) とも 753/753 一致。8〜13 倍 (スカラー asm、未ベクトル化)。
+116-  線カーネルは nv_curve.cpp と重複 (共通化は未了)。非 AArch64 は未対応 (FRECPE のソフト版なし)。→ どちらも F3/F4 で解消 (下記)。
+117-- **N1h 空間カーネル** `native/nv_spatial.{h,cpp}` + 共通部品 `native/nv_ndimage.{h,cpp}`: 1287/1287 ビット一致。1080p 約 1.7 倍。
+118-- **N1g 時間カーネル** `native/nv_temporal.{h,cpp}` (動き推定・dense_flow・warp・類似度 v5/pyramid・rv、process_frame_v5 全体も):
+119-  474/474 ビット一致。1080p の process_frame_v5 2.1 秒 → 0.55 秒 (1 スレッド)。
+120-- **照合の前提 (N1g/N1h)**: 期待値は scipy.ndimage / numpy の演算順に依存し、照合はこの環境 (numpy 2.1.3・scipy 1.15.3・arm64) に固定。
+121-  scipy の gaussian_filter と np.interp は FMA を使い、numpy の加算リダクションは形状で順が変わる (1 列幅・nbx=1 の特例)。
+122-  numpy/scipy を更新したら照合をやり直す。
+123-- **API の前提**: パラメータは Python の float と同じく演算前に float32 にする (NEP 50。np.float64 を混ぜると Python 側が倍精度になる)。
+124-  pyramid は Y の帯域が 3 段以上を前提 (Python は 3 段未満で IndexError、C++ は 0 埋め)。
+125-- `make -C native verify` で 8 本 (N0 + N1a〜e・g・h) を通しで照合できる (2026-10-27: クリーンビルド警告 0、全件一致)。
+126-- 残件 (取り消し未移植・N1e の未到達経路・線カーネル重複・非 AArch64) は F1〜F4 で解決 (下記)。
+## swap logs
+aft/alt3.json rc 1 22.1 s | aft cases: 67 (accepted tiles per case: min 0, max 545, cases with accepted > 0: 54; statuses {0: 61, 1: 3, 2: 3}) | Python auto_fine_tune time (when computed): total 304.0 s | total 21.9 s -> FAILURES
+curve/alt2.json rc 1 57.0 s | interp: 20552/20554 queries bit-exact (640 tables) | tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright) | total 56.8 s: 2 MISMATCHES
+curve/alt3.json rc 1 86.1 s | interp: 13624/20554 queries bit-exact (640 tables) | tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright) | total 86.0 s: 7172 MISMATCHES
+flat_cancel/alt3.json rc 0 184.7 s | noise 96x400 mode 1                              400x96: uncancelled (64, 0, 96, 96, 2), 9 queries (6 curve + 3 sizes); k = 11 values x -j [1, 2]: ok (status 5 on 9, 2 with a partial square) | cancel: 676/676 checks identical; Python 77.4 s, C++ 106.0 s (wall) | total 184.6 s: ALL IDENTICAL
+flat/alt3.json rc 1 161.9 s |   per run: 17730 candidates, 17109 scored candidates, 1293 x 3 structs (deep); statuses {0: 41, 1: 60, 2: 65, 3: 13, 4: 2} |   time: Python (incl. intermediates, 2 procs, wall) 78.4 s; C++ -j 1 51.4 s, -j 2 29.2 s (incl. blob I/O) | total 161.8 s: 154 MISMATCHES
+spatial/alt1.json rc 1 12.9 s |   real  spatial       : 30/30 bit-exact (139968000 words) | 1266/1287 bit-exact (455 cases with NaN in the expected output, 930522 NaN words, payloads compared) | time: Python 8.1 s wall (2 procs, 8.0 s CPU), C++ 3.0 s (2 threads)
+spatial/alt2.json rc 1 13.0 s |   real  spatial       : 30/30 bit-exact (139968000 words) | 1274/1287 bit-exact (455 cases with NaN in the expected output, 930522 NaN words, payloads compared) | time: Python 7.7 s wall (2 procs, 8.1 s CPU), C++ 3.4 s (2 threads)
+spatial/alt3.json rc 1 15.7 s |   real  spatial       : 30/30 bit-exact (139968000 words) | 1274/1287 bit-exact (455 cases with NaN in the expected output, 930522 NaN words, payloads compared) | time: Python 10.4 s wall (2 procs, 10.5 s CPU), C++ 3.3 s (2 threads)
+temporal/alt1.json rc 1 29.8 s |   real  temporal : 18/36 bit-exact (101011680 words, 144 flows compared) | 434/474 bit-exact (147 cases with NaN in the expected output, 45933 NaN words, payloads compared) | time: Python 23.0 s wall (2 procs, 40.8 s CPU), C++ 5.5 s (2 threads)
+temporal/alt2.json rc 1 29.1 s |   real  temporal : 18/36 bit-exact (101011680 words, 144 flows compared) | 436/474 bit-exact (147 cases with NaN in the expected output, 45933 NaN words, payloads compared) | time: Python 22.4 s wall (2 procs, 40.1 s CPU), C++ 5.4 s (2 threads)
+temporal/alt3.json rc 1 27.5 s |   real  temporal : 18/36 bit-exact (101011680 words, 144 flows compared) | 436/474 bit-exact (147 cases with NaN in the expected output, 45933 NaN words, payloads compared) | time: Python 21.1 s wall (2 procs, 38.0 s CPU), C++ 5.2 s (2 threads)
+## bridge logs
+alt0.json rc 0 439.2 s |   fallback  9/9 cases, 691209/691209 words | ALL MATCH (439 s)
+alt1.json rc 1 411.5 s |   fallback  9/9 cases, 691209/691209 words | 60 CASES DIFFER (411 s)
+alt2.json rc 1 1305.4 s |   fallback  9/9 cases, 691209/691209 words | 60 CASES DIFFER (1305 s)
+alt3.json rc 1 411.0 s |   fallback  9/9 cases, 691209/691209 words | 78 CASES DIFFER (411 s)

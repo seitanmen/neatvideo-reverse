@@ -1,0 +1,31 @@
+  ui video    ('v02:306', False)           645/645  21.9s
+  ui video    ('v02:309', False)           645/645  21.3s
+  ui video    ('v02:312', False)           645/645  19.4s
+  ui video    ('v02:315', False)           645/645  20.0s
+  ui video    ('v02:318', False)           645/645  22.9s
+  ui video    ('t:298', False)             645/645  7.3s
+  ui video    ('t:301', False)             645/645  6.1s
+  ui video    ('t:304', False)             645/645  9.3s
+  ui video    ('t:307', False)             645/645  11.5s
+  ui synth    1                            4644/4644  51.6s
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/n3a/repro/nv_ui_qt/backend.py:122: RuntimeWarning: divide by zero encountered in divide
+  return np.clip((1.0 / rv - 1.0) / (1.0 / rv_min - 1.0), 0.0, 1.0).astype(np.float32)
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/n3a/repro/nv_ui_qt/display.py:304: RuntimeWarning: invalid value encountered in multiply
+  return np.clip((1 - w) * (i * NLC_SEPIA) + w * (i * NLC_BLUE + NLC_BLUE_OFF), 0, 255).astype(F32)
+  ui synth    2                            4644/4644  52.5s
+  ui yuv      7                            720/720  0.1s
+  ui yuv      8                            720/720  0.0s
+  ui yuv      9                            720/720  0.0s
+  ui mix      3                            210/210  0.0s
+  ui mix      4                            210/210  0.0s
+  ui floor    0                            2/2  1.1s
+  ui nlc      10                           526/526  1.1s
+  ui nlc      11                           520/520  0.0s
+  ui interp   5                            8016/8016  0.0s
+  ui interp   6                            7918/7918  0.0s
+  ui quality  ('v02', 312, 30)             30/30  57.5s
+  ui quality  ('v02', 309, 20)             20/20  56.3s
+  ui quality  ('t', 300, 30)               30/30  9.1s
+  ui quality  ('t', 305, 20)               20/20  9.1s
+ui: 34755/34755 bit-exact
+exit 0

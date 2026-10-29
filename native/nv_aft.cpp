@@ -1,6 +1,7 @@
 // nv_aft - see nv_aft.h.  Every function names the Python function it reproduces; the comments give
 // the operand order of the Python expression where both operands can be NaN.
 #include "nv_aft.h"
+#include "nv_libm.h"
 
 #include "nv_band.h"
 #include "nv_curve.h"
@@ -65,7 +66,7 @@ inline float MS(float a, float b) { return M(b, a); }
 inline double MDS(double a, double b) { return MD(b, a); }
 
 // libSystem's pow through a volatile pointer (nv_curve._pow; no constant folding, no pow(x, 2) -> x*x)
-double (*volatile g_pow)(double, double) = &::pow;
+double (*volatile g_pow)(double, double) = NV_LIBM(pow, pow);
 
 const float NEG_C = bits(0xbe800000u);    // -0.25f
 const float M_ONE = bits(0xbf800000u);    // -1.0f

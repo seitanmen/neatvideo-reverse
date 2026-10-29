@@ -1,0 +1,54 @@
+t640_d8_close            stdout SAME (345600 / 345600 B = 1 frames), exit 0 / 0, messages SAME (0), errors SAME []
+t640_d8_apply2           stdout SAME (345600 / 345600 B = 1 frames), exit 0 / 0, messages SAME (2), errors SAME []
+t640_d8_edit             stdout SAME (1036800 / 1036800 B = 3 frames), exit 0 / 0, messages SAME (6), errors SAME []
+t640_d8_auto             stdout SAME (691200 / 691200 B = 2 frames), exit 0 / 0, messages SAME (5), errors SAME []
+t640_d8_cancel           stdout SAME (0 / 0 B = 0 frames), exit 0 / 0, messages SAME (0), errors SAME []
+t640_d8_mix              stdout SAME (345600 / 345600 B = 1 frames), exit 0 / 0, messages SAME (5), errors SAME []
+t640_d16_close           stdout SAME (691200 / 691200 B = 1 frames), exit 0 / 0, messages SAME (0), errors SAME []
+t640_d16_apply2          stdout SAME (691200 / 691200 B = 1 frames), exit 0 / 0, messages SAME (2), errors SAME []
+t640_d16_edit            stdout SAME (2073600 / 2073600 B = 3 frames), exit 0 / 0, messages SAME (6), errors SAME []
+t640_d16_auto            stdout SAME (1382400 / 1382400 B = 2 frames), exit 0 / 0, messages SAME (5), errors SAME []
+t640_d16_cancel          stdout SAME (0 / 0 B = 0 frames), exit 0 / 0, messages SAME (0), errors SAME []
+t640_d16_mix             stdout SAME (691200 / 691200 B = 1 frames), exit 0 / 0, messages SAME (5), errors SAME []
+t640_d32_close           stdout SAME (1382400 / 1382400 B = 1 frames), exit 0 / 0, messages SAME (0), errors SAME []
+t640_d32_apply2          stdout SAME (1382400 / 1382400 B = 1 frames), exit 0 / 0, messages SAME (2), errors SAME []
+t640_d32_edit            stdout SAME (4147200 / 4147200 B = 3 frames), exit 0 / 0, messages SAME (6), errors SAME []
+t640_d32_auto            stdout SAME (2764800 / 2764800 B = 2 frames), exit 0 / 0, messages SAME (5), errors SAME []
+t640_d32_cancel          stdout SAME (0 / 0 B = 0 frames), exit 0 / 0, messages SAME (0), errors SAME []
+t640_d32_mix             stdout SAME (1382400 / 1382400 B = 1 frames), exit 0 / 0, messages SAME (5), errors SAME []
+t321_d8_edit             stdout SAME (260703 / 260703 B = 3 frames), exit 0 / 0, messages SAME (6), errors SAME []
+t321_d8_auto             stdout SAME (173802 / 173802 B = 2 frames), exit 0 / 0, messages SAME (5), errors SAME []
+t321_d16_edit            stdout SAME (521406 / 521406 B = 3 frames), exit 0 / 0, messages SAME (6), errors SAME []
+t321_d16_auto            stdout SAME (347604 / 347604 B = 2 frames), exit 0 / 0, messages SAME (5), errors SAME []
+t321_d32_edit            stdout SAME (1042812 / 1042812 B = 3 frames), exit 0 / 0, messages SAME (6), errors SAME []
+t321_d32_auto            stdout SAME (695208 / 695208 B = 2 frames), exit 0 / 0, messages SAME (5), errors SAME []
+t640_d8_max3_close       stdout SAME (345600 / 345600 B = 1 frames), exit 0 / 0, messages SAME (0), errors SAME []
+t640_d16_fps_close       stdout SAME (691200 / 691200 B = 1 frames), exit 0 / 0, messages SAME (1), errors SAME []
+OFX window d8: stdout SAME (345600 B), exit 0 / 0
+== OFX d8 a menus: 114 Python items (94 enabled), C++ 115 (+1 About Qt): identical apart from About Qt
+   state_ofx a: 29 fields, equal
+   win_ofx a.png: 0 of 1204000 pixels differ
+== OFX d8 b menus: 114 Python items (98 enabled), C++ 115 (+1 About Qt): identical apart from About Qt
+   state_ofx b: 29 fields, equal
+   win_ofx b.png: 0 of 1204000 pixels differ
+OFX window d32: stdout SAME (1382400 B), exit 0 / 0
+== OFX d32 a menus: 114 Python items (94 enabled), C++ 115 (+1 About Qt): identical apart from About Qt
+   state_ofx a: 29 fields, equal
+   win_ofx a.png: 0 of 1204000 pixels differ
+== OFX d32 b menus: 114 Python items (98 enabled), C++ 115 (+1 About Qt): identical apart from About Qt
+   state_ofx b: 29 fields, equal
+   win_ofx b.png: 0 of 1204000 pixels differ
+640                          exit 1 / 1, stdout 0 / 0 B, SAME ['usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]']
+640 360 --depth 12           exit 1 / 1, stdout 0 / 0 B, SAME ['usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]']
+0 360                        exit 1 / 1, stdout 0 / 0 B, SAME ['usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]']
+a b                          exit 1 / 1, stdout 0 / 0 B, SAME ['usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]']
+640 360 --depth              exit 1 / 1, stdout 0 / 0 B, SAME ['usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]']
+640 360 x                    exit 1 / 1, stdout 0 / 0 B, SAME ['usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]']
+640 360                      exit 1 / 1, stdout 0 / 0 B, SAME ['no frames received on stdin']
+640 360 30 0 --depth 16      exit 1 / 1, stdout 0 / 0 B, SAME ['no frames received on stdin']
+4294967296 120               exit 1 / 1, stdout 0 / 0 B, SAME ['no frames received on stdin']
+2147483648 1 24 2            exit 1 / 1, stdout 0 / 0 B, SAME ['no frames received on stdin']
+4294967496 120 24 2          exit 1 / 1, stdout 0 / 0 B, SAME ['no frames received on stdin']
+99999999999999999999 120     exit 1 / 1, stdout 0 / 0 B, SAME ['no frames received on stdin'] (known: Python OverflowError traceback, C++ 'no frames'; exit and stdout equal)
+3037000500 3037000500 24 0 --depth 32 exit 1 / 1, stdout 0 / 0 B, SAME ['no frames received on stdin'] (known: Python OverflowError traceback, C++ 'no frames'; exit and stdout equal)
+RESULT: ALL SAME

@@ -1,0 +1,22 @@
+test_v02.mp4 n=0 mode 1                          1920x1080: uncancelled (832, 0, 128, 128, 0), 247 queries (241 curve + 6 sizes); k = 14 values x -j [1, 2]: ok (status 5 on 12, 5 with a partial square)
+test_v02.mp4 n=312 mode 1                        1920x1080: uncancelled (832, 0, 128, 128, 0), 247 queries (241 curve + 6 sizes); k = 14 values x -j [1, 2]: ok (status 5 on 12, 5 with a partial square)
+test_v02.mp4 n=576 mode 1                        1920x1080: uncancelled (488, 864, 64, 64, 2), 247 queries (241 curve + 6 sizes); k = 14 values x -j [1, 2]: ok (status 5 on 12, 5 with a partial square)
+test_v02.mp4 n=700 mode 1                        1920x1080: uncancelled (800, 0, 128, 128, 0), 247 queries (241 curve + 6 sizes); k = 14 values x -j [1, 2]: ok (status 5 on 12, 5 with a partial square)
+test.mp4 n=0 mode 1                              640x360: uncancelled (376, 296, 64, 64, 2), 35 queries (29 curve + 6 sizes); k = 14 values x -j [1, 2]: ok (status 5 on 12, 5 with a partial square)
+test.mp4 n=300 mode 1                            640x360: uncancelled (416, 288, 48, 48, 2), 35 queries (29 curve + 6 sizes); k = 14 values x -j [1, 2]: ok (status 5 on 12, 5 with a partial square)
+test.mp4 n=450 mode 1                            640x360: uncancelled (176, 208, 48, 48, 2), 35 queries (29 curve + 6 sizes); k = 14 values x -j [1, 2]: ok (status 5 on 12, 5 with a partial square)
+test.mp4 n=750 mode 1                            640x360: uncancelled (392, 288, 48, 48, 2), 35 queries (29 curve + 6 sizes); k = 14 values x -j [1, 2]: ok (status 5 on 12, 5 with a partial square)
+test_v02.mp4 n=312 mode 0                        1920x1080: uncancelled (896, 0, 128, 128, 0), 247 queries (241 curve + 6 sizes); k = 14 values x -j [1, 2]: ok (status 5 on 12, 5 with a partial square)
+test_v02.mp4 n=312 mode 2                        1920x1080: uncancelled (896, 0, 128, 128, 0), 247 queries (241 curve + 6 sizes); k = 14 values x -j [1, 2]: ok (status 5 on 12, 5 with a partial square)
+test.mp4 n=300 mode 0                            640x360: uncancelled (120, 272, 48, 48, 2), 35 queries (29 curve + 6 sizes); k = 14 values x -j [1, 2]: ok (status 5 on 12, 5 with a partial square)
+test.mp4 n=300 mode 2                            640x360: uncancelled (416, 288, 48, 48, 2), 35 queries (29 curve + 6 sizes); k = 14 values x -j [1, 2]: ok (status 5 on 12, 5 with a partial square)
+test_v02.mp4 n=312 mode 1, explicit noise table  1920x1080: uncancelled (832, 0, 128, 128, 0), 6 queries (0 curve + 6 sizes); k = 8 values x -j [1, 2]: ok (status 5 on 6, 5 with a partial square)
+test.mp4 n=300 mode 1, explicit noise table      640x360: uncancelled (416, 288, 48, 48, 2), 6 queries (0 curve + 6 sizes); k = 8 values x -j [1, 2]: ok (status 5 on 6, 5 with a partial square)
+noise 200x150 mode 1                             200x150: uncancelled (0, 0, 128, 128, 0), 11 queries (7 curve + 4 sizes); k = 13 values x -j [1, 2]: ok (status 5 on 11, 3 with a partial square)
+noise 64x64 mode 1                               64x64: uncancelled (0, 0, 64, 64, 2), 4 queries (2 curve + 2 sizes); k = 6 values x -j [1, 2]: ok (status 5 on 4, 1 with a partial square)
+noise 96x400 mode 1                              400x96: uncancelled (64, 0, 96, 96, 2), 9 queries (6 curve + 3 sizes); k = 11 values x -j [1, 2]: ok (status 5 on 9, 2 with a partial square)
+cancel: 676/676 checks identical; Python 75.6 s, C++ 104.5 s (wall)
+total 181.3 s: ALL IDENTICAL
+real 181.35
+user 242.24
+sys 28.59

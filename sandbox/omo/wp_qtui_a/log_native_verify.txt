@@ -1,0 +1,61 @@
+0
+  real  model_levels : 108/108 bit-exact
+  real  band_levels  : 108/108 bit-exact
+5706/5706 bit-exact
+curve: 1094/1094 curves bit-exact (xs + ys), histograms 1094/1094 (178 cases with NaN in ys)
+clip: 4000/4000 IsClip values bit-exact
+interp: 20554/20554 queries bit-exact (640 tables)
+tile: 25/25 pixnoise tiles bit-exact (noise, weight, bright)
+total 59.1 s: ALL BIT-EXACT
+[python] byte equal: 667/667 (blob fits 651, overflow -1 17); C++ 1.69 s, Python 36.9 s wall (7.9 us/byte over 2 workers)
+TOTAL: 667/667 byte equal, 0 mismatches (40.1 s)
+flat: 362/362 case runs bit-exact (result + steps + curve + reduce + candidates + placed/IsClip + trace + structs)
+total 160.6 s: ALL BIT-EXACT
+cancel: 676/676 checks identical; Python 81.5 s, C++ 106.9 s (wall)
+total 189.4 s: ALL IDENTICAL
+  levels set -1  : 8/8 bit-exact
+  levels set 0-4 : 8/8 bit-exact
+  rand   set -1  : 148/148 bit-exact
+  rand   set 0-4 : 708/708 bit-exact
+  real   set -1  : 56/56 bit-exact
+  real   set 0-4 : 280/280 bit-exact
+  tail   set -1  : 6/6 bit-exact
+  tail   set 0-4 : 30/30 bit-exact
+1244/1244 bit-exact (218 planes x sets; 254 runs with NaN in the input; 5095424 words compared)
+  ub direct ad1ae0: 28/28 identical (pad: 8/8, bins: 8/8, ok: 12/12; pad / bins = NotImplementedError on both sides)
+  comp  blocksum : 120/120 bit-exact (1040 words)
+  comp  dense    : 44/44 bit-exact (421138 words)
+  comp  flow     : 44/44 bit-exact (6384 words)
+  comp  pyramid  : 24/24 bit-exact (107553 words)
+  comp  refine   : 120/120 bit-exact (11440 words)
+  comp  warp     : 16/16 bit-exact (71702 words)
+  rand  frame    : 16/16 bit-exact (166817 words, 21 flows compared)
+  rand  temporal : 48/48 bit-exact (1113646 words, 163 flows compared)
+  real  frame    : 6/6 bit-exact (8490400 words, 30 flows compared)
+  real  temporal : 36/36 bit-exact (101011680 words, 144 flows compared)
+474/474 bit-exact (147 cases with NaN in the expected output, 45933 NaN words, payloads compared)
+  comp  atrous        : 180/180 bit-exact (896736 words)
+  comp  curve         : 66/66 bit-exact (74950 words)
+  comp  down2         : 48/48 bit-exact (18336 words)
+  comp  exp           : 60/60 bit-exact (74728 words)
+  comp  gauss         : 66/66 bit-exact (89848 words)
+  comp  mapc          : 61/61 bit-exact (74735 words)
+  comp  median        : 60/60 bit-exact (74728 words)
+  comp  to_grid       : 144/144 bit-exact (77136 words)
+  comp  uniform       : 512/512 bit-exact (644672 words)
+  rand  spatial       : 60/60 bit-exact (638942 words)
+  real  spatial       : 30/30 bit-exact (139968000 words)
+1287/1287 bit-exact (455 cases with NaN in the expected output, 930522 NaN words, payloads compared)
+  reference floor (C++ computed) vs data/ref_floor.npy: 51/51 bit-exact  (compute_reference_floor: status 0, 0.492 s)
+ok       [synth] 31x64 side < 32 (NotImplementedError)  (NotImplementedError)
+  real  : 12/12 bit-exact (all 0xc300 bytes)
+  real2 : 9/9 bit-exact (all 0xc300 bytes)
+  synth : 18/18 bit-exact (all 0xc300 bytes) (status != 0 in Python: 1)
+39/39 profiles bit-exact
+shuffle    4097/4097 OK
+sim        3000/3000 OK
+finish     3000/3000 OK
+aft -j 1   67/67 OK
+aft -j 2   67/67 OK
+combine    69/69 OK
+total 22.2 s -> ALL BIT-EXACT

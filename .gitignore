@@ -39,6 +39,22 @@ native/lzma/**
 !native/lzma/*.c
 !native/lzma/*.h
 !native/lzma/*.md
+# W2a: the libm sensitivity harness (sources only; libm_alt/bin, libm_alt/obj and libm_ulp are build outputs)
+!native/Makefile.libm_alt
+!native/openlibm/
+!native/openlibm/**
+!native/musl/
+!native/musl/**
+!native/libm_alt/
+native/libm_alt/**
+!native/libm_alt/*.cpp
+!native/libm_alt/*.h
+!native/libm_alt/*.py
+!native/libm_alt/*.exp
+!native/libm_alt/musl_shim/
+!native/libm_alt/musl_shim/*.h
+!native/libm_alt/pyhook/
+!native/libm_alt/pyhook/*.py
 
 # packaging/ (.app の梱包。venv・ビルド物 (.venv/・build/・dist/) は除外)
 !packaging/
@@ -47,6 +63,23 @@ packaging/**
 !packaging/*.spec
 !packaging/*.sh
 !packaging/README.md
+
+# qtui/ (C++ Qt UI、N3a。ビルド物 (build/) は除外)
+!qtui/
+qtui/**
+!qtui/CMakeLists.txt
+!qtui/src/
+!qtui/src/**/
+!qtui/src/**/*.cpp
+!qtui/src/**/*.h
+!qtui/src/**/*.inc
+!qtui/tests/
+!qtui/tests/*.cpp
+!qtui/tests/*.h
+!qtui/tests/fixtures/
+!qtui/tests/fixtures/*.json
+!qtui/tools/
+!qtui/tools/*.py
 
 # analysis (ソースコード・ドキュメントのみ)
 !neatvideo_ofx_614/
@@ -157,3 +190,21 @@ __pycache__/
 *.raw
 disasm_full.txt
 **/disasm_full.txt
+
+# ビルド物・キャッシュ (N2 以降の追跡漏れ分)
+native/*.dylib
+native/*_test
+native/libm_alt/bin/
+__pycache__/
+*.pyc
+
+# libm 感度計測のキャプチャ (15 GB)
+sandbox/omo/wp_native_libm/runs/
+
+# ワーカーの一時キャッシュ (10MB 超の検証入出力)
+sandbox/omo/wp_native_aft/tmp/
+sandbox/omo/wp_native_spatial/tmp/
+sandbox/omo/wp_native_flat/tmp/
+
+# ワーカーの一時キャッシュ全般 (10MB 超の検証入出力)
+sandbox/omo/wp_native_*/tmp/

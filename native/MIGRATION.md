@@ -174,10 +174,34 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
   入れず別ターゲット (`make -C native lib` 後に `python3 native/verify_bridge.py`)。
 - **アプリ名**: 2026-10-29 に **MeatVideo** に改名 (bundle・launcher・scripts・docs)。
   ウィンドウ内の題字は reproduction UI のまま。内部モジュール名 (nv_*) は不変。
-- **次 (N3)**: Qt C++ UI への移植 — 委託済み: `.claude/tasks/native_n3_qtui.md`
-  (N3a 骨格+Prepare / N3b Adjust+書き出し / N3c 残り。libnvcore の C ABI 直呼びで numpy 不使用)。
-- **W2 (libm)**: 委託済み: `.claude/tasks/native_w2_libm.md`
-  (alt libm ハーネスで語単位 diff を計測 → 統括がベンダー libm か文書化かを判定)。
+### N3 完了 + W2 判定 (2026-10-29)
+
+- **N3 完了**: `qtui/` (CMake Qt 6 アプリ) — Prepare/Adjust 両ページ・ビューア・選択範囲・
+  パネル (Quality/Completeness 含む)・フィルタ設定・プレビュー/サムネイル・書き出し・
+  Preferences・Profile Viewer/Check・Variants・OFX ブリッジモード。**処理は libnvcore の
+  C ABI 直呼びのみ** (UI に numpy を持ち込まない)。`nvcore_c_{ui,depth,prof5}` +
+  `nv_depth/nv_prof5/nv_lstsq/nv_ui` を追加。nv_lstsq は np.linalg の OpenBLAS 0.3.29 の
+  演算順を再現。PyObj (順序付き JSON、Python の意味論) でプロファイル dict を扱う。
+  自己試験 105/105 (Qt Test)。書き出し 23/23 バイト一致。L-1 (OFX の 2^63/2^64 フレーム
+  オーバーフロー) を修正 — 0.44 秒/226 MB で終了し Python 版と同じ終わり方
+  (修正前は数秒で 10 GB)。マージ後の main ツリーで clean ビルド警告 0・
+  make verify 11 本全件一致・verify_bridge 全語一致・自己試験 105/105 を統括が再確認
+  (自己試験は `NV_TEST_VIDEO=<動画>` または qtui から見た ../test.mp4 が必要)。
+- **N3 の既知差 (記録のみ)**: L-2 OFX 引数の端値 (1e400・Unicode 数字・0x10) の解釈が
+  Python 版と違う / L-3 C++ 自己試験 3 項目が弱く項目 20 が未実装 (Python との一致は
+  比較スクリプトで確認) / I-5 自己試験の単項目実行は前項の動画読み込み前提で落ちる /
+  I-6 極端なサイズのエラー文が違う (traceback vs no frames) / nv_depth の x86 未照合 /
+  実画面確認は未実施 (offscreen のみ。手順は REPORT)。
+- **W2 判定: W2c (文書化) で確定**。W2a のハーネス
+  (`native/libm_alt.{h,cpp}` + openlibm/musl 同梱、NV_LIBM_ALT で切替、
+  `verify_libm_alt.py`) が測定基盤として残る。libm の ULP 差は本家自身の
+  プラットフォーム別バイナリと同じ性質であり、macOS libm 基準を文書化する。
+  numpy/scipy/Python/OpenBLAS の版を上げたら照合をやり直す
+  (nv_lstsq は OpenBLAS 0.3.29 の演算順に固定)。
+- **N2/N3 運用決定 (5 問題への回答)**: (1) 設定ファイルは Python 版と共有
+  (C++ 固有の 2 キーを追加、既存キーは削除しない)。(2) polyfit は OpenBLAS 0.3.29 固定。
+  (3) W2 は W2c。(4) 1080p 比較用の生画像は検証のたびに再生成 (コミットしない)。
+  (5) 書き出し CLI の UI 設定依存は当面許容 (N4 でスタンドアロン化)。
 - **Windows**: `.claude/tasks/native_windows_runbook.md` (Windows ホストの Claude が実行中) と
   native_windows.md (W1〜W5)。
 

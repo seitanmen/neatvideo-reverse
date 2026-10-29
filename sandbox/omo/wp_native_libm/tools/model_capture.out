@@ -1,0 +1,2 @@
+[capture] model: rc 0, 60 s, 2 native calls, default build passes: ['  ub direct ad1ae0: 28/28 identical (pad: 8/8, bins: 8/8, ok: 12/12; pad / bins = NotImplementedError on both sides)']
+done in 60 s (/Users/seitan/Desktop/work/reverse/.claude/worktrees/w2a/sandbox/omo/wp_native_libm/runs)

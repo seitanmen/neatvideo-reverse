@@ -1,0 +1,53 @@
+py: exit 0; t8: ok | batch d8: 2 profiles; batch profiler: wrote 2 profiles to <OUT>/batch_d8 | batch d8s: 1 profiles; batch profiler: wrote 1 profiles to <OUT>/batch_d8s | t10: ok | s10: ok | export s10: True wrote /Users/seitan/Desktop/work/reverse/.claude/worktrees/n3a/sandbox/omo/wp_qtui_c/n3c/py/export_s10.mp4 | batch d10: 1 profiles; batch profiler: wrote 1 profiles to <OUT>/batch_d10 | s422: ok | export s422: True wrote /Users/seitan/Desktop/work/reverse/.claude/worktrees/n3a/sandbox/omo/wp_qtui_c/n3c/py/export_s422.mp4 | s422_32: ok | export s422_32: True wrote /Users/seitan/Desktop/work/reverse/.claude/worktrees/n3a/sandbox/omo/wp_qtui_c/n3c/py/export_s422_32.mkv | batch d32: 1 profiles; batch profiler: wrote 1 profiles to <OUT>/batch_d32 | done
+cpp: exit 0; t8: ok | batch d8: 2 profiles; batch profiler: wrote 2 profiles to <OUT>/batch_d8 | batch d8s: 1 profiles; batch profiler: wrote 1 profiles to <OUT>/batch_d8s | t10: ok | s10: ok | export s10: 1 wrote /Users/seitan/Desktop/work/reverse/.claude/worktrees/n3a/sandbox/omo/wp_qtui_c/n3c/cpp/export_s10.mp4 | batch d10: 1 profiles; batch profiler: wrote 1 profiles to <OUT>/batch_d10 | s422: ok | export s422: 1 wrote /Users/seitan/Desktop/work/reverse/.claude/worktrees/n3a/sandbox/omo/wp_qtui_c/n3c/cpp/export_s422.mp4 | s422_32: ok | export s422_32: 1 wrote /Users/seitan/Desktop/work/reverse/.claude/worktrees/n3a/sandbox/omo/wp_qtui_c/n3c/cpp/export_s422_32.mkv | batch d32: 1 profiles; batch profiler: wrote 1 profiles to <OUT>/batch_d32 | done
+== compare_ui (states, menus, panes, grabs)
+== states
+  state_batchdlg.json: 4/4 fields equal, profile leaves equal, profile JSON text identical
+  state_pviewer.json: 5/5 fields equal, profile leaves equal, profile JSON text identical
+  state_pviewer_none.json: 2/2 fields equal, profile leaves equal, profile JSON text identical
+  state_s10.json: 25/25 fields equal, profile leaves equal, profile JSON text identical
+  state_s422.json: 25/25 fields equal, profile leaves equal, profile JSON text identical
+  state_s422_32.json: 25/25 fields equal, profile leaves equal, profile JSON text identical
+  state_t10.json: 25/25 fields equal, profile leaves equal, profile JSON text identical
+  state_t8.json: 25/25 fields equal, profile leaves equal, profile JSON text identical
+  menus.json: 114 entries, 1 differences
+      $[6].items: len 12 vs 13
+== panes
+  21/21 pane images byte-identical (3110400 pixels in all)
+== grabs
+  dlg_batch.png: 0 of 76728 pixels differ (0.000%), max |diff| 0
+  dlg_prefs.png: size (285, 423, 3) vs (340, 423, 3)
+  dlg_pviewer.png: 0 of 396800 pixels differ (0.000%), max |diff| 0
+  dlg_pviewer_none.png: 0 of 396800 pixels differ (0.000%), max |diff| 0
+  win_s10_adjust.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_s422_32.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_t10.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+  win_t8.png: 0 of 1204000 pixels differ (0.000%), max |diff| 0
+RESULT: EQUAL
+== menus.json (video + profile): 114 Python items (100 enabled), C++ 115 (+1 About Qt): identical apart from About Qt
+== Preferences rows
+  9 Python rows vs 9 C++ rows (+2 C++-only: ['Auto Fine-Tune after Auto / Build Profile', 'ffmpeg (directory or binary)']); other rows identical
+   known: native core box: enabled True (Python) vs False (C++)
+   known: native core box: tip 'Profile search, Auto Fine-Tune and the frame filters through the C++ core (native/, bit-exact with the Python code); off = the Python code. Unavailable when the library is not found' (Python) vs 'The C++ UI always processes through libnvcore (native/, bit-exact with the Python code); the setting (prefs/native) is kept for the Python UI' (C++)
+== Batch Profiler profiles
+  batch_d10_src10.nvprof.json: identical text (2354 B)
+  batch_d32_src422.nvprof.json: identical text (2445 B)
+  batch_d8_src10.nvprof.json: identical text (2346 B)
+  batch_d8_test.nvprof.json: identical text (2358 B)
+  batch_d8s_src422.nvprof.json: identical text (2209 B)
+== exports
+  export_s10.mp4: SAME (byte for byte, 55394 B)
+    export_s10.ui_params.json: identical text
+    export_s10.ui_profile.json: identical text
+    export_s10.json (without seconds): equal
+  export_s422.mp4: SAME (byte for byte, 22357 B)
+    export_s422.ui_params.json: identical text
+    export_s422.ui_profile.json: identical text
+    export_s422.json (without seconds): equal
+  export_s422_32.mkv: SAME (decoded frames 3 + length, 1486306 B)
+    export_s422_32.ui_params.json: identical text
+    export_s422_32.ui_profile.json: identical text
+    export_s422_32.json (without seconds): equal
+== runs.json: equal {'exports': {'s10': True, 's422': True, 's422_32': True}, 'batch_msgs': ['batch profiler: wrote 2 profiles to <OUT>/batch_d8', 'batch profiler: wrote 1 profiles to <OUT>/batch_d8s', 'batch profiler: wrote 1 profiles to <OUT>/batch_d10', 'batch profiler: wrote 1 profiles to <OUT>/batch_d32']}
+== settings.ini [prefs]: identical (10 keys)
+RESULT: EQUAL (apart from the known differences)

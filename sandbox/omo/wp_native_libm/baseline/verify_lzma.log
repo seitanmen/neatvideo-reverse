@@ -1,0 +1,9 @@
+[python] 668 inputs (9277926 source bytes); planes 572, byte strings 96
+[python] byte equal: 667/667 (blob fits 651, overflow -1 17); C++ 1.67 s, Python 35.1 s wall (7.5 us/byte over 2 workers)
+[python] around the output limit n + 0x80 (stream length - n, fits): [(126, True), (126, True), (126, True), (127, True), (127, True), (127, True), (128, True), (128, True), (128, True), (129, False), (129, False), (129, False), (130, False), (130, False), (130, False)]
+  known divergence (empty input, not a genuine case; REPORT.md): 0 bytes: props 5d00000001 != 5d00100000; blob bytes differ
+[genuine] no saved blobs found; skipped
+TOTAL: 667/667 byte equal, 0 mismatches (41.2 s)
+real 41.24
+user 95.39
+sys 4.70

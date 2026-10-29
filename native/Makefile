@@ -16,6 +16,8 @@
 #   make -C native verify                                 (all of the above)
 #   make -C native portable x86 && native/verify_x86.sh  (F4: portable build, x86_64 vs arm64 bytes)
 #   make -C native lib && python3 native/verify_bridge.py   (N2a: libnvcore.dylib via ctypes vs the Python path)
+#   make -C native libm-alt && python3 native/verify_libm_alt.py   (W2a: openlibm / musl / naive libm builds,
+#                                                                   Makefile.libm_alt; the default build is unchanged)
 #
 # Makefile.band / .curve / .lzma / .flat / .model / .v5 / .profile / .aft are the per-task makefiles the workers wrote;
 # the rules below are the same.
@@ -100,9 +102,13 @@ nv_aft_test: $(AFT_SRC) $(AFT_HDR)
 # native/verify_bridge.py).  `make lib` builds it; `make lib SUF=_p XFLAGS=-DNV_PORTABLE` (= `make lib_portable`)
 # builds libnvcore_p.dylib with the portable float operations.
 LIB_SRC = nvcore_c.cpp nv_aft.cpp nv_profile.cpp nv_model.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp \
-          nv_linekernel.cpp nv_portable.cpp nv_lzma.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp
+          nv_linekernel.cpp nv_portable.cpp nv_lzma.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp \
+          nv_ui.cpp nvcore_c_ui.cpp nv_quality.cpp nv_prof5.cpp nv_lstsq.cpp nvcore_c_prof5.cpp \
+          nv_depth.cpp nvcore_c_depth.cpp
 LIB_HDR = nvcore_c.h nv_aft.h nv_profile.h nv_model.h nv_flat.h nv_band.h nv_curve.h nv_linekernel.h \
-          nv_portable.h nv_lzma.h nv_ndimage.h nv_spatial.h nv_temporal.h
+          nv_portable.h nv_lzma.h nv_ndimage.h nv_spatial.h nv_temporal.h \
+          nv_ui.h nvcore_c_ui.h nv_quality.h nv_prof5.h nv_lstsq.h nvcore_c_prof5.h \
+          nv_depth.h nvcore_c_depth.h
 
 libnvcore$(SUF).dylib: $(LIB_SRC) $(LIB_HDR) $(SDK_OBJ)
 	$(CXX) $(CXXFLAGS) $(XFLAGS) -D_7ZIP_ST -dynamiclib -install_name @rpath/libnvcore$(SUF).dylib \
@@ -144,4 +150,11 @@ clean:
 	       nv_lzma_test lzma/obj nv_flat_test nv_model_test nv_v5_test nv_profile_test nv_aft_test \
 	       $(PORT_BINS:%=%_p) $(PORT_BINS:%=%_x86) libnvcore.dylib libnvcore_p.dylib
 
-.PHONY: all lib lib_portable portable x86 verify verify_bridge clean
+# W2a: the libm sensitivity builds in libm_alt/bin/ (Makefile.libm_alt, libm_alt.h)
+libm-alt:
+	$(MAKE) -f Makefile.libm_alt
+
+libm-alt-clean:
+	$(MAKE) -f Makefile.libm_alt clean
+
+.PHONY: all lib lib_portable portable x86 verify verify_bridge clean libm-alt libm-alt-clean

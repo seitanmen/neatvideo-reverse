@@ -1,0 +1,31 @@
+  ui video    ('v02:306', False)           645/645  16.5s
+  ui video    ('v02:309', False)           645/645  16.9s
+  ui video    ('v02:312', False)           645/645  17.1s
+  ui video    ('v02:315', False)           645/645  17.2s
+  ui video    ('v02:318', False)           645/645  15.8s
+  ui video    ('t:298', False)             645/645  4.0s
+  ui video    ('t:301', False)             645/645  4.3s
+  ui video    ('t:304', False)             645/645  4.7s
+  ui video    ('t:307', False)             645/645  9.3s
+  ui synth    1                            4644/4644  49.3s
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/n3a/repro/nv_ui_qt/backend.py:122: RuntimeWarning: divide by zero encountered in divide
+  return np.clip((1.0 / rv - 1.0) / (1.0 / rv_min - 1.0), 0.0, 1.0).astype(np.float32)
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/n3a/repro/nv_ui_qt/display.py:304: RuntimeWarning: invalid value encountered in multiply
+  return np.clip((1 - w) * (i * NLC_SEPIA) + w * (i * NLC_BLUE + NLC_BLUE_OFF), 0, 255).astype(F32)
+  ui synth    2                            4644/4644  45.3s
+  ui yuv      7                            720/720  0.0s
+  ui yuv      8                            720/720  0.0s
+  ui yuv      9                            720/720  0.0s
+  ui mix      3                            210/210  0.0s
+  ui mix      4                            210/210  0.0s
+  ui floor    0                            2/2  0.7s
+  ui nlc      10                           526/526  1.0s
+  ui nlc      11                           520/520  0.0s
+  ui interp   5                            8016/8016  0.0s
+  ui interp   6                            7918/7918  0.0s
+  ui quality  ('v02', 312, 30)             30/30  52.5s
+  ui quality  ('v02', 309, 20)             20/20  52.2s
+  ui quality  ('t', 300, 30)               30/30  8.7s
+  ui quality  ('t', 305, 20)               20/20  8.3s
+ui: 34755/34755 bit-exact
+QT_QPA_PLATFORM=offscreen python3 verify_bridge_ui.py --jobs 2  297.17s user 676.27s system 597% cpu 2:42.96 total

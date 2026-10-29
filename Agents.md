@@ -578,6 +578,14 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   空間段の面ごと関数の抽出 (回帰なし)。既知: AFT 取り消しはプロファイル構築中は効かない、
   x86_64 dylib 未作成。verify_bridge は `make -C native lib` 後に `python3 native/verify_bridge.py`
   (動画・ffmpeg・PySide6 が必要)。詳細は native/MIGRATION.md。
+- **N3 完了 + W2 確定 (2026-10-29)**: N3 Qt 6 C++ UI (`qtui/`、CMake・Qt 6.8+・
+  libnvcore の C ABI 直呼びで numpy 不使用。Prepare/Adjust・ビューア・パネル・書き出し・
+  OFX モード。自己試験 105/105、書き出し 23/23 バイト一致。L-1 の OFX オーバーフロー修正
+  済み)。nv_lstsq は np.linalg の OpenBLAS 0.3.29 演算順に固定。W2 は W2c (文書化) で確定:
+  libm 差異は本家と同じプラットフォーム差。計測ハーネス `native/libm_alt` +
+  `verify_libm_alt.py` (NV_LIBM_ALT 切替)。N2/N3 運用: 設定ファイルは Python 版と共有、
+  1080p 比較画像は都度再生成、書き出し CLI の UI 設定依存は当面許容。既知差
+  (L-2/L-3/I-5/I-6・nv_depth x86 未照合・実画面未確認) は MIGRATION.md に記録。
 
 ## 8. 共同作業ルール (複数エージェント共有)
 

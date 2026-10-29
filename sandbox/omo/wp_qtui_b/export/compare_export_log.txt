@@ -1,0 +1,15 @@
+a_t_default            output SAME (byte for byte, (512082, 512082) B, frames 4), commands SAME ((8, 8)), meta True, exit (0, 0), time py 1.8s cpp 1.0s
+b_v02_default          output SAME (byte for byte, (2447586, 2447586) B, frames 4), commands SAME ((8, 8)), meta True, exit (0, 0), time py 3.1s cpp 2.2s
+c1_t_perchan           output SAME (byte for byte, (560656, 560656) B, frames 4), commands SAME ((8, 8)), meta True, exit (0, 0), time py 1.7s cpp 1.0s
+c2_v02_mix             output SAME (byte for byte, (3182018, 3182018) B, frames 4), commands SAME ((8, 8)), meta True, exit (0, 0), time py 3.2s cpp 2.2s
+c3_t_radius1_s_off     output SAME (byte for byte, (765085, 765085) B, frames 4), commands SAME ((8, 8)), meta True, exit (0, 0), time py 1.7s cpp 0.9s
+d_aac_copy_crf16       output SAME (byte for byte, (324556, 324556) B, frames 24), commands SAME ((9, 9)), meta True, exit (0, 0), time py 2.0s cpp 1.1s
+d2_ts_mp2_crf16        output SAME (byte for byte, (333913, 333913) B, frames 24), commands SAME ((9, 9)), meta True, exit (0, 0), time py 2.3s cpp 1.4s
+e_10bit_mkv            output SAME (decoded frames (framemd5) + file length, (674147, 674147) B, frames (3, 3)), commands SAME ((8, 8)), meta True, exit (0, 0), time py 1.3s cpp 0.5s
+f1_audio_aac           output SAME (byte for byte, (174597, 174597) B, frames 12), commands SAME ((9, 9)), meta True, exit (0, 0), time py 1.6s cpp 0.7s
+f2_audio_none          output SAME (byte for byte, (165639, 165639) B, frames 12), commands SAME ((8, 8)), meta True, exit (0, 0), time py 1.5s cpp 0.7s
+h_full_short           output SAME (byte for byte, (2453110, 2453110) B, frames 180), commands SAME ((9, 9)), meta True, exit (0, 0), time py 7.4s cpp 5.9s
+e2_12bit_x265          output SAME (byte for byte, (315655, 315655) B, frames 3), commands SAME ((8, 8)), meta True, exit (0, 0), time py 1.4s cpp 0.6s
+e3_16bit_mkv           output SAME (decoded frames (framemd5) + file length, (1502465, 1502465) B, frames (3, 3)), commands SAME ((8, 8)), meta True, exit (0, 0), time py 1.2s cpp 0.5s
+e4_32float_mkv         output SAME (decoded frames (framemd5) + file length, (5801637, 5801637) B, frames (3, 3)), commands SAME ((8, 8)), meta True, exit (0, 0), time py 1.4s cpp 0.6s
+RESULT: ALL SAME

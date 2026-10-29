@@ -1,0 +1,42 @@
+## A: libm_ulp on model+aft arg logs (verifier run)
+sandbox/omo/wp_native_libm/runs/capture/aft/args/:
+libm_args_40878.bin
+libm_args_40885.bin
+libm_args_40954.bin
+libm_args_41149.bin
+
+sandbox/omo/wp_native_libm/runs/capture/model/args/:
+libm_args_33971.bin
+libm_args_34776.bin
+{'func': 'pow', 'alt': 1, 'n': 177, 'bitdiff': 0, 'max_ulp': 0}
+{'func': 'pow', 'alt': 2, 'n': 177, 'bitdiff': 0, 'max_ulp': 0}
+{'func': 'pow', 'alt': 3, 'n': 177, 'bitdiff': 86, 'max_ulp': 9}
+{'func': 'tanf', 'alt': 1, 'n': 8, 'bitdiff': 2, 'max_ulp': 1, 'kernel_offsets_changed': 0, 'kernel_args_changed': 0}
+{'func': 'tanf', 'alt': 2, 'n': 8, 'bitdiff': 2, 'max_ulp': 1, 'kernel_offsets_changed': 0, 'kernel_args_changed': 0}
+{'func': 'tanf', 'alt': 3, 'n': 8, 'bitdiff': 0, 'max_ulp': 0, 'kernel_offsets_changed': 0, 'kernel_args_changed': 0}
+{'func': 'atan2', 'alt': 1, 'n': 860, 'bitdiff': 126, 'max_ulp': 1}
+{'func': 'atan2', 'alt': 2, 'n': 860, 'bitdiff': 126, 'max_ulp': 1}
+{'func': 'atan2', 'alt': 3, 'n': 860, 'bitdiff': 218, 'max_ulp': 1}
+{'func': 'sincos_self', 'alt': 0, 'n': 26, 'sincos_ne_sin_cos': 0}
+{'func': 'sincos.sin', 'alt': 1, 'n': 26, 'bitdiff': 2, 'max_ulp': 1, 'sincos_ne_sin_cos': 0}
+{'func': 'sincos.cos', 'alt': 1, 'n': 26, 'bitdiff': 0, 'max_ulp': 0, 'sincos_ne_sin_cos': 0}
+{'func': 'sincos.sin', 'alt': 2, 'n': 26, 'bitdiff': 2, 'max_ulp': 1, 'sincos_ne_sin_cos': 0}
+{'func': 'sincos.cos', 'alt': 2, 'n': 26, 'bitdiff': 0, 'max_ulp': 0, 'sincos_ne_sin_cos': 0}
+{'func': 'sincos.sin', 'alt': 3, 'n': 26, 'bitdiff': 9, 'max_ulp': 8, 'sincos_ne_sin_cos': 0}
+{'func': 'sincos.cos', 'alt': 3, 'n': 26, 'bitdiff': 12, 'max_ulp': 5, 'sincos_ne_sin_cos': 0}
+{'func': 'expf', 'alt': 1, 'n': 0, 'bitdiff': 0, 'max_ulp': 0}
+{'func': 'expf', 'alt': 2, 'n': 0, 'bitdiff': 0, 'max_ulp': 0}
+{'func': 'expf', 'alt': 3, 'n': 0, 'bitdiff': 0, 'max_ulp': 0}
+## kernel_offsets in worker ulp.json
+## G: git status of libm_alt
+?? native/libm_alt/fields.py
+?? native/libm_alt/frames_e2e.py
+?? native/libm_alt/libm_ulp.cpp
+?? native/libm_alt/musl.exp
+?? native/libm_alt/musl_rename.h
+?? native/libm_alt/musl_shim/endian.h
+?? native/libm_alt/musl_shim/features.h
+?? native/libm_alt/openlibm.exp
+?? native/libm_alt/openlibm_rename.h
+?? native/libm_alt/pyhook/sitecustomize.py
+0

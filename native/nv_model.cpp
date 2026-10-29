@@ -8,6 +8,7 @@
 // nor fold them, or their results written out in the portable build).
 
 #include "nv_model.h"
+#include "nv_libm.h"
 #include "nv_linekernel.h"
 #include "nv_portable.h"
 
@@ -98,8 +99,8 @@ const float Q50 = bits(0x3f000000u);
 const float Q85 = bits(0x3f59999au);
 
 // libSystem functions through volatile pointers (no constant folding / rewriting)
-double (*volatile g_atan2)(double, double) = &::atan2;
-struct __double2 (*volatile g_sincos)(double) = &::__sincos_stret;
+double (*volatile g_atan2)(double, double) = NV_LIBM(atan2, atan2);
+struct __double2 (*volatile g_sincos)(double) = NV_LIBM(__sincos_stret, sincos_stret);
 
 using Vec = std::vector<float>;
 

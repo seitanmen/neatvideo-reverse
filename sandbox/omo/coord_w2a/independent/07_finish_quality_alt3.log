@@ -1,0 +1,3 @@
+cases 3000, blobs with 0xbf34!=0: 903, Quality% changed 0, Completeness% changed 2, q/g value changed 2
+  changed: (668, (12, 59), (12, 58), 0.5925925970077515, 0.5802469253540039)
+  changed: (853, (64, 60), (64, 59), 0.6049382090568542, 0.5925925374031067)

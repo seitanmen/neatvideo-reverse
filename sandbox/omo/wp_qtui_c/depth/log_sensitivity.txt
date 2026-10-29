@@ -1,0 +1,4 @@
+rgb kg order          : 452 of 56344044 words differ -> DETECTED
+4:2:2 widen +1 ulp    : 136026 of 56344044 words differ -> DETECTED
+legacy NaN -> 255     : 3517 of 56344044 words differ -> DETECTED
+OFX 16 trunc          : 9433 of 241268 words differ -> DETECTED
