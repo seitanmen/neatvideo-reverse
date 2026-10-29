@@ -3159,3 +3159,4 @@ ce03a057debe18600f768212bb8c08915683d285837758f31c98a9db621479ee  sandbox/omo/wp
 dbefc32c2b94e8b707ff9760f49fc43beb1746cbab12715a01056fd63f362944  sandbox/omo/wp_native_libm/dl/x_musl/musl-1.2.6/src/process/execle.c
 3821faa03c1718620f1f4804133aa7473065c2f34f9cb49708b7930787e0e9e5  sandbox/omo/wp_native_libm/dl/x_musl/musl-1.2.6/src/process/_Fork.c
 abf0d460badbe4cc5b0a9d7f5adf506ab53f964cb0a45a4a5d95551c7a3d3124  .gitignore
+9d1df08a30ea3de89aed9fb7ee2a2204ba7aeed8eaf13129b21bea39ac1e2b4a  .claude/tasks/native_n3_fixes2.md
