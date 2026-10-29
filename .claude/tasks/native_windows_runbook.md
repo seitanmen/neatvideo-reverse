@@ -132,10 +132,14 @@ Get-ChildItem native -Filter *.bin -Recurse | ForEach-Object {
 
 ## 5. 実写フレームを使う検証について
 
-- N1a/N1b/N1d/N1f/N1g/N1h の一部のケースは `test_v02.mp4` / `test.mp4` を ffmpeg で読む。
-  Windows でも **ffmpeg を入れると実行できる** (`winget install Gyan.FFmpeg`)。
-  ただし動画ファイルは git に無いので統括に要求する。無い場合は動画を使うケースを
-  スキップしてよい (REPORT に「実写ケース未実施」と明記)。
+- **動画はリポジトリに入っている** (`test_v02.mp4` 137 MB・`test.mp4` 77 MB、Git LFS)。
+  **Git for Windows に git-lfs が入っている必要がある** (同梱が一般的。無ければ
+  `winget install GitHub.GitLFS` → `git lfs install` → `git lfs pull` で実体を取得。
+  LFS が無いとポインタファイル (数百バイトのテキスト) だけが降りてくるので、
+  最初に `ls test_v02.mp4` のサイズで確認すること)。
+- これらを使うケースは ffmpeg で読む。Windows でも **ffmpeg を入れると実行できる**
+  (`winget install Gyan.FFmpeg`)。動画は 2 本ともコミット済みなので、
+  動画を使うケースも通常どおり実施すること (スキップ不要)。
 
 ## 6. REPORT と成果物の納め方
 
