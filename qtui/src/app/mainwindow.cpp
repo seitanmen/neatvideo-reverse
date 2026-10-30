@@ -1,5 +1,6 @@
 // mainwindow - see mainwindow.h (port of repro/nv_ui_qt/main_window.py).
 #include "mainwindow.h"
+#include "look.h"
 
 #include <QActionGroup>
 #include <QTextEdit>
@@ -169,18 +170,38 @@ MainWindow::MainWindow(const QString& video, QWidget* parent) : QMainWindow(pare
     QStyle* st = style();
 
     auto* central = new QWidget();
-    auto* v = new QVBoxLayout(central);
-    v->setContentsMargins(4, 2, 4, 2);
-    v->setSpacing(2);
-    auto* top = new QHBoxLayout();
+    auto* outer = new QVBoxLayout(central);
+    outer->setContentsMargins(0, 0, 0, 0);
+    outer->setSpacing(0);
+    // the page tabs: centred in a darker row over the whole width; the selected tab has the colour of the page
+    // below and joins it (genuine.png)
+    auto* tabrow = new QWidget();
+    tabrow->setObjectName("tabrow");
+    tabrow->setAttribute(Qt::WA_StyledBackground);
+    tabrow->setStyleSheet(QString("#tabrow{background:%1}").arg(LOOK_TABROW));
+    auto* top = new QHBoxLayout(tabrow);
+    top->setContentsMargins(0, 3, 0, 0);
     tabs = new QTabBar();
     tabs->setExpanding(false);
+    tabs->setDrawBase(false);
+    tabs->setIconSize(QSize(22, 16));
     tabs->addTab(st->standardIcon(QStyle::SP_FileDialogContentsView), "Prepare Noise Profile");
     tabs->addTab(st->standardIcon(QStyle::SP_FileDialogDetailedView), "Adjust and Preview");
-    tabs->setStyleSheet("QTabBar::tab{padding:5px 14px; font-weight:bold}");
-    top->addWidget(tabs);
+    tabs->setStyleSheet(QString("QTabBar::tab{padding:5px 14px; font-weight:bold; color:#a8a8a8; background:%1; "
+                                "border:1px solid #6e6e6e; border-bottom:none; margin-top:2px}"
+                                "QTabBar::tab:selected{color:#f0f0f0; background:%2; border-color:#7a7a7a; "
+                                "margin-top:0px}"
+                                "QTabBar::tab:!selected:hover{color:#d8d8d8}")
+                            .arg(LOOK_TABROW, LOOK_WINDOW));
     top->addStretch(1);
-    v->addLayout(top);
+    top->addWidget(tabs, 0, Qt::AlignBottom);
+    top->addStretch(1);
+    outer->addWidget(tabrow);
+    auto* page = new QWidget();
+    outer->addWidget(page, 1);
+    auto* v = new QVBoxLayout(page);
+    v->setContentsMargins(4, 4, 4, 2);
+    v->setSpacing(2);
 
     auto* split = new QSplitter(Qt::Horizontal);
     auto* left = new QWidget();
@@ -520,6 +541,13 @@ void MainWindow::auto_clicked() {
 // ---------------------------------------------------------------- menus (menus.py)
 void MainWindow::build_menus() {
     QMenuBar* mb = menuBar();
+    mb->setNativeMenuBar(false);              // in the window, as the genuine plug-in window (not the macOS menu bar)
+    {
+        QPalette pal = mb->palette();
+        pal.setColor(QPalette::Window, QColor(LOOK_MENUBAR));
+        mb->setPalette(pal);
+        mb->setAutoFillBackground(true);
+    }
     auto add = [&](QMenu* menu, const std::string& key, const QString& text, std::function<void()> slot,
                    const QKeySequence& sc = QKeySequence(), bool enabled = true, const QString& tip = QString(),
                    bool checkable = false, std::function<void(bool)> tslot = nullptr) {
@@ -704,6 +732,7 @@ void MainWindow::build_menus() {
     mode->setPopupMode(QToolButton::InstantPopup);
     mode->setAutoRaise(true);
     mode->setStyleSheet("QToolButton{font-weight:bold; padding:2px 8px}");
+    mode->setProperty("nv_arrow", false);     // genuine: the bold "Advanced Mode" without a menu mark
     auto* mm = new QMenu(mode);
     g = new QActionGroup(this);
     for (const auto& [key, text, adv] : std::vector<std::tuple<std::string, QString, bool>>{
@@ -887,8 +916,8 @@ void MainWindow::open_video(const QString& path_in) {
             const bool capped = vi.n && nf < vi.n;
             video_lbl->setText(QString("%1x%2 · preview %3").arg(vi.W).arg(vi.H).arg(nf) +
                                (capped ? QString("/%1 frames (memory cap)").arg(vi.n) : QString(" frames")));
-            video_lbl->setStyleSheet(capped ? "color:#d08000" : "");
-            viewer_bar->set_frame_info(vi.W, vi.H, pf.bits);
+            video_lbl->setStyleSheet(capped ? "color:#f0a030" : "");
+            viewer_bar->set_frame_info(vi.W, vi.H, pf.bits, pf.is_float);
             depth_lbl->setText(depth_text());
             say(QFileInfo(path).fileName() +
                 Q(": " + std::to_string(vi.W) + "x" + std::to_string(vi.H) + " " + std::to_string(nf) + "f " + vi.fps +
@@ -2496,7 +2525,7 @@ void MainWindow::set_ofx_frames(std::vector<Frame>&& fr, int W, int H, double fp
     timeline->set_frame(std::min(n / 3, std::max(n - 3, 0)));
     video_lbl->setText(QString("OFX host: %1x%2 · %3 frames · %4 fps").arg(W).arg(H).arg(n).arg(Q(py_float_str(fps))));
     depth_lbl->setText(QString("source OFX host (%1-bit 4:2:0) · processing %1-bit").arg(depth));
-    viewer_bar->set_frame_info(W, H, depth);
+    viewer_bar->set_frame_info(W, H, depth, depth == 32);   // --depth 32: the host sends float32 (ofx.h)
     update_performance();
     set_ofx_mode(true);
     say("OFX host: Auto Profile (Prepare Noise Profile), adjust, then Apply to return the frame to the host");

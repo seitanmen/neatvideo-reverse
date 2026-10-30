@@ -5,12 +5,14 @@
 #include <QApplication>
 #include <QMessageBox>
 
+#include "look.h"
 #include "mainwindow.h"
 #include "ofx.h"
 
 int main(int argc, char** argv) {
     QApplication app(argc, argv);
     QApplication::setApplicationName("nv_ui_qt");
+    nvqt::apply_look(app);                 // Fusion + the genuine grey palette (look.h), also on macOS
     QStringList args = QApplication::arguments().mid(1);
     const std::string dir =
         nvqt::find_ffmpeg_dir(nvqt::settings()->value("prefs/ffmpeg").toString().toStdString());

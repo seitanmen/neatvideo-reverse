@@ -51,6 +51,7 @@
 #include "export.h"
 #include "filter_panel.h"
 #include "noise_graph.h"
+#include "look.h"
 #include "mainwindow.h"
 #include "ofx.h"
 #include "profile_panel.h"
@@ -400,16 +401,30 @@ private slots:
         QVERIFY(qc.has_value());
         QCOMPARE(win->profile_panel->quality->text(), QString("%1%").arg(qc->first));
         QCOMPARE(win->profile_panel->completeness->text(), QString("%1%").arg(qc->second));
+        QCOMPARE(win->profile_panel->complete_lbl->text(), QString("%1%").arg(qc->second));   // the equalizer row too
         QVERIFY(qc->second > 1);                    // AFT marks the unmeasured bins
+    }
+
+    void equalizerCompleteness() {   // the equalizer row's box: g x 100 as the genuine Advanced panel ("85%"), not n/a
+        QVERIFY(wait_until([&] { return idle() && win->completeness_pct.has_value(); }));
+        QCOMPARE(win->profile_panel->complete_lbl->text(), QString("%1%").arg(*win->completeness_pct));
+        QVERIFY(!win->profile_panel->complete_lbl->toolTip().contains("not computed"));
+        win->profile_panel->set_completeness(85);
+        QCOMPARE(win->profile_panel->complete_lbl->text(), QString("85%"));
+        win->profile_panel->set_completeness(std::nullopt);
+        QCOMPARE(win->profile_panel->complete_lbl->text(), QString("n/a"));
+        win->profile_panel->set_completeness(win->completeness_pct);   // back to the window's value
     }
 
     void resetFineTuneCompleteness() {   // "Completeness: after Reset the LZMA flag is cleared -> 0%"
         win->reset_fine_tune();
         QVERIFY(wait_until([&] { return idle(); }));
         QCOMPARE(win->profile_panel->completeness->text(), QString("0%"));
+        QCOMPARE(win->profile_panel->complete_lbl->text(), QString("0%"));
         win->state->undo->undo();
         QVERIFY(wait_until([&] { return idle(); }));
         QVERIFY(win->profile_panel->completeness->text() != "0%");
+        QCOMPARE(win->profile_panel->complete_lbl->text(), win->profile_panel->completeness->text());
     }
 
     void viewerModePerPage() {   // "viewer mode kept per page (defaults Prepare YCrCb+, Adjust Normal)"
@@ -1765,6 +1780,7 @@ private slots:
         QVERIFY(wait_until([&] { return idle(); }));
         QCOMPARE(win->profile_panel->quality->text(), QString("n/a"));
         QCOMPARE(win->profile_panel->completeness->text(), QString("n/a"));
+        QCOMPARE(win->profile_panel->complete_lbl->text(), QString("n/a"));   // no profile: n/a as the genuine
         win->state->undo->undo();
         QVERIFY(wait_until([&] { return idle() && win->quality_pct.has_value(); }));
     }
@@ -1987,6 +2003,33 @@ private slots:
         QVERIFY(qobject_cast<QMessageBox*>(box)->text().startsWith("<OFX host>\n640x360, source unknown (8-bit 4:2:0), read as yuv420p"));
         box->close();
         delete ow;
+    }
+
+    void frameInfoFloat32() {   // the viewer bar's frame info as the genuine one: "Frame: 3840x2160, 32-bit float"
+        ViewerBar bar(win->viewer);
+        bar.set_frame_info(3840, 2160, 32, true);
+        QCOMPARE(bar.size->text(), QString("Frame: 3840x2160, 32-bit float"));
+        for (int b : {8, 10, 12, 16}) {          // the integer depths keep "N-bit"
+            bar.set_frame_info(1920, 1080, b, false);
+            QCOMPARE(bar.size->text(), QString("Frame: 1920x1080, %1-bit").arg(b));
+        }
+        // the OFX host mode: --depth 32 is float32 from the host (ofx.h), --depth 8 / 16 are integers
+        for (int d : {8, 16, 32}) {
+            std::vector<Frame> fr(win->frames.begin(), win->frames.begin() + 3);
+            if (d == 32)
+                for (Frame& f : fr) {            // the float32 frames of a --depth 32 host
+                    f.fY.assign(f.Y.begin(), f.Y.end());
+                    f.fCb.assign(f.Cb.begin(), f.Cb.end());
+                    f.fCr.assign(f.Cr.begin(), f.Cr.end());
+                    f.Y.clear();
+                    f.Cb.clear();
+                    f.Cr.clear();
+                }
+            auto* ow = new MainWindow();
+            ow->set_ofx_frames(std::move(fr), 640, 360, 30.0, d);
+            QCOMPARE(ow->viewer_bar->size->text(), QString("Frame: 640x360, %1-bit%2").arg(d).arg(d == 32 ? " float" : ""));
+            delete ow;
+        }
     }
 
     void ofxArgsAndNoFrames() {   // main.py _ofx_main: usage / no frames on stdin -> exit 1, nothing on stdout
@@ -2321,7 +2364,7 @@ private slots:
         ensure_v10_at_10();
         const QString lbl = win->depth_lbl->text();
         QVERIFY2(lbl.contains("yuv420p10le (10-bit 4:2:0)") && lbl.contains("processing 10-bit"), qPrintable(lbl));
-        QVERIFY(win->viewer_bar->size->text().contains("10-bit"));
+        QCOMPARE(win->viewer_bar->size->text(), QString("Frame: 640x360, 10-bit"));
         QVERIFY(win->filter_panel->perf->text().contains("Frame Bitdepth:&nbsp;&nbsp;</td><td>10-bit (yuv420p10le)"));
         QWidget* box = win->image_info();
         QVERIFY(qobject_cast<QMessageBox*>(box)->text().contains(QString::fromUtf8("read as yuv420p10le · 10-bit 4:2:0")));
@@ -2404,6 +2447,7 @@ private slots:
         QCOMPARE(static_cast<long long>(win->frames.size()),
                  static_cast<long long>(mem * 1073741824.0) / pixfmt("gbrpf32le").internal_bytes(640, 360));
         QVERIFY(win->depth_lbl->text().endsWith("processing 32-bit float RGB"));
+        QCOMPARE(win->viewer_bar->size->text(), QString("Frame: 640x360, 32-bit float"));   // genuine wording
         QCOMPARE(win->export_filter(), std::make_pair(QString("Matroska FFV1 (*.mkv);;EXR sequence (*.exr)"), QString(".mkv")));
         QWidget* box = win->image_info();
         QVERIFY(qobject_cast<QMessageBox*>(box)->text().contains("(processed as full-range YCbCr)"));
@@ -2693,6 +2737,7 @@ int main(int argc, char** argv) {
     if (qgetenv("QT_QPA_PLATFORM").isEmpty()) qputenv("QT_QPA_PLATFORM", "offscreen");
     QApplication app(argc, argv);
     QApplication::setApplicationName("nv_ui_qt");
+    apply_look(app);                        // the look of MeatVideoQt (main.cpp)
     SelfTest t;
     return QTest::qExec(&t, argc, argv);
 }

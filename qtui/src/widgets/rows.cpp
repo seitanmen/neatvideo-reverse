@@ -427,7 +427,7 @@ void BeginRow::look_(bool on) {
     const QString c = on ? QString(ACTIVE_TITLE) : dim ? QString("#9a9a9a") : QString();
     const QString gear = QString::fromUtf8("⚙ ") + name;
     const QString nm = c.isEmpty() ? gear : QString("<span style='color:%1'>%2</span>").arg(c, gear);
-    title->setText(nm + " <span style='color:#2a6fd6'>(?)</span>");
+    title->setText(nm + " <span style='color:#6ea8ff'>(?)</span>");
     if (button->text() != "Begin (n/a)") button->setText(on ? "Finish" : "Begin");
     button->setIcon(on ? square_icon(QColor(70, 150, 255)) : triangle_icon());
 }
@@ -471,8 +471,8 @@ Header::Header(const QString& title_, EnableCheck* enable_, bool expanded, bool 
     h->addWidget(arrow);
     const bool na = enable != nullptr && !enable->spec.implemented;
     QString t = "<b>" + title_ + "</b>";
-    if (!help_tip.isEmpty()) t += " <span style='color:#2a6fd6'>(?)</span>";
-    if (na) t += QString(" <span style='color:%1'>(n/a)</span>").arg(level == 0 ? "#c8c8c8" : "#808080");
+    if (!help_tip.isEmpty()) t += " <span style='color:#6ea8ff'>(?)</span>";
+    if (na) t += QString(" <span style='color:%1'>(n/a)</span>").arg(level == 0 ? "#c8c8c8" : "#a8a8a8");
     title = new QLabel(t);
     if (level == 0) title->setStyleSheet(QString("color:") + HEADER_TEXT);
     if (na) {
@@ -545,8 +545,7 @@ IconBar::IconBar(const QString& what, QWidget* parent) : QWidget(parent) {
         if (icon) b->setIcon(st->standardIcon(*icon));
         if (!text.isEmpty()) b->setText(text);
         b->setToolTip(tip);
-        b->setAutoRaise(true);
-        lay->addWidget(b);
+        lay->addWidget(b);                      // raised (genuine: every icon button has its bevel)
         return b;
     };
     open = btn(QStyle::SP_DirOpenIcon, QString("Load %1 from a file…").arg(what));

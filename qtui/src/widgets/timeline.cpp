@@ -81,7 +81,7 @@ Timeline::Timeline(QWidget* parent) : QWidget(parent) {
     slider->setFixedHeight(14);
     slider->setToolTip("Timeline (repro: the genuine plug-in follows the host's timeline)");
     label = new QLabel("Frame 0 / 0");
-    label->setStyleSheet("color:#606060");
+    label->setStyleSheet("color:#b4b4b4");      // light grey on the grey page (look.h), as the genuine dim labels
     label->setMinimumWidth(110);
     row->addWidget(slider, 1);
     row->addWidget(label);
