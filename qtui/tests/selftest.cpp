@@ -401,16 +401,30 @@ private slots:
         QVERIFY(qc.has_value());
         QCOMPARE(win->profile_panel->quality->text(), QString("%1%").arg(qc->first));
         QCOMPARE(win->profile_panel->completeness->text(), QString("%1%").arg(qc->second));
+        QCOMPARE(win->profile_panel->complete_lbl->text(), QString("%1%").arg(qc->second));   // the equalizer row too
         QVERIFY(qc->second > 1);                    // AFT marks the unmeasured bins
+    }
+
+    void equalizerCompleteness() {   // the equalizer row's box: g x 100 as the genuine Advanced panel ("85%"), not n/a
+        QVERIFY(wait_until([&] { return idle() && win->completeness_pct.has_value(); }));
+        QCOMPARE(win->profile_panel->complete_lbl->text(), QString("%1%").arg(*win->completeness_pct));
+        QVERIFY(!win->profile_panel->complete_lbl->toolTip().contains("not computed"));
+        win->profile_panel->set_completeness(85);
+        QCOMPARE(win->profile_panel->complete_lbl->text(), QString("85%"));
+        win->profile_panel->set_completeness(std::nullopt);
+        QCOMPARE(win->profile_panel->complete_lbl->text(), QString("n/a"));
+        win->profile_panel->set_completeness(win->completeness_pct);   // back to the window's value
     }
 
     void resetFineTuneCompleteness() {   // "Completeness: after Reset the LZMA flag is cleared -> 0%"
         win->reset_fine_tune();
         QVERIFY(wait_until([&] { return idle(); }));
         QCOMPARE(win->profile_panel->completeness->text(), QString("0%"));
+        QCOMPARE(win->profile_panel->complete_lbl->text(), QString("0%"));
         win->state->undo->undo();
         QVERIFY(wait_until([&] { return idle(); }));
         QVERIFY(win->profile_panel->completeness->text() != "0%");
+        QCOMPARE(win->profile_panel->complete_lbl->text(), win->profile_panel->completeness->text());
     }
 
     void viewerModePerPage() {   // "viewer mode kept per page (defaults Prepare YCrCb+, Adjust Normal)"
@@ -1766,6 +1780,7 @@ private slots:
         QVERIFY(wait_until([&] { return idle(); }));
         QCOMPARE(win->profile_panel->quality->text(), QString("n/a"));
         QCOMPARE(win->profile_panel->completeness->text(), QString("n/a"));
+        QCOMPARE(win->profile_panel->complete_lbl->text(), QString("n/a"));   // no profile: n/a as the genuine
         win->state->undo->undo();
         QVERIFY(wait_until([&] { return idle() && win->quality_pct.has_value(); }));
     }

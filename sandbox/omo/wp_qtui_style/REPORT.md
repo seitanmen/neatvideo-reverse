@@ -48,3 +48,75 @@
 - I-2 (推測): ネイティブのメニューバーをやめたので、macOS のアプリメニューから Preferences・About が消え、⌘, が効かなくなるとみられる。Tools (F10) と Help には残る。
 - I-6 (変更前から): OFX のホストモードの深度の欄が "processing 32-bit" で、単体のアプリの表記と違う。
 - 手を付けていない本家との差: アイコン、右パネルの題字入りの枠、Quality の棒。
+
+---
+## 追加: "n/a" の対応 (ユーザーの依頼、2026-10-31)
+
+### イコライザの行の欄 (`complete_lbl`)
+- 変更前は "n/a" だった。本家は同じ場所に 85% を出している。
+- `ProfilePanel::set_completeness` で、パネルの Completeness と同じ値 (g×100 の %、プロファイルがなければ "n/a") を出すようにした。
+- 本家の欄は割合の分だけ明るく塗った棒の形で、この見た目は未対応。
+- 試験: `equalizerCompleteness` を新しく足し、既存の 3 項目にも確認を足した。自己試験は 117/117。表示の 1 行を消すと 3 項目が FAIL する。
+
+### "n/a" の棚卸し (全 24 か所。分類の全文は `PROGRESS.md` §3.3)
+**(a) 値があって表示するだけで済むもの**
+- イコライザの行の欄 1 件だけで、上のとおりこの PR で直した。
+
+**(b) 本家の機能そのものが未実装のもの**
+処理・測定・ホストとの連携を変えることになるので、この PR では実装しない。
+- Filter Settings の次の行
+  - Quality Mode
+  - Sharpening
+  - Jitter
+  - Dust and Scratches
+  - Flicker (局所・全面)。CLI の `--flicker` はあるが意味が違い、UI につなぐには処理を変える必要がある
+  - Edge Smoothing
+  - Repeat Rate
+  - Adapt to Changing Noise
+  - Artifact Removal
+  - Mix の成分別
+- Local Flicker Check と Repeated Frames Check
+- Manual Fine-Tune
+- プロファイルの Noise Level の 5 帯域
+- P・γ・x1.0
+- Variants
+- Auto Match
+- Profile Converter (.dnp)
+- Skip Neat Video Processing
+
+**(c) そのまま残すもの**
+- プロファイルが無いときの代わりの表示 "n/a"。本家にも、条件付きで "n/a" を出す表示がある。
+- 本家での中身を観測していない Device Name and Mode のメニューと Save As Default Profile…。
+- Help の外部リンク。
+
+### Completeness の値 (観測と推測を分ける)
+**観測**
+- test_v02 の Auto Profile → AFT の Quality / Completeness は、次の経路ですべて同じ値になった。
+  - 今の C++
+  - G1 より前の C++
+  - PySide6 版 (native と純 Python)
+- 比べたフレームと値
+  - 作業者: 6 フレーム。n=240 は 47/19
+  - 独立検証者: 作業者が使っていない n=400 で 49/22
+- したがって G1 による変化はない。
+- AFT の後の Completeness は「未測定のビンの数 ÷ 27」になる。
+
+**本家の値と未確定の点**
+- 本家の同じ場面は Quality 65% / Completeness 85% (= 23/27)。
+- 差の原因は**未確定**。
+  - repro で見本を 512² にしても 19%、2 倍に拡大した入力でも 15% で、確かめられなかった。
+  - 候補 (推測) は 2 つ。本家が実際に使った見本の領域が違うことと、AFT の移植と本家の違い (移植が本家と照合済みなのはタイル順だけ) 。
+
+### 訂正: "Profiled with: Full frame (WxH)"
+- 作業者と統括は当初、この表示を「見本 = フレーム全面」と読み、85% の説明にも使った。
+- 本家バイナリの文字列では、"Profiled with:" に続く選択肢は "Full frame (" / "Two fields (" / "One field (" の 3 つで、直前に "Scan type: Progressive / Interlaced" がある (観測)。
+- したがって、この欄はプログレッシブのフレームかインターレースのフィールドかを表すものとみられ (推測)、見本の領域は表さない。
+- repro はプログレッシブだけを扱うので、今の "Full frame (WxH)" という表示は本家と同じ意味になり、変更しない。
+
+### 独立検証 Round 2
+- 判定は **APPROVE** (M 0・L 1・I 3)。
+- 主な観測
+  - パネルとイコライザの行の値は、12 の場面ですべて一致した。
+  - 自己試験は 117/117、`g1_compare` は ALL SAME。
+  - "n/a" の (a) に取りこぼしはない。
+- L-R2-1 (観測と推測を分けて書くこと) は、この節で対応した。

@@ -90,3 +90,90 @@ worktree `.claude/worktrees/n3fix-style` (branch n3fix-style、基点 53a52e1)�
 - 撮影: `shots/cmp_text_contrast.png` (cocoa で show せずに grab、前後)。`shots/after2_native_{prepare,adjust}.png`。
   "Frame 5 / 17" と "(?)" が読めることを目で確かめた。"profile not ready" (プロファイルのない状態) は撮っていない。
 - 自己試験 116 passed, 0 failed。変更したファイルをビルドし直して、警告 0。
+
+## 追加作業 3: "n/a" の表示 (ユーザーの依頼、PR #6)
+
+### 3.1 イコライザの行の欄 (`complete_lbl`)
+- `ProfilePanel::set_completeness` が、パネルの Completeness 欄と同じ文字列 (g×100 の "%"、プロファイルがなければ "n/a") をイコライザの行の欄にも出す。
+  本家の Advanced パネルがこの位置に g×100 を出していることに合わせた (QUALITY.md §8.4、genuine.png の "85%")。
+  ツールチップの「(n/a: not computed in the reproduction)」は「同じ値。プロファイルがなければ n/a」に変えた。
+- 試験:
+  - 新規の項目 `equalizerCompleteness`: 窓の値と一致すること、85 → "85%"、なし → "n/a"、ツールチップに "not computed" がないことを確かめる。
+  - 既存の項目にも確認を足した: `qualityPanel` (AFT 後)、`resetFineTuneCompleteness` (Reset → 0%、Undo)、Reset Profile → "n/a"。
+  - 感度: 1 行を消すと `equalizerCompleteness` と `qualityPanel` が FAIL (Actual "n/a")。確認後に元へ戻した。
+- 撮影 `shots/cmp_eq_completeness.png`: 本家 85% / 前 n/a / 後 22% (test_v02、cocoa で grab)。
+  本家の欄は 85% の割合だけ明るく塗った棒の形で、そこは未対応 (見た目の差として残す)。
+
+### 3.2 Completeness の値の差の調査 (観測)
+- 同じ入力・同じ流れ (フレーム F で Auto Profile → Auto Fine-Tune) で、次の 3 つを比べた。
+  - C++ の今のビルド: `qtui_g1eq … default` の quality.json
+  - G1 より前の C++ ビルド: `scratchpad/g1cpp_before/qtui/build/qtui_g1eq`
+  - PySide6 版の backend/quality: `tools/py_quality.py`。NV_NATIVE=1 と、純 Python の NV_NATIVE=0 の両方
+- 結果 (Quality, Completeness) と、領域、AFT が未測定とした (マーカーの付いた) ビンの数:
+
+  | 入力 | C++ 今 | C++ G1 前 | Python (native) | Python (NV_NATIVE=0) | 領域 (y, x, size) | 未測定ビン |
+  |---|---|---|---|---|---|---|
+  | test_v02 100 | 50, 26 | 50, 26 | 50, 26 | — | 0, 800, 128 | 7 |
+  | test_v02 240 | 47, 19 | 47, 19 | 47, 19 | 47, 19 | 0, 856, 128 | 5 |
+  | test_v02 312 | 47, 19 | 47, 19 | 47, 19 | — | 0, 832, 128 | 5 |
+  | test_v02 576 | 36, 19 | 36, 19 | 36, 19 | — | 864, 520, 64 | 5 |
+  | test.mp4 300 | 43, 70 | 43, 70 | 43, 70 | 43, 70 | 288, 416, 48 | 19 |
+  | test.mp4 30 | 40, 59 | 40, 59 | 40, 59 | — | 288, 392, 48 | 16 |
+
+- G1 による変化はない。C++ は G1 の前後どちらでも Python と全件一致する。統括の実画面の 47%/19% は test_v02 240 の行と同じ値。
+- 本家の 65%/85% と違うのは、プロファイルの作り方が違うため。
+  - 本家: Resolve で 3840×2160 に拡大した test_v02 の全面 ("Full frame") を見本にした。AFT が測ったのは 4 ビンで、残る 23 ビンが未測定 (23/27 = 85%)。
+  - repro の Auto Profile: FindFlatArea の移植が選んだ空の 128² を見本にする。AFT の移植は 22 ビンを測るので、未測定は 5 (5/27 = 19%)。
+  - g は「未測定ビン 1 個につき +1/27」なので、AFT が多くのビンを測れるほど Completeness が下がる。
+  - repro の UI には全面のプロファイルを作る経路がない (選択は 1 辺 512 まで)。AFT の移植の係数と測定ビンは、本家とは照合していない (§6.5)。
+- 気づいた点 (UI の表示。直していない):
+  - パネルの情報欄の "Profiled with: Full frame (WxH)" は、本家の文字列を固定で出している (`profile_panel.cpp:394`)。実際の見本は 128² の領域でも "Full frame" と出る。統括が「Full frame、AFT 済み」と読んだのはこのためとみられる。
+  - 実際の領域を出すかどうかは文言の変更になるので、統括の判断を待つ。
+
+### 3.3 qtui の "n/a" の一覧と分類
+(a) 値がすでにあり、表示するだけで済む → この PR で表示した
+- `profile_panel.cpp:274` イコライザの行の欄 → Completeness (3.1)
+
+(b) 本家の機能そのものが未実装 → この PR では実装しない
+- 下の各機能は、実装すると処理・測定・ホストとの連携を変えることになる。
+- Filter Settings の (n/a) の行 (`state.cpp` の implemented=false。ラベル "(n/a)"、値 "n/a"、無効表示):
+  - Quality Mode (時間・空間): v5 に品質モードがない
+  - Sharpening 一式 (Enable、Prevent Over-Sharpening、Range ×3、チャンネル ×3): 鮮鋭化の処理がない
+  - Jitter of Details (Threshold、Extended Filtration): 処理がない
+  - Dust and Scratches (Mode、Threshold、Amount): 処理がない
+  - Flicker (Local、Full Frame): 本家に合わせて全体補正は既定でオフ。局所的なフリッカーの処理もない
+  - Edge Smoothing (Low・Mid・High): 処理がない
+  - Repeated Frames の Repeat Rate: 処理がない
+  - Adapt to Changing Noise: 処理がない
+  - Artifact Removal (Dots・Lines・High・Mid・Low): 処理がない
+  - Mix の成分別 (mix_Y/Cr/Cb): backend の mix は 1 つだけで、成分別にするには処理を変える必要がある
+- 確認ツール:
+  - "Begin (n/a)" の Local Flicker Check と Repeated Frames Check (Filter Settings Check のメニューの 2・3 番も同じ)
+- Device Noise Profile パネル:
+  - Manual Fine-Tune ボタン: 選んだ領域でビンを測り直す機能が未実装 (グラフの点をドラッグする手動の調整はある)
+  - Noise Level の Frequencies (High..Ultra Low): repro のプロファイルの曲線には帯域がない
+- 最下段の P (走査方式)・γ (入力のガンマ)・x1.0 (入力のゲイン): repro はプログレッシブとガンマ補正済みだけを扱い、入力のゲインはない
+- ツールバーの Variants ×2 と Variants メニューの項目: 別の設定の組が未実装
+- Profile メニュー:
+  - Auto Match: 未実装
+  - Profile Converter…: 本家の .dnp 形式の読み書きが未実装 (ツールチップは "Not available: …")
+- Effect メニューの Skip Neat Video Processing: ホストとの連携 (処理の省略) が必要
+
+(c) その他
+- 表示する値がないときの代わりの表示 (仕様どおり、変えない):
+  - パネルの Quality と Completeness の "n/a" (プロファイルがないとき)
+  - Profile Viewer の "Overall Profile Quality: n/a" と "Completeness: n/a"
+  - 本家も、片方の表示は条件付きで "n/a" を出す (REPORT の発見の節)
+- 本家での中身が未観測のもの:
+  - Device Name and Mode の ▸≡ メニュー
+  - Profile メニューの Save As Default Profile… (repro には Assign As Default Profile がある)
+- 外部の文書・サイトへのリンク (repro の対象外):
+  - Help メニューの Read Me、What's New、How to Use Neat Video、Web Page、Community Forum、Report a Bug Online、Support via E-mail
+- コメントだけで、表示はない: `mainwindow.h:3`、`rows.h:120`、`filter_panel.cpp:455`
+
+### 3.4 確認 (観測)
+- 自己試験: 117 passed, 0 failed (116 + equalizerCompleteness)。
+- `g1_compare --cases default`: RESULT: ALL SAME。
+- `compare_export` (NV_NATIVE=1): RESULT: ALL SAME。
+- 新しいビルド先での clean ビルド: 警告 0。
+- cocoa の grab: `shots/after3_native_prepare.png` と `cmp_eq_completeness.png` で、欄が 22% と出ることを目で確かめた。

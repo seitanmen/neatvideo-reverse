@@ -245,7 +245,7 @@ ProfilePanel::ProfilePanel(QWidget* parent) : QWidget(parent) {
                        static_cast<QWidget*>(sel_val)})
         reg_(w, "adv");
 
-    // equalizer: graph, then [Auto Fine-Tune, Manual, Auto Complete | 4 round toggles | n/a | x]
+    // equalizer: graph, then [Auto Fine-Tune, Manual, Auto Complete | 4 round toggles | completeness | x]
     auto* eq = new QFrame();
     eq->setObjectName("eq");
     eq->setStyleSheet("#eq{background:#595959; border:1px solid #3a3a3a}");
@@ -275,7 +275,8 @@ ProfilePanel::ProfilePanel(QWidget* parent) : QWidget(parent) {
     complete_lbl->setAlignment(Qt::AlignCenter);
     complete_lbl->setFixedWidth(56);
     complete_lbl->setStyleSheet(QString("QLabel{") + DARK_BOX + "}");
-    complete_lbl->setToolTip("Overall completeness and accuracy of fine-tuning\n(n/a: not computed in the reproduction)");
+    complete_lbl->setToolTip("Overall completeness and accuracy of fine-tuning\n(the genuine panel shows the curve term g x 100 "
+                             "here: the same value as Completeness above; n/a without a profile)");
     b_reset = new QToolButton();
     b_reset->setText(QString::fromUtf8("✕"));
     b_reset->setFixedSize(26, 24);
@@ -407,7 +408,9 @@ void ProfilePanel::set_quality(std::optional<int> pct) {
 }
 
 void ProfilePanel::set_completeness(std::optional<int> pct) {
+    // genuine: the Advanced panel shows g x 100 in the equalizer row too (QUALITY.md 8.4, "85%" in genuine.png)
     completeness->setText(pct ? QString("%1%").arg(*pct) : QString("n/a"));
+    complete_lbl->setText(completeness->text());
 }
 
 }  // namespace nvqt
