@@ -7,11 +7,11 @@
 # of the FUN_00995250 struct, repro/nv_model.py + nv_model_special.py + nv_model_bm.py) for set_ = -1
 # and every set 0..4 with the Python port, runs the C++ binary native/nv_model_test over the same inputs
 # and compares the status and all 4096 words BIT FOR BIT.
-# The Python results are cached by plane hash in sandbox/omo/wp_native_model/tmp/pycache (the port
+# The Python results are cached by plane hash in work/omo/wp_native_model/tmp/pycache (the port
 # takes ~2 s per 128^2 plane); real frames are read from the N1a frame cache
-# (sandbox/omo/wp_native_band/tmp/*.npy) or cut with ffmpeg into sandbox/omo/wp_native_model/tmp/.
+# (work/omo/wp_native_band/tmp/*.npy) or cut with ffmpeg into work/omo/wp_native_model/tmp/.
 # --genuine additionally compares the C++ results with the cached genuine dumps of
-# neatvideo_ofx_614/analysis/noise/model_verify/tmp/gcache (read only; the genuine is never run).
+# reference/genuine/analysis/noise/model_verify/tmp/gcache (read only; the genuine is never run).
 import argparse
 import hashlib
 import os
@@ -23,11 +23,11 @@ from multiprocessing import Pool
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-REPRO = os.path.join(ROOT, "repro")
-TMP = os.path.join(ROOT, "sandbox", "omo", "wp_native_model", "tmp")
+REPRO = os.path.join(ROOT, "reference", "python")
+TMP = os.path.join(ROOT, "work", "omo", "wp_native_model", "tmp")
 PYCACHE = os.path.join(TMP, "pycache")
-BAND_FRAMES = os.path.join(ROOT, "sandbox", "omo", "wp_native_band", "tmp")
-MODEL_VERIFY = os.path.join(ROOT, "neatvideo_ofx_614", "analysis", "noise", "model_verify")
+BAND_FRAMES = os.path.join(ROOT, "work", "omo", "wp_native_band", "tmp")
+MODEL_VERIFY = os.path.join(ROOT, "reference/genuine", "analysis", "noise", "model_verify")
 sys.path.insert(0, REPRO)
 sys.dont_write_bytecode = True
 
@@ -369,7 +369,7 @@ def _bm_valid_rows(c, sizes):
 
 
 def ub_checks(exe):
-    """The two not-ported paths of nv_model_bm (sandbox/omo/wp_native_model_ub/REPORT.md):
+    """The two not-ported paths of nv_model_bm (work/omo/wp_native_model_ub/REPORT.md):
     (1) model_full cannot reach them: FUN_00ad319c calls ad1ae0 only with sides >= 84 (min side * 3 >= 83,
         3 x 3 tiled below 89 x 89), above every padding (4 / 8), and with sides >= 84 every block has a
         qualifying direction bin.  Checked over all block placements of the sides 84..1536 (the tiled

@@ -1,15 +1,15 @@
 # native/lzma/ — LZMA SDK 9.20 の C ソース (無改変の写し)
 
 `native/nv_lzma.{h,cpp}` が使う LZMA 符号器。本家 (`FUN_009d61f4` → `LzmaCompress`) と同じ出力になる版として、
-既存の照合 (AGENTS.md §6.5、`neatvideo_ofx_614/analysis/noise/lzma_oracle/README.md`) で使われた 9.20 を使う。
+既存の照合 (AGENTS.md §6.5、`reference/genuine/analysis/noise/lzma_oracle/README.md`) で使われた 9.20 を使う。
 
 ## 出典
 
 - 配布物: LZMA SDK 9.20 (Igor Pavlov)、`lzma920.tar.bz2`、取得元 https://www.7-zip.org/a/lzma920.tar.bz2
 - 配布物の SHA256: `8ac221acdca8b6f6dd110120763af42b3707363752fc04e63c7bbff76774a445` (7-zip.org の公表値と一致。
-  ワークスペース内の写し `sandbox/omo/coord/verify_lzma/ref/lzma920.tar.bz2` と `sandbox/omo/wp_lzma/dl/lzma920/arc/lzma920.tar.bz2`
+  ワークスペース内の写し `work/omo/coord/verify_lzma/ref/lzma920.tar.bz2` と `work/omo/wp_lzma/dl/lzma920/arc/lzma920.tar.bz2`
   の両方で 2026-10-26 に再計算して一致)
-- コピー元: `neatvideo_ofx_614/analysis/noise/lzma_oracle/sdk920/` (既存のオラクル `lzo_920` の入力。`SHA256_sdk920.txt` に各ファイルの値)。
+- コピー元: `reference/genuine/analysis/noise/lzma_oracle/sdk920/` (既存のオラクル `lzo_920` の入力。`SHA256_sdk920.txt` に各ファイルの値)。
   コピーの前に同フォルダで `shasum -a 256 -c ../SHA256_sdk920.txt` が 12/12 OK、コピー後に `native/lzma/` で同じ一覧が 12/12 OK。
   さらに配布物を展開した `C/` の同名ファイルと `cmp` で 12/12 同一 (2026-10-26)
 - `lzma.txt` は配布物の最上位にある説明書 (LICENSE 節を含む) を `cmp` で同一のまま写したもの
@@ -40,7 +40,7 @@ ff1a71dfed8f6082c86ab07c08bfc873cceeee8fceff9d4ba0f6b5e82dd4b6d4  LzmaLib.h
 ecf55f6328ffab36ec2702904e92128a9a2c237a9576922b347d129bb793e521  lzma.txt
 ```
 
-確認: `cd native/lzma && shasum -a 256 -c ../../neatvideo_ofx_614/analysis/noise/lzma_oracle/SHA256_sdk920.txt`
+確認: `cd native/lzma && shasum -a 256 -c ../../reference/genuine/analysis/noise/lzma_oracle/SHA256_sdk920.txt`
 
 ## 必要なファイルの理由
 

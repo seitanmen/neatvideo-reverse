@@ -3,8 +3,8 @@
 #   make -C native lib && python3 native/verify_bridge_ui.py [--jobs N] [--quick] [--tmp DIR]
 #   (also a group of native/verify_bridge.py: --only ui)
 #
-# Reference: nvfilter.yuv_to_rgb (with the UI's clips), repro/nv_ui_qt/display.py (render_simple, freq_images,
-# render_freq, minmax, noise_level, not_uniform) and repro/nv_ui_qt/quality.py (profile_numbers).
+# Reference: nvfilter.yuv_to_rgb (with the UI's clips), reference/python/nv_ui_qt/display.py (render_simple, freq_images,
+# render_freq, minmax, noise_level, not_uniform) and reference/python/nv_ui_qt/quality.py (profile_numbers).
 # Inputs: the frames native/verify_bridge.py caches (test_v02 n = 306..320 BT.709, test.mp4 n = 298..308
 # BT.601, yuv420p uint8 as the UI reads them) as the viewer's RGB (np.clip(yuv_to_rgb(..), 0, 255) float32),
 # crops of them of many sizes (odd, < 4 px, 16..512 px), synthetic RGB (noise, flat, clipped, gradients) and
@@ -23,7 +23,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-REPRO = os.path.join(ROOT, "repro")
+REPRO = os.path.join(ROOT, "reference", "python")
 for p in (REPRO, HERE):
     if p not in sys.path:
         sys.path.insert(0, p)

@@ -14,12 +14,12 @@
 #    arguments, same NV_FLAT_CANCEL_AT); the outputs must be byte-identical.  --ref DIR: also the
 #    binaries of the same names in DIR (e.g. a build before a refactoring; a command that DIR's binary
 #    does not know is counted as skipped).
-# Work directory: $NV_X86_WORK (default sandbox/omo/wp_native_portable/x86); the captured blobs are
+# Work directory: $NV_X86_WORK (default work/omo/wp_native_portable/x86); the captured blobs are
 # removed at the end unless --keep.  --no-capture replays an earlier --keep capture.
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(dirname "$HERE")
-WORK=${NV_X86_WORK:-$ROOT/sandbox/omo/wp_native_portable/x86}
+WORK=${NV_X86_WORK:-$ROOT/work/omo/wp_native_portable/x86}
 ONLY=band,curve,model,flat
 REF=
 KEEP=0

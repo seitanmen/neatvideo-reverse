@@ -1,4 +1,4 @@
-# W2a: processed frames end to end through the UI backend (repro/nv_ui_qt/backend.process_frame, native core on)
+# W2a: processed frames end to end through the UI backend (reference/python/nv_ui_qt/backend.process_frame, native core on)
 # with the default libnvcore.dylib and with libm_alt/bin/libnvcore.dylib at NV_LIBM_ALT = 0..3.
 #
 #   python3 native/libm_alt/frames_e2e.py OUT_DIR BRIDGE_TMP     (verify_libm_alt.py --stages frames)
@@ -18,7 +18,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 NATIVE = os.path.dirname(HERE)
 ROOT = os.path.dirname(NATIVE)
-REPRO = os.path.join(ROOT, "repro")
+REPRO = os.path.join(ROOT, "reference", "python")
 VIDEOS = {"v02": ("frames_v02_306_321.npz", 312), "t": ("frames_t_298_309.npz", 302)}
 
 CHILD = r'''
@@ -58,7 +58,7 @@ def run(dst, tmp, lib, alt):
     env["NV_NATIVE_LIB"] = lib
     if alt is not None:
         env["NV_LIBM_ALT"] = str(alt)
-    code = CHILD % {"repro": REPRO, "videos": VIDEOS, "tmp": tmp, "dst": dst}
+    code = CHILD % {"reference", "python": REPRO, "videos": VIDEOS, "tmp": tmp, "dst": dst}
     r = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, cwd=REPRO)
     if r.returncode:
         raise RuntimeError(r.stderr[-3000:])

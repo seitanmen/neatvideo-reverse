@@ -1,4 +1,4 @@
-# Bit-exact verification of the native v5 temporal kernel (N1g) against repro/nvfilter.py.
+# Bit-exact verification of the native v5 temporal kernel (N1g) against reference/python/nvfilter.py.
 #
 #   make -C native -f Makefile.v5 && python3 native/verify_temporal.py [--quick] [--no-real] [--jobs N]
 #
@@ -27,7 +27,7 @@ sys.dont_write_bytecode = True
 import v5_cases as vc  # noqa: E402
 from v5_cases import F32, fbits, nv, np  # noqa: E402
 
-TMP = os.path.join(vc.ROOT, "sandbox", "omo", "wp_native_temporal", "tmp")
+TMP = os.path.join(vc.ROOT, "work", "omo", "wp_native_temporal", "tmp")
 SPECIAL = np.concatenate([fbits(*vc.NANS), np.array([np.inf, -np.inf, -0.0], F32)])
 
 

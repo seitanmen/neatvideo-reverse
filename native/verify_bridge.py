@@ -3,7 +3,7 @@
 #   make -C native lib && python3 native/verify_bridge.py [--jobs N] [--quick] [--tmp DIR] [--only GROUP,..]
 #                                                        [--bench] [--export]
 #
-# The Python path is the reference: repro/nv_ui_qt/backend.py with the native core off (set_native(False):
+# The Python path is the reference: reference/python/nv_ui_qt/backend.py with the native core off (set_native(False):
 # nvfilter.build_profile_v5 / nv_aft_v5.apply_aft / nvfilter.temporal_v5 + spatial_v5) and on
 # (set_native(True): repro/nv_native.py).  Frames are read with denoise_video_v5.read_frames as the UI reads
 # them (yuv420p uint8; test_v02 n = 306..320 BT.709, test.mp4 n = 298..308 BT.601) and cached in --tmp.
@@ -52,7 +52,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-REPRO = os.path.join(ROOT, "repro")
+REPRO = os.path.join(ROOT, "reference", "python")
 if REPRO not in sys.path:
     sys.path.insert(0, REPRO)
 sys.dont_write_bytecode = True

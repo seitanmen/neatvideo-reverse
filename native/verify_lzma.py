@@ -9,11 +9,11 @@
 #     rint ties / the int16 saturation edges, dictionary-size boundaries (4 KiB multiples +-1), and inputs whose
 #     stream length is searched to lie exactly around the output limit (n + 0x7e .. n + 0x82).
 # (2) Genuine (no genuine run here; only blobs already saved by earlier `nvh profile` runs): every saved
-#     *.lzma0/1/2 under neatvideo_ofx_614/analysis/noise and sandbox/ is decoded with Python's lzma module (an
+#     *.lzma0/1/2 under reference/genuine/analysis/noise and sandbox/ is decoded with Python's lzma module (an
 #     independent decoder), recompressed by nv_lzma_test and compared byte for byte (bytes 13..15 of the header are
 #     heap garbage in the genuine and are skipped).  For the saved crops whose float32 frame and area are known,
 #     plane_int16 of the crop is also compared with the genuine's decoded plane.
-# The pass criterion is byte equality only.  Temporary files: sandbox/omo/wp_native_lzma/tmp/.
+# The pass criterion is byte equality only.  Temporary files: work/omo/wp_native_lzma/tmp/.
 import argparse
 import glob
 import hashlib
@@ -27,8 +27,8 @@ from concurrent.futures import ProcessPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-REPRO = os.path.join(ROOT, "repro")
-TMP = os.path.join(ROOT, "sandbox", "omo", "wp_native_lzma", "tmp")
+REPRO = os.path.join(ROOT, "reference", "python")
+TMP = os.path.join(ROOT, "work", "omo", "wp_native_lzma", "tmp")
 EXE = os.environ.get("NV_LZMA_EXE", os.path.join(HERE, "nv_lzma_test"))   # override: sensitivity runs
 sys.path.insert(0, REPRO)
 sys.dont_write_bytecode = True
@@ -337,8 +337,8 @@ def check_python(a):
 
 # ---------------------------------------------------------------- (2) against the genuine's saved blobs
 def genuine_blobs():
-    pats = [os.path.join(ROOT, "neatvideo_ofx_614", "analysis", "noise", "**", "*.lzma[012]"),
-            os.path.join(ROOT, "sandbox", "**", "*.lzma[012]")]
+    pats = [os.path.join(ROOT, "reference/genuine", "analysis", "noise", "**", "*.lzma[012]"),
+            os.path.join(ROOT, "work", "**", "*.lzma[012]")]
     files = sorted({f for p in pats for f in glob.glob(p, recursive=True)
                     if not f.startswith(TMP)})
     seen, out = {}, []
@@ -364,10 +364,10 @@ def decode(b):
 def known_crops():
     """Saved float32 frames with the area given to `nvh profile` (from the run logs / scripts)."""
     out = []
-    f100 = os.path.join(ROOT, "sandbox", "omo", "coord", "verify_lzma", "nvh", "f100.rgb.f32")
+    f100 = os.path.join(ROOT, "work", "omo", "coord", "verify_lzma", "nvh", "f100.rgb.f32")
     for S in (32, 45, 46):
         out.append((f100, 700, 200, S, S, os.path.join(os.path.dirname(f100), f"p{S}.bin")))
-    f312 = os.path.join(ROOT, "sandbox", "omo", "wp_lzma", "data", "boundary", "frame312.rgb.f32")
+    f312 = os.path.join(ROOT, "work", "omo", "wp_lzma", "data", "boundary", "frame312.rgb.f32")
     for S in (32, 45, 46, 64, 512):
         out.append((f312, 830, 300, S, S, os.path.join(os.path.dirname(f312), f"prof_r{S}.bin")))
     return [c for c in out if os.path.exists(c[0]) and os.path.exists(c[5] + ".lzma0")]

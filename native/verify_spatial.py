@@ -1,4 +1,4 @@
-# Bit-exact verification of the native v5 spatial kernel (N1h) against repro/nvfilter.py.
+# Bit-exact verification of the native v5 spatial kernel (N1h) against reference/python/nvfilter.py.
 #
 #   make -C native -f Makefile.v5 && python3 native/verify_spatial.py [--quick] [--no-real] [--jobs N]
 #
@@ -14,7 +14,7 @@
 #           (nvfilter.temporal_v5 on frames n-2..n+2) x default and varied parameters (luma / chroma /
 #           band_amounts / band_noise / noise_level / channel_noise / spatial / mix)
 # Python runs in up to 3 processes (--jobs); frames, profiles and rv are cached in
-# sandbox/omo/wp_native_spatial/tmp/.
+# work/omo/wp_native_spatial/tmp/.
 import argparse
 import os
 import sys
@@ -29,7 +29,7 @@ import v5_cases as vc  # noqa: E402
 from v5_cases import F32, U32, fbits, nv, np  # noqa: E402
 from scipy.ndimage import gaussian_filter, map_coordinates, median_filter, uniform_filter  # noqa: E402
 
-TMP = os.path.join(vc.ROOT, "sandbox", "omo", "wp_native_spatial", "tmp")
+TMP = os.path.join(vc.ROOT, "work", "omo", "wp_native_spatial", "tmp")
 SPECIAL = np.concatenate([fbits(*vc.NANS), np.array([np.inf, -np.inf, 0.0, -0.0, 1e38, -1e38, 1e-40, -1e-42], F32)])
 
 

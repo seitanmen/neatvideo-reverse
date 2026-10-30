@@ -440,7 +440,7 @@ def v5_codes(F, defb, altb, acc):
 
 
 def quality_numbers(blob):
-    sys.path.insert(0, os.path.join(ROOT, "repro"))
+    sys.path.insert(0, os.path.join(ROOT, "reference", "python"))
     from nv_ui_qt import quality as Q
     q = Q.quality_from_blob(blob)
     g = Q.genuine_g(blob)

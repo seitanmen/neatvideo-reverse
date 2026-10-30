@@ -3,7 +3,7 @@
 #   make -C native && python3 native/verify_quality.py
 #
 # Generates structured + random profile blobs, computes Quality/Completeness with the
-# Python ports (repro/nv_ui_qt/quality.py + quality_draft.py + repro/nv_flat.py), runs the
+# Python ports (reference/python/nv_ui_qt/quality.py + quality_draft.py + repro/nv_flat.py), runs the
 # C++ binary over the same blobs, and compares the results BIT FOR BIT.
 import os
 import struct
@@ -13,8 +13,8 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
 sys.path.insert(0, ROOT)
-sys.path.insert(0, os.path.join(ROOT, "repro"))
-sys.path.insert(0, os.path.join(ROOT, "sandbox", "omo", "coord", "verify_quality", "static"))
+sys.path.insert(0, os.path.join(ROOT, "reference", "python"))
+sys.path.insert(0, os.path.join(ROOT, "work", "omo", "coord", "verify_quality", "static"))
 sys.dont_write_bytecode = True
 
 import numpy as np  # noqa: E402

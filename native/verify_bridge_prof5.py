@@ -1,6 +1,6 @@
 # N3a: the "prof5" group of native/verify_bridge.py - the UI's profile building through nvcore_c_prof5.h
 # (nvc_build_profile_v5, nvc_noisiest_candidates + nvc_hh1_sigma, nvc_effective_curve) against
-# repro/nv_ui_qt/backend.py (backend.build_profile, backend.noisiest_frame, state.effective_profile), bit for bit
+# reference/python/nv_ui_qt/backend.py (backend.build_profile, backend.noisiest_frame, state.effective_profile), bit for bit
 # on every leaf (verify_bridge.compare).  backend.build_profile runs with the native core OFF here (the Python
 # nvfilter.build_profile_v5): since G8 the native core's build_profile is nvc_build_profile_v5 itself.
 #
@@ -17,7 +17,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-REPRO = os.path.join(ROOT, "repro")
+REPRO = os.path.join(ROOT, "reference", "python")
 for p in (REPRO, HERE):
     if p not in sys.path:
         sys.path.insert(0, p)

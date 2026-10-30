@@ -12,7 +12,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-REPRO = os.path.join(ROOT, "repro")
+REPRO = os.path.join(ROOT, "reference", "python")
 sys.path.insert(0, REPRO)
 sys.dont_write_bytecode = True
 

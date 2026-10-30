@@ -7,7 +7,7 @@
 # port (repro/nv_band.py), plus direct cases of quantile / mean / std, runs the C++ binary
 # native/nv_band_test over the same inputs and compares the results BIT FOR BIT.
 # Real frames are cut with ffmpeg from test_v02.mp4 / test.mp4 (workspace root) and cached in
-# sandbox/omo/wp_native_band/tmp/.
+# work/omo/wp_native_band/tmp/.
 import argparse
 import os
 import struct
@@ -18,8 +18,8 @@ from multiprocessing import Pool
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-REPRO = os.path.join(ROOT, "repro")
-TMP = os.path.join(ROOT, "sandbox", "omo", "wp_native_band", "tmp")
+REPRO = os.path.join(ROOT, "reference", "python")
+TMP = os.path.join(ROOT, "work", "omo", "wp_native_band", "tmp")
 sys.path.insert(0, REPRO)
 sys.dont_write_bytecode = True
 

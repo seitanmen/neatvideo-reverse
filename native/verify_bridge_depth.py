@@ -3,7 +3,7 @@
 #   make -C native lib && python3 native/verify_bridge_depth.py [--jobs N] [--quick]
 #   (also a group of native/verify_bridge.py: --only depth)
 #
-# Reference: repro/nv_depth.py (split, sanitize, to_internal, from_internal) and repro/nv_ui_qt/ofx_bridge.py
+# Reference: repro/nv_depth.py (split, sanitize, to_internal, from_internal) and reference/python/nv_ui_qt/ofx_bridge.py
 # (unpack_yuv420p, pack_yuv420p).  Every output word is compared: float32 planes as their u32 bits, raw frames byte
 # for byte, the sanitize restore info (indices and the original values' bits).
 # Inputs: every processing format of nv_depth.pixfmt (yuv420p legacy, yuv{420,422,444}p{10,12,16}le,
@@ -23,7 +23,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-REPRO = os.path.join(ROOT, "repro")
+REPRO = os.path.join(ROOT, "reference", "python")
 for p in (REPRO, HERE):
     if p not in sys.path:
         sys.path.insert(0, p)

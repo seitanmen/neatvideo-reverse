@@ -23,14 +23,14 @@ from multiprocessing import Pool
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-sys.path.insert(0, os.path.join(ROOT, "repro"))
+sys.path.insert(0, os.path.join(ROOT, "reference", "python"))
 sys.dont_write_bytecode = True
 
 import numpy as np  # noqa: E402
 
 F32 = np.float32
 F64 = np.float64
-TMP = os.path.join(ROOT, "sandbox", "omo", "wp_native_curve", "tmp")
+TMP = os.path.join(ROOT, "work", "omo", "wp_native_curve", "tmp")
 EXE = os.environ.get("NV_CURVE_EXE", os.path.join(HERE, "nv_curve_test"))   # override: mutation runs
 
 FRAMES = [("test_v02.mp4", 0), ("test_v02.mp4", 100), ("test_v02.mp4", 312), ("test_v02.mp4", 576),

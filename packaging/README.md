@@ -2,7 +2,7 @@
 
 repro の Qt UI (`python3 -m nv_ui_qt.main`) を PyInstaller でスタンドアロンの `.app` にする。
 Python・numpy・scipy・PySide6 と N2a の `native/libnvcore.dylib` を同梱するので、配布先に Python は要らない。
-ffmpeg は同梱しない (GPL)。仕様は `.claude/tasks/native_n2_app.md` の N2b、作業記録は `sandbox/omo/wp_native_app/REPORT.md`。
+ffmpeg は同梱しない (GPL)。仕様は `.claude/tasks/native_n2_app.md` の N2b、作業記録は `work/omo/wp_native_app/REPORT.md`。
 
 ## 必要な環境
 
@@ -26,7 +26,7 @@ packaging/build_app.sh          # → packaging/dist/MeatVideo.app (約 190 MB�
 - `make -C native lib` で dylib を作ってから梱包し、最後に `codesign --force --deep -s -` (アドホック署名) と
   `codesign --verify --deep --strict` をする。
 - 中身: `nvrepro.spec`。repro の全モジュール (tkinter の旧 UI `nv_ui.py` と v1〜v4・検証用スクリプトを除く) と AFT の移植
-  (`neatvideo_ofx_614/analysis/noise/aft_port/src/nv_aft.py`)、`data/ref_floor.npy`、`libnvcore.dylib` (Contents/Frameworks)。
+  (`reference/genuine/analysis/noise/aft_port/src/nv_aft.py`)、`data/ref_floor.npy`、`libnvcore.dylib` (Contents/Frameworks)。
   anaconda に入っている未使用のパッケージ (scipy の任意の import から辿られる dask・jax・torch・matplotlib・sphinx など) と、
   QtQuick・QtPdf を引き込む Qt のプラグイン (仮想キーボード・PDF 画像) は除外している。
 

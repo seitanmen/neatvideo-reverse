@@ -24,12 +24,12 @@
 #    The arm64 and arm64 portable replays are always strict.
 # A missing capture, a replay of no call, or a group of --only (default: the groups the capture ran, kept in
 # <work>/cap/groups.txt; else all of verify_bridge.py's, plus export with --export) without a recorded call fails.
-# Work directory: $NV_X86_WORK or --work (default sandbox/omo/wp_qtui_fix/x86_bridge); the capture is removed at
+# Work directory: $NV_X86_WORK or --work (default work/omo/wp_qtui_fix/x86_bridge); the capture is removed at
 # the end unless --keep.  --no-capture replays an earlier --keep capture.  Results: <work>/replay_*.json.
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(dirname "$HERE")
-WORK=${NV_X86_WORK:-$ROOT/sandbox/omo/wp_qtui_fix/x86_bridge}
+WORK=${NV_X86_WORK:-$ROOT/work/omo/wp_qtui_fix/x86_bridge}
 PY86=/Library/Frameworks/Python.framework/Versions/3.12/bin/python3.12
 ONLY=
 VB=()

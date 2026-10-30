@@ -28,14 +28,14 @@ FROZEN = getattr(sys, "frozen", False)
 BASE = getattr(sys, "_MEIPASS", None) or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REF_FLOOR = os.path.join(BASE, "data", "ref_floor.npy")
 if not FROZEN:      # python3 packaging/main.py ... (checks of the launcher without a build)
-    for _p in (os.path.join(BASE, "neatvideo_ofx_614", "analysis", "noise", "aft_port", "src"),
-               os.path.join(BASE, "repro")):
+    for _p in (os.path.join(BASE, "reference/genuine", "analysis", "noise", "aft_port", "src"),
+               os.path.join(BASE, "python")):
         if _p not in sys.path:
             sys.path.insert(0, _p)
 FFMPEG_DIRS = ("/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin")    # = ffmpeg_path.FFMPEG_DIRS
 
 
-from nv_ui_qt import ffmpeg_path    # noqa: E402 - the search shared with the UIs (repro/nv_ui_qt/ffmpeg_path.py)
+from nv_ui_qt import ffmpeg_path    # noqa: E402 - the search shared with the UIs (reference/python/nv_ui_qt/ffmpeg_path.py)
 
 _has_tools = ffmpeg_path.has_tools
 _settings_ffmpeg = ffmpeg_path.settings_ffmpeg

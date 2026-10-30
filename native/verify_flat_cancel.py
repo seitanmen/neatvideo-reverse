@@ -4,7 +4,7 @@
 #
 #   make -C native && python3 native/verify_flat_cancel.py [--jobs J] [--all-k]
 #
-# The same idea as neatvideo_ofx_614/analysis/noise/verify_cancel.py (genuine vs Python), here Python vs
+# The same idea as reference/genuine/analysis/noise/verify_cancel.py (genuine vs Python), here Python vs
 # C++: the counting cancel query reports a cancel from its k-th query on (k = 0: never, only counted).
 # The C++ driver reads k from the environment variable NV_FLAT_CANCEL_AT (nv_flat_test cancel).
 # For every case and k, (x, y, w, h, status) and the number of queries must be identical, with the C++
@@ -27,7 +27,7 @@ from multiprocessing import Pool
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-sys.path.insert(0, os.path.join(ROOT, "repro"))
+sys.path.insert(0, os.path.join(ROOT, "reference", "python"))
 sys.path.insert(0, HERE)
 sys.dont_write_bytecode = True
 
@@ -38,7 +38,7 @@ import verify_flat as vf  # noqa: E402  (frame cache, case blobs)
 F32 = np.float32
 F64 = np.float64
 EXE = os.environ.get("NV_FLAT_EXE", os.path.join(HERE, "nv_flat_test"))
-OUT = os.path.join(ROOT, "sandbox", "omo", "wp_native_flat_cancel", "tmp")
+OUT = os.path.join(ROOT, "work", "omo", "wp_native_flat_cancel", "tmp")
 
 FRAMES = [("test_v02.mp4", n) for n in (0, 312, 576, 700)] + [("test.mp4", n) for n in (0, 300, 450, 750)]
 

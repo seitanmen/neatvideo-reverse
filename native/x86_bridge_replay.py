@@ -260,7 +260,7 @@ def main():
             bad.append({"call": key, "fn": rec["fn"], "label": rec["label"], "diffs": diffs})
         else:
             g["ok"] += 1
-    res = {"lib": A.lib, "machine": platform.machine(), "python": sys.version.split()[0], "every": A.every,
+    res = {"lib": A.lib, "machine": platform.machine(), "reference", "python": sys.version.split()[0], "every": A.every,
            "unspec": unspec, "overlap": overlap, "groups": groups, "bad": bad, "seconds": time.time() - t0}
     with open(A.out, "w") as f:
         json.dump(res, f, indent=1)

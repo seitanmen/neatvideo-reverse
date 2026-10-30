@@ -15,9 +15,9 @@
 #
 # Each case is a window of the frame (the area plus a margin of up to 7 px) so that the area offset is
 # exercised without shipping whole frames.  The Python results are cached in
-# sandbox/omo/wp_native_profile/tmp/pycache, keyed by the window bytes, the parameters and the SHA-1 of
+# work/omo/wp_native_profile/tmp/pycache, keyed by the window bytes, the parameters and the SHA-1 of
 # the repro sources build_profile runs (and of data/ref_floor.npy).  Real frames are read from the N1a
-# frame cache (sandbox/omo/wp_native_band/tmp/*.npy, read only) or cut with ffmpeg into tmp/.
+# frame cache (work/omo/wp_native_band/tmp/*.npy, read only) or cut with ffmpeg into tmp/.
 # The LZMA input of length 0 (repro/nv_lzma.py differs from the SDK there) cannot occur: areas are >= 1 px
 # (and any side < 32 stops in tile_dev before the LZMA part).
 import argparse
@@ -32,10 +32,10 @@ from multiprocessing import Pool
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-REPRO = os.path.join(ROOT, "repro")
-TMP = os.path.join(ROOT, "sandbox", "omo", "wp_native_profile", "tmp")
+REPRO = os.path.join(ROOT, "reference", "python")
+TMP = os.path.join(ROOT, "work", "omo", "wp_native_profile", "tmp")
 PYCACHE = os.path.join(TMP, "pycache")
-BAND_FRAMES = os.path.join(ROOT, "sandbox", "omo", "wp_native_band", "tmp")
+BAND_FRAMES = os.path.join(ROOT, "work", "omo", "wp_native_band", "tmp")
 FLOOR = os.path.join(ROOT, "data", "ref_floor.npy")
 sys.path.insert(0, REPRO)
 sys.dont_write_bytecode = True

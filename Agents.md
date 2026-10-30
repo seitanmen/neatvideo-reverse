@@ -1,4 +1,4 @@
-# Agents.md — Neat Video v6 リバース＋デノイズ再現プロジェクト
+# Agents.md — Meat Video v6 リバース＋デノイズ再現プロジェクト
 
 作業ディレクトリ: `/Users/seitan/Desktop/work/reverse`
 言語: 日本語で応答する。技術的正確性を優先し、推測と観測事実を区別する。
@@ -20,7 +20,7 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
 - `test_v02.mp4` (1920x1080・721f・137MB) — テスト動画その2
 - `test_v02_reduce.mov` (1080p・721f・101MB) — **本家 Neat Video 処理済みの正解データ**
 
-### 展開・解析 (`neatvideo_ofx_614/`, 71MB)
+### 展開・解析 (`reference/genuine/`, 71MB)
 - `NeatVideo6.ofx.bundle/` — OFX バンドル一式。主バイナリは `Contents/MacOS/NeatVideo6.ofx`
   (45MB, Mach-O Universal x86_64+arm64, SHA256 `6f0e9316…134e1`)
 - `NeatVideo6.arm64.ofx` (22MB, SHA256 `95bef55f…8430`) — thin 化した arm64 スライス (解析用)
@@ -44,15 +44,15 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
   (`INDEX.txt` が入口。EstimateNoiseLevelCurve 移植は `curve_p4/`・`fix5/`・`speed/`・`lowfix/`、FindFlatArea 移植は `ffa/`、統合後の回帰は `main_final/`)
 
 ### 作業用の隔離フォルダ (`sandbox/`)
-- `sandbox/dirfilt/` — BuildNoiseModel の移植を別エージェントが行った作業場所 (指示書 `INSTRUCTIONS.md`)。2026-10-16 に `repro/` へマージ済み
-  (マージ元 `sandbox/dirfilt/merge_stage/`)。報告・ログ・指示書の写しは `analysis/blackbox/logs_20261016/model/`、照合スクリプトは `analysis/noise/model_verify/`
-- `sandbox/omo/` — 2026-10-17〜18 の作業パッケージ (`wp_*`: 各作業者の REPORT・notes・src) と独立検証 (`coord/verify_*/VERDICT.md`)、文書・コードの版の控え (`coord/backup/`)。
+- `work/dirfilt/` — BuildNoiseModel の移植を別エージェントが行った作業場所 (指示書 `INSTRUCTIONS.md`)。2026-10-16 に `repro/` へマージ済み
+  (マージ元 `work/dirfilt/merge_stage/`)。報告・ログ・指示書の写しは `analysis/blackbox/logs_20261016/model/`、照合スクリプトは `analysis/noise/model_verify/`
+- `work/omo/` — 2026-10-17〜18 の作業パッケージ (`wp_*`: 各作業者の REPORT・notes・src) と独立検証 (`coord/verify_*/VERDICT.md`)、文書・コードの版の控え (`coord/backup/`)。
   マージしたのは speed (`repro/`) と aft の修正版 (`analysis/noise/aft_port/`) のコード、統括が審査した nvh のサブコマンド (ramp・wmul・pairw・down2・sad・b32・aftshuffle)、検証で確定した事実 (本書と `exp_results.txt` の対応する節) だけ。
   作業者の文書に残る誤りと正しい記述は、各 wp の `CORRECTIONS.md` にまとめた (2026-10-20。REPORT・MERGE_PLAN・notes・harness_request・FIX_REQUEST の先頭にその旨の注記。INSTRUCTIONS には注記なし)
 
 ### 引き継ぎ報告
 - `REPORT_CLAUDE_20261021.md` — 2026-10-17〜21 の経緯、保護区画の観測と扱いの理由、作業途中のもの、引き継ぎ時の注意 (既存の成果物に手を加えるときは変更前を残す)
-- `sandbox/omo/wp_spatial/notes/lead_static_20261021.md` — 2026-10-21〜22 に統括が保護区画まわりを読んだ記録 (ユーザーが統括に解析を一任)。
+- `work/omo/wp_spatial/notes/lead_static_20261021.md` — 2026-10-21〜22 に統括が保護区画まわりを読んだ記録 (ユーザーが統括に解析を一任)。
   先頭に検証結果を受けての訂正注記がある。確定した機構は本書 §6.4・§7 へ反映済み。検証は `coord/verify_protect/VERDICT.md` (A〜J の判定と
   「マージしてよい/書いてはいけない」の一覧)
 
@@ -65,7 +65,7 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
   最後に本家のノイズ測定の移植 (`band_model`・`is_clip`・`find_flat_area_genuine` など、§6.5。中身は下の nv_* モジュール)
   2026-10-26: `build_profile_v5(area=...)` が (y0, x0, size) に加えて長方形 (y0, x0, h, w) を受け付ける (各辺を独立に [8, H]・[8, W] に切り詰め、
   h == w なら従来の 3 要素の area にまとめる。`prof["area"]` は正方形 3 要素・長方形 4 要素)。None と 3 要素は変更前とビット一致 (独立検証 186/186、
-  `sandbox/omo/coord/genuine_ui/VERDICT.md`)。`nv_aft_v5.apply_aft` も 4 要素の area に対応 (正方形はビット一致)。CLI は `--area Y,X,SIZE` か `Y,X,H,W`
+  `work/omo/coord/genuine_ui/VERDICT.md`)。`nv_aft_v5.apply_aft` も 4 要素の area に対応 (正方形はビット一致)。CLI は `--area Y,X,SIZE` か `Y,X,H,W`
 - `nv_curve.py`・`nv_pixnoise.py`・`nv_lines.py` — 本家 EstimateNoiseLevelCurve の移植 (本家とビット一致、§6.5)。
   `nv_curve.genuine_noise_curve(rgb)` が (輝度, ノイズ) の 8 点表を、`nv_curve.noise_at(表)` が本家の補間器を返す。
   `nv_curve.is_clip_genuine` は本家の IsClip。`nvfilter.find_flat_area` の正規化曲線とクリップ判定はこれを使う
@@ -77,18 +77,18 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
   以外は本家とビット一致)。見本画像の LZMA 圧縮 (0x18〜0x2b) は `nv_lzma.py` (LZMA SDK 9.20 の符号器の移植) を使う。部品は `nv_mcstats.py` (`FUN_0098718c`)・`nv_refnoise.py` (基準モデルの白色ノイズ `FUN_009c3bc4`)・
   `nv_cov.py` (照合用の分岐カウンタ)。照合用で、ノイズ除去のパイプライン (v5) は使っていない (2026-10-17 の高速化後、負荷平均 5〜8 の中で 1 面 128² 2.1 秒・320² 6.6〜6.8 秒、プロファイル 128² 15.4〜15.7 秒 (高速化前は同条件で 2.7 / 9.2〜9.5 / 20.5〜21.0 秒))。白色ノイズの基準値 (`reference_floor`、51 語) は workspace 直下の `data/ref_floor.npy` に置いてあり (参照実装で計算した値とビット一致)、無ければ計算する (約 7 秒)
 - `denoise_video_v5.py` — **実写用 v5 (推奨)**。ネイティブ yuv420p 入出力 (色タグ継承)・ストリーミング・フレーム並列。
-  2026-10-26 に高ビット深度 (`--depth 10|12|16|32|source`、既定 8 = 従来と同じ yuv420p・libx264 で、控えとの出力のバイト一致を確認) と `--codec` を追加 (仕様・報告・検証は `sandbox/omo/coord/highbits/` の SPEC.md・REPORT.md・VERDICT.md、検証 Round 2 で APPROVE)
+  2026-10-26 に高ビット深度 (`--depth 10|12|16|32|source`、既定 8 = 従来と同じ yuv420p・libx264 で、控えとの出力のバイト一致を確認) と `--codec` を追加 (仕様・報告・検証は `work/omo/coord/highbits/` の SPEC.md・REPORT.md・VERDICT.md、検証 Round 2 で APPROVE)
 - `nv_depth.py` — 画素形式の表と変換 (2026-10-26)。高ビット深度の入力は読み込み時に処理コアの「8 ビット相当 0〜255 の float32」へ正規化し (整数は v/2^(b−8) で厳密、float の RGB は ×255 して `_KRB` の係数で full range の YCbCr 4:4:4 へ)、書き出しで戻す。
   `nvfilter.py` は無変更 (`CURVE_BINS` などは正規化後の尺度でそのまま働く)。色差はソースの形式のまま (4:2:0・4:4:4。4:2:2 は偶数列 = 元の標本・奇数列 = 左右の平均で 4:4:4 に広げて処理し、偶数列を戻す)。
   float の NaN/±inf は処理用に有限の値へ置き換え (NaN→0、+inf→面の有限の最大、−inf→最小)、書き出しで元の値を戻す
 - `nv_ui.py` — 調整 UI (tkinter, v5)。`python3 nv_ui.py` で起動。全編出力は `denoise_video_v5.py` を呼ぶ
-- `nv_ui_qt/` — 調整 UI の PySide6 版 (2026-10-25。仕様 `ui_spec/UI_SPEC.md`・タスク `.claude/tasks/ui_qt_migration.md`)。2026-10-25 に配置を本家に寄せた (根拠は公式ユーザーガイド v6.1 の画像と、バイナリの UI 構築順の静的解析。`sandbox/omo/coord/verify_qtui_layout/` の LAYOUT_WEB.md・LAYOUT.md・LAYOUT_PLAN.md): ページ Prepare Noise Profile / Adjust and Preview、メニュー Effect / Edit / View / Profile / Filter / Tools / Help (本家の Task・Variants は省略) と Beginner / Advanced の切り替え、ビューアは既定 YCrCb+ (合成 + Y/Cr/Cb Enhanced。Enhanced と周波数表示は repro の定義)・「Filtered」表示と押している間だけ元画像・範囲を選ぶとその範囲だけ処理、最下段にサムネイル (青 = 現在、オレンジ = 時間窓) と Cancel / Apply (Apply = 全編の書き出し)、Filter Settings は Temporal / Spatial / General タブで成分は Luminance → Cr → Cb、帯域は High → Ultra Low。Frequencies 行は本家同様 3 成分共通 (成分別は「repro」欄)、Mix with Original は Enable 付きで本家の向き (表示 = 100 − 内部 mix)、プロファイルの Noise Level (Overall・成分別) は曲線の倍率 `tune`。Undo/Redo、JSON のプロファイル・プリセット (本家の .dnp / .nfp ではない)。
+- `nv_ui_qt/` — 調整 UI の PySide6 版 (2026-10-25。仕様 `ui_spec/UI_SPEC.md`・タスク `.claude/tasks/ui_qt_migration.md`)。2026-10-25 に配置を本家に寄せた (根拠は公式ユーザーガイド v6.1 の画像と、バイナリの UI 構築順の静的解析。`work/omo/coord/verify_qtui_layout/` の LAYOUT_WEB.md・LAYOUT.md・LAYOUT_PLAN.md): ページ Prepare Noise Profile / Adjust and Preview、メニュー Effect / Edit / View / Profile / Filter / Tools / Help (本家の Task・Variants は省略) と Beginner / Advanced の切り替え、ビューアは既定 YCrCb+ (合成 + Y/Cr/Cb Enhanced。Enhanced と周波数表示は repro の定義)・「Filtered」表示と押している間だけ元画像・範囲を選ぶとその範囲だけ処理、最下段にサムネイル (青 = 現在、オレンジ = 時間窓) と Cancel / Apply (Apply = 全編の書き出し)、Filter Settings は Temporal / Spatial / General タブで成分は Luminance → Cr → Cb、帯域は High → Ultra Low。Frequencies 行は本家同様 3 成分共通 (成分別は「repro」欄)、Mix with Original は Enable 付きで本家の向き (表示 = 100 − 内部 mix)、プロファイルの Noise Level (Overall・成分別) は曲線の倍率 `tune`。Undo/Redo、JSON のプロファイル・プリセット (本家の .dnp / .nfp ではない)。
   バックエンドは変更せず `nvfilter.py` の v5 と `nv_aft_v5.py` (AFT。2026-10-25 に別途追加されたもの。RGB 各面の係数を Y/Cb/Cr の曲線に掛けている点は未確認) を使う。既定値は `V5_DEFAULTS` (UI_SPEC の Luminance 帯域の既定値ではない)。
   本家の Luminance / Cb / Cr 別の帯域スライダーは `nv_ui_qt/backend.py` が `spatial_v5` を成分ごとに呼んで実現し、全成分が同じ設定なら `process_frame_v5` とビット一致。4:2:0 では色差が 4 段なので Cb/Cr の High は無効表示。
   v5 に対応のない Sharpening・Jitter・Dust and Scratches・Flicker・Edge Smoothing・品質モード・Input Data Gain は無効表示 (n/a)。
-  Device Noise Profile パネルの Quality と Completeness は本家の計算式 (`nv_ui_qt/quality.py`、2026-10-26 に統括が g を解読して完成。§4 の Quality 節と `sandbox/omo/coord/verify_quality/static/QUALITY.md`、独立検証 APPROVE)。Most Noisy Frame・Auto Complete・Assist・ガイド文は再現側の独自。
-  全編出力は `nv_ui_qt/export.py` が `denoise_video_v5.main` を UI のプロファイル (AFT・手動調整込み) と成分別設定で動かす (CRF 0 で `backend.process_frame` とビット一致)。自己試験 `nv_ui_qt/selftest.py` 88 項目 (2026-10-26 に高ビット深度の 6 項目、本家合わせの 9 項目、Profile Check とパネルの 6 項目、Noise Level Check の 7 項目、Quality の 11 項目を追加)。Profile Check (2026-10-26、本家の観測と仕様・検証は `sandbox/omo/coord/genuine_ui2/` の SPEC.md・VERDICT.md で APPROVE): 本家同様ダイアログではなくビューアの Assist Image 表示に切り替える (パネルの Begin/Finish・ツールバー・メニューが 1 つの切り替え)。Assist Image は repro の定義 (現在のフレームに空間段だけを Luminance/Cr/Cb・全帯域 100% で掛けたもの。本家の処理は未解読) で、下段の Enhanced は強調なし。従来のダイアログは Profile Viewer… (⇧⌘I) になり、Repro 欄 (Profile mode など) もそこへ移した。Noise Level Check (2026-10-26、本家の観測・仕様・検証は `sandbox/omo/coord/verify_quality/` の REPORT.md・nlc/SPEC.md・nlc_verify/VERDICT.md で APPROVE): 本家同様、時間フィルタのマスクを Assist Image として出す (パネルの Begin/Finish・ツールバーの Filter Settings Check のメニュー・Tools のメニューが 1 つの切り替え)。色は本家の画面に当てはめた式 (I = (R+G+B)/3、(1 − m)·I·(1, 0.9, 0.75) + m·(I·(0.3, 0.45, 0.5) + (0, 0, 126.5))、残差 0.35〜1.3 階調)。マスク m は repro の定義 (時間段の Y の残留分散 rv から m = clamp((1/rv − 1)/(1/rv_min − 1), 0, 1)。本家の式は未解読で、test_v02 の −60% では本家 0.33 に対し 0.52)。Temporal の Noise Level (`t_noise`) を実装した (`nv_ui_qt/backend.py` が時間段だけ noise_level を ×t_noise。既定 +0% は変更前とビット一致)。`nv_aft_v5.assist_params` (2026-10-26 に別エージェントが処理コアに追加) は UI から使っていない。Device Noise Profile パネルは本家の順でスクロールなし、選択範囲の Noise Level は Main Sample 比の (±n%) 付き。
-  本家合わせ (2026-10-26、DaVinci Resolve 上の本家 6.1.3 Pro の観測 `sandbox/omo/coord/genuine_ui/OBSERVED.md`・`shots/` と、バイナリの静的解析 `STATIC.md`。仕様 `SPEC.md`、独立検証 `VERDICT.md` で APPROVE):
+  Device Noise Profile パネルの Quality と Completeness は本家の計算式 (`nv_ui_qt/quality.py`、2026-10-26 に統括が g を解読して完成。§4 の Quality 節と `work/omo/coord/verify_quality/static/QUALITY.md`、独立検証 APPROVE)。Most Noisy Frame・Auto Complete・Assist・ガイド文は再現側の独自。
+  全編出力は `nv_ui_qt/export.py` が `denoise_video_v5.main` を UI のプロファイル (AFT・手動調整込み) と成分別設定で動かす (CRF 0 で `backend.process_frame` とビット一致)。自己試験 `nv_ui_qt/selftest.py` 88 項目 (2026-10-26 に高ビット深度の 6 項目、本家合わせの 9 項目、Profile Check とパネルの 6 項目、Noise Level Check の 7 項目、Quality の 11 項目を追加)。Profile Check (2026-10-26、本家の観測と仕様・検証は `work/omo/coord/genuine_ui2/` の SPEC.md・VERDICT.md で APPROVE): 本家同様ダイアログではなくビューアの Assist Image 表示に切り替える (パネルの Begin/Finish・ツールバー・メニューが 1 つの切り替え)。Assist Image は repro の定義 (現在のフレームに空間段だけを Luminance/Cr/Cb・全帯域 100% で掛けたもの。本家の処理は未解読) で、下段の Enhanced は強調なし。従来のダイアログは Profile Viewer… (⇧⌘I) になり、Repro 欄 (Profile mode など) もそこへ移した。Noise Level Check (2026-10-26、本家の観測・仕様・検証は `work/omo/coord/verify_quality/` の REPORT.md・nlc/SPEC.md・nlc_verify/VERDICT.md で APPROVE): 本家同様、時間フィルタのマスクを Assist Image として出す (パネルの Begin/Finish・ツールバーの Filter Settings Check のメニュー・Tools のメニューが 1 つの切り替え)。色は本家の画面に当てはめた式 (I = (R+G+B)/3、(1 − m)·I·(1, 0.9, 0.75) + m·(I·(0.3, 0.45, 0.5) + (0, 0, 126.5))、残差 0.35〜1.3 階調)。マスク m は repro の定義 (時間段の Y の残留分散 rv から m = clamp((1/rv − 1)/(1/rv_min − 1), 0, 1)。本家の式は未解読で、test_v02 の −60% では本家 0.33 に対し 0.52)。Temporal の Noise Level (`t_noise`) を実装した (`nv_ui_qt/backend.py` が時間段だけ noise_level を ×t_noise。既定 +0% は変更前とビット一致)。`nv_aft_v5.assist_params` (2026-10-26 に別エージェントが処理コアに追加) は UI から使っていない。Device Noise Profile パネルは本家の順でスクロールなし、選択範囲の Noise Level は Main Sample 比の (±n%) 付き。
+  本家合わせ (2026-10-26、DaVinci Resolve 上の本家 6.1.3 Pro の観測 `work/omo/coord/genuine_ui/OBSERVED.md`・`shots/` と、バイナリの静的解析 `STATIC.md`。仕様 `SPEC.md`、独立検証 `VERDICT.md` で APPROVE):
   ビューアの表示は本家の式 (`nv_ui_qt/display.py`: 色変換 Y = 0.2989R+0.5866G+0.1145B・Cr = (R−Y)·0.71316504・Cb = (B−Y)·0.56465274、ペインごとの色付きの出力範囲、
   明るさ 0〜100 (50 で恒等)、YCrCb+ の Enhanced と Frequencies は BuildFreqImage (5 段の間引きラプラシアン、Prepare だけ強調 b/((Box3Box3 b²)^¼+0.01)・重み 1.25^k) と
   FindFreqLevs の表示範囲。本家の画面の YCrCb ペインとの平均絶対誤差は Y 0.29 / Cr 0.43 / Cb 0.33。ディザは省略)。表示モードはページごと (Prepare 既定 YCrCb+、Adjust 既定 Normal)。
@@ -149,7 +149,7 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
 ### Quality (genuine measure) (2026-10-26 統括が g を解読して完成)
 - 式: `q = s11·P·(S/5)·0.5^クリップ数`、表示は `qRound(q·100) + "%"`
   (Profile Viewer は double・Simple/Advanced パネルは float の qRound。RS 0xa4acf8 / Demo 0x9bb3e0、
-  3 か所 (Simple/Advanced/Profile Viewer) とも同じ関数。解析と検証は `sandbox/omo/coord/verify_quality/static/QUALITY.md`)
+  3 か所 (Simple/Advanced/Profile Viewer) とも同じ関数。解析と検証は `work/omo/coord/verify_quality/static/QUALITY.md`)
 - `s11 = 0.5·g + 0.5`。**g = 輝度曲線の完成度** (RS 0xa4b03c / Demo 0x9bb748。2026-10-26 に統括が解読。
   入口・出口の難読化ブロックは大域語の記帳だけで浮動小数点の累積 s0 には触れない。RS と Demo は数値経路が
   命令単位で一致)。27 ビン (3ch × 9) を (ビン, チャンネル) 順に float32 で加算:
@@ -170,7 +170,7 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
   Reset Fine-Tuning は base["aft_reset"] を立てて 0xc2a4 = 0 にする (構築直後の状態。本家の
   コンストラクタ RS 0xa49e28 が LZMA 旗を消すため完成度 0%。新規ビルドは旗が立ったまま 1%。
   機構は QUALITY.md §8.6 で解決済み)。次の AFT で aft_reset は消える
-- UI: `repro/nv_ui_qt/quality.py` (`genuine_g`・`profile_quality`・`profile_completeness`・`profile_numbers`)。Device Noise Profile パネルの
+- UI: `reference/python/nv_ui_qt/quality.py` (`genuine_g`・`profile_quality`・`profile_completeness`・`profile_numbers`)。Device Noise Profile パネルの
   Quality / Completeness 欄と Profile Viewer の「Overall Profile Quality:」「Completeness:」行に表示。プロファイル変更 (build/AFT/
   読み込み/リセット/undo・redo/ファクター・tune) と動画オープンで再計算 (worker で実行、
   変更がなければキャッシュ)。実装 (`nv_ui_qt/quality.py`) と照合用 (`quality_draft.genuine_g`) は
@@ -202,10 +202,10 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
 - UI: `cd repro && python3 nv_ui.py` (Load→Auto Profile (auto/spatial/temporal)→タブで調整→Preview→Process full video)
 - Qt UI: `cd repro && python3 -m nv_ui_qt.main [video]` (要 PySide6。2026-10-25 に 6.12.0 を導入)。自己試験 (画面を出さない): `QT_QPA_PLATFORM=offscreen python3 -m nv_ui_qt.selftest ../test.mp4 <出力先>` (出力先に設定・試験ファイル・短い可逆の書き出しだけを書く)。
   プレビューは全フレームをメモリに読む (上限は Preferences、既定 4 GB。1080p 721f で約 2.2 GB)。1080p 1 フレームのプレビューは約 2.4 秒、Preview Area で約 0.6 秒、AFT は約 48 秒 (検証者の測定)
-- 検証: `python3 validate_v5.py` (合成)、`neatvideo_ofx_614/analysis/blackbox/calibrate_v5.py` (本家区間比較・較正)、
+- 検証: `python3 validate_v5.py` (合成)、`reference/genuine/analysis/blackbox/calibrate_v5.py` (本家区間比較・較正)、
   `compare_full.py` (全編比較)。区間 yuv の抽出手順は calibrate_v5.py の docstring 参照。
   calibrate_v5.py の候補には `"area": [y0, x0, size]` (区間別は `{"296": [...], "560": [...]}`) でプロファイル領域を指定できる
-- 本家との照合 (解析用): `make -C neatvideo_ofx_614/analysis/harness check` で `nvh` をビルドし、自己テストする。
+- 本家との照合 (解析用): `make -C reference/genuine/analysis/harness check` で `nvh` をビルドし、自己テストする。
   - サブコマンド: `nvh levels|model W H plane.f32 [set]` (帯域測度。各行「番号 %.9g 16進ビット」。`set` は model の方向フィルタの組)、`nvh curve|clip W H rgb.f32` (`curve` は %.17g)・`nvh flat W H rgb.f32 [mode] [sel]`、
     `nvh profile W H rgb.f32 mode out.bin [x y w h]` (本家の LZMA 圧縮データ 3 つも out.bin.lzma0/1/2 に書く。読み取りのみ)、読み取り専用の `nvh info` (定数・AutoFineTune の入口判定)・`nvh order`
   - EstimateNoiseLevelCurve の部品: `nvh tiles W H [tile margin]` (タイル配置)・`nvh kernel W H angle` (線カーネル表)・
@@ -213,13 +213,13 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
     `nvh refmodel out.bin` (白色ノイズの基準モデル)・`nvh interp n x.. y.. q..` (曲線の補間器)
   - FindFlatArea の部品: `nvh reduce W H rgb.f32 s out` (縮小と輝度)・`nvh cand W H luma.f32 rx ry step [nb per_bin]` (候補)・
     `nvh xform W H rgb.f32 mode out` (色変換)・`nvh flatness W H plane.f32` (帯域測度→平坦度)・`nvh quantile n v.f32 qbits flag div` (分位点。qbits は q の float32 ビットを 16 進で)
-  - 曲線の照合: `cd neatvideo_ofx_614/analysis/noise && python3 verify_curve.py` (`--reference` で参照経路も、`--diagnose` でタイル単位、
+  - 曲線の照合: `cd reference/genuine/analysis/noise && python3 verify_curve.py` (`--reference` で参照経路も、`--diagnose` でタイル単位、
     `--extra`・`--fuzz N` で追加の入力、`--sensitivity` で照合が空振りしないことの確認。加算順の集計は既定で行い `--no-order` で省く)。
     `verify_curve_speed.py --orig` は既定で `frozen_20261016/` と比べ、`--mem` でメモリを測る (`--mem-dirs frozen_20261016/pre_lowfix` で修正前と比較)
   - BuildNoiseModel の照合 (`analysis/noise/model_verify/`): `python3 verify_model_cases.py --sets --jobs 6` (1 面モデルの 4096 語、753 件。
     `--mutate NAME` で感度試験、`--every N` で間引き)、`python3 verify_profile.py [--quick]` (プロファイル。領域を指定して `nvh profile` を呼ぶので
     FindFlatArea は呼ばれない)、`independent/run_model.py`・`run_profile.py` (独立検証者の入力)、`bench.py`。本家の結果は `model_verify/tmp/` にキャッシュする
-  - LZMA (プロファイル 0x18〜0x2b) の照合: `make -C neatvideo_ofx_614/analysis/noise/lzma_oracle` の後 `python3 verify_lzma.py [--oracle] [--genuine] [--fuzz N] [--quick]`
+  - LZMA (プロファイル 0x18〜0x2b) の照合: `make -C reference/genuine/analysis/noise/lzma_oracle` の後 `python3 verify_lzma.py [--oracle] [--genuine] [--fuzz N] [--quick]`
     (移植と C 9.20・16.04 の比較と行の網羅率、本家の圧縮データとのバイト単位の比較)
   - FindFlatArea の照合: `python3 verify_flat_exact.py --clip ../../../test_v02.mp4:24 --clip ../../../test.mp4:30 --modes 0,1,2 --inter`
     (`--production` で本番の入口も、`--scales`・`--small`・`--synthetic` で追加の入力)。帯域測度は `python3 verify_levels.py [--quick]`。
@@ -230,10 +230,10 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
     `nvh ramp t in.f32 n out` (`FUN_009ee93c`、clamp(2 − x/t, 0, 1))・`nvh wmul t r.f32 prev.f32 n out` (`FUN_009eebf8`、ramp(r)·prev)・`nvh pairw a b c n out` (`FUN_009efb1c`、c·(max(a,b) − b))・
     `nvh down2 W H plane out` (`FUN_009f15b4`、2×2 平均。1 回の呼び出しで 2 行 → 1 行)・`nvh sad W H a b ax ay bx by [elem]` (`FUN_009f862c` 16×16・`FUN_009f9290` 32×32)・
     `nvh b32 W H ref cur cx cy thr` (`FUN_0098bf18`、32×32 探索と SAD 重心のサブ画素。記述子は `FUN_0097eebc`/`FUN_0097eef8`、オフセット表は {int バイトオフセット, short dx, short dy} × 8)。AutoFineTune のモード 2 のタイル順 `nvh aftshuffle N` (`FUN_009d39ec`、0 ≤ N ≤ 4096。外の関数を呼ばず、大域は __TEXT の定数 1 件だけ)。
-    空間フィルタの葉 (2026-10-21 追加、sandbox/omo/wp_spatial の要求を統括が逆アセンブルで確認: 22 関数とも外への分岐・呼び出しなし、大域は 0x14a67a8 か __TEXT `__const` の 0x12504a0 (値 0) だけ、または大域なし): `nvh elem NAME n out s0 s1 s2 s3 in1 [in2 [in3]]` (要素ごとの 17 関数。recip `0x9ed5f8`・mul `0x9edc38`・add `0x9ed844`・sub `0x9ed710`・acc `0x9edeb8`・scale `0x9ee304`・affine `0x9ee3fc`・clampmul `0x9ee7bc`・blend `0x9ee1a4`・mulk `0x9edd6c`・u8 `0x9f02b4`・sqr `0x9ed2f0`・sqrtabs `0x9ed3e0`・sqrtk `0x9ed4e0`・fabs `0x9ee50c`・rstep `0x9ef260`・rinv `0x9eef5c`。スカラーは float32 の 16 進ビット)・`nvh strip3 W H plane box|sq mode sbits out` (`FUN_009ed014`・`FUN_009ed164` を呼び出し元と同じ 4 列帯のループで)・`nvh sigfuse` (`FUN_009f1d8c`)・`nvh ixform` (`FUN_009f1d0c`)・`nvh sel2` (`FUN_009f19cc`。末尾に `full` を付けると呼び出し元 `FUN_0098eba8` を呼んで端数部まで処理する。`FUN_0098eba8` は葉ではないが、呼ぶのは `FUN_009f19cc` だけで大域は 0x14a67a8 だけであることを統括が確認)。
+    空間フィルタの葉 (2026-10-21 追加、work/omo/wp_spatial の要求を統括が逆アセンブルで確認: 22 関数とも外への分岐・呼び出しなし、大域は 0x14a67a8 か __TEXT `__const` の 0x12504a0 (値 0) だけ、または大域なし): `nvh elem NAME n out s0 s1 s2 s3 in1 [in2 [in3]]` (要素ごとの 17 関数。recip `0x9ed5f8`・mul `0x9edc38`・add `0x9ed844`・sub `0x9ed710`・acc `0x9edeb8`・scale `0x9ee304`・affine `0x9ee3fc`・clampmul `0x9ee7bc`・blend `0x9ee1a4`・mulk `0x9edd6c`・u8 `0x9f02b4`・sqr `0x9ed2f0`・sqrtabs `0x9ed3e0`・sqrtk `0x9ed4e0`・fabs `0x9ee50c`・rstep `0x9ef260`・rinv `0x9eef5c`。スカラーは float32 の 16 進ビット)・`nvh strip3 W H plane box|sq mode sbits out` (`FUN_009ed014`・`FUN_009ed164` を呼び出し元と同じ 4 列帯のループで)・`nvh sigfuse` (`FUN_009f1d8c`)・`nvh ixform` (`FUN_009f1d0c`)・`nvh sel2` (`FUN_009f19cc`。末尾に `full` を付けると呼び出し元 `FUN_0098eba8` を呼んで端数部まで処理する。`FUN_0098eba8` は葉ではないが、呼ぶのは `FUN_009f19cc` だけで大域は 0x14a67a8 だけであることを統括が確認)。
     `FUN_00990f74` (空間の縮小核)・`FUN_0099c3a4`・`FUN_0099afb4`/`FUN_0099a76c` は難読化された読み書きや係数を含むので、ハーネスでは呼ばない
     (2026-10-22 に統括が保護区画の解析をユーザーから一任されて機構を読んだ。確定した式は §6.4・§7 に反映、詳細は
-    `sandbox/omo/wp_spatial/notes/lead_static_20261021.md` と `coord/verify_protect/VERDICT.md`。ハーネスで呼ばない方針は変わらない)
+    `work/omo/wp_spatial/notes/lead_static_20261021.md` と `coord/verify_protect/VERDICT.md`。ハーネスで呼ばない方針は変わらない)
   - 入力は 0〜255 の float の平面 (RGB は R,G,B の順に連結)。照合は `analysis/noise/verify_*.py` で、
     共通部 `nvh_common.py` が最初に `nvh selftest` の終了コード 3 を確かめてから本家を呼ぶ
   - 安全装置 (`nvh_guard.h`): 本家のアサーションはシステムのダイアログを出し、出し続ける箇所もある。
@@ -251,7 +251,7 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
 
 ### 6.1 RTTI→vtable 追跡で特定した本家関数 (arm64 スライス、Ghidra アドレス)
 ラムダ型名 (`FuncPRun/FuncPFuncs<…$_N>`) の typeinfo → vtable → 参照元で親関数を特定。
-成果物: `neatvideo_ofx_614/analysis/rtti/` (`INDEX_rtti.txt`, `*_parent_*.c`, `kern/fn_*.c`)、
+成果物: `reference/genuine/analysis/rtti/` (`INDEX_rtti.txt`, `*_parent_*.c`, `kern/fn_*.c`)、
 スクリプト: `analysis/ghidra_scripts/{RttiLambdas,DecompAddrs}.java`
 | 関数 | アドレス | 観測内容 |
 |---|---|---|
@@ -259,16 +259,16 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
 | 画素ノイズ推定 | `0x998d98` | **16 方向 (整数格子 atan(1/4),atan(1/2),atan(3/4),45°… の 90°回転) × 2 スケール**のフィルタバンク。エネルギー比を**線形ランプ** clamp((r−0.8)/0.4), clamp((r−1.1)/0.4) (`FUN_009ee93c`) で重み化しエッジを除外 |
 | `astfqg::FindFlatArea` | `0x9b1a5c` | 1/8 以下に縮小して探索。3ch 中 2ch 以上でクリップ率>0.33 なら棄却 (`IsClip.*` = `0x9c6648`)。Auto Profile は第3引数 0 でサイズ表から選ぶ (幅の **18%** の正方形は第3引数 1 の別経路)。詳細と移植は §6.5 |
 | `astfqg::FilterTemporal` | `0x9a4800` → `0x9a815c` (CPU/GPU 振分) → CPU `0x9a84f8` | 近傍の重み = 類似度マップ (`FUN_0099a76c`、多重解像度、閾値 T² = (Threshold設定×0.16)²、モード1では 64)、中心の重み 1。`local_174` (中心 x、近傍 **0.64x**) は重みではなく**フレームごとのノイズ分散係数**で、Σw (`FUN_009ed844`: a+b) と Σf·w² (`FUN_009edadc`: acc+f·w²) を累積 → 残留ノイズ分散 Σf·w²/(Σw)² と推定。6 個の float を取る `FUN_009abbe4` は **3 チャンネル分の (ゲイン, オフセット)**: 中心フレームに (−1,0)×3 を渡して −中心 を作り、近傍には同じ組で `x·g+o` (`FUN_009aba00` / `FUN_009f08d4`) を掛けてから差を取る (フレーム単位の明るさ補正。§6.4) |
-| 補助関数 (確定) | `0x9ed2f0` x², `0x9edc38` a·b, `0x9ed710` a−b, `0x9ee04c` a/(b+ε), `0x9ee3fc` a·x+b, `0x9ee93c` clamp 線形ランプ | `0x9ee93c` (a=t, b=2t, 1, 0) の本家とビット一致する式 (2026-10-17〜18、`nvh ramp|wmul|pairw|down2` と実装者 4,031 件・独立検証者 3,186 件で不一致 0。NEON 判定のバイトが非 0 の経路のみ。sandbox/omo/wp_temporal): b − a > b·1e-5 のとき (fcsel hi) そのまま、そうでなければ a ← a·0.99999 − 1e-5、b ← b·1.00001 + 1e-5 (t ≤ 0・±inf で効く。順序なしでは補正しないが slope が NaN になるので出力は同じ)。一般形 (a, b, c, d) では slope = f32((d − c)/(b − a))、ic = f32(c − a·slope) で、(t, 2t, 1, 0) では slope = f32(−1/(b − a))、ic = f32(1 − a·slope) (照合したのはこの組だけ)。先頭 n&~3 個は FMLA(x, slope, ic) → FMIN 1 → FMAX 0 (NaN 伝播)、残りは非融合の fmul・fadd → fcsel で clamp (NaN → 0、−0 → +0)。`0x9eebf8` はその結果 × prev (NEON 部は ramp·prev の順で NaN の選び方に効く)。`0x9efb1c` は c·(max(a,b) − b) で、NEON 部の max は FMAX (NaN 伝播)・端数部は a>b?a:b。2×2 平均 `0x9f15b4` は先頭 W&~7 列が (a+b)+(c+d)、残りの列が ((a+b)+c)+d (×0.25。奇数の最終列は捨てる。`repro/nv_pixnoise.down2` と同じ式) |
+| 補助関数 (確定) | `0x9ed2f0` x², `0x9edc38` a·b, `0x9ed710` a−b, `0x9ee04c` a/(b+ε), `0x9ee3fc` a·x+b, `0x9ee93c` clamp 線形ランプ | `0x9ee93c` (a=t, b=2t, 1, 0) の本家とビット一致する式 (2026-10-17〜18、`nvh ramp|wmul|pairw|down2` と実装者 4,031 件・独立検証者 3,186 件で不一致 0。NEON 判定のバイトが非 0 の経路のみ。work/omo/wp_temporal): b − a > b·1e-5 のとき (fcsel hi) そのまま、そうでなければ a ← a·0.99999 − 1e-5、b ← b·1.00001 + 1e-5 (t ≤ 0・±inf で効く。順序なしでは補正しないが slope が NaN になるので出力は同じ)。一般形 (a, b, c, d) では slope = f32((d − c)/(b − a))、ic = f32(c − a·slope) で、(t, 2t, 1, 0) では slope = f32(−1/(b − a))、ic = f32(1 − a·slope) (照合したのはこの組だけ)。先頭 n&~3 個は FMLA(x, slope, ic) → FMIN 1 → FMAX 0 (NaN 伝播)、残りは非融合の fmul・fadd → fcsel で clamp (NaN → 0、−0 → +0)。`0x9eebf8` はその結果 × prev (NEON 部は ramp·prev の順で NaN の選び方に効く)。`0x9efb1c` は c·(max(a,b) − b) で、NEON 部の max は FMAX (NaN 伝播)・端数部は a>b?a:b。2×2 平均 `0x9f15b4` は先頭 W&~7 列が (a+b)+(c+d)、残りの列が ((a+b)+c)+d (×0.25。奇数の最終列は捨てる。`repro/nv_pixnoise.down2` と同じ式) |
 | ノイズ推定 (§6.5) | `BuildNoiseModel 0x9af718`, `AutoFineTune 0x9a775c`, `FindFreqLevs 0x9b2814`, `BuildFreqImage 0x9b0b68` | 2026-10-15 に解読 (FindFreqLevs / BuildFreqImage の呼び出し元は表示用ジョブ `FUN_0014f9a0` だけ。2026-10-17 に静的に確認) |
-| 空間フィルタ (2026-10-17、sandbox/omo/wp_spatial を独立検証者が確認) | `Filter 0x9ac2b0` → CPU `FUN_009adc8c` → `FUN_009ae918` → 面ごと `FUN_0098edb0` → 縮小核 `FUN_00990f74` | 間引きラプラシアン 5 段 (3×3 箱平均 → 2×2 平均で縮小 → (3,1)/4 で拡大して差)。面ごとの `FUN_0098edb0` が白色化 W = B/(σ + 1e-4) (定数 0x38d1b717、0x98f86c〜0x98f880 で `FUN_009ed5f8` = 1/(x+ε) を呼ぶ) をして縮小核に渡し、縮小核は R = √(3×3 平均(W²)) (`FUN_009950f4`)、X = W·clamp((2t − R)/t, 0, 1)。通常経路の t = (cfg[k] + 1e-6)·\|model[+0x14+4k]\|·1.1 (0x99155c〜0x991574)、出力の乗数は −cfg[+0x14+4k] (Amount 系。0x991748〜0x991758 で読み、cfg+0xb8 ≤ 0 か値が 1 のとき 0x9917a0 の fneg で符号を反転。それ以外は `FUN_009ee7bc` の適応経路)。通常経路のランプと積は 0x9916a4 の `bl 0x9eebf8` 1 回 (s0 = t、s1 = t+t、R・W・X と要素数 n を渡す。n = 面の要素数というのは推定)、縮小は `FUN_0098edb0` の 0x98f2bc〜0x98f2dc で `FUN_009f15b4` を H>>1 回 (H < 2 なら呼ばない)。移植 (`wp_spatial/src/nv_spatial.py`) の halve と縮小式は 2026-10-21 に本家と同じ演算にした (実装者 1,785 件・独立検証者 2,484 件で `nvh down2|ramp|wmul` と不一致 0。区間 A/B の PSNR は変更前と 3 桁目まで同じ)。2026-10-21 の追加の観測 (wp_spatial の実装者の読みを独立検証者が抜き取り確認、`coord/verify_spatial3/VERDICT.md`): 局所 RMS (`FUN_009950f4` → `FUN_009ed164`) は端を 0 で埋め、3×3 箱 (`FUN_009ed014`) は端を複製する (どちらも `nvh strip3` で本家と一致)。方向フィルタの組は表 0x1246c48 (0x1246c48 + 色モード·0x48 + 品質·0x18 + 8·面) から選ばれ、既定の YCrCb では Y が組 2、Cr・Cb が組 1 (実装者の読み。本番は方向経路 0x991aac〜を通るとみられる)。方向経路の定数 4.5 (0x991ac8)・1.05 (0x3f866666) は確認、経路全体は本家と未照合。周期パターンの保護 (組 4) は品質 2 のときだけとみられる。`FUN_00990f74` の入口には難読化様のコードがあり、ハーネスでは呼ばない |
-| 動き探索の葉 (2026-10-17〜18、sandbox/omo/wp_motion を独立検証者が確認) | SAD `0x9f862c` (16×16)・`0x9f9290` (32×32)、32×32 探索とサブ画素 `0x98bf18` | SAD は 8bit 面の Σ\|a−b\|。`0x98bf18` のサブ画素は SAD 重心で、すべて float32 の単独演算 (FMA・double・逆数近似なし): inv = 1/(thr + 0.01f)、d = inv·(float)(SAD − best) (64 ビット符号なしから変換)、w = (d·−0.66f) + 1.0f (2 回丸め、clamp なし。基準位置だけさらに +0.0f)、d < 1.5151515f (0x3fc1f07c) の近傍だけを表の順に num += (dx,dy)·w・den += w、出力 = num/den + (float)位置。`nvh sad`・`nvh b32` と、実装者 15,058 件・独立検証者 5,446 件 (実写切り出しを含む) で不一致 0。照合はハーネスで呼べる経路 (ブロックが面の内側) だけで、端に掛かる遅い経路・NaN の閾値・elem 4 は未照合。打切りの向き (< か <=) は出力から区別できず、逆アセンブル (b.pl) で確認。移植 `wp_motion/src/nv_motion.py` で v5 のフローを置き換えると区間 A の Y は 47.117 → 46.609 dB (v5 の既定は変えない)。パターン探索 `0x98b9a4`・`0x98adbc` (32×32 枝の入口に難読化様の判定があり未調査)・平滑化・回帰 `0x98c90c`・レベル間の伝播は未照合 |
-| その他 | `FilterVideoField 0x9a17b8`, `MotionCompensator::{EstimateScaleMotion 0x98a368, CompensateImageMotion 0x989cd8, CompensateImageSet 0x987f88}` | 静的な解読は sandbox/omo/wp_motion/notes/decode_motion.md (本家との照合は上の葉だけ) |
+| 空間フィルタ (2026-10-17、work/omo/wp_spatial を独立検証者が確認) | `Filter 0x9ac2b0` → CPU `FUN_009adc8c` → `FUN_009ae918` → 面ごと `FUN_0098edb0` → 縮小核 `FUN_00990f74` | 間引きラプラシアン 5 段 (3×3 箱平均 → 2×2 平均で縮小 → (3,1)/4 で拡大して差)。面ごとの `FUN_0098edb0` が白色化 W = B/(σ + 1e-4) (定数 0x38d1b717、0x98f86c〜0x98f880 で `FUN_009ed5f8` = 1/(x+ε) を呼ぶ) をして縮小核に渡し、縮小核は R = √(3×3 平均(W²)) (`FUN_009950f4`)、X = W·clamp((2t − R)/t, 0, 1)。通常経路の t = (cfg[k] + 1e-6)·\|model[+0x14+4k]\|·1.1 (0x99155c〜0x991574)、出力の乗数は −cfg[+0x14+4k] (Amount 系。0x991748〜0x991758 で読み、cfg+0xb8 ≤ 0 か値が 1 のとき 0x9917a0 の fneg で符号を反転。それ以外は `FUN_009ee7bc` の適応経路)。通常経路のランプと積は 0x9916a4 の `bl 0x9eebf8` 1 回 (s0 = t、s1 = t+t、R・W・X と要素数 n を渡す。n = 面の要素数というのは推定)、縮小は `FUN_0098edb0` の 0x98f2bc〜0x98f2dc で `FUN_009f15b4` を H>>1 回 (H < 2 なら呼ばない)。移植 (`wp_spatial/src/nv_spatial.py`) の halve と縮小式は 2026-10-21 に本家と同じ演算にした (実装者 1,785 件・独立検証者 2,484 件で `nvh down2|ramp|wmul` と不一致 0。区間 A/B の PSNR は変更前と 3 桁目まで同じ)。2026-10-21 の追加の観測 (wp_spatial の実装者の読みを独立検証者が抜き取り確認、`coord/verify_spatial3/VERDICT.md`): 局所 RMS (`FUN_009950f4` → `FUN_009ed164`) は端を 0 で埋め、3×3 箱 (`FUN_009ed014`) は端を複製する (どちらも `nvh strip3` で本家と一致)。方向フィルタの組は表 0x1246c48 (0x1246c48 + 色モード·0x48 + 品質·0x18 + 8·面) から選ばれ、既定の YCrCb では Y が組 2、Cr・Cb が組 1 (実装者の読み。本番は方向経路 0x991aac〜を通るとみられる)。方向経路の定数 4.5 (0x991ac8)・1.05 (0x3f866666) は確認、経路全体は本家と未照合。周期パターンの保護 (組 4) は品質 2 のときだけとみられる。`FUN_00990f74` の入口には難読化様のコードがあり、ハーネスでは呼ばない |
+| 動き探索の葉 (2026-10-17〜18、work/omo/wp_motion を独立検証者が確認) | SAD `0x9f862c` (16×16)・`0x9f9290` (32×32)、32×32 探索とサブ画素 `0x98bf18` | SAD は 8bit 面の Σ\|a−b\|。`0x98bf18` のサブ画素は SAD 重心で、すべて float32 の単独演算 (FMA・double・逆数近似なし): inv = 1/(thr + 0.01f)、d = inv·(float)(SAD − best) (64 ビット符号なしから変換)、w = (d·−0.66f) + 1.0f (2 回丸め、clamp なし。基準位置だけさらに +0.0f)、d < 1.5151515f (0x3fc1f07c) の近傍だけを表の順に num += (dx,dy)·w・den += w、出力 = num/den + (float)位置。`nvh sad`・`nvh b32` と、実装者 15,058 件・独立検証者 5,446 件 (実写切り出しを含む) で不一致 0。照合はハーネスで呼べる経路 (ブロックが面の内側) だけで、端に掛かる遅い経路・NaN の閾値・elem 4 は未照合。打切りの向き (< か <=) は出力から区別できず、逆アセンブル (b.pl) で確認。移植 `wp_motion/src/nv_motion.py` で v5 のフローを置き換えると区間 A の Y は 47.117 → 46.609 dB (v5 の既定は変えない)。パターン探索 `0x98b9a4`・`0x98adbc` (32×32 枝の入口に難読化様の判定があり未調査)・平滑化・回帰 `0x98c90c`・レベル間の伝播は未照合 |
+| その他 | `FilterVideoField 0x9a17b8`, `MotionCompensator::{EstimateScaleMotion 0x98a368, CompensateImageMotion 0x989cd8, CompensateImageSet 0x987f88}` | 静的な解読は work/omo/wp_motion/notes/decode_motion.md (本家との照合は上の葉だけ) |
 ※ 周辺に難読化 (ハッシュ値をグローバルに書き込む改ざん検知様コード) が混在。T² の単位は推定を含む。
 ※ 訂正 (2026-10-15): 初版の「近傍フレーム重み = 中心×0.64」「smoothstep」、第2版の「FUN_009abbe4 = 大域アフィン」は誤読。上記が補助関数を確定させた後の読み。
 
 ### 6.2 ブラックボックス比較 (test_v02 vs 本家出力, n=296〜327, ネイティブ YUV)
-成果物: `neatvideo_ofx_614/analysis/blackbox/` (`bb_analyze.py`, `bb_out.txt`, `exp_compare.py`, `exp_results.txt`)
+成果物: `reference/genuine/analysis/blackbox/` (`bb_analyze.py`, `bb_out.txt`, `exp_compare.py`, `exp_results.txt`)
 - フレームずれ 0、全体輝度/色の変化なし (±0.04) → **全体フリッカ補正は掛かっていない**。1800x1000 外も一様に処理。
 - 除去成分の帯域別 RMS ≈ 入力ノイズの帯域別 σ (L1 2.25/2.18, L2 1.10/1.15, L3 0.54/0.57) → 全帯域でノイズ分を除去し、信号は保存。
 - ノイズは強く有色: 白色換算 σ が L1=2.4 に対し L2〜L6=5〜7。nvfilter の HH1-MAD 推定 (0.74) は 3〜10 倍過小 → `--sigma-scale 4` が必要だった原因。
@@ -309,7 +309,7 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   - test_v02 では処理に使うプロファイル値 (曲線・帯域比・total 比) が修正前後で同一 → 全編・区間の数値はそのまま有効 (区間は再測定で一致を確認)。
   - 再レビューで 14 件すべて FIXED・APPROVE。追加対応: 無ノイズ画素が画面の 50% 超ならノイズなしとして σ=0 (本家由来ではない安全策。
     testsrc2 で出力≒入力、test_v02 / test.mp4 は 0% で影響なし)。ロスレス出力で窓処理のビット一致を 4 条件で確認。
-- 本家とビット一致したノイズ推定を v5 に入れる試験 (2026-10-17、sandbox/omo/wp_integrate、独立検証者が区間 A を再測定。数値は `exp_results.txt` の「integrate」節):
+- 本家とビット一致したノイズ推定を v5 に入れる試験 (2026-10-17、work/omo/wp_integrate、独立検証者が区間 A を再測定。数値は `exp_results.txt` の「integrate」節):
   ノイズ曲線を本家の EstimateNoiseLevelCurve (輝度のみを測る) にすると、区間 A の Y は 47.117 → 46.984 (B 47.222 → 47.199) で、色差は U 41.35・V 40.98 と大きく悪い
   (輝度曲線 × CHROMA_GAIN を色差に流用するため σ が過大)。帯域比を本家の領域モデル (`nv_profile` の q99 語) にする案は、尺度を揃えると区間 A で 47.118 / 50.996 / 51.203 で v5 既定と同等。
   既定は変えない (コードはマージしていない)
@@ -404,7 +404,7 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   - 段統計 (`FUN_00995250` の語 0..54) は `nv_band.model_levels` が本家とビット一致する (155 平面)。測るのは W, H ≥ 9 かつ
     (W−8)(H−8) ≥ 32 の段だけで、小さすぎる段の外挿の係数は前段の |q99_k / q99_k−1| (0.5〜1.0)。以前の `band_model(border=4)` は
     最大 87% (極端な入力。実フレームの切り出しでも 75%) ずれていた。外挿の係数が −0.5 固定だったことが原因とみられる (本番では未使用)
-  - 2026-10-16 に語 55 以降 (方向フィルタ) とプロファイル全体も移植した (`repro/nv_model*.py`・`nv_profile.py`。別エージェントが `sandbox/dirfilt/` で実装し、
+  - 2026-10-16 に語 55 以降 (方向フィルタ) とプロファイル全体も移植した (`repro/nv_model*.py`・`nv_profile.py`。別エージェントが `work/dirfilt/` で実装し、
     統括が独立検証の後にマージ)。数値は `exp_results.txt` の「BuildNoiseModel full port」節
     - 方向フィルタの組 `DAT_01243988` (5 組 × 0x260 バイト、静的に読み出し): 組 0 なし、組 1 は 4 方向、組 2 は 8 方向、組 3・4 は 16 方向 (FUN_00998d98 と同じ表)。
       族 A (半径 4: 帯域から線フィルタを引いて `FUN_009ef0d0` で頑健化した帯域の方向エネルギー)、R (argmax 方向の応答を引いた残差)、dc (残差を帯域の局所 RMS で重み付け)、
@@ -443,7 +443,7 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
     本体の中にも同じ型の判定 (語 `0x148849c`、表 image+0x15636b8、カウンタ `0x1488318`) があり、32px タイルの行数に (…)·0x40 を足す
     (正しい表なら 0 になるとみられる)。表を書くコードは特定していない (ホストによる初期化か認証の過程で作られると推定)。
     ハーネスでは表が NULL なので本体は実行されず 0 を返す。判定の回避・パッチはしていない。判定の前 (`0x9a775c〜0x9a7828`) にプロファイルへの書き込みはない (2026-10-17 に逆アセンブルで確認) ので、`nvh profile` のダンプは BuildNoiseModel 直後の状態
-  - 2026-10-17 の静的な追加読み (sandbox/omo/wp_aft の作業者の解読を独立検証者と統括が逆アセンブルで確認。AutoFineTune は本家で実行していない):
+  - 2026-10-17 の静的な追加読み (work/omo/wp_aft の作業者の解読を独立検証者と統括が逆アセンブルで確認。AutoFineTune は本家で実行していない):
     - 類似度 `FUN_009b6338` の R 語は語 490/491 (byte 0x7a8/0x7ac、0x9b64f4/0x9b655c)。許容幅は stats[1+i]・stats[17+i]・stats[34+8l+m]・stats[49+l]。定数 `DAT_012477dc` = (3, 2, 3)・`DAT_012477d0` = (4, 3, 4) (色モード 0/1/2)、66% は 0x3f28f5c3
     - worker `FUN_009b56f4` のゲートは G (面 1) → R → B の順で、類似度の積を 0.5 と比べる (最後の 0x9b60b0 だけ b.le)。親は色モード 0/1 で `FUN_009b4e08`×3 → `FUN_009bdf30`(0.2, 3.0, 0)×3、モード 2 で `FUN_009b5408`×3 を呼び、profile+0x2d = 0 は成否によらず書く (0x9a8004)
     - `FUN_009b4e08` はビン 0〜8 の 9 個すべてを処理する (0x9b5238 の `cmp x9,#0x100` は書き込みの後)。段係数の欄は `memset_pattern16` の模様 0xc962e0 = 1.0f×4 で埋める (0 ではない)
@@ -551,7 +551,7 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   Python とビット一致 (20000/20000)。make -C native && python3 native/verify_quality.py [N]。
 - 教訓: float 定数は Python 側のビットパターンから写す (−0.25 = 0xBE800000。手計算の 16 進は誤り)、
   fmaxnm の NaN は isnan を明示、vector の most vexing parse に注意。
-- N1 進捗 (詳細は native/MIGRATION.md と sandbox/omo/wp_native_*/REPORT.md、独立検証 coord/native_n1/):
+- N1 進捗 (詳細は native/MIGRATION.md と work/omo/wp_native_*/REPORT.md、独立検証 coord/native_n1/):
   N1a 帯域測度 5706/5706 (nv_band)、N1b 曲線 1094+IsClip 4000+補間器 20554 (nv_curve、
   1080p 0.49 秒/4 スレッド 0.13 秒)、N1c LZMA 949/949 + 本家 blob 258/258 (SDK 9.20 無改変ソース
   を native/lzma/ に同梱)。make -C native verify で通し照合。
@@ -620,3 +620,25 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
 - 揮発物 (`/tmp/nv_expand`, `/tmp/ghproj`, `/tmp/nv_out*`) の再生成手順は §3 参照。
 - 競合回避: 同一ファイルの同時編集を避ける。UI (`nv_ui.py`・`nv_ui_qt/`) と core (`nvfilter.py`)
   は担当を分け、結合部は `params()` / `process_frame()` の I/F とする。
+
+## 9. GPU 対応状況 (2026-10-31 記録。詳細は docs/GPU_STATUS.md)
+
+- 本家: Metal + OpenCL をリンク (arm64)。GPUApiKind × GPUDeviceNumber の
+  複数 API × 複数デバイス管理、GPUBufPool/GPURenderMemEstimator/SplitTuner、
+  NVBenchmark (splitFrame/joinFrame の実測でデバイス選定)。Demo 版は GPU 1 基制限。
+- GPU 処理カーネル本体は未解読 (保護コードと絡む)。
+- Meat Video: CPU 専用 (1080p まで実用速度)。本家の正解データが CPU/GPU どちらの
+  経路か不明 — **最優先の調査項目は「本家の GPU 有効/無効 A/B 処理で出力差の有無を確認」**。
+- GPU 実装は 4K/8K の実用速度が必要になった時点で検討 (Metal バックエンド案あり)。
+
+## 10. インターレース / プログレッシブ (2026-10-31 記録。詳細は docs/INTERLACE_PROGRESSIVE.md)
+
+- 本家: "Profiled with: Full frame / Two fields / One field" の文字列、
+  `astfqg::FilterVideoField` (0x9a17b8)、MotionCompensator の CompensateImageSet で
+  フィールド処理が確認されている。
+- Meat Video: **プログレッシブのみ対応**。フィールド分離・フィールド単位の
+  時間/動き/プロファイル・再結合・OFX のフィールド属性は未対応 (docs に実装順を記録)。
+- インターレース素材を現状に通すと、動き推定と時間平均が正しく働かない。
+- N4 (OFX) はまずプログレッシブのみで開始し、フィールド属性は
+  「インターレース非対応」と正直に報告する段階から。
+

@@ -40,7 +40,7 @@ ROOT = os.path.normpath(os.path.join(HERE, ".."))
 ALTBIN = os.path.join(HERE, "libm_alt", "bin")
 HOOK = os.path.join(HERE, "libm_alt", "pyhook")
 ULP = os.path.join(HERE, "libm_alt", "libm_ulp")
-DEFAULT_OUT = os.path.join(ROOT, "sandbox", "omo", "wp_native_libm", "runs")
+DEFAULT_OUT = os.path.join(ROOT, "work", "omo", "wp_native_libm", "runs")
 
 SUITES = ["quality", "band", "curve", "lzma", "flat", "flat_cancel", "model", "temporal", "spatial", "profile", "aft"]
 NOJOBS = {"quality"}                     # verify_quality.py has no --jobs

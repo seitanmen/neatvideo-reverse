@@ -1,4 +1,4 @@
-Migration of the PySide6 UI (repro/nv_ui_qt) to a native binary - staged plan
+Migration of the PySide6 UI (reference/python/nv_ui_qt) to a native binary - staged plan
 =============================================================================
 
 作成: 2026-10-26 (統括)。背景: 本家は C++ / Qt 5.15.2 / NEON float32 / 独自スレッドプールの
@@ -84,7 +84,7 @@ N1 の委託分割: `.claude/tasks/native_n1_split.md` (N1a 帯域測度 / N1b �
 N1c LZMA (SDK 9.20 の C ソースを流用) / N1d 領域探索 / N1e モデル / N1f プロファイル /
 N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと共通規約・検証形式つき)。
 
-### N1 の進捗 (2026-10-26、N1a/b/c 完了。REPORT は sandbox/omo/wp_native_*/、独立検証は coord/native_n1/)
+### N1 の進捗 (2026-10-26、N1a/b/c 完了。REPORT は work/omo/wp_native_*/、独立検証は coord/native_n1/)
 
 - **N1a 帯域測度** `native/nv_band.{h,cpp}`: 5706/5706 ビット一致 (乱数 + 実写)。128² で約 22 倍。
 - **N1b ノイズ曲線** `native/nv_curve.{h,cpp}`: 曲線 1094・IsClip 4000・補間器 20554・タイル 25、
@@ -106,7 +106,7 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
   - libm の pow/tan は volatile 関数ポインタ経由 (定数畳み込み防止)
 - **既知の差**: `repro/nv_lzma.py` は長さ 0 の入力で props が SDK と違う (C++ は SDK どおり。
   本家の経路は 32px 以上なので不発生。N1f の照合では長さ 0 を除外)。
-### N1d/e/g/h (2026-10-27 完了。REPORT は sandbox/omo/wp_native_{flat,model,spatial,temporal}/、独立検証は coord/native_n1b/VERDICT.md で 4 件 APPROVE)
+### N1d/e/g/h (2026-10-27 完了。REPORT は work/omo/wp_native_{flat,model,spatial,temporal}/、独立検証は coord/native_n1b/VERDICT.md で 4 件 APPROVE)
 
 - **N1d 領域探索** `native/nv_flat.{h,cpp}` (N1a・N1b を利用): 181 ケース × (-j 1, -j 3) = 362/362 ビット一致
   (実写 20 フレーム × 色モード 0..2、合成 81、乱数 40。縮小面・候補・trace・帯域測度の構造体まで比較)。
@@ -125,7 +125,7 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
 - `make -C native verify` で 8 本 (N0 + N1a〜e・g・h) を通しで照合できる (2026-10-27: クリーンビルド警告 0、全件一致)。
 - 残件 (取り消し未移植・N1e の未到達経路・線カーネル重複・非 AArch64) は F1〜F4 で解決 (下記)。
 
-### N1f/N1i と F1〜F4 (2026-10-28 完了。REPORT は sandbox/omo/wp_native_{profile,aft,flat_cancel,model_ub,linekernel,portable}/、独立検証は coord/native_n1c/VERDICT_{n1f,n1i,f1f4}.md で 6 件 APPROVE)
+### N1f/N1i と F1〜F4 (2026-10-28 完了。REPORT は work/omo/wp_native_{profile,aft,flat_cancel,model_ub,linekernel,portable}/、独立検証は coord/native_n1c/VERDICT_{n1f,n1i,f1f4}.md で 6 件 APPROVE)
 
 - **N1f プロファイル** `native/nv_profile.{h,cpp}` (N1a〜N1e を利用): 39/39 のプロファイルで 0xc300 バイト全部がビット一致
   (実写 21・合成 18。ヒープポインタ 0x00..0x17 は双方 0)。独立検証者の新しい入力 33/33 + エラー状態 6/6。
@@ -226,7 +226,7 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
 - **G6 (I-6 解消)**: 異常終了時に Python 版と同じ形の traceback と最終行を出力。
   極端サイズ 4810 ジョブが一致。
 - **G2 (E3 解消)**: 両 UI の Preferences に ffmpeg 欄を追加
-  (`prefs/ffmpeg`。探索順 NV_FFMPEG → prefs → PATH)。新規 `repro/nv_ui_qt/ffmpeg_path.py`。
+  (`prefs/ffmpeg`。探索順 NV_FFMPEG → prefs → PATH)。新規 `reference/python/nv_ui_qt/ffmpeg_path.py`。
   Python 自己試験は 96 → 97 項目。
 - **G7 (E1 解消)**: `nvc_profile_build_cancel` (戻り値 3 = 取り消し) を追加。
   取り消しは構築の全段で効く。verify_bridge の cancel は 23 → 49 ケース。

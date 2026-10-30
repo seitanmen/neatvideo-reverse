@@ -1,5 +1,5 @@
 # Bit-exact verification of the native AutoFineTune port (native/nv_aft.{h,cpp}, N1i) against the
-# Python implementation (neatvideo_ofx_614/analysis/noise/aft_port/src/nv_aft.py and the colour
+# Python implementation (reference/genuine/analysis/noise/aft_port/src/nv_aft.py and the colour
 # combination of repro/nv_aft_v5.apply_aft).
 #
 #   make -C native -f Makefile.aft && python3 native/verify_aft.py [--quick] [--jobs J] [--no-real]
@@ -21,7 +21,7 @@
 #             the cached bytes: aft_color_weights, aft_face_curves, curve (Y, Cb, Cr), sigma, aft_bin_flags.
 #   --mutants negative controls: rebuilds nv_aft with -DNVA_MUT_* (wrong 66% quantile, the upper extrapolation
 #             threshold last > 4, CV tolerance x s_lvl, >= 3.0 flag) and requires mismatches.
-# The Python results are cached in sandbox/omo/wp_native_aft/tmp/ under a key of the input hash and the hash of
+# The Python results are cached in work/omo/wp_native_aft/tmp/ under a key of the input hash and the hash of
 # the Python sources (the AFT port takes ~30 s per 1080p frame, the profile ~15 s).
 import argparse
 import glob
@@ -36,8 +36,8 @@ from multiprocessing import Pool
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-REPRO = os.path.join(ROOT, "repro")
-AFT_SRC = os.path.join(ROOT, "neatvideo_ofx_614", "analysis", "noise", "aft_port", "src")
+REPRO = os.path.join(ROOT, "reference", "python")
+AFT_SRC = os.path.join(ROOT, "reference/genuine", "analysis", "noise", "aft_port", "src")
 sys.path.insert(0, REPRO)
 sys.path.insert(0, AFT_SRC)
 sys.dont_write_bytecode = True
@@ -50,9 +50,9 @@ warnings.simplefilter("ignore", RuntimeWarning)     # the Python ports compute w
 F32 = np.float32
 F64 = np.float64
 U32 = np.uint32
-TMP = os.environ.get("NV_AFT_TMP", os.path.join(ROOT, "sandbox", "omo", "wp_native_aft", "tmp"))
+TMP = os.environ.get("NV_AFT_TMP", os.path.join(ROOT, "work", "omo", "wp_native_aft", "tmp"))
 EXE = os.path.join(HERE, "nv_aft_test")
-BAND_FRAMES = os.path.join(ROOT, "sandbox", "omo", "wp_native_band", "tmp")
+BAND_FRAMES = os.path.join(ROOT, "work", "omo", "wp_native_band", "tmp")
 PROF = 0xc300
 CURVE = (0xbf44, 0xc064, 0xc184)
 DIAG_KEYS = ("ntiles", "clip_skip", "simG_skip", "simR_skip", "simB_skip", "diff_skip", "accepted")

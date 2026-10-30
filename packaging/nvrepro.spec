@@ -8,8 +8,8 @@ import os
 from PyInstaller.utils.hooks import collect_submodules
 
 ROOT = os.path.abspath(os.path.join(SPECPATH, ".."))
-REPRO = os.path.join(ROOT, "repro")
-AFT_SRC = os.path.join(ROOT, "neatvideo_ofx_614", "analysis", "noise", "aft_port", "src")
+REPRO = os.path.join(ROOT, "python")
+AFT_SRC = os.path.join(ROOT, "reference/genuine", "analysis", "noise", "aft_port", "src")
 LIB = os.path.join(ROOT, "native", "libnvcore.dylib")
 REF_FLOOR = os.path.join(ROOT, "data", "ref_floor.npy")
 for p in (LIB, REF_FLOOR, os.path.join(AFT_SRC, "nv_aft.py")):

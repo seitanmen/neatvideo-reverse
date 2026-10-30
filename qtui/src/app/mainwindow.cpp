@@ -164,7 +164,7 @@ MainWindow::MainWindow(const QString& video, QWidget* parent) : QMainWindow(pare
     runner = new TaskRunner(this);
     load_prefs();
     preset_clean = default_params();
-    setWindowTitle(U("Neat Video v6 — reproduction UI (export using ") + QString::number(prefs["jobs"].toInt()) +
+    setWindowTitle(U("Meat Video v6 — reproduction UI (export using ") + QString::number(prefs["jobs"].toInt()) +
                    " CPU processes)");
     resize(1400, 860);
     QStyle* st = style();
@@ -579,7 +579,7 @@ void MainWindow::build_menus() {
     QMenu* m = mb->addMenu("E&ffect");
     add(m, "copy_both", "Copy Profile and Preset", [this] { copy_both(); }, QKeySequence("Shift+Ctrl+C"));
     add(m, "paste_both", "Paste Profile and Preset", [this] { paste_both(); }, QKeySequence("Shift+Ctrl+V"));
-    na(m, "Skip Neat Video Processing");
+    na(m, "Skip Meat Video Processing");
     add(m, "apply", "Apply\tReturn", [this] { b_apply->click(); }, QKeySequence(), true, b_apply->toolTip());
     add(m, "cancel", "Cancel", [this] { b_cancel->click(); }, QKeySequence(), true,
         "Close the window (the genuine plug-in returns to the host)");
@@ -717,7 +717,7 @@ void MainWindow::build_menus() {
     na(m, "Read Me");
     na(m, "What's New");
     add(m, "qsg", "&Quick Start Guide", [this] { guide("tuning"); });
-    na(m, "How to Use Neat Video");
+    na(m, "How to Use Meat Video");
     m->addSeparator();
     na(m, "Web Page");
     na(m, "Community Forum");
@@ -2365,7 +2365,8 @@ QWidget* MainWindow::guide(const std::string& which) {
 
 QWidget* MainWindow::about() {
     return info_box("About",
-                    "Reproduction UI of Neat Video v6 (C++ / Qt " + QString(qVersion()) + ").\n"
+                    "Reproduction UI of Meat Video v6 (C++ / Qt " + QString(qVersion()) + ").\n"
+                    "Developer: kawata.\n"
                     "Backend: libnvcore (native/, the C++ ports of repro/nvfilter.py v5 and the static AFT port, "
                     "bit-exact with the Python code).\n"
                     "Not affiliated with ABSoft; profiles and presets are JSON, not .dnp / .nfp.\n\n"

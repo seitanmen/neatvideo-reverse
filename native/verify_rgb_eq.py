@@ -1,6 +1,6 @@
 # G1: the R/G/B equalizer in C++ (native/nv_aft.cpp color_weights / combine_levels / rgb_effective through
 # nvcore_c_rgb.h) against references written here from the processing core's nv_aft_v5.apply_aft (read only), BIT FOR
-# BIT.  No PySide6 / repro/nv_ui_qt (C++-first policy, native/MIGRATION.md): the references copy apply_aft's
+# BIT.  No PySide6 / reference/python/nv_ui_qt (C++-first policy, native/MIGRATION.md): the references copy apply_aft's
 # operation order.
 #
 #   make -C native lib && python3 native/verify_rgb_eq.py [--quick] [--before-lib PATH]
@@ -34,7 +34,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, ".."))
-REPRO = os.path.join(ROOT, "repro")
+REPRO = os.path.join(ROOT, "reference", "python")
 for p in (REPRO, HERE):
     if p not in sys.path:
         sys.path.insert(0, p)
