@@ -1184,9 +1184,10 @@ bool ad1ae0(const Img& clean, const Img& Ai, int c, float* q0, float* q1) {
     return true;
 }
 
-// nv_model_special.ad319c; false = NotImplementedError
-bool ad319c(uint32_t* words, const Vec& band_k, const Vec& M_k, int W, int H, int k) {
-    if (std::min(W, H) * 3 < 83) return true;
+// nv_model_special.ad319c: OK, NOT_IMPLEMENTED (the Python NotImplementedError) or CANCELLED (stop() true)
+template <class Stop>
+int ad319c(uint32_t* words, const Vec& band_k, const Vec& M_k, int W, int H, int k, const Stop& stop) {
+    if (std::min(W, H) * 3 < 83) return OK;
     Img band(W, H), Mi(W, H);
     band.d = band_k;
     Mi.d = M_k;
@@ -1219,6 +1220,7 @@ bool ad319c(uint32_t* words, const Vec& band_k, const Vec& M_k, int W, int H, in
     for (int gy = 0; gy < cy; ++gy)
         for (int gx = 0; gx < cx; ++gx) grid.push_back({24 + gx * stx, 24 + gy * sty});
     for (int j = 0; j < 5; ++j) {
+        if (stop()) return CANCELLED;
         const U8Img U8 = image_u8(Ai);
         out[score_w(j)] = 0.0f;
         float best = 0.0f;
@@ -1257,12 +1259,13 @@ bool ad319c(uint32_t* words, const Vec& band_k, const Vec& M_k, int W, int H, in
     }
     const int o4[2] = {0xaa0, 0xab4}, o5[2] = {0xac8, 0xadc};
     for (int c = 0; c < 2; ++c) {
+        if (stop()) return CANCELLED;
         float a, b;
-        if (!ad1ae0(clean, Ai, c, &a, &b)) return false;
+        if (!ad1ae0(clean, Ai, c, &a, &b)) return NOT_IMPLEMENTED;
         out[(P_OFF + o4[c] + 4 * k) / 4] = a;
         out[(P_OFF + o5[c] + 4 * k) / 4] = b;
     }
-    return true;
+    return OK;
 }
 
 }  // namespace
@@ -1277,8 +1280,10 @@ int bm_quantiles(const float* clean, const float* A, int W, int H, int cfg, floa
 }
 
 // ============================================================================== nv_model.model_full
-int model_full(const float* plane, int W, int H, int set_, uint32_t* words, int levels) {
+int model_full(const float* plane, int W, int H, int set_, uint32_t* words, int levels, const Cancel* cancel) {
     if (W > 512 || H > 512 || W < 2 || H < 2 || levels < 1 || levels > LEVELS) return BAD_ARGUMENT;
+    auto stop = [cancel]() { return cancel != nullptr && *cancel && (*cancel)(); };
+    if (stop()) return CANCELLED;
     nvb::model_levels(plane, W, H, words, levels);
     float* out = reinterpret_cast<float*>(words);
     const std::vector<LevelInfo> info = level_info(W, H, words, levels);
@@ -1294,6 +1299,7 @@ int model_full(const float* plane, int W, int H, int set_, uint32_t* words, int 
         const int Wk = W >> k, Hk = H >> k;
         const size_t n = sz(Wk, Hk);
         for (int s : sets) {
+            if (stop()) return CANCELLED;
             const SetDef sd = make_set(s);
             const int nd = sd.nd;
             const KernelList* K = nullptr;
@@ -1320,6 +1326,7 @@ int model_full(const float* plane, int W, int H, int set_, uint32_t* words, int 
                     const Vec& band = pyr.band[k];
                     std::vector<Vec> F(nd), E(nd);
                     for (int d = 0; d < nd; ++d) {
+                        if (stop()) return CANCELLED;
                         Vec lf(n);
                         linefilt(K->k[d], band.data(), lf.data(), r1);
                         Vec T = vsub(band, lf);
@@ -1402,6 +1409,7 @@ int model_full(const float* plane, int W, int H, int set_, uint32_t* words, int 
                 }
                 std::vector<Vec> F(nd), E(nd);
                 for (int d = 0; d < nd; ++d) {
+                    if (stop()) return CANCELLED;
                     const Vec Fd = dfilt(*K, sd, d, V, r);
                     const Vec Ed = vsqrt_abs(box2(box2(vsq(Fd), Wk, Hk, rs), Wk, Hk, rs));
                     out[(off + 0x140 * s + 0x40 * k + 4 * d) / 4] = q99(crop(Ed, Wk, Hk, bx, by), div);
@@ -1414,7 +1422,8 @@ int model_full(const float* plane, int W, int H, int set_, uint32_t* words, int 
                     for (size_t p = 0; p < n; ++p) Sel[p] = F[idx[p]][p];
                     const Vec U2 = vadd(band, U);
                     const Vec Mv = blend_add_10(U2, Sel);
-                    if (!ad319c(words, band, Mv, Wk, Hk, k)) return NOT_IMPLEMENTED;
+                    const int st = ad319c(words, band, Mv, Wk, Hk, k, stop);
+                    if (st != OK) return st;
                 }
             }
         }

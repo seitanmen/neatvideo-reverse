@@ -110,7 +110,53 @@ double median_f64(double* v, size_t n) {
     return ((lo + hi) + 0.0) / 2.0;
 }
 
-// np.percentile(v, q) ('linear') of n >= 1 float32 values (v is reordered): float32 result
+// The order statistics k1 <= k2 (0-based) of n float32 values that are all non-negative and not NaN (bits
+// <= 0x7f800000: their bit patterns sort as the values, +0 is the only zero), so *a / *b are the values
+// std::nth_element gives (G8 speed-up of the large selections, the static-pixel sets of _trim_rms): one
+// histogram pass over the bits >> 19, then nth_element on the values of the buckets k1 .. k2 fall in.  false
+// (nothing written): a negative or NaN value - the caller uses nth_element on all values.
+const size_t SELECT_MIN = 8192;
+
+bool select2_nonneg(const float* v, size_t n, size_t k1, size_t k2, float* a, float* b) {
+    std::vector<size_t> cnt(4096, 0);
+    uint32_t bad = 0;
+    for (size_t i = 0; i < n; ++i) {
+        const uint32_t u = nvn::ubits(v[i]);
+        bad |= static_cast<uint32_t>(u > 0x7f800000u);
+        ++cnt[(u >> 19) & 4095u];
+    }
+    if (bad) return false;
+    size_t acc = 0, base = 0;
+    unsigned b1 = 0, b2 = 0;
+    bool found1 = false;
+    for (unsigned q = 0; q < 4096; ++q) {
+        if (!found1 && acc + cnt[q] > k1) {
+            b1 = q;
+            base = acc;
+            found1 = true;
+        }
+        if (acc + cnt[q] > k2) {
+            b2 = q;
+            break;
+        }
+        acc += cnt[q];
+    }
+    std::vector<float> sub;
+    size_t m = 0;
+    for (unsigned q = b1; q <= b2; ++q) m += cnt[q];
+    sub.reserve(m);
+    for (size_t i = 0; i < n; ++i) {
+        const unsigned q = nvn::ubits(v[i]) >> 19;
+        if (q >= b1 && q <= b2) sub.push_back(v[i]);
+    }
+    std::nth_element(sub.begin(), sub.begin() + static_cast<long>(k1 - base), sub.end());
+    *a = sub[k1 - base];
+    std::nth_element(sub.begin(), sub.begin() + static_cast<long>(k2 - base), sub.end());
+    *b = sub[k2 - base];
+    return true;
+}
+
+// np.percentile(v, q) ('linear') of n >= 1 float32 values (v may be reordered): float32 result
 float percentile_f32(float* v, size_t n, int q) {
     const float q32 = static_cast<float>(q) / 100.0f;
     const float vi = static_cast<float>(n - 1) * q32;
@@ -123,13 +169,17 @@ float percentile_f32(float* v, size_t n, int q) {
         next = static_cast<long>(fl + 1.0f);
     }
     const float gamma = static_cast<float>(static_cast<double>(vi) - static_cast<double>(prev));
+    auto idx = [&](long i) { return i < 0 ? n - 1 : static_cast<size_t>(i); };
     auto at = [&](long i) {
-        const size_t k = i < 0 ? n - 1 : static_cast<size_t>(i);
+        const size_t k = idx(i);
         std::nth_element(v, v + k, v + n);
         return v[k];
     };
-    const float a = at(prev);
-    const float b = at(next);
+    float a, b;
+    if (n < SELECT_MIN || idx(prev) > idx(next) || !select2_nonneg(v, n, idx(prev), idx(next), &a, &b)) {
+        a = at(prev);
+        b = at(next);
+    }
     const float diff = S(b, a);
     float r = A(a, M(diff, gamma));
     if (gamma >= 0.5f) r = S(b, M(diff, S(1.0f, gamma)));
@@ -150,6 +200,22 @@ std::vector<float> blocks(const float* a, int H, int W, int blk, int* nby, int* 
                             sizeof(float) * blk);
         }
     return out;
+}
+
+// block k = (by, bx) of nvfilter._blocks(a, blk) (W = the row length of a) into o[blk * blk]: the values
+// blocks() stores for it, without the copy of the whole plane
+void block_at(const float* a, int W, int blk, int by, int bx, float* o) {
+    for (int r = 0; r < blk; ++r)
+        std::memcpy(o + static_cast<size_t>(r) * blk, a + static_cast<size_t>(by * blk + r) * W + bx * blk,
+                    sizeof(float) * blk);
+}
+
+// the same of a 0 / 1 mask as float32 (np.asarray(mask, float32) / mask.astype(float32))
+void block_at(const uint8_t* m, int W, int blk, int by, int bx, float* o) {
+    for (int r = 0; r < blk; ++r) {
+        const uint8_t* row = m + static_cast<size_t>(by * blk + r) * W + bx * blk;
+        for (int x = 0; x < blk; ++x) o[static_cast<size_t>(r) * blk + x] = row[x] ? 1.0f : 0.0f;
+    }
 }
 
 Plane to_plane(const float* p, int H, int W) {
@@ -412,21 +478,21 @@ bool fill_curve(const std::vector<double>& vals, const std::vector<uint8_t>& val
     return true;
 }
 
-// noise_curve_spatial(planes, ratio2, full_range, matrix=matrix): curves (has[c] = not None)
+// noise_curve_spatial(planes, ratio2, full_range, matrix=matrix): curves (has[c] = not None).  dead_y: _dead of
+// the frame's Y when the caller has it (else computed here)
 void noise_curve_spatial(const Frame& f, const double ratio2[3], bool full_range, int matrix,
-                         std::vector<double> curves[3], bool has[3]) {
+                         std::vector<double> curves[3], bool has[3], const std::vector<uint8_t>* dead_y = nullptr) {
     const int blk = 16;
     const int H = f.H, W = f.W;
     const int nby = H / blk, nbx = W / blk;
     for (int c = 0; c < 3; ++c) has[c] = false;
     if (nby == 0 || nbx == 0) return;
-    const Plane Y = to_plane(f.p[0], H, W);
     const size_t nb = static_cast<size_t>(nby) * nbx, bb = static_cast<size_t>(blk) * blk;
-    int by_, bx_;
-    std::vector<float> yb = blocks(Y.d.data(), H, W, blk, &by_, &bx_);
+    std::vector<float> tb(bb);
     std::vector<int> bins(nb);
     for (size_t k = 0; k < nb; ++k) {
-        const float m = mean_axis_f32(&yb[k * bb], bb);
+        block_at(f.p[0], W, blk, static_cast<int>(k / nbx), static_cast<int>(k % nbx), tb.data());
+        const float m = mean_axis_f32(tb.data(), bb);
         const float t = D(M(m, 8.0f), 256.0f);
         long b = static_cast<long>(t);
         bins[k] = static_cast<int>(std::min<long>(std::max<long>(b, 0), CURVE_BINS - 1));
@@ -434,17 +500,20 @@ void noise_curve_spatial(const Frame& f, const double ratio2[3], bool full_range
     std::vector<uint8_t> masks[3];
     clip_masks(f, full_range, matrix, masks);
     std::vector<int> nclip(nb, 0);
-    for (int c = 0; c < 3; ++c) {
-        std::vector<float> mf(masks[c].begin(), masks[c].end());
-        std::vector<float> mb = blocks(mf.data(), H, W, blk, &by_, &bx_);
-        for (size_t k = 0; k < nb; ++k) nclip[k] += mean_axis_f32(&mb[k * bb], bb) > F_CLIP;
-    }
+    for (int c = 0; c < 3; ++c)
+        for (size_t k = 0; k < nb; ++k) {
+            block_at(masks[c].data(), W, blk, static_cast<int>(k / nbx), static_cast<int>(k % nbx), tb.data());
+            nclip[k] += mean_axis_f32(tb.data(), bb) > F_CLIP;
+        }
     std::vector<uint8_t> live(nb);
     {
-        const std::vector<uint8_t> dm = dead(Y);
-        std::vector<float> df(dm.begin(), dm.end());
-        std::vector<float> db = blocks(df.data(), H, W, blk, &by_, &bx_);
-        for (size_t k = 0; k < nb; ++k) live[k] = mean_axis_f32(&db[k * bb], bb) < static_cast<float>(0.1);
+        std::vector<uint8_t> own;
+        if (!dead_y) own = dead(to_plane(f.p[0], H, W));
+        const std::vector<uint8_t>& dm = dead_y ? *dead_y : own;
+        for (size_t k = 0; k < nb; ++k) {
+            block_at(dm.data(), W, blk, static_cast<int>(k / nbx), static_cast<int>(k % nbx), tb.data());
+            live[k] = mean_axis_f32(tb.data(), bb) < static_cast<float>(0.1);
+        }
     }
     std::vector<uint8_t> flat;
     for (int c = 0; c < 3; ++c) {
@@ -453,14 +522,14 @@ void noise_curve_spatial(const Frame& f, const double ratio2[3], bool full_range
         const Plane p = to_plane(f.p[c], ph, pw);
         const std::vector<Plane> b = nvn::atrous(p, 2);
         auto med_map = [&](const Plane& band) {
-            int cy, cx;
             const int bs = blk / s;
-            std::vector<float> bl = blocks(band.d.data(), band.H, band.W, bs, &cy, &cx);
+            const int cy = band.H / bs, cx = band.W / bs;
             const size_t bbs = static_cast<size_t>(bs) * bs;
             Plane m(cy, cx);
             std::vector<float> tmp(bbs);
             for (size_t k = 0; k < static_cast<size_t>(cy) * cx; ++k) {
-                for (size_t i = 0; i < bbs; ++i) tmp[i] = std::fabs(bl[k * bbs + i]);
+                block_at(band.d.data(), band.W, bs, static_cast<int>(k / cx), static_cast<int>(k % cx), tmp.data());
+                for (size_t i = 0; i < bbs; ++i) tmp[i] = std::fabs(tmp[i]);
                 m.d[k] = M(F_014826, median_f32(tmp.data(), bbs));
             }
             return nvn::fit(m, nby, nbx);
@@ -491,11 +560,13 @@ void noise_curve_spatial(const Frame& f, const double ratio2[3], bool full_range
 // noise_curve_temporal(p0, p1, levels): curves, ratios, totals (per plane, ok[c] = in the dicts), still
 void noise_curve_temporal(const Frame& f0, const Frame& f1, int levels, std::vector<double> curves[3],
                           bool has_curve[3], std::vector<double> ratios[3], double tots[3], bool has_ratio[3],
-                          double* still_frac) {
+                          double* still_frac, const std::vector<uint8_t>* dead_y0 = nullptr) {
     const int H = f0.H, W = f0.W;
     const Plane Y0 = to_plane(f0.p[0], H, W), Y1 = to_plane(f1.p[0], H, W);
     const Plane u1 = nvn::uniform(Y1, 15, nvn::REFLECT), u0 = nvn::uniform(Y0, 15, nvn::REFLECT);
-    const std::vector<uint8_t> d0 = dead(Y0);
+    std::vector<uint8_t> own;
+    if (!dead_y0) own = dead(Y0);
+    const std::vector<uint8_t>& d0 = dead_y0 ? *dead_y0 : own;
     const size_t n = Y0.size();
     std::vector<uint8_t> still(n);
     size_t nstill = 0;
@@ -529,36 +600,34 @@ void noise_curve_temporal(const Frame& f0, const Frame& f1, int levels, std::vec
         const Plane lu = nvn::to_grid(lum, ph, pw);
         const int L = same ? levels : levels - 1;
         const std::vector<Plane> b = nvn::atrous(df, L);
-        size_t msum = 0;
-        for (uint8_t v : m) msum += v;
-        if (msum < 64) continue;            // curves[name] = None; no ratios / totals for this plane
+        // the indices of the mask in index order (x[m] of every selection below)
+        std::vector<size_t> mi;
+        for (size_t i = 0; i < pn; ++i)
+            if (m[i]) mi.push_back(i);
+        if (mi.size() < 64) continue;       // curves[name] = None; no ratios / totals for this plane
         std::vector<double> sig;
-        std::vector<float> sel;
+        std::vector<float> sel(mi.size());
         for (int j = 0; j < L; ++j) {
-            sel.clear();
-            for (size_t i = 0; i < pn; ++i)
-                if (m[i]) sel.push_back(b[j].d[i]);
+            for (size_t q = 0; q < mi.size(); ++q) sel[q] = b[j].d[mi[q]];
             sig.push_back(trim_rms(sel));
         }
-        sel.clear();
-        for (size_t i = 0; i < pn; ++i)
-            if (m[i]) sel.push_back(static_cast<float>(d[i] - static_cast<double>(b[L].d[i])));
+        for (size_t q = 0; q < mi.size(); ++q)
+            sel[q] = static_cast<float>(d[mi[q]] - static_cast<double>(b[L].d[mi[q]]));
         noise_shape(sig, trim_rms(sel), 0.9, &ratios[c], &tots[c]);
         has_ratio[c] = true;
-        std::vector<int> bins(pn);
-        for (size_t i = 0; i < pn; ++i) {
-            const float t = D(M(lu.d[i], 8.0f), 256.0f);
-            bins[i] = static_cast<int>(std::min<long>(std::max<long>(static_cast<long>(t), 0), CURVE_BINS - 1));
+        // b[0][m & (bins == i)] for the bins i, each in index order (one pass)
+        std::vector<std::vector<float>> per(CURVE_BINS);
+        for (size_t q = 0; q < mi.size(); ++q) {
+            const float t = D(M(lu.d[mi[q]], 8.0f), 256.0f);
+            const int bin = static_cast<int>(std::min<long>(std::max<long>(static_cast<long>(t), 0), CURVE_BINS - 1));
+            per[bin].push_back(b[0].d[mi[q]]);
         }
         std::vector<double> vals(CURVE_BINS);
         std::vector<uint8_t> valid(CURVE_BINS);
         const double ratio = static_cast<double>(H) * W / static_cast<double>(pn);
         for (int i = 0; i < CURVE_BINS; ++i) {
-            sel.clear();
-            for (size_t k = 0; k < pn; ++k)
-                if (m[k] && bins[k] == i) sel.push_back(b[0].d[k]);
-            vals[i] = sel.empty() ? 0.0 : trim_rms(sel);
-            valid[i] = static_cast<double>(sel.size()) * ratio >= static_cast<double>(H) * W / 1024.0;
+            vals[i] = per[i].empty() ? 0.0 : trim_rms(per[i]);
+            valid[i] = static_cast<double>(per[i].size()) * ratio >= static_cast<double>(H) * W / 1024.0;
         }
         has_curve[c] = fill_curve(vals, valid, &curves[c]);
     }
@@ -713,7 +782,9 @@ bool effective_curve(const double* centers, int n, const double* curve, const do
 int build_profile_v5(const Frame& f, const Frame* pair, const Frame* more, int n_more, bool full_range,
                      int matrix, int mode, int levels, int area_n, const int* area_in, int threads,
                      const Cancel& cancel, Profile* out) {
-    if (levels < 2 || levels > 8 || f.H < 1 || f.W < 1) return BAD_ARGUMENT;
+    // H or W < 2: Python raises ValueError (np.gradient in find_flat_area_gradient, or _b3 of the empty chroma crop
+    // of area_band_sigma); the port read out of bounds there (robust_sigma of an empty plane)
+    if (levels < 2 || levels > 8 || f.H < 2 || f.W < 2) return BAD_ARGUMENT;
     Profile& P = *out;
     P = Profile();
     const int H = f.H, W = f.W;
@@ -791,12 +862,13 @@ int build_profile_v5(const Frame& f, const Frame* pair, const Frame* more, int n
     std::vector<double> curves[3];
     bool have = false;                       // curves is not None
     bool has[3] = {false, false, false};
+    const std::vector<uint8_t> dead0 = dead(planes[0]);    // _dead(planes[0]): used three times below
     if ((mode == MODE_TEMPORAL || mode == MODE_AUTO) && pair != nullptr) {
         std::vector<double> cv[3], ratios[3];
         double tots[3];
         bool hc[3], hr[3];
         double still;
-        noise_curve_temporal(f, *pair, levels, cv, hc, ratios, tots, hr, &still);
+        noise_curve_temporal(f, *pair, levels, cv, hc, ratios, tots, hr, &still, &dead0);
         P.has_static = true;
         P.static_fraction = still;
         if (hc[0] && hc[1] && hc[2] && (mode == MODE_TEMPORAL || still >= 0.1)) {
@@ -824,7 +896,8 @@ int build_profile_v5(const Frame& f, const Frame* pair, const Frame* more, int n
         std::vector<std::array<bool, 3>> hs(nf);
         auto one = [&](int k) {
             bool h[3];
-            noise_curve_spatial(k == 0 ? f : more[k - 1], r2, full_range, matrix, cs[k].data(), h);
+            noise_curve_spatial(k == 0 ? f : more[k - 1], r2, full_range, matrix, cs[k].data(), h,
+                                k == 0 ? &dead0 : nullptr);
             for (int c = 0; c < 3; ++c) hs[k][c] = h[c];
         };
         if (threads > 1 && nf > 1) {
@@ -851,10 +924,9 @@ int build_profile_v5(const Frame& f, const Frame* pair, const Frame* more, int n
         }
     }
     {
-        const std::vector<uint8_t> dm = dead(planes[0]);
         size_t cnt = 0;
-        for (uint8_t v : dm) cnt += v;
-        P.dead_fraction = static_cast<double>(cnt) / static_cast<double>(dm.size());
+        for (uint8_t v : dead0) cnt += v;
+        P.dead_fraction = static_cast<double>(cnt) / static_cast<double>(dead0.size());
     }
     if (P.dead_fraction > 0.5) {
         P.noise_free = true;

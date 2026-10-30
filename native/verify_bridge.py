@@ -22,9 +22,18 @@
 #            and the Assist Image; test.mp4 n = 300..304 (defaults, per-channel)
 #   cancel   FindFlatArea (status 5, area, number of queries at k = 1, 120, 240, 241, 242, 247, never;
 #            -j 1 / 3) and the AFT tile loop (number of queries, Cancelled) against the Python ports;
-#            backend.run_in_child(task, run_aft) with a task cancelled during the AFT
+#            backend.run_in_child(task, run_aft) with a task cancelled during the AFT; (G7) the BuildNoiseModel
+#            blob with a cancel query (nv_native.profile_blob: Cancelled at query k, the bytes without a true
+#            answer) and run_in_child cancelled at a time inside it (latency < 1 s)
 #   fallback NV_NATIVE_LIB=<missing> in a child process (AVAILABLE False, backend uses the Python path);
 #            NV_NATIVE=0; inputs the C path does not reproduce (np.float64 parameter, unknown similarity)
+#   g8       (G8) backend.build_profile off vs on (nv_native.build_profile_v5 -> nvc_build_profile_v5, -j 1 / 3) on
+#            frames outside the ranges above and of verify_prof5 (test_v02 n = 120 / 455 / 690, test.mp4 n = 40 / 520
+#            / 860; pair / more = the next two frames) x (FindFlatArea search, a manual rectangle); variants: frames
+#            read at 10 bits (float32 planes, the Preferences bit depth), 4:4:4, odd sizes, full range, BT.2020, pair
+#            != more[0], the FindFlatArea cache, inputs the C port leaves to Python (uint8 / NaN planes, levels 4,
+#            an unknown mode, a 5-value area, a luma side of 1 px), and the cancel queries of build_profile_v5 (status 5
+#            at query k)
 #   prof5    (N3a, verify_bridge_prof5.py) nvc_build_profile_v5 / noisiest / hh1 / effective_profile vs backend
 #   ui       (N3a, verify_bridge_ui.py) the viewer display, selection measures, Quality and yuv_to_rgb vs
 #            nvfilter / nv_ui_qt.display / nv_ui_qt.quality
@@ -444,6 +453,32 @@ def case_cancel():
         nt = (rgb.shape[1] // 32) * (rgb.shape[0] // 32)
         out.append(result("cancel", f"AFT without cancel -j {j}: {d[0]} queries (tiles {nt})", compare(nt, d[0])))
 
+    # G7: the BuildNoiseModel blob of the AFT path asks the query inside the model (native only)
+    def blob_no_query(area4):
+        buf = np.zeros(nn.PROF_BYTES, np.uint8)
+        fl = nn._floor()
+        st = nn._lib.nvc_profile_build(nn._ptr(rgb), rgb.shape[1], rgb.shape[0], 1, *area4, nn._ptr(fl), 1, 1,
+                                       nn._ptr(buf))
+        return buf.tobytes() if st == 0 else None
+    for area4 in ((ax, ay, ah, ah), (60, 40, 216, 344)):
+        ref = raw if area4[2] == ah else blob_no_query(area4)      # raw = nv_profile.build_profile (Python)
+        for j in (1, 3):
+            g, d = counter(0)
+            got = nn.profile_blob(rgb, area4, 1, j, g)
+            nq = d[0]
+            out.append(result("cancel", f"profile_blob {list(area4)} -j {j} with a cancel query never true: "
+                              f"{nq} queries, bytes vs {'nv_profile.build_profile' if area4[2] == ah else 'nvc_profile_build'}",
+                              compare(ref, got)))
+            for k in (1, 2, nq // 3, nq - 1, nq):
+                g, d = counter(k)
+                try:
+                    nn.profile_blob(rgb, area4, 1, j, g)
+                    got = "returned"
+                except nn.Cancelled:
+                    got = "Cancelled"
+                out.append(result("cancel", f"profile_blob {list(area4)} -j {j} cancel at query {k}/{nq}: {got} "
+                                  f"after {d[0]} queries", compare(("Cancelled", True), (got, d[0] == k))))
+
     # run_in_child(task, run_aft): the task is cancelled during the AFT (in this process)
     class Task:
         def __init__(self, after):
@@ -465,6 +500,28 @@ def case_cancel():
         dt = time.perf_counter() - t0
         out.append(result("cancel", f"run_in_child(task, run_aft) cancelled after {after} queries: {got} in {dt:.2f} s",
                           compare("Cancelled", got)))
+    # G7: cancelled at a time inside the BuildNoiseModel (a 344 x 216 area, 1 thread): back within 1 s
+    import threading
+
+    class Flag:
+        cancelled = False
+    big = dict(base, area=[40, 60, 216, 344])
+    threads0, nn.THREADS = nn.THREADS, 1
+    for at in (0.05, 0.4):
+        t = Flag()
+        tm = threading.Timer(at, lambda t=t: setattr(t, "cancelled", True))
+        t0 = time.perf_counter()
+        tm.start()
+        try:
+            backend.run_in_child(t, backend.run_aft, big, planes, False, "bt709")
+            got = "returned"
+        except backend.Cancelled:
+            got = "Cancelled"
+        lat = time.perf_counter() - t0 - at
+        tm.join()
+        out.append(result("cancel", f"run_in_child(task, run_aft) area {big['area']} -j 1 cancelled at {at} s: {got}, "
+                          f"latency {lat:.3f} s", compare(("Cancelled", True), (got, lat < 1.0))))
+    nn.THREADS = threads0
     return out
 
 
@@ -533,6 +590,196 @@ def case_fallback():
     return out
 
 
+# ------------------------------------------------------------------------------------- G8
+G8_FRAMES = (("v02", 120), ("v02", 455), ("v02", 690), ("t", 40), ("t", 520), ("t", 860))
+
+
+def frames_g8(video, n, depth=8):
+    """[f0, f1, f2] = frames n .. n + 2 as the UI loads them (8: yuv420p uint8; 10: the Preferences bit depth 10,
+    nv_depth float32 planes on the 0..255 scale), cached in TMP."""
+    path, _, _, matrix = VIDEOS[video]
+    cache = os.path.join(TMP, f"g8_{video}_{n}_{depth}.npz")
+    if not os.path.exists(cache):
+        from denoise_video_v5 import probe, read_frames
+        import nv_depth as nd
+        info = probe(path)
+        rd = ()
+        if depth != 8:
+            fmt = nd.choose_format(nd.source_format(info["pix_fmt"]), depth)
+            rd = (fmt, matrix, nd.read_filter(info, fmt, matrix))
+        d = {}
+        for i, f in read_frames(path, info["W"], info["H"], n, n + 3, info["fps"], *rd):
+            for c, p in zip("ybr", f):
+                d[f"{c}{i - n}"] = np.array(p)
+        np.savez(cache + ".part.npz", **d)
+        os.replace(cache + ".part.npz", cache)
+    z = np.load(cache)
+    return [tuple(z[f"{c}{i}"] for c in "ybr") for i in range(3)]
+
+
+def _g8_area(video, k, H, W):
+    return [(H // 5, W // 3, 200, 296), (H // 2 - 7, 11, 176, 176), (3, W - 260, 250, 250),
+            (H // 3, W // 4, 96, 144), (H - 120, W // 2, 112, 300), (17, 23, 64, 64)][k % 6]
+
+
+def case_g8(video, n, k):
+    """backend.build_profile off vs on (-j 1 / 3) on frames n .. n + 2: search and a manual rectangle."""
+    backend, nv, nn = _setup()
+    fl = frames_g8(video, n)
+    matrix = VIDEOS[video][3]
+    H, W = fl[0][0].shape
+    mode = ("auto", "spatial", "temporal")[k % 3]
+    out = []
+    threads0 = nn.THREADS
+    for area in (None, _g8_area(video, k, H, W)):
+        backend.set_native(False)
+        _clear(nv, nn)
+        ref, tp = _timed(backend.build_profile, fl, 0, False, matrix, mode, area)
+        for j in (1, 3):
+            backend.set_native(True)
+            _clear(nv, nn)
+            nn.THREADS = j
+            got, tn = _timed(backend.build_profile, fl, 0, False, matrix, mode, area)
+            out.append(result("g8", f"{video} n={n} {mode} area {area} -j {j} -> {got['area']} status "
+                              f"{got['flat_status']}", compare(ref, got), tp, tn))
+    nn.THREADS = threads0
+    return out
+
+
+def _g8_pair(nv, nn, label, planes, more, pair=None, area=None, mode="auto", full_range=False, matrix="bt709",
+             levels=5, expect_c=True):
+    """nvfilter.build_profile_v5 vs nv_native.build_profile_v5 (-j 1 / 3) on the given planes; expect_c: whether
+    nv_native takes the C path (nv_native._p5_args) - checked too."""
+    out = []
+    pair = more[0] if pair is None and more else pair
+    _clear(nv, nn)
+    ref = nv.build_profile_v5(planes, full_range, area, pair, mode, levels, more, matrix)
+    c_path = nn._p5_args(planes, full_range, area, pair, mode, levels, more, matrix) is not None
+    for j in (1, 3):
+        _clear(nv, nn)
+        got = nn.build_profile_v5(planes, full_range, area, pair, mode, levels, more, matrix, threads=j)
+        cmp = compare((ref, expect_c), (got, c_path))
+        out.append(result("g8", f"{label} ({'C' if c_path else 'Python'} path) -j {j}", cmp))
+    return out
+
+
+def case_g8_variants(video, n):
+    backend, nv, nn = _setup()
+    import warnings
+    warnings.simplefilter("ignore")
+    matrix = VIDEOS[video][3]
+    f8 = [tuple(np.asarray(p, F32) for p in f) for f in frames_g8(video, n)]
+    f10 = [tuple(np.asarray(p, F32) for p in f) for f in frames_g8(video, n, 10)]
+    H, W = f8[0][0].shape
+    rect = (H // 4, W // 5, 152, 248)
+    out = []
+    lab = f"{video} n={n}"
+    for area in (None, rect):
+        out += _g8_pair(nv, nn, f"{lab} 10-bit read (float32 planes) auto area {area}", f10[0], f10[1:], area=area,
+                        matrix=matrix)
+    up = [tuple([f[0]] + [np.ascontiguousarray(c.repeat(2, 0).repeat(2, 1)[:H, :W]) for c in f[1:]]) for f in f8]
+    out += _g8_pair(nv, nn, f"{lab} 4:4:4 auto", up[0], up[1:], matrix=matrix)
+    out += _g8_pair(nv, nn, f"{lab} 4:4:4 temporal rect", up[0], up[1:], area=rect, mode="temporal", matrix=matrix)
+    odd = [(f[0][:H - 1, :W - 3], f[1][:H // 2, :(W - 2) // 2], f[2][:H // 2, :(W - 2) // 2]) for f in f8]
+    odd = [tuple(np.ascontiguousarray(p) for p in f) for f in odd]
+    out += _g8_pair(nv, nn, f"{lab} odd size {odd[0][0].shape} / {odd[0][1].shape} auto", odd[0], odd[1:],
+                    matrix=matrix)
+    out += _g8_pair(nv, nn, f"{lab} full range spatial", f8[0], f8[1:], mode="spatial", full_range=True,
+                    matrix=matrix)
+    out += _g8_pair(nv, nn, f"{lab} BT.2020 auto", f8[0], f8[1:], matrix="bt2020")
+    out += _g8_pair(nv, nn, f"{lab} pair = frame n+2, more = [n+1] temporal", f8[0], f8[1:2], pair=f8[2],
+                    mode="temporal", matrix=matrix)
+    out += _g8_pair(nv, nn, f"{lab} no pair / more auto (spatial curve, no static fraction)", f8[0], [],
+                    matrix=matrix)
+    # the FindFlatArea cache: a second call takes the cached area (no search) and gives the same dict
+    _clear(nv, nn)
+    ref = nv.build_profile_v5(f8[0], False, None, f8[1], "auto", 5, f8[1:], matrix)
+    first = nn.build_profile_v5(f8[0], False, None, f8[1], "auto", 5, f8[1:], matrix)
+    q = [0]
+
+    def count():
+        q[0] += 1
+        return False
+    second = nn.build_profile_v5(f8[0], False, None, f8[1], "auto", 5, f8[1:], matrix, cancel=count)
+    out.append(result("g8", f"{lab} FindFlatArea cache: first, second call (second: {q[0]} cancel queries, "
+                      f"cache {len(nn._FFA_CACHE)})", compare((ref, ref, 0), (first, second, q[0]))))
+    # inputs nv_native leaves to Python: the same dict as nvfilter (nv_native._p5_args is None)
+    u8 = frames_g8(video, n)
+    out += _g8_pair(nv, nn, f"{lab} uint8 planes", u8[0], u8[1:], matrix=matrix, expect_c=False)
+    nanf = (f8[0][0].copy(), f8[0][1], f8[0][2])
+    nanf[0][5, 7] = np.nan
+    out += _g8_pair(nv, nn, f"{lab} a NaN in Y, rect", nanf, f8[1:], area=rect, matrix=matrix, expect_c=False)
+    out += _g8_pair(nv, nn, f"{lab} levels 4", f8[0], f8[1:], area=rect, levels=4, matrix=matrix, expect_c=False)
+    out += _g8_pair(nv, nn, f"{lab} mode 'bogus'", f8[0], f8[1:], area=rect, mode="bogus", matrix=matrix,
+                    expect_c=False)
+    out += _g8_pair(nv, nn, f"{lab} 5-value area", f8[0], f8[1:], area=rect + (9,), matrix=matrix, expect_c=False)
+    return out
+
+
+def case_g8_tiny():
+    """(G8 fix F1) a luma side of 1 px: nv_native leaves it to Python (nvc_build_profile_v5 read out of bounds there
+    before the fix; Python raises ValueError) - the exception (type and message) or dict of nvfilter, -j 1 / 3, for
+    the search and a manual square, auto and spatial."""
+    backend, nv, nn = _setup()
+    import warnings
+    warnings.simplefilter("ignore")
+    rng = np.random.default_rng(23)
+    out = []
+
+    def run(fn, *a, **k):
+        try:
+            return fn(*a, **k)
+        except Exception as e:  # noqa: BLE001
+            return f"{type(e).__name__}: {e}"
+    for H, W in ((1, 1), (1, 2), (2, 1), (1, 50), (50, 1), (2, 2), (2, 50)):
+        Hc, Wc = (H + 1) // 2, (W + 1) // 2
+        f = [tuple((100 + 5 * rng.standard_normal(sh)).astype(F32) for sh in ((H, W), (Hc, Wc), (Hc, Wc)))
+             for _ in range(3)]
+        for area in (None, (0, 0, 8)):
+            for mode in ("auto", "spatial"):
+                _clear(nv, nn)
+                ref = run(nv.build_profile_v5, f[0], False, area, f[1], mode, 5, f[1:], "bt709")
+                c_path = nn._p5_args(f[0], False, area, f[1], mode, 5, tuple(f[1:]), "bt709") is not None
+                for j in (1, 3):
+                    _clear(nv, nn)
+                    got = run(nn.build_profile_v5, f[0], False, area, f[1], mode, 5, f[1:], "bt709", threads=j)
+                    exp_c = min(H, W) >= 2
+                    out.append(result("g8", f"{H}x{W} {mode} area {area} -j {j} ({'C' if c_path else 'Python'} path): "
+                                      f"{got if isinstance(got, str) else 'dict'}",
+                                      compare((ref, exp_c), (got, c_path))))
+    return out
+
+
+def case_g8_cancel():
+    """build_profile_v5 with a cancel query true at query k: Python (nvfilter) vs C (nv_native), outcome and the
+    number of queries (the FindFlatArea queries: tiles + 1 + sizes)."""
+    backend, nv, nn = _setup()
+    fr = frames("v02")
+    planes = tuple(np.asarray(p, F32) for p in fr[312])
+    more = [tuple(np.asarray(p, F32) for p in fr[i]) for i in (313, 314)]
+    out = []
+
+    def run(fn, k, **kw):
+        c = [0]
+
+        def f():
+            c[0] += 1
+            return k > 0 and c[0] >= k
+        _clear(nv, nn)
+        try:
+            r = fn(planes, False, None, more[0], "auto", 5, more, "bt709", cancel=f, **kw)
+        except nv.ProfileCancelled as e:
+            r = f"ProfileCancelled: {e}"
+        return r, c[0]
+    for k in (1, 100, 240, 241, 246, 247, 0):
+        ref = run(nv.build_profile_v5, k)
+        for j in (1, 3):
+            got = run(nn.build_profile_v5, k, threads=j)
+            out.append(result("g8", f"build_profile_v5 cancel at query {k or 'never'} -j {j}: "
+                              f"{got[0] if isinstance(got[0], str) else 'dict'}, {got[1]} queries", compare(ref, got)))
+    return out
+
+
 def _child_native():
     from nv_ui_qt import backend
     return backend.native_enabled()
@@ -596,7 +843,7 @@ def bench():
     stages = [("find_flat_area (curve + search)", lambda on: (nn.find_flat_area if on else
                                                               lambda *a: nv.find_flat_area(*a, with_status=True))(
                                                                   planes, False, "bt709"), True),
-              ("build_profile (auto: FindFlatArea + the rest in Python)",
+              ("build_profile (auto: nvc_build_profile_v5, G8)",
                ui(lambda: backend.build_profile(fl, 312 - lo, False, "bt709", "auto")), True),
               ("run_aft (BuildNoiseModel 128x128 + AFT + combine)",
                ui(lambda: backend.run_aft(base, fr[312], False, "bt709")), True),
@@ -648,7 +895,7 @@ def main():
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--tmp", default=TMP)
-    ap.add_argument("--only", default="curve,profile,aft,frame,cancel,fallback,prof5,ui,depth")
+    ap.add_argument("--only", default="curve,profile,aft,frame,cancel,fallback,g8,prof5,ui,depth")
     ap.add_argument("--bench", action="store_true")
     ap.add_argument("--export", action="store_true")
     A = ap.parse_args()
@@ -687,6 +934,14 @@ def main():
         stages.append([("case_cancel", ())])
     if "fallback" in groups:
         stages.append([("case_fallback", ())])
+    if "g8" in groups:
+        for v, n in G8_FRAMES:                  # read the frames once, before the workers
+            for d in (8, 10):
+                frames_g8(v, n, d)
+        st = [("case_g8", (v, n, k)) for k, (v, n) in enumerate(G8_FRAMES)]
+        st += [("case_g8_variants", (v, n)) for v, n in (("v02", 455), ("t", 520))] + [("case_g8_cancel", ())]
+        st += [("case_g8_tiny", ())]
+        stages.append(st)
     rows = []
     t0 = time.perf_counter()
     with ProcessPoolExecutor(A.jobs) as ex:

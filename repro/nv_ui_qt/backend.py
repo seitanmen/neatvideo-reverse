@@ -12,12 +12,12 @@ nv.temporal_v5 with noise_level x t_noise for the temporal stage only (the spati
 noise_level); at t_noise = 1 (or without the key) P is passed unchanged.
 
 Native core (N2a, Preferences > "Use the native core"): with libnvcore.dylib (repro/nv_native.py) the
-temporal / spatial kernels, the FindFlatArea search of build_profile and Auto Fine-Tune run in C++
+temporal / spatial kernels, build_profile (nvc_build_profile_v5, G8) and Auto Fine-Tune run in C++
 (bit-exact with the Python functions, native/verify_bridge.py); inputs the C ports do not reproduce fall
 back to the Python functions. set_native() switches it; NV_NATIVE=0 in the environment disables it, and
 set_native writes NV_NATIVE so that the export process and its frame workers follow the UI setting. With
 the native core, run_in_child(task, run_aft, ...) runs the AFT in this process (no child process), and
-task.cancelled is asked in the AFT tile loop.
+task.cancelled is asked inside its BuildNoiseModel (G7) and in the AFT tile loop.
 
 Noise Level Check (repro definition of the genuine's temporal filter mask; its formula is not decoded):
 temporal_mask() maps the luma residual noise variance rv of the temporal stage to
@@ -331,8 +331,9 @@ class Cancelled(Exception):
 def run_in_child(task, fn, *args):
     """fn(*args) in a spawned child process that is terminated when task.cancelled is set (AFT
     runs pure-Python code for seconds to a minute and cannot be interrupted in a thread).
-    fn = run_aft with the native core enabled: runs here (about a second) and asks task.cancelled in
-    the AFT tile loop; inputs the C path does not reproduce go to the child process as before."""
+    fn = run_aft with the native core enabled: runs here (about a second) and asks task.cancelled inside
+    the BuildNoiseModel (G7) and in the AFT tile loop; inputs the C path does not reproduce go to the child
+    process as before."""
     if fn is run_aft and native_enabled():
         if task.cancelled:
             raise Cancelled("cancelled")

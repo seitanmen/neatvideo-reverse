@@ -259,7 +259,14 @@ PyObj run_aft(const PyObj& base_in, const Frame& frame, bool full_range, const s
     if (cancel && cancel()) throw Cancelled();
     std::vector<uint8_t> raw(NVC_PROF_BYTES, 0);
     const int threads = native_threads();
-    if (nvc_profile_build(rgb.data(), W, H, 1, ax, ay, aw, ah, reference_floor().data(), 1, threads, raw.data()) != 0)
+    int pst;
+    {
+        CancelScope cs(&cancel);    // asked inside the BuildNoiseModel (nv_native.profile_blob, G7)
+        pst = nvc_profile_build_cancel(rgb.data(), W, H, 1, ax, ay, aw, ah, reference_floor().data(), 1, threads,
+                                       cs.fn(), raw.data());
+    }
+    if (pst == 3) throw Cancelled();
+    if (pst != 0)
         throw std::runtime_error("Auto Fine-Tune: the native BuildNoiseModel does not take this area (the Python UI "
                                  "would run the Python AFT)");
     if (cancel && cancel()) throw Cancelled();

@@ -8,11 +8,14 @@ behind the same contracts as the Python functions the UI backend calls.
     spatial_v5(planes, prof, rv, P)  == nvfilter.spatial_v5(planes, prof, rv, P)
     noise_curve(rgb)                 == nv_curve.genuine_noise_curve(rgb)
 
-Division of the work: the C side runs FindFlatArea with its noise curve (nv_flat / nv_curve), the
-BuildNoiseModel profile (nv_profile), AutoFineTune and its colour combination (nv_aft), and the v5
-temporal / spatial kernels (nv_temporal / nv_spatial); Python keeps everything else: the RGB conversion
-(nvfilter.yuv_to_rgb, numpy), the rest of build_profile_v5 (it is called with the area found here),
-the dict building, the caches and the Mix step. native/verify_bridge.py compares both paths bit for bit.
+Division of the work: the C side runs build_profile_v5 whole (nv_prof5: FindFlatArea with its noise
+curve, the band sigmas, the spatial / temporal curves; nvcore_c_prof5.h), the BuildNoiseModel profile
+(nv_profile), AutoFineTune and its colour combination (nv_aft), and the v5 temporal / spatial kernels
+(nv_temporal / nv_spatial); Python keeps the RGB conversion of the AFT (nvfilter.yuv_to_rgb, numpy), the dict
+building, the caches and the Mix step. native/verify_bridge.py compares both paths bit for bit.
+build_profile_v5 runs in Python for inputs the C port does not reproduce (planes that are not finite float32,
+a luma side under 2 px, other chroma shapes, levels other than 5, unknown mode / matrix names, other area
+lengths).
 
 AVAILABLE is False when the library cannot be loaded (or has another ABI version); callers then use the
 Python functions. temporal_v5 / spatial_v5 / apply_aft return None for inputs outside what the C ports
@@ -20,9 +23,10 @@ reproduce (numpy scalars of non-weak type in the profile or parameters - numpy w
 float64 -, an unknown similarity, planes smaller than the motion block, an area outside the frame, an
 AFT mode other than 0 / 1, ...); the caller then runs the Python function, so the result is the same.
 Cancel: find_flat_area / build_profile_v5 / apply_aft take a cancel query (no arguments, true =
-cancelled) that the C code asks where the Python code asks it (FindFlatArea, the AFT tile loop);
-the profile model of apply_aft (nv_profile, about a second) is not interruptible. A cancelled
-apply_aft raises Cancelled.
+cancelled) that the C code asks where the Python code asks it (FindFlatArea, the AFT tile loop) and,
+in apply_aft, also inside the BuildNoiseModel profile (profile_blob: the plane models, their levels,
+direction sets and directions, the tile models; native only, G7). A cancelled apply_aft / profile_blob
+raises Cancelled.
 
 Library search: $NV_NATIVE_LIB (when set, only that path), else sys._MEIPASS (PyInstaller), <app>/Contents/Frameworks, then
 native/libnvcore.dylib next to repro/. Threads of the profile / AFT calls: $NV_NATIVE_THREADS
@@ -39,7 +43,7 @@ import numpy as np
 import nvfilter as nv
 
 F32 = np.float32
-ABI_VERSION = 1
+ABI_VERSION = 2
 PROF_BYTES = 0xc300
 _PROF_I, _PROF_D, _PAR_I, _PAR_D = 4, 82, 4, 21
 _MAXC = 16
@@ -100,6 +104,11 @@ if AVAILABLE:
     _lib.nvc_flat_area.restype = None
     _lib.nvc_profile_build.argtypes = [_P, _I, _I, _I, _I, _I, _I, _I, _P, _I, _I, _P]
     _lib.nvc_profile_build.restype = _I
+    _lib.nvc_profile_build_cancel.argtypes = [_P, _I, _I, _I, _I, _I, _I, _I, _P, _I, _I, CANCEL_FN, _P]
+    _lib.nvc_profile_build_cancel.restype = _I
+    _lib.nvc_build_profile_v5.argtypes = [_P, _I, _I, _I, _I, _P, _I, _P, _I, _I, _I, _I, _I, _P, _I, CANCEL_FN,
+                                          _P, _P]
+    _lib.nvc_build_profile_v5.restype = _I
     _lib.nvc_aft.argtypes = [_P, _I, _I, _P, _I, _I, CANCEL_FN, _P]
     _lib.nvc_aft.restype = _I
     _lib.nvc_aft_combine.argtypes = [_P, _P, _P, _I, _P, _D, _P, _I, _P, _P, _P, _P, _P]
@@ -229,11 +238,7 @@ def find_flat_area(planes, full_range=False, matrix="bt709", mode=1, cancel=None
     """nvfilter.find_flat_area(planes, full_range, matrix, mode, with_status=True, curve="genuine", cancel)
     -> (y0, x0, size, status): the same steps, the search in C. Own cache (same key and size as nvfilter's)."""
     planes = tuple(np.asarray(p, F32) for p in planes)
-    h = hashlib.blake2b(digest_size=16)
-    for p in planes:
-        h.update(str(p.shape).encode())
-        h.update(np.ascontiguousarray(p).view(np.uint8))
-    key = (h.hexdigest(), bool(full_range), matrix, int(mode), "genuine")
+    key = _ffa_key(planes, full_range, matrix, mode)
     with _FFA_LOCK:
         res = _FFA_CACHE.get(key)
     if res is None:
@@ -256,10 +261,127 @@ def find_flat_area(planes, full_range=False, matrix="bt709", mode=1, cancel=None
     return res
 
 
+_P5_MATRIX = {"bt709": 0, "bt601": 1, "bt2020": 2}
+_P5_MODES = ("auto", "spatial", "temporal")
+_P5_NAMES = ("Y", "Cb", "Cr")
+_P5_I, _P5_D = 16, 72
+
+
+def _ffa_key(planes, full_range, matrix, mode=1):
+    """The FindFlatArea cache key of find_flat_area (nvfilter's key)."""
+    h = hashlib.blake2b(digest_size=16)
+    for p in planes:
+        h.update(str(p.shape).encode())
+        h.update(np.ascontiguousarray(p).view(np.uint8))
+    return h.hexdigest(), bool(full_range), matrix, int(mode), "genuine"
+
+
+def _p5_frame(fr, shapes):
+    """The three planes of a frame as given (C-contiguous float32), or None when nv_prof5 does not reproduce the
+    Python result for them: not float32 2-D arrays of the shapes `shapes`, or values that are not finite
+    (nvcore_c_prof5.h; Python propagates NaN where the port does not)."""
+    try:
+        if len(fr) != 3:
+            return None
+    except TypeError:
+        return None
+    out = []
+    for p, s in zip(fr, shapes):
+        if not isinstance(p, np.ndarray) or p.dtype != F32 or p.shape != s:
+            return None
+        p = np.ascontiguousarray(p)
+        if not np.isfinite(p).all():
+            return None
+        out.append(p)
+    return out
+
+
+def _p5_dict(oi, od):
+    """The prof dict of nvfilter.build_profile_v5 from out_i / out_d (nvcore_c_prof5.h): key order and types."""
+    an, lev, n = int(oi[0]), [int(v) for v in oi[7:10]], int(oi[14])
+    prof = {"version": 5, "sub": int(oi[12]), "full_range": bool(oi[13]), "area": [int(v) for v in oi[1:1 + an]],
+            "mode": _P5_MODES[int(oi[5])] + ("+noise-free" if oi[6] else ""),
+            "levels": {c: lev[i] for i, c in enumerate(_P5_NAMES)},
+            "band_ratio": {c: [float(v) for v in od[5 * i:5 * i + lev[i]]] for i, c in enumerate(_P5_NAMES)},
+            "tot_ratio": {c: float(od[15 + i]) for i, c in enumerate(_P5_NAMES)},
+            "area_sigma": {c: [float(v) for v in od[18 + 5 * i:18 + 5 * i + lev[i]]] for i, c in enumerate(_P5_NAMES)},
+            "curve": {c: [float(v) for v in od[33 + 8 * i:33 + 8 * i + n]] for i, c in enumerate(_P5_NAMES)},
+            "curve_centers": [float(v) for v in od[57:57 + n]],
+            "flat_status": None if oi[10] == -1 else int(oi[10])}
+    if oi[11]:
+        prof["static_fraction"] = float(od[65])
+    prof["dead_fraction"] = float(od[66])
+    prof["area_level"] = float(od[67])
+    prof["sigma"] = {c: float(od[68 + i]) for i, c in enumerate(_P5_NAMES)}
+    return prof
+
+
+def _p5_args(planes, full_range, area, pair, mode, levels, more, matrix):
+    """The arguments of nvc_build_profile_v5, or None (the Python function then runs)."""
+    if type(levels) is not int or levels != 5 or mode not in _P5_MODES or matrix not in _P5_MATRIX:
+        return None
+    shp = _shapes(planes) if isinstance(planes, (tuple, list)) else None
+    if shp is None:
+        return None
+    H, W, Hc, Wc = shp
+    if min(H, W) < 2:                   # Python raises ValueError there (np.gradient / an empty chroma crop)
+        return None
+    if (Hc, Wc) != (H, W) and (Hc, Wc) != ((H + 1) // 2, (W + 1) // 2):
+        return None
+    shapes = ((H, W), (Hc, Wc), (Hc, Wc))
+    pl = _p5_frame(planes, shapes)
+    pp = _p5_frame(pair, shapes) if pair is not None else []
+    try:
+        mm = [_p5_frame(f, shapes) for f in more]
+    except TypeError:
+        return None
+    if pl is None or pp is None or any(m is None for m in mm):
+        return None
+    if area is None:
+        ar = []
+    else:
+        try:
+            ar = [int(v) for v in area]
+        except (TypeError, ValueError):
+            return None
+        if len(ar) not in (3, 4) or any(not -2 ** 31 <= v < 2 ** 31 for v in ar):
+            return None
+    return pl, pp or None, [p for m in mm for p in m], len(mm), shp, ar
+
+
+def _p5_call(args, full_range, mode, matrix, cancel, threads):
+    """nvc_build_profile_v5 -> the prof dict, or None on an error status (the caller runs the Python path);
+    status 5 raises ProfileCancelled."""
+    pl, pp, mm, n_more, (H, W, Hc, Wc), ar = args
+    ara = np.array(ar or [0], np.int32)
+    oi, od = np.zeros(_P5_I, np.int32), np.zeros(_P5_D, np.float64)
+    cb = _cancel_fn(cancel)
+    keep = (pl, pp, mm, ara)                # noqa: F841 - the buffers live through the call
+    r = _lib.nvc_build_profile_v5(_ptrs(pl), H, W, Hc, Wc, _ptrs(pp) if pp else None, n_more,
+                                  _ptrs(mm) if mm else None, int(bool(full_range)), _P5_MATRIX[matrix],
+                                  _P5_MODES.index(mode), 5, len(ar), _ptr(ara), threads or THREADS, cb,
+                                  _ptr(oi), _ptr(od))
+    if r == 5:
+        raise nv.ProfileCancelled("profiling cancelled (FindFlatArea status 5)")
+    return _p5_dict(oi, od) if r == 0 else None
+
+
 def build_profile_v5(planes, full_range=False, area=None, pair=None, mode="auto", levels=5, more=(),
                      matrix="bt709", cancel=None, threads=None):
-    """nvfilter.build_profile_v5 with the FindFlatArea search (area=None) in C: the area found is passed
-    to build_profile_v5 (its clamp leaves an area of find_flat_area unchanged) and flat_status set after."""
+    """nvfilter.build_profile_v5 in C (nvc_build_profile_v5, G8), with the FindFlatArea cache of find_flat_area
+    (a cached search passes its area to the C call as a manual square, whose clamp leaves an area of
+    find_flat_area unchanged, and sets flat_status after; a new search is stored). Inputs the C port does not
+    reproduce (_p5_args) take the earlier path: the search in C (find_flat_area), the rest nvfilter.build_profile_v5."""
+    try:
+        more = tuple(more)                  # iterated twice below (the checks, then a call)
+    except TypeError:
+        pass
+    args = _p5_args(planes, full_range, area, pair, mode, levels, more, matrix)
+    prof = None
+    if args is not None:
+        prof = _p5_build(args, full_range, area, mode, matrix, cancel, threads)
+    if prof is not None:
+        return prof
     if area is not None:
         return nv.build_profile_v5(planes, full_range, area, pair, mode, levels, more, matrix)
     y0, x0, S, status = find_flat_area(planes, full_range, matrix, cancel=cancel, threads=threads)
@@ -270,20 +392,48 @@ def build_profile_v5(planes, full_range=False, area=None, pair=None, mode="auto"
     return prof
 
 
+def _p5_build(args, full_range, area, mode, matrix, cancel, threads):
+    """build_profile_v5 through nvc_build_profile_v5 and the FindFlatArea cache, or None (error status)."""
+    if area is not None:
+        return _p5_call(args, full_range, mode, matrix, cancel, threads)
+    key = _ffa_key(args[0], full_range, matrix)
+    with _FFA_LOCK:
+        res = _FFA_CACHE.get(key)
+    if res is not None:
+        prof = _p5_call(args[:5] + ([res[0], res[1], res[2]],), full_range, mode, matrix, cancel, threads)
+        if prof is not None:
+            prof["flat_status"] = res[3]
+        return prof
+    prof = _p5_call(args, full_range, mode, matrix, cancel, threads)
+    if prof is None:
+        return None
+    with _FFA_LOCK:
+        if key not in _FFA_CACHE:
+            while len(_FFA_CACHE) >= 16:
+                _FFA_CACHE.pop(next(iter(_FFA_CACHE)))
+            _FFA_CACHE[key] = (*prof["area"], prof["flat_status"])
+    return prof
+
+
 # ------------------------------------------------------------------------------------- AutoFineTune
 def _floor():
     import nv_profile as npr
     return np.ascontiguousarray(npr.reference_floor(), F32)
 
 
-def profile_blob(rgb, area4, mode=1, threads=None):
-    """nv_profile.build_profile(rgb, mode, (x, y, w, h))[0] as bytes, or None (status not OK)."""
+def profile_blob(rgb, area4, mode=1, threads=None, cancel=None):
+    """nv_profile.build_profile(rgb, mode, (x, y, w, h))[0] as bytes, or None (status not OK). cancel: asked
+    inside the model (nvc_profile_build_cancel); a true answer raises Cancelled."""
     rgb = _c32(rgb)
     H, W = rgb.shape[:2]
     x, y, w, h = (int(v) for v in area4)
     out = np.zeros(PROF_BYTES, np.uint8)
     fl = _floor()
-    st = _lib.nvc_profile_build(_ptr(rgb), W, H, int(mode), x, y, w, h, _ptr(fl), 1, threads or THREADS, _ptr(out))
+    cb = _cancel_fn(cancel)
+    st = _lib.nvc_profile_build_cancel(_ptr(rgb), W, H, int(mode), x, y, w, h, _ptr(fl), 1, threads or THREADS, cb,
+                                       _ptr(out))
+    if st == 3:
+        raise Cancelled("cancelled")
     return out.tobytes() if st == 0 else None
 
 
@@ -314,7 +464,7 @@ def _apply_aft(prof, rgb, mode=0, area=None, matrix="bt709", band=0, cancel=None
         return None
     if cancel is not None and cancel():
         raise Cancelled("cancelled")
-    raw = profile_blob(rgb, (ax, ay, aw, ah), 1, threads)
+    raw = profile_blob(rgb, (ax, ay, aw, ah), 1, threads, cancel)
     if raw is None:
         return None
     if cancel is not None and cancel():

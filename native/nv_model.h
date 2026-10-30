@@ -13,6 +13,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 
 namespace nvm {
 
@@ -26,12 +27,20 @@ enum Status : int {
     NOT_IMPLEMENTED = 1,   // the Python port raises NotImplementedError (FUN_00ad11b0 without a bin,
                            // pad_mirror with pad >= side: bm_quantiles only)
     BAD_ARGUMENT = 2,      // the Python port raises ValueError (sides outside 2..512, levels outside 1..5)
+    CANCELLED = 3,         // the cancel query answered true (native only: the Python port has no query)
 };
+
+// A cancel query (true = cancelled); the callers that run several models at once make it thread-safe.
+using Cancel = std::function<bool()>;
 
 // nv_model.model_full(plane, set_, levels=levels): plane is H x W row-major float32;
 // set_ < 0: sets 0..4, else that set only.  out receives STRUCT_WORDS words (also on
-// NOT_IMPLEMENTED the words written so far, which the caller must not use).
-int model_full(const float* plane, int W, int H, int set_, uint32_t* out, int levels = LEVELS);
+// NOT_IMPLEMENTED / CANCELLED the words written so far, which the caller must not use).
+// cancel (G7, may be null): asked before every level x direction set, every direction of the families A, B
+// and C and every pattern round of FUN_00ad319c; a true answer returns CANCELLED at once.  Without a true
+// answer the words do not depend on it.
+int model_full(const float* plane, int W, int H, int set_, uint32_t* out, int levels = LEVELS,
+               const Cancel* cancel = nullptr);
 
 // nv_model_bm.ad1ae0(clean, A, cfg) (FUN_00ad1ae0) on its own, for the checks of its explicit-error
 // paths (native/verify_model.py): clean and A are H x W row-major float32, q receives the quantiles

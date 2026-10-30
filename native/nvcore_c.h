@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 
-#define NVC_ABI_VERSION 1
+#define NVC_ABI_VERSION 2       /* 2 (G7/G8): nvc_profile_build_cancel; repro/nv_native.py calls nvc_build_profile_v5 */
 #define NVC_PROF_I 4
 #define NVC_PROF_D 82
 #define NVC_PAR_I 4
@@ -48,6 +48,13 @@ void nvc_flat_area(const float* rgb, int W, int H, int mode, int threads, nvc_ca
  * reference-floor words (with_floor = True) or NULL.  out: NVC_PROF_BYTES.  Returns nvp::Status (0 ok). */
 int nvc_profile_build(const float* rgb, int W, int H, int mode, int x, int y, int w, int h, const float* floor,
                       int lzma, int threads, uint8_t* out);
+
+/* nvc_profile_build with a cancel query (G7): nvp::build_profile asks it before each plane model and inside the
+ * models (every level x direction set, every direction, every pattern round), before each tile model of the
+ * tile deviations and before the LZMA part.  Returns 3 (nvp::CANCELLED) soon after a true answer (out is then
+ * not meaningful); without one the result is that of nvc_profile_build. */
+int nvc_profile_build_cancel(const float* rgb, int W, int H, int mode, int x, int y, int w, int h,
+                             const float* floor, int lzma, int threads, nvc_cancel_fn cancel, uint8_t* out);
 
 /* nva::auto_fine_tune (nv_aft.auto_fine_tune(rgb, prof, mode, image2=None, cancel)) on prof in place.
  * out3: the mode-2 values (written for mode 2 with status 0).  Returns nva::Status (0 ok, 1 too small,

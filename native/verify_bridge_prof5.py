@@ -1,7 +1,8 @@
 # N3a: the "prof5" group of native/verify_bridge.py - the UI's profile building through nvcore_c_prof5.h
 # (nvc_build_profile_v5, nvc_noisiest_candidates + nvc_hh1_sigma, nvc_effective_curve) against
-# repro/nv_ui_qt/backend.py with the native core ON (backend.build_profile -> nv_native.build_profile_v5,
-# backend.noisiest_frame, state.effective_profile), bit for bit on every leaf (verify_bridge.compare).
+# repro/nv_ui_qt/backend.py (backend.build_profile, backend.noisiest_frame, state.effective_profile), bit for bit
+# on every leaf (verify_bridge.compare).  backend.build_profile runs with the native core OFF here (the Python
+# nvfilter.build_profile_v5): since G8 the native core's build_profile is nvc_build_profile_v5 itself.
 #
 #   run(tmp, jobs, quick) -> (ok, total)        (verify_bridge.py calls it; also: python3 native/verify_bridge_prof5.py)
 #
@@ -53,7 +54,7 @@ def _run_profile(case):
     video, mat, f, mode, area = case
     import verify_bridge as vb
     from nv_ui_qt import backend
-    backend.set_native(True)
+    backend.set_native(False)
     frames, _ = vb.frame_list(video)
     t0 = time.perf_counter()
     ref = backend.build_profile(frames, f, False, mat, mode, area)
