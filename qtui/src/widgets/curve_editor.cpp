@@ -27,16 +27,15 @@ double py_round3(double x) {
 }
 }  // namespace
 
-QIcon all_icon(int size) {
+QIcon all_icon(int size, const std::vector<std::string>& keys) {
     QPixmap pm(size, size);
     pm.fill(Qt::transparent);
     QPainter p(&pm);
     p.setRenderHint(QPainter::Antialiasing);
     QRectF r(1.5, 1.5, size - 3, size - 3);
-    const char* cs[3] = {"Y", "Cr", "Cb"};
     for (int k = 0; k < 3; ++k) {
         p.setPen(Qt::NoPen);
-        p.setBrush(ch_color(cs[k]));
+        p.setBrush(ch_color(keys[static_cast<size_t>(k)]));
         p.drawPie(r, (90 + 120 * k) * 16, 120 * 16);
     }
     p.setPen(QPen(QColor(60, 60, 60), 1));
@@ -95,12 +94,12 @@ void EqualizerPlot::paintEvent(QPaintEvent*) {
     p.drawRect(bar);
     const std::string tgt = o->target;
     std::vector<std::string> order;
-    for (const auto& kl : UI_CHANNELS)
+    for (const auto& kl : o->order())
         if (kl.first != tgt) order.push_back(kl.first);
-    for (const auto& kl : UI_CHANNELS)
+    for (const auto& kl : o->order())
         if (kl.first == tgt) order.push_back(kl.first);
     for (const auto& c : order) {
-        const auto& fs = o->factors[ch_index(c)];
+        const auto& fs = o->factors[o->index(c)];
         std::vector<QPointF> pts;
         for (int i = 0; i < 9; ++i) pts.push_back(pt(i, fs[i]));
         const bool active = tgt == "all" || tgt == c;
@@ -108,7 +107,7 @@ void EqualizerPlot::paintEvent(QPaintEvent*) {
         for (size_t k = 0; k + 1 < pts.size(); ++k) p.drawLine(pts[k], pts[k + 1]);
         for (int i = 0; i < 9; ++i) {
             const QPointF q = pts[static_cast<size_t>(i)];
-            const bool pinned = o->pinned[ch_index(c)].count(i) > 0;
+            const bool pinned = o->pinned[o->index(c)].count(i) > 0;
             p.setPen(QPen(QColor(20, 20, 20), 1));
             p.setBrush(QBrush(pinned ? ch_color(c) : QColor(250, 220, 0)));
             const double s = (active ? 6 : 5) + (o->main_bin && i == *o->main_bin ? 4 : 0);
@@ -121,13 +120,13 @@ void EqualizerPlot::paintEvent(QPaintEvent*) {
 std::optional<EqualizerPlot::Hit> EqualizerPlot::hit_(QPointF pos) const {
     std::vector<std::string> chans;
     if (o->target == "all") {
-        for (const auto& kl : UI_CHANNELS) chans.push_back(kl.first);
+        for (const auto& kl : o->order()) chans.push_back(kl.first);
     } else {
         chans.push_back(o->target);
     }
     std::optional<Hit> best;
     for (const auto& c : chans) {
-        const auto& fs = o->factors[ch_index(c)];
+        const auto& fs = o->factors[o->index(c)];
         for (int i = 0; i < 9; ++i) {
             const QPointF q = pt(i, fs[i]);
             const double d = std::fabs(q.x() - pos.x()) + std::fabs(q.y() - pos.y());
@@ -152,6 +151,13 @@ void EqualizerPlot::mouseMoveEvent(QMouseEvent* e) {
 void EqualizerPlot::mouseReleaseEvent(QMouseEvent*) { drag_.reset(); }
 
 // ------------------------------------------------------------------ CurveEditor
+namespace {
+const std::vector<std::pair<std::string, int>> ORDER_RGB = {{"R", 0}, {"G", 1}, {"B", 2}};
+const std::vector<std::pair<std::string, int>> ORDER_YCC = {{"Y", 0}, {"Cr", 2}, {"Cb", 1}};   // factors Y, Cb, Cr
+const std::map<std::string, QString> NAMES = {{"Y", "Luminance (Y)"}, {"Cr", "Cr"}, {"Cb", "Cb"},
+                                              {"R", "Red"}, {"G", "Green"}, {"B", "Blue"}};
+}  // namespace
+
 CurveEditor::CurveEditor(QWidget* parent) : QWidget(parent) {
     auto* v = new QVBoxLayout(this);
     v->setContentsMargins(0, 0, 0, 0);
@@ -160,33 +166,61 @@ CurveEditor::CurveEditor(QWidget* parent) : QWidget(parent) {
     auto* row = new QHBoxLayout();
     row->setSpacing(2);
     group = new QButtonGroup(this);
-    const std::map<std::string, QString> names = {{"Y", "Luminance (Y)"}, {"Cr", "Cr"}, {"Cb", "Cb"}};
-    const std::pair<const char*, const char*> keys[4] = {{"all", "All"}, {"Y", "Y"}, {"Cr", "Cr"}, {"Cb", "Cb"}};
-    for (const auto& [key, text] : keys) {
-        const std::string k = key;
+    for (int n = 0; n < 4; ++n) {
         auto* b = new QToolButton();
-        b->setText(text);
-        b->setIcon(k == "all" ? all_icon() : QIcon(dot_pixmap(k, 18)));
         b->setIconSize(QSize(18, 18));
         b->setToolButtonStyle(Qt::ToolButtonIconOnly);
         b->setFixedSize(26, 24);
         b->setCheckable(true);
-        b->setToolTip(k == "all"
-                          ? QString("Show the noise graphs (noise level vs brightness level) for all three color "
-                                    "channels\n(repro: Luminance, Cr and Cb; the genuine's channels are R, G, B)")
-                          : QString("Show the noise graph (noise level vs brightness level) for the %1 channel "
-                                    "alone\n(repro: the genuine's buttons are Red, Green, Blue)")
-                                .arg(names.at(k)));
         b->setStyleSheet("QToolButton{border:1px solid #3a3a3a; border-radius:3px; background:#6a6a6a}"
                          "QToolButton:checked{background:#6f6fd8}");
         group->addButton(b);
-        connect(b, &QToolButton::clicked, this, [this, k] { set_target(k); });
+        connect(b, &QToolButton::clicked, this, [this, b] { set_target(b->property("key").toString().toStdString()); });
         row->addWidget(b);
-        target_buttons[k] = b;
+        buttons_.push_back(b);
     }
+    label_buttons();
     target_buttons["all"]->setChecked(true);
     buttons = row;
     v->addLayout(row);
+}
+
+const std::vector<std::pair<std::string, int>>& CurveEditor::order() const {
+    return channels == "RGB" ? ORDER_RGB : ORDER_YCC;
+}
+
+int CurveEditor::index(const std::string& c) const {
+    for (const auto& [k, i] : order())
+        if (k == c) return i;
+    return 0;
+}
+
+void CurveEditor::label_buttons() {
+    const bool rgb = channels == "RGB";
+    std::vector<std::string> keys;
+    for (const auto& kl : order()) keys.push_back(kl.first);
+    target_buttons.clear();
+    for (int n = 0; n < 4; ++n) {
+        const std::string key = n == 0 ? std::string("all") : keys[static_cast<size_t>(n - 1)];
+        QToolButton* b = buttons_[static_cast<size_t>(n)];
+        b->setProperty("key", QString::fromStdString(key));
+        b->setText(key == "all" ? (rgb ? "RGB" : "All") : QString::fromStdString(key));
+        b->setIcon(key == "all" ? all_icon(18, keys) : QIcon(dot_pixmap(key, 18)));
+        if (rgb)
+            b->setToolTip(key == "all" ? QString("Show the noise graphs (noise level vs brightness level) for all three "
+                                                 "color channels")
+                                       : QString("Show the noise graph (noise level vs brightness level) for the %1 "
+                                                 "channel alone").arg(NAMES.at(key)));
+        else
+            b->setToolTip(key == "all"
+                              ? QString("Show the noise graphs (noise level vs brightness level) for all three color "
+                                        "channels\n(repro: Luminance, Cr and Cb of a profile made before the R/G/B "
+                                        "equalizer; the genuine's channels are R, G, B)")
+                              : QString("Show the noise graph (noise level vs brightness level) for the %1 channel "
+                                        "alone\n(repro: a profile made before the R/G/B equalizer; the genuine's "
+                                        "buttons are Red, Green, Blue)").arg(NAMES.at(key)));
+        target_buttons[key] = b;
+    }
 }
 
 void CurveEditor::set_target(const std::string& key) {
@@ -195,9 +229,15 @@ void CurveEditor::set_target(const std::string& key) {
     plot->update();
 }
 
-int CurveEditor::channel() const { return target == "all" ? 0 : ch_index(target); }
+int CurveEditor::channel() const { return target == "all" ? 0 : index(target); }
 
-void CurveEditor::set_factors(const Factors& f, const std::array<std::set<int>, 3>& p, std::optional<int> mb) {
+void CurveEditor::set_factors(const Factors& f, const std::array<std::set<int>, 3>& p, std::optional<int> mb,
+                              const std::string& ch) {
+    if (ch != channels) {
+        channels = ch;
+        label_buttons();
+        set_target("all");
+    }
     factors = f;
     pinned = p;
     main_bin = mb;
@@ -206,12 +246,12 @@ void CurveEditor::set_factors(const Factors& f, const std::array<std::set<int>, 
 
 void CurveEditor::move_knot(const std::string& c, int i, double f) {
     f = std::min(std::max(f, FACTOR_MIN), FACTOR_MAX);
-    std::array<double, 9> fs = factors[ch_index(c)];
+    std::array<double, 9> fs = factors[index(c)];
     fs[i] = f;
     if (target == "all")
         emit editedAll(fs, i);
     else
-        emit edited(ch_index(c), fs, i);
+        emit edited(index(c), fs, i);
 }
 
 }  // namespace nvqt

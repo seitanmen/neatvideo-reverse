@@ -59,6 +59,9 @@
 #include "rows.h"
 #include "state.h"
 #include "nvcore_c_ui.h"
+#include "nvcore_c.h"
+#include "nvcore_c_rgb.h"
+#include "nvcore.h"
 #include "timeline.h"
 #include "video.h"
 
@@ -93,6 +96,7 @@ class SelfTest : public QObject {
         int code = -1;
         QByteArray out, err;
     };
+    PyObj g1_aft_;          // the AFT profile of the G1 items
     QString v10;            // the 10-bit source of the Bit depth items and its raw samples
     QByteArray a10;
 
@@ -2411,6 +2415,270 @@ private slots:
         QVERIFY(wait_until([&] { return win->fmt && win->fmt->legacy() && aft_done(); }));
         QCOMPARE(static_cast<long long>(win->frames.size()),
                  std::min(901LL, static_cast<long long>(mem * 1073741824.0) / pixfmt("yuv420p").internal_bytes(640, 360)));
+    }
+
+    // ---------------- G1, the R/G/B equalizer (sandbox/omo/wp_qtui_fix/DESIGN_G1.md, decisions U1-U10) --------
+    void g1FreshAndAft() {   // "G1 fresh profile ..." / "G1 run_aft ..." / "G1 build-time colour weights" / "G1 after AFT"
+        const auto& fr = win->frames;
+        const int f = std::min(4, static_cast<int>(fr.size()) - 3);
+        const PyObj fresh = build_profile(fr, f, win->full_range, win->matrix, "auto", nullptr, CancelFn());
+        ProfileState ps0;
+        ps0.base = fresh;
+        QCOMPARE(ps0.channels, std::string("RGB"));
+        QVERIFY(ps0.factors == unit_factors());
+        QCOMPARE(fresh.get("ui_rgb_weights").size(), size_t(3));
+        QVERIFY(ps0.effective() == fresh);
+        QCOMPARE(ps0.to_json().get("format").as_str(), std::string("nv_repro_profile_rgb"));
+        const PyObj aft = run_aft(fresh, fr[static_cast<size_t>(f)], win->full_range, win->matrix, CancelFn());
+        QVERIFY(fresh.get("ui_rgb_weights") == aft.get("aft_color_weights"));
+        const auto& k = aft.keys();
+        QCOMPARE(k[k.size() - 2], std::string("aft_levels"));
+        QCOMPARE(k[k.size() - 1], std::string("ui_pre_aft"));
+        // the R/G/B combination of the AFT's levels on the curve before AFT is the AFT's curve (the probe path)
+        const int n = static_cast<int>(aft.get("curve_centers").size());
+        std::vector<double> cx = aft.get("curve_centers").as_doubles(), cv, cw, lv, out(3 * static_cast<size_t>(n));
+        for (const char* c : {"Y", "Cb", "Cr"})
+            for (double v : aft.get("ui_pre_aft").get("curve").get(c).as_doubles()) cv.push_back(v);
+        for (size_t c = 0; c < 3; ++c)
+            for (size_t j = 0; j < 3; ++j) cw.push_back(aft.get("aft_color_weights")[c][j].as_double());
+        for (size_t j = 0; j < 3; ++j)
+            for (size_t b = 0; b < 9; ++b) lv.push_back(aft.get("aft_levels")[j][b].as_double());
+        QCOMPARE(nvc_rgb_combine(cx.data(), n, cv.data(), cw.data(), lv.data(), nullptr, out.data()), 0);
+        int ci = 0;
+        for (const char* c : {"Y", "Cb", "Cr"}) {
+            const auto got = aft.get("curve").get(c).as_doubles();
+            for (int i = 0; i < n; ++i) QCOMPARE(std::memcmp(&got[static_cast<size_t>(i)], &out[static_cast<size_t>(ci * n + i)], 8), 0);
+            ++ci;
+        }
+        const ProfileState ps1 = after_aft(ps0, aft);
+        QVERIFY(ps1.factors == *rgb_reference(aft));
+        QVERIFY(!(ps1.factors == unit_factors()));
+        QVERIFY(ps1.effective() == aft);
+        g1_aft_ = aft;
+        win->state->set_profile(ps1, "G1 test");
+        CurveEditor* ed = win->profile_panel->curve;
+        QCOMPARE(ed->channels, std::string("RGB"));
+        QCOMPARE(ed->target_buttons.size(), size_t(4));
+        QVERIFY(ed->target_buttons.count("R") && ed->target_buttons.count("G") && ed->target_buttons.count("B"));
+        QVERIFY(ed->target_buttons.at("R")->toolTip().endsWith("for the Red channel alone"));
+        QVERIFY(ed->factors == ps1.factors);
+    }
+
+    void g1EditsResetComplete() {   // "G1 R bin 4 +20%" / "G1 All +20%" / "G1 Reset" / "G1 Auto Complete"
+        const PyObj& aft = g1_aft_;
+        QVERIFY(aft.is_dict());
+        CurveEditor* ed = win->profile_panel->curve;
+        Factors L = win->state->profile.factors;
+        L[0][4] = 1.2;
+        win->state->new_edit();
+        const int undo0 = win->state->undo->index();
+        emit ed->edited(0, L[0], 4);
+        const PyObj e = *win->state->effective();
+        QCOMPARE(e.get("ui_channels").as_str(), std::string("RGB"));
+        const auto xs = aft.get("curve_centers").as_doubles();
+        for (const char* c : {"Y", "Cb", "Cr"}) {
+            const auto a = e.get("curve").get(c).as_doubles(), b = aft.get("curve").get(c).as_doubles();
+            for (size_t i = 0; i < xs.size(); ++i) QCOMPARE(a[i] == b[i], std::fabs(xs[i] - 128.0) >= 32.0);
+        }
+        win->state->undo->undo();
+        QCOMPARE(win->state->undo->index(), undo0);
+        QVERIFY(*win->state->effective() == win->state->profile.base);
+        // All channels, every bin +20%: the curve before AFT x sqrt(1.2)
+        Factors U;
+        for (auto& r : U) r.fill(1.2);
+        const PyObj e2 = rgb_effective_profile(aft, U, PyObj::dict());
+        for (const char* c : {"Y", "Cb", "Cr"}) {
+            const auto a = e2.get("curve").get(c).as_doubles(), p = aft.get("ui_pre_aft").get("curve").get(c).as_doubles();
+            for (size_t i = 0; i < a.size(); ++i) QVERIFY(std::fabs(a[i] / (p[i] * std::sqrt(1.2)) - 1.0) < 1e-6);
+        }
+        // Reset: the curve and sigma before AFT exactly, Completeness 0%
+        const ProfileState r = reset_fine_tune(win->state->profile);
+        const PyObj er = r.effective();
+        QVERIFY(er.get("curve") == aft.get("ui_pre_aft").get("curve"));
+        QVERIFY(er.get("sigma") == aft.get("ui_pre_aft").get("sigma"));
+        const auto q = profile_numbers(r, win->frames, win->full_range, win->matrix);
+        QVERIFY(q && q->second == 0);
+        // Auto Complete keeps the bins the AFT measured
+        const Factors ac = auto_complete(win->state->profile);
+        const PyObj& mk = aft.get("aft_bin_flags").get("marker");
+        for (int c = 0; c < 3; ++c)
+            for (int b = 0; b < 9; ++b)
+                if (!mk[static_cast<size_t>(c)][static_cast<size_t>(b)].truthy()) QCOMPARE(ac[c][b], win->state->profile.factors[c][b]);
+    }
+
+    void g1QualityAndFiles() {   // "G1 Quality ..." / "G1 new format ..." / "G1 older Y / Cb / Cr files ..."
+        const PyObj& aft = g1_aft_;
+        const ProfileState ps1 = win->state->profile;
+        ProfileState leg = ps1;
+        leg.channels = "YCbCr";
+        leg.factors = unit_factors();
+        const auto q1 = profile_numbers(ps1, win->frames, win->full_range, win->matrix);
+        QVERIFY(q1 && q1 == profile_numbers(leg, win->frames, win->full_range, win->matrix));
+        ProfileState pt = ps1;
+        pt.tune.set("all", PyObj::real(1.1));
+        QVERIFY(profile_numbers(pt, win->frames, win->full_range, win->matrix) == q1);
+        ProfileState pe = ps1;
+        pe.factors[0][4] = 1.2;
+        pe.pinned[0].insert(4);
+        pe.tune.set("all", PyObj::real(1.1));
+        pe.tune.set("Cr", PyObj::real(0.8));
+        const PyObj d = pe.to_json();
+        QCOMPARE(d.get("format").as_str(), std::string("nv_repro_profile_rgb"));
+        QCOMPARE(d.get("channels").as_str(), std::string("RGB"));
+        QCOMPARE(d.get("version").as_int(), int64_t(2));
+        const ProfileState back = ProfileState::from_json(PyObj::parse(d.dump(1)));
+        QCOMPARE(back.channels, std::string("RGB"));
+        QVERIFY(back.factors == pe.factors && back.pinned == pe.pinned);
+        QCOMPARE(back.effective().dump(1), pe.effective().dump(1));
+        for (int mut = 0; mut < 2; ++mut) {
+            PyObj x = d;
+            if (mut == 0) x.pop("channels");
+            else x.at("base").pop("ui_pre_aft");
+            bool rejected = false;
+            try {
+                ProfileState::from_json(x);
+            } catch (const std::runtime_error&) {
+                rejected = true;
+            }
+            QVERIFY(rejected);
+        }
+        // older Y / Cb / Cr files: the effective profile the code before G1 wrote
+        const QString dir = QString(NV_SOURCE_ROOT) + "/qtui/tests/fixtures";
+        auto text = [](const QString& p) { std::ifstream f(p.toStdString(), std::ios::binary); std::stringstream ss; ss << f.rdbuf(); return ss.str(); };
+        for (const char* name : {"g1_legacy_r4", "g1_legacy_b6tune"}) {
+            const ProfileState lp = ProfileState::from_json(PyObj::parse(text(dir + "/" + name + ".nvprof.json")));
+            QCOMPARE(lp.channels, std::string("YCbCr"));
+            QCOMPARE(lp.effective().dump(1), text(dir + "/" + name + ".ui_profile.json"));
+            QCOMPARE(lp.to_json().get("format").as_str(), std::string("nv_repro_profile"));
+        }
+        const ProfileState lr = ProfileState::from_json(PyObj::parse(text(dir + "/g1_legacy_r4.nvprof.json")));
+        win->state->set_profile(lr, "G1 legacy");
+        CurveEditor* ed = win->profile_panel->curve;
+        QCOMPARE(ed->channels, std::string("YCbCr"));
+        QVERIFY(ed->target_buttons.count("Y") && ed->target_buttons.count("Cr") && ed->target_buttons.count("Cb"));
+        const ProfileState rr = reset_fine_tune(lr);
+        QCOMPARE(rr.channels, std::string("RGB"));
+        QVERIFY(rr.effective().get("curve") == lr.base.get("ui_pre_aft").get("curve"));
+        win->state->undo->undo();
+        win->state->undo->undo();
+        (void)aft;
+    }
+
+    void g1MalformedKeys() {   // "G1 malformed ui_rgb_weights / aft_color_weights / ... rejected" (L-1)
+        const PyObj& aft = g1_aft_;
+        QVERIFY(aft.is_dict());
+        ProfileState pe;
+        pe.base = aft;
+        pe.factors = *rgb_reference(aft);
+        const PyObj d = pe.to_json();
+        auto nums = [](std::initializer_list<double> v) { return PyObj::reals(std::vector<double>(v)); };
+        PyObj f8 = PyObj::list();
+        for (int i = 0; i < 8; ++i) f8.append(PyObj::boolean(false));
+        PyObj w2 = PyObj::list();
+        w2.append(nums({0.5, 0.5}));
+        struct Bad {
+            const char* text;
+            std::function<void(PyObj&)> edit;
+        };
+        const char* W = "profile ui_rgb_weights must be 3 x 3 finite numbers";
+        const char* C = "profile aft_color_weights must be 3 x 3 finite numbers";
+        const char* L9 = "profile aft_levels must be 3 x 9 finite numbers";
+        const char* P = "profile ui_pre_aft must hold the curve and sigma of Y / Cb / Cr (finite numbers)";
+        const char* F = "profile aft_bin_flags must be 3 x 9 booleans (marker, clip, gt3)";
+        const std::vector<Bad> bad = {
+            {W, [&](PyObj& b) { b.set("ui_rgb_weights", w2); }},
+            {C, [](PyObj& b) { b.at("aft_color_weights")[0][1] = PyObj::str("x"); }},
+            {L9, [](PyObj& b) { b.at("aft_levels")[2][8] = PyObj::real(NAN); }},
+            {L9, [&](PyObj& b) { b.at("aft_levels")[1] = nums({1, 1, 1, 1, 1, 1, 1, 1}); }},
+            {P, [&](PyObj& b) { b.at("ui_pre_aft").at("curve").set("Y", nums({1.0})); }},
+            {P, [](PyObj& b) { b.at("ui_pre_aft").at("sigma").set("Cr", PyObj::str("x")); }},
+            {F, [&](PyObj& b) { b.at("aft_bin_flags").at("marker")[0] = f8; }},
+            {F, [](PyObj& b) { b.at("aft_bin_flags").set("gt3", PyObj::integer(0)); }},
+        };
+        for (const auto& c : bad) {
+            PyObj x = d;
+            c.edit(x.at("base"));
+            QString got = "accepted";
+            try {
+                ProfileState::from_json(x);
+            } catch (const std::runtime_error& e) {
+                got = e.what();
+            }
+            QCOMPARE(got, QString(c.text));
+        }
+        QCOMPARE(ProfileState::from_json(d).channels, std::string("RGB"));      // the intact file still loads
+    }
+
+    // G1 step 4 (native_n3_fixes2.md): an R/G/B equalizer edit gives the same Y / Cb / Cr curves, sigma and processed
+    // frame as the Y / Cb / Cr combination of the code BEFORE G1.  The expected values are a fixture made by that code
+    // (qtui/tests/fixtures/g1_before_combine.json, written by qtui/tools/g1_fixture/make_g1_fixture.sh from 5dabc1f:
+    // nvc_aft_combine of the base commit on the AFT bytes holding the edited float32 R / G / B levels, then its nvcore
+    // temporal + finish), so the code under test is not its own reference.  Edits: R bin 4 / G all bins / all faces
+    // bin 2 to float(1.2), B bin 6 to float(0.7) (the AFT bytes hold float32; the editor's 1.2 is not one).
+    // Frame: test.mp4 frame 4, the frame the fixture was made on (the AFT levels of the run are checked first).
+    static uint64_t fnv1a(const Planes& p) {
+        uint64_t h = 1469598103934665603ULL;
+        for (int c = 0; c < 3; ++c) {
+            const auto& v = c == 0 ? p.Y : c == 1 ? p.Cb : p.Cr;
+            const auto* b = reinterpret_cast<const uint8_t*>(v.data());
+            for (size_t i = 0; i < v.size() * sizeof(float); ++i) h = (h ^ b[i]) * 1099511628211ULL;
+        }
+        return h;
+    }
+
+    void g1EditMatchesAftCombine() {
+        const QString fx = QString(NV_SOURCE_ROOT) + "/qtui/tests/fixtures/g1_before_combine.json";
+        std::ifstream in(fx.toStdString(), std::ios::binary);
+        QVERIFY2(in.good(), "qtui/tests/fixtures/g1_before_combine.json is missing");
+        std::stringstream ss;
+        ss << in.rdbuf();
+        const PyObj X = PyObj::parse(ss.str());
+        const auto& fr = win->frames;
+        const int f = static_cast<int>(X.get("frame").as_int());
+        QVERIFY(static_cast<int>(fr.size()) > f + 2);
+        const PyObj fresh = build_profile(fr, f, win->full_range, win->matrix, "auto", nullptr, CancelFn());
+        const PyObj aftp = run_aft(fresh, fr[static_cast<size_t>(f)], win->full_range, win->matrix, CancelFn());
+        // the input: the same AFT run as the fixture (levels and the curve after AFT)
+        QVERIFY2(aftp.get("aft_levels") == X.get("aft_levels"),
+                 "the AFT levels differ from the fixture's (the fixture is for test.mp4 frame 4: NV_TEST_VIDEO?)");
+        QVERIFY(aftp.get("curve") == X.get("curve_after_aft"));
+        const PyObj P = backend_params(default_params());
+        const int R = static_cast<int>(P.get("radius").as_int());
+        std::vector<Planes> wn;
+        for (int i = std::max(0, f - R); i <= std::min(static_cast<int>(fr.size()) - 1, f + R); ++i)
+            wn.push_back(to_planes(fr[static_cast<size_t>(i)]));
+        const int wci = f - std::max(0, f - R);
+        const char* NM[3] = {"Y", "Cb", "Cr"};
+        QCOMPARE(X.get("edits").size(), size_t(4));
+        for (const PyObj& e : X.get("edits").items()) {
+            const QByteArray name = QByteArray::fromStdString(e.get("name").as_str());
+            AppState st;
+            ProfileState ps0;
+            ps0.base = fresh;
+            st.set_profile(after_aft(ps0, aftp), "AFT");
+            for (const PyObj& t : e.get("set").items()) {      // the R/G/B equalizer through AppState (the UI's path)
+                const int j = static_cast<int>(t[0].as_int()), k = static_cast<int>(t[1].as_int());
+                std::array<double, 9> fs = st.profile.factors[static_cast<size_t>(j)];
+                fs[static_cast<size_t>(k)] = t[2].as_double();
+                st.new_edit();
+                st.set_factors(j, fs, k);
+            }
+            const PyObj eff = *st.effective();
+            for (const char* c : NM) {
+                const auto got = eff.get("curve").get(c).as_doubles(), exp = e.get("curve").get(c).as_doubles();
+                QVERIFY2(got.size() == exp.size() && std::memcmp(got.data(), exp.data(), 8 * got.size()) == 0, name);
+                const double gs = eff.get("sigma").get(c).as_double(), es = e.get("sigma").get(c).as_double();
+                QVERIFY2(std::memcmp(&gs, &es, 8) == 0, name);
+            }
+            Flows flows;
+            Planes tmp, rv;
+            temporal(wn, wci, eff, P, &flows, &tmp, &rv);
+            const Planes res = finish(wn[static_cast<size_t>(wci)], tmp, rv, eff, P);
+            char hx[32];
+            std::snprintf(hx, sizeof(hx), "%016llx", static_cast<unsigned long long>(fnv1a(res)));
+            QCOMPARE(QString(hx), QString::fromStdString(e.get("frame_fnv1a64").as_str()));
+            QVERIFY2(!(eff.get("curve") == aftp.get("curve")), name);   // the edit changed the curve
+        }
     }
 
     void cleanupTestCase() {

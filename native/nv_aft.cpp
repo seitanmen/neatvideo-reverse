@@ -622,20 +622,15 @@ int auto_fine_tune(const float* rgb, int W, int H, uint8_t* prof, int mode, cons
 }
 
 // ------------------------------------------------------------------ nv_aft_v5.apply_aft (combination)
-void combine(const uint8_t* raw, const uint8_t* aft, const double* centers, int n, const float* const curves[3],
-             double area_level, const double tot_ratio[3], int band, Combine* out) {
-    // _read_model_q99 / _color_weights (Python floats; q ** 2 and the folded constants are libm pow)
+void color_weights(const float q99[3], double cw[3][3]) {
+    // _color_weights (Python floats; q ** 2 and the folded constants are libm pow)
     const double MSQ[3][3] = {
         {g_pow(0.299, 2.0), g_pow(0.587, 2.0), g_pow(0.114, 2.0)},
         {g_pow(0.169, 2.0), g_pow(0.331, 2.0), g_pow(0.500, 2.0)},
         {g_pow(0.500, 2.0), g_pow(0.419, 2.0), g_pow(0.081, 2.0)},
     };
     double a_sq[3];
-    for (int j = 0; j < 3; ++j) {
-        float q;
-        std::memcpy(&q, raw + (FACE[j] / 4 + 5 + band) * 4, 4);
-        a_sq[j] = g_pow(static_cast<double>(q), 2.0);
-    }
+    for (int j = 0; j < 3; ++j) a_sq[j] = g_pow(static_cast<double>(q99[j]), 2.0);
     for (int ci = 0; ci < 3; ++ci) {
         // sum() of the three Python floats: 0 + x0 (the int start), then CPython 3.12+'s
         // Neumaier-compensated loop over x1, x2 (builtin_sum_impl), the compensation added at the end
@@ -650,33 +645,46 @@ void combine(const uint8_t* raw, const uint8_t* aft, const double* centers, int 
         }
         if (comp != 0.0 && std::isfinite(comp)) denom = AD(denom, comp);
         for (int j = 0; j < 3; ++j)
-            out->cw[ci][j] = (denom <= 0) ? 1.0 / 3.0 : MD(a_sq[j], MSQ[ci][j]) / denom;
+            cw[ci][j] = (denom <= 0) ? 1.0 / 3.0 : MD(a_sq[j], MSQ[ci][j]) / denom;
     }
-    // the 9 curve words of each face on np.linspace(0, 256, 9), interpolated at the v5 centres
+}
+
+void combine_levels(const double cw[3][3], const double levels[3][9], const double* centers, int n,
+                    const float* const curves[3], std::vector<double> face[3], std::vector<float> curve_out[3]) {
+    // the 9 levels of each face on np.linspace(0, 256, 9), interpolated at the v5 centres
     double raw_c[9];
     for (int k = 0; k < 9; ++k) raw_c[k] = 32.0 * k;
     for (int j = 0; j < 3; ++j) {
-        double vals[9];
-        for (int k = 0; k < 9; ++k) {
-            float v;
-            std::memcpy(&v, aft + CURVE[j] + 0x20 * k, 4);
-            vals[k] = static_cast<double>(v);
-        }
-        nvn::Interp it(raw_c, vals, 9);
-        out->face[j].resize(n);
-        for (int i = 0; i < n; ++i) out->face[j][i] = it(centers[i], false);
+        nvn::Interp it(raw_c, levels[j], 9);
+        face[j].resize(n);
+        for (int i = 0; i < n; ++i) face[j][i] = it(centers[i], false);
     }
     // f_c = sqrt(maximum(0 + cw0*f0 + cw1*f1 + cw2*f2, 0)); curve * f_c in float64 -> float32
     for (int ci = 0; ci < 3; ++ci) {
-        out->curve[ci].resize(n);
+        curve_out[ci].resize(n);
         for (int i = 0; i < n; ++i) {
             double ws = 0.0;
-            for (int j = 0; j < 3; ++j) ws = AD(ws, MD(out->cw[ci][j], out->face[j][i]));
+            for (int j = 0; j < 3; ++j) ws = AD(ws, MD(cw[ci][j], face[j][i]));
             const double mx = (ws != ws) ? ws : (ws >= 0.0 ? ws : 0.0);
             const double f = std::sqrt(mx);
-            out->curve[ci][i] = static_cast<float>(MD(static_cast<double>(curves[ci][i]), f));
+            curve_out[ci][i] = static_cast<float>(MD(static_cast<double>(curves[ci][i]), f));
         }
     }
+}
+
+void combine(const uint8_t* raw, const uint8_t* aft, const double* centers, int n, const float* const curves[3],
+             double area_level, const double tot_ratio[3], int band, Combine* out) {
+    float q99[3];
+    for (int j = 0; j < 3; ++j) std::memcpy(&q99[j], raw + (FACE[j] / 4 + 5 + band) * 4, 4);
+    color_weights(q99, out->cw);
+    double levels[3][9];
+    for (int j = 0; j < 3; ++j)
+        for (int k = 0; k < 9; ++k) {
+            float v;
+            std::memcpy(&v, aft + CURVE[j] + 0x20 * k, 4);
+            levels[j][k] = static_cast<double>(v);
+        }
+    combine_levels(out->cw, levels, centers, n, curves, out->face, out->curve);
     // prof["sigma"] = interp(area_level, centres, curve) * tot_ratio (numpy float64 scalar product)
     for (int ci = 0; ci < 3; ++ci) {
         std::vector<double> cv(n);
@@ -693,6 +701,22 @@ void combine(const uint8_t* raw, const uint8_t* aft, const double* centers, int 
             out->clip[j][k] = aft[o + 0x1d] != 0;
             out->gt3[j][k] = aft[o + 0x1e] != 0;
         }
+}
+
+// ------------------------------------------------------------------ the R/G/B equalizer (G1)
+void rgb_effective(const double* centers, int n, const float* const src[3], const double cw[3][3],
+                   const double levels[3][9], const double tk[3], double area_level, const double tot_ratio[3],
+                   std::vector<float> curve_out[3], double sigma[3]) {
+    std::vector<double> face[3];
+    combine_levels(cw, levels, centers, n, src, face, curve_out);
+    for (int ci = 0; ci < 3; ++ci) {
+        const float t = static_cast<float>(tk[ci]);              // curves * np.float32(tk) (array first)
+        for (int i = 0; i < n; ++i) curve_out[ci][i] = M(curve_out[ci][i], t);
+        std::vector<double> cv(n);
+        for (int i = 0; i < n; ++i) cv[i] = static_cast<double>(curve_out[ci][i]);
+        nvn::Interp it(centers, cv.data(), n);
+        sigma[ci] = MDS(it(area_level, false), tot_ratio[ci]);
+    }
 }
 
 }  // namespace nva

@@ -43,7 +43,7 @@ import numpy as np
 import nvfilter as nv
 
 F32 = np.float32
-ABI_VERSION = 2
+ABI_VERSION = 3
 PROF_BYTES = 0xc300
 _PROF_I, _PROF_D, _PAR_I, _PAR_D = 4, 82, 4, 21
 _MAXC = 16

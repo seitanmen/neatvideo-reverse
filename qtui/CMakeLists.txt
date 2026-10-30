@@ -73,3 +73,8 @@ set_target_properties(qtui_dump_n3c PROPERTIES BUILD_RPATH "${NVCORE_DIR}")
 add_executable(qtui_emit_sizes tests/emit_sizes.cpp)
 target_link_libraries(qtui_emit_sizes PRIVATE nvui)
 set_target_properties(qtui_emit_sizes PROPERTIES BUILD_RPATH "${NVCORE_DIR}")
+
+# G1 (R/G/B equalizer) comparison driver: qtui/tools/g1_compare.py
+add_executable(qtui_g1eq tests/g1_eq.cpp)
+target_link_libraries(qtui_g1eq PRIVATE nvui)
+set_target_properties(qtui_g1eq PROPERTIES BUILD_RPATH "${NVCORE_DIR}")
