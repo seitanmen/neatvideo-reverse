@@ -22,6 +22,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 
 namespace nvp {
 
@@ -36,7 +37,11 @@ enum Status : int {
                            // FUN_00ad11b0 without a direction bin in nv_model)
     BAD_ARGUMENT = 2,      // ValueError in nv_model (sides outside 2..512), or an area outside the
                            // frame / a mode outside 0..3 (the Python port does not check these)
+    CANCELLED = 3,         // the cancel query of build_profile answered true (native only, G7)
 };
+
+// A cancel query (true = cancelled).
+using Cancel = std::function<bool()>;
 
 // data/ref_floor.npy ('<f4', shape (51,)): nv_profile.reference_floor's cache.  false on any error.
 bool load_reference_floor(const char* path, float out[DEV_WORDS]);
@@ -51,8 +56,10 @@ int compute_reference_floor(float out[DEV_WORDS], int threads = 1);
 // FUN_009b2f34 (nv_profile.tile_dev): plane H x W row-major, model >= MODEL_WORDS words of the
 // plane's model; floor may be nullptr (no floor).  threads > 1 computes the tile models in
 // parallel (the accumulation stays in the Python order: same bits).
+// cancel (may be null): asked before each tile model and inside it (nvm::model_full); must be thread-safe
+// when threads > 1.  A true answer returns CANCELLED.
 int tile_dev(const float* plane, int W, int H, const uint32_t* model, const float* floor,
-             float out[DEV_WORDS], int threads = 1);
+             float out[DEV_WORDS], int threads = 1, const Cancel* cancel = nullptr);
 
 // FUN_0098718c (nv_mcstats.mc_stats) of the H x W planes R, G, B.
 void mc_stats(const float* R, const float* G, const float* B, int W, int H, float out[MC_WORDS]);
@@ -65,7 +72,13 @@ int curve_bin(float mean);
 // stride_c floats per pixel (channels 0..2 = R, G, B).  floor: the 51 reference-floor words
 // (with_floor = True) or nullptr (with_floor = False).  out receives PROF_BYTES bytes; the heap
 // pointers 0x00..0x17 stay 0.  Returns a Status (out is meaningful for OK only).
+// cancel (G7; empty: never asked): asked from the calling thread and the worker threads (serialised, and
+// not asked again after a true answer) before each of the six plane models and inside them (every level x
+// direction set, every direction, every pattern round; nvm::model_full), before each tile model of
+// tile_dev and before the LZMA part.  A true answer returns CANCELLED soon after; without one the bytes do
+// not depend on it.
 int build_profile(const float* rgb, int W, int H, int stride_c, int mode, int x, int y, int w, int h,
-                  const float* floor, uint8_t* out, bool lzma = true, int threads = 1);
+                  const float* floor, uint8_t* out, bool lzma = true, int threads = 1,
+                  const Cancel& cancel = Cancel());
 
 }  // namespace nvp

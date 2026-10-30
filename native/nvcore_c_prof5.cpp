@@ -24,7 +24,9 @@ int nvc_build_profile_v5(const float* const* planes, int H, int W, int Hc, int W
                          int area_n, const int* area, int threads, nvc_p5_cancel_fn cancel, int* out_i,
                          double* out_d) {
     try {
-        if (!planes || H < 1 || W < 1 || Hc < 1 || Wc < 1 || n_more < 0 || (n_more > 0 && !more) ||
+        // a luma side under 2 px: Python raises ValueError (np.gradient of the FindFlatArea fallback, or _b3 of an
+        // empty chroma crop), the port is not defined there
+        if (!planes || H < 2 || W < 2 || Hc < 1 || Wc < 1 || n_more < 0 || (n_more > 0 && !more) ||
             mode < 0 || mode > 2 || levels < 2 || levels > 5 || (area_n != 0 && area_n != 3 && area_n != 4) ||
             (area_n != 0 && !area))
             return -2;

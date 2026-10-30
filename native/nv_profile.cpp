@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstring>
 #include <functional>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -375,7 +376,7 @@ int compute_reference_floor(float out[DEV_WORDS], int threads) {
 
 // ------------------------------------------------------------------------------ tile_dev
 int tile_dev(const float* plane, int W, int H, const uint32_t* model, const float* floor,
-             float out[DEV_WORDS], int threads) {
+             float out[DEV_WORDS], int threads, const Cancel* cancel) {
     if (W < 32 || H < 32) return NOT_IMPLEMENTED;
     const int nx = ((W - 32) >> 4) + 1;
     const int ny = ((H - 32) >> 4) + 1;
@@ -384,12 +385,18 @@ int tile_dev(const float* plane, int W, int H, const uint32_t* model, const floa
     std::vector<int> tst(ntiles, 0);
     // tile index tx * ny + ty: the Python loop order (tx outer, ty inner)
     parallel_for(ntiles, threads, [&](int k) {
+        if (cancel && *cancel && (*cancel)()) {
+            tst[k] = CANCELLED;
+            return;
+        }
         const int tx = k / ny, ty = k % ny;
         std::vector<float> tile(32 * 32);
         for (int r = 0; r < 32; ++r)
             std::memcpy(&tile[size_t(r) * 32], plane + size_t(16 * ty + r) * W + 16 * tx, 32 * sizeof(float));
-        tst[k] = nvm::model_full(tile.data(), 32, 32, 2, &tw[size_t(k) * nvm::STRUCT_WORDS], 2);
+        tst[k] = nvm::model_full(tile.data(), 32, 32, 2, &tw[size_t(k) * nvm::STRUCT_WORDS], 2, cancel);
     });
+    for (int k = 0; k < ntiles; ++k)
+        if (tst[k] == CANCELLED) return CANCELLED;
     for (int k = 0; k < ntiles; ++k)
         if (tst[k] != nvm::OK) return tst[k];
     float pm[MODEL_WORDS];
@@ -498,9 +505,19 @@ int curve_bin(float mean) {
 
 // ------------------------------------------------------------------------------ build_profile
 int build_profile(const float* rgb, int W, int H, int stride_c, int mode, int x, int y, int w, int h,
-                  const float* floor, uint8_t* out, bool lzma, int threads) {
+                  const float* floor, uint8_t* out, bool lzma, int threads, const Cancel& cancel) {
     if (mode < 0 || mode > 3 || stride_c < 3 || x < 0 || y < 0 || w < 1 || h < 1 || x + w > W || y + h > H)
         return BAD_ARGUMENT;
+    // the query of all threads: serialised, sticky after the first true answer
+    std::mutex cancel_mu;
+    bool cancelled = false;
+    const Cancel stop_fn = [&]() {
+        std::lock_guard<std::mutex> lk(cancel_mu);
+        if (!cancelled && cancel()) cancelled = true;
+        return cancelled;
+    };
+    const Cancel* stop = cancel ? &stop_fn : nullptr;
+    if (stop && stop_fn()) return CANCELLED;
     const size_t n = size_t(w) * h;
     std::vector<std::vector<float>> planes(6, std::vector<float>(n));
     for (int r = 0; r < h; ++r)
@@ -517,7 +534,12 @@ int build_profile(const float* rgb, int W, int H, int stride_c, int mode, int x,
 
     std::vector<std::vector<uint32_t>> models(6, std::vector<uint32_t>(nvm::STRUCT_WORDS));
     int mst[6];
-    parallel_for(6, threads, [&](int i) { mst[i] = nvm::model_full(planes[i].data(), w, h, -1, models[i].data()); });
+    parallel_for(6, threads, [&](int i) {
+        mst[i] = (stop && stop_fn()) ? int(CANCELLED) : nvm::model_full(planes[i].data(), w, h, -1, models[i].data(),
+                                                                         nvm::LEVELS, stop);
+    });
+    for (int i = 0; i < 6; ++i)
+        if (mst[i] == CANCELLED) return CANCELLED;
     for (int i = 0; i < 6; ++i)
         if (mst[i] != nvm::OK) return mst[i];
     for (int i = 0; i < 6; ++i) std::memcpy(out + 0x4c + size_t(i) * 0x1f54, models[i].data(), 0x1f54);
@@ -525,7 +547,7 @@ int build_profile(const float* rgb, int W, int H, int stride_c, int mode, int x,
     const size_t dev_off[3] = {0xbc44, 0xbd10, 0xbddc};
     for (int i = 0; i < 3; ++i) {
         float d[DEV_WORDS];
-        const int st = tile_dev(planes[i].data(), w, h, models[i].data(), floor, d, threads);
+        const int st = tile_dev(planes[i].data(), w, h, models[i].data(), floor, d, threads, stop);
         if (st != OK) return st;
         std::memcpy(out + dev_off[i], d, sizeof(d));
     }
@@ -551,6 +573,7 @@ int build_profile(const float* rgb, int W, int H, int stride_c, int mode, int x,
         out[e + 0x1d] = flags[c] ? 1 : 0;
         out[e + 0x1e] = 0;                                  // 3.0 < level 1.0
     }
+    if (stop && stop_fn()) return CANCELLED;
     if (lzma) {
         // FUN_009b41c4 (nv_profile.lzma_part): R, G, B in turn; a failure clears 0x18..0x2b and 0xc2a4
         std::vector<uint8_t> blobs[3];

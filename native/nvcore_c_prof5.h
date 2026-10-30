@@ -4,12 +4,14 @@
  * native/verify_prof5.py and native/verify_bridge_prof5.py (a group of native/verify_bridge.py).
  *
  * nvc_build_profile_v5 = repro/nv_ui_qt/backend.build_profile(frames, f, full_range, matrix, mode, area, cancel)
- * with the native core on (repro/nv_native.build_profile_v5 -> nvfilter.build_profile_v5) minus "ui_frame":
+ * minus "ui_frame" (= nvfilter.build_profile_v5 with nv_native.find_flat_area's search; since G8 the native core's
+ * repro/nv_native.build_profile_v5 calls this function, with the FindFlatArea cache around it):
  *   planes: Y (H x W), Cb, Cr (Hc x Wc) of frame f as float32 (backend.profile_window: np.asarray(p, float32));
  *   pair: the 3 planes of frame f + 1 or NULL; more: n_more x 3 planes of frames f + 1 .. f + n_more (<= 2 in the UI;
  *   pair == more[0..2] there); mode 0 "auto", 1 "spatial", 2 "temporal"; levels 5 in the UI; matrix 0 bt709,
  *   1 bt601, 2 bt2020; area_n 0 = FindFlatArea search (cancellable: status 5), 3 = [y0, x0, size], 4 = [y0, x0, h, w].
- * Returns 0 ok, 5 cancelled (Python: ProfileCancelled; nothing written), < 0 bad arguments / error.
+ * Returns 0 ok, 5 cancelled (Python: ProfileCancelled; nothing written), < 0 bad arguments / error (-2 also for
+ * H or W < 2, where Python raises ValueError).
  *
  * out_i[NVC_P5_I]:
  *   [0] area_n (3 or 4)   [1..4] area (y0, x0, size, size) or (y0, x0, h, w)

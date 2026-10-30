@@ -116,6 +116,17 @@ int nvc_profile_build(const float* rgb, int W, int H, int mode, int x, int y, in
     }
 }
 
+int nvc_profile_build_cancel(const float* rgb, int W, int H, int mode, int x, int y, int w, int h,
+                             const float* floor, int lzma, int threads, nvc_cancel_fn cancel, uint8_t* out) {
+    try {
+        nvp::Cancel cb;
+        if (cancel) cb = [cancel]() { return cancel() != 0; };
+        return nvp::build_profile(rgb, W, H, 3, mode, x, y, w, h, floor, out, lzma != 0, threads, cb);
+    } catch (...) {
+        return -1;
+    }
+}
+
 int nvc_aft(const float* rgb, int W, int H, uint8_t* prof, int mode, int threads, nvc_cancel_fn cancel,
             float* out3) {
     try {

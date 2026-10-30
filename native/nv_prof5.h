@@ -59,7 +59,8 @@ using Cancel = std::function<bool()>;
 
 enum Status { OK = 0, CANCELLED = 5, BAD_ARGUMENT = -2 };
 
-// backend.build_profile's call of build_profile_v5 (native core on): area_n 0 = FindFlatArea (nv_native.
+// backend.build_profile's call of build_profile_v5 (native core on; BAD_ARGUMENT for H or W < 2, where Python
+// raises ValueError): area_n 0 = FindFlatArea (nv_native.
 // find_flat_area: nvc_flat_area on the CLIP_FINITE RGB from 64 px, else / on status 1 / a side < 8
 // find_flat_area_gradient), 3 = square (y0, x0, size), 4 = rectangle (y0, x0, h, w).  pair: the next frame
 // (or null), more: the following frames (more[0] == pair in the UI).  matrix: nvu::Matrix.

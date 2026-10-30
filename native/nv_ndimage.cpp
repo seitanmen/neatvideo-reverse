@@ -5,6 +5,7 @@
 // _nd_image.cpython-313-darwin.so / _multiarray_umath.cpython-313-darwin.so.
 #include "nv_ndimage.h"
 #include "nv_libm.h"
+#include "nv_portable.h"
 
 #include <cmath>
 
@@ -285,12 +286,25 @@ Plane b3(const Plane& a, int step, int axis) {
     Plane o(a.H, a.W);
     const int H = a.H, W = a.W;
     if (a.size() == 0) return o;
+#if NVP_ASM
+    // 4 lanes at a time where the taps need no reflection (G8 speed-up): the same instructions in the same
+    // operand order per lane (nvp::add / mul are single FADD / FMUL .4S), so the bits are those of the scalar loop
+    const nvp::V4 v0 = nvp::dup(w0), v1 = nvp::dup(w1), v2 = nvp::dup(w2);
+    auto lanes = [&](const float* t0, const float* t1, const float* t2, const float* t3, const float* t4, float* r) {
+        using namespace nvp;
+        store(r, add(add(mul(v0, add(load(t0), load(t4))), mul(v1, add(load(t1), load(t3)))), mul(v2, load(t2))));
+    };
+#endif
     if (axis == 0) {
         for (int y = 0; y < H; ++y) {
             const float* t[5];
             for (int k = 0; k < 5; ++k) t[k] = a.row((int)ext_index((long)y + (long)(k - 2) * step, H, REFLECT));
             float* r = o.row(y);
-            for (int x = 0; x < W; ++x)
+            int x = 0;
+#if NVP_ASM
+            for (; x + 4 <= W; x += 4) lanes(t[0] + x, t[1] + x, t[2] + x, t[3] + x, t[4] + x, r + x);
+#endif
+            for (; x < W; ++x)
                 r[x] = A(A(M(w0, A(t[0][x], t[4][x])), M(w1, A(t[1][x], t[3][x]))), M(w2, t[2][x]));
         }
     } else {
@@ -299,12 +313,20 @@ Plane b3(const Plane& a, int step, int axis) {
             ix[k].resize(W);
             for (int x = 0; x < W; ++x) ix[k][x] = (int)ext_index((long)x + (long)(k - 2) * step, W, REFLECT);
         }
+        auto one = [&](const float* s, float* r, int x) {
+            r[x] = A(A(M(w0, A(s[ix[0][x]], s[ix[4][x]])), M(w1, A(s[ix[1][x]], s[ix[3][x]]))), M(w2, s[ix[2][x]]));
+        };
         for (int y = 0; y < H; ++y) {
             const float* s = a.row(y);
             float* r = o.row(y);
-            for (int x = 0; x < W; ++x)
-                r[x] = A(A(M(w0, A(s[ix[0][x]], s[ix[4][x]])), M(w1, A(s[ix[1][x]], s[ix[3][x]]))),
-                         M(w2, s[ix[2][x]]));
+            int x = 0;
+#if NVP_ASM
+            const long st = step;
+            for (; x < W && x < 2 * st; ++x) one(s, r, x);
+            for (; x + 4 + 2 * st <= W; x += 4)     // taps x - 2 step .. x + 3 + 2 step inside the row
+                lanes(s + x - 2 * st, s + x - st, s + x, s + x + st, s + x + 2 * st, r + x);
+#endif
+            for (; x < W; ++x) one(s, r, x);
         }
     }
     return o;
