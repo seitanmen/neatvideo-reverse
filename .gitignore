@@ -55,6 +55,9 @@ native/libm_alt/**
 !native/libm_alt/musl_shim/*.h
 !native/libm_alt/pyhook/
 !native/libm_alt/pyhook/*.py
+# G9: the capture hook of native/verify_x86_bridge.sh
+!native/x86cap/
+!native/x86cap/*.py
 
 # packaging/ (.app の梱包。venv・ビルド物 (.venv/・build/・dist/) は除外)
 !packaging/

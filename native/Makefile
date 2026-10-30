@@ -16,6 +16,8 @@
 #   make -C native verify                                 (all of the above)
 #   make -C native portable x86 && native/verify_x86.sh  (F4: portable build, x86_64 vs arm64 bytes)
 #   make -C native lib && python3 native/verify_bridge.py   (N2a: libnvcore.dylib via ctypes vs the Python path)
+#   native/verify_x86_bridge.sh   (G9: libnvcore_x86.dylib (`make lib_x86`) vs libnvcore.dylib on the recorded
+#                                  verify_bridge.py calls, byte for byte)
 #   make -C native libm-alt && python3 native/verify_libm_alt.py   (W2a: openlibm / musl / naive libm builds,
 #                                                                   Makefile.libm_alt; the default build is unchanged)
 #
@@ -30,7 +32,10 @@ CXXFLAGS ?= -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra
 SDK_CFLAGS = -O2 -ffp-contract=off -fno-fast-math -D_7ZIP_ST -Wall -Wextra \
              -Wno-self-assign -Wno-unused-but-set-variable -Wno-misleading-indentation
 SDK_SRC = lzma/LzmaLib.c lzma/LzmaEnc.c lzma/LzmaDec.c lzma/LzFind.c lzma/Alloc.c
-SDK_OBJ = $(SDK_SRC:lzma/%.c=lzma/obj/%.o)
+# SDK_OBJDIR / SDK_XFLAGS: another architecture's objects in their own directory (`make lib_x86`)
+SDK_OBJDIR ?= lzma/obj
+SDK_XFLAGS ?=
+SDK_OBJ = $(SDK_SRC:lzma/%.c=$(SDK_OBJDIR)/%.o)
 SDK_HDR = $(wildcard lzma/*.h)
 
 all: nv_quality_test nv_band_test nv_curve_test nv_lzma_test nv_flat_test nv_model_test nv_v5_test lib \
@@ -58,9 +63,9 @@ nv_curve_test$(SUF): nv_curve_main.cpp nv_curve.cpp nv_curve.h $(LK) $(PT)
 	$(CXX) $(CXXFLAGS) $(XFLAGS) -o $@ nv_curve_main.cpp nv_curve.cpp nv_linekernel.cpp nv_portable.cpp -lpthread
 
 # N1c: LZMA (repro/nv_lzma.py) over the SDK 9.20 sources
-lzma/obj/%.o: lzma/%.c $(SDK_HDR)
-	@mkdir -p lzma/obj
-	$(CC) $(SDK_CFLAGS) -c -o $@ $<
+$(SDK_OBJDIR)/%.o: lzma/%.c $(SDK_HDR)
+	@mkdir -p $(SDK_OBJDIR)
+	$(CC) $(SDK_CFLAGS) $(SDK_XFLAGS) -c -o $@ $<
 
 nv_lzma_test: nv_lzma_main.cpp nv_lzma.cpp nv_lzma.h $(SDK_OBJ)
 	$(CXX) $(CXXFLAGS) -D_7ZIP_ST -o $@ nv_lzma_main.cpp nv_lzma.cpp $(SDK_OBJ)
@@ -119,6 +124,10 @@ lib: libnvcore$(SUF).dylib
 lib_portable:
 	$(MAKE) SUF=_p XFLAGS=-DNV_PORTABLE libnvcore_p.dylib
 
+# G9: libnvcore_x86.dylib (x86_64, run by an x86_64 Python under Rosetta 2; native/verify_x86_bridge.sh)
+lib_x86:
+	$(MAKE) SUF=_x86 XFLAGS="-arch x86_64" SDK_XFLAGS="-arch x86_64" SDK_OBJDIR=lzma/obj_x86 libnvcore_x86.dylib
+
 portable:
 	$(MAKE) SUF=_p XFLAGS=-DNV_PORTABLE $(PORT_BINS:%=%_p)
 
@@ -147,8 +156,8 @@ verify_bridge: lib
 
 clean:
 	rm -rf nv_quality_test tmp_blobs.bin tmp_results.bin nv_band_test nv_curve_test \
-	       nv_lzma_test lzma/obj nv_flat_test nv_model_test nv_v5_test nv_profile_test nv_aft_test \
-	       $(PORT_BINS:%=%_p) $(PORT_BINS:%=%_x86) libnvcore.dylib libnvcore_p.dylib
+	       nv_lzma_test lzma/obj lzma/obj_x86 nv_flat_test nv_model_test nv_v5_test nv_profile_test nv_aft_test \
+	       $(PORT_BINS:%=%_p) $(PORT_BINS:%=%_x86) libnvcore.dylib libnvcore_p.dylib libnvcore_x86.dylib
 
 # W2a: the libm sensitivity builds in libm_alt/bin/ (Makefile.libm_alt, libm_alt.h)
 libm-alt:
@@ -157,4 +166,4 @@ libm-alt:
 libm-alt-clean:
 	$(MAKE) -f Makefile.libm_alt clean
 
-.PHONY: all lib lib_portable portable x86 verify verify_bridge clean libm-alt libm-alt-clean
+.PHONY: all lib lib_portable lib_x86 portable x86 verify verify_bridge clean libm-alt libm-alt-clean
