@@ -597,6 +597,17 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   verify_bridge のグループ拡張: cancel 49・g8 152・prof5/ui/depth 追加。
   残った記録: aftCancellable 試験の弱さ、1×1 手動領域の差 (UI から到達不可)、
   Python 自己試験の終了時まれな停止 (別タスク)。
+- **C++ ファースト方針 (2026-10-30)**: 成果物は C++ に一本化。qtui が公式 UI、
+  PySide6 版 (nv_ui_qt) と nv_ui.py は参照実装として凍結 (動作義務なし)。
+  Python (repro/) は参照実装・検証オラクルとして維持。
+- **G1/G9/スタイル マージ完了 (2026-10-31、PR #5/#6、独立検証 APPROVE)**:
+  G1 イコライザを本家どおり R/G/B に (nvcore_c_rgb の色行列結合。旧形式 JSON は
+  従来の意味のまま読む。NVC_ABI_VERSION = 3)。G9 x86 検証 (記録/再生ブリッジ、
+  差は W2c 既知の temporal expf のみ)。スタイル修正 (Fusion ベース + 本家灰色パレット、
+  ウィンドウ内メニュー + 右端 Advanced Mode、中央タブ、n/a → Completeness 表示、
+  "32-bit float" 表示、コントラスト改善)。統括が実画面で確認済み。
+  自己試験 117/117 (C++)・97/97 (PySide6)、verify_bridge 全語一致。
+  残った記録: nv_ndimage の asm 部分のみ x86 未保証。
 
 ## 8. 共同作業ルール (複数エージェント共有)
 

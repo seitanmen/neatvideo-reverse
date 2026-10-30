@@ -241,6 +241,34 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
 - **残った記録**: Qt C++ の aftCancellable 試験は弱い (マージ後の強化候補)。
   取り消し ABI は int(*)(void) 型。1×1 の手動領域で Python と結果が違う
   (UI からは作れない)。Python 自己試験の終了時まれな停止は別タスク。
+
+### G1 + G9 + スタイル修正マージ完了 (2026-10-31、PR #5/#6 マージ。独立検証 Round 4/5・Round 2 APPROVE)
+
+- **G1 (R/G/B イコライザ、C++ ファースト版)**: qtui のイコライザを本家どおり R/G/B の
+  9 ビンに。Y/Cb/Cr 曲線は `nvcore_c_rgb` の色行列結合 (`nvc_rgb_weights` /
+  `nvc_rgb_effective_curve` / `nvc_rgb_combine`。nva::combine を color_weights と
+  combine_levels に分離。nvc_aft_combine の動作は不変 = 結合 69/69) で作る。
+  新形式 `nv_repro_profile_rgb` v2・Reset Fine-Tuning は AFT 前の曲線に戻る。
+  旧形式 (Y/Cb/Cr) の JSON は**従来の意味のまま読む** (統括決定。71 件の互換確認済み)。
+  `NVC_ABI_VERSION = 3` (main 取り込み後、nv_native.py も 3)。自己試験に
+  g1EditMatchesAftCombine (4 種編集 × 曲線/sigma/フレームハッシュをビット比較、
+  1 ulp 変異で FAIL) を追加。
+- **G9 (x86 検証)**: 記録/再生ブリッジ (`native/x86cap/`・`x86_bridge_{cap,replay,diff,known}.py`・
+  `verify_x86_bridge.sh`・`x86_exe_pair.py`) で arm64 3577/3577・portable 3577/3577・
+  x86 3546/3577 (差 31 件は nvc_temporal で W2c 既知の expf 差のみ)。
+  nv_depth も照合済み。nv_ndimage の asm 部分のみ「x86 未保証」が残る。
+- **スタイル修正 (PR #6)**: qtui がスタイル未指定で macOS ネイティブ表示になっていたのを、
+  `qtui/src/app/look.{h,cpp}` の `apply_look()` で Fusion ベース + 本家の灰色パレットに統一
+  (中央タブ・ボタン内右下の ▾・選択欄の ▾ 1 本化・プロファイル名欄の ▼・
+  ウィンドウ内メニューバー + 右端の「Advanced Mode」)。イコライザ行の n/a を
+  Completeness (g×100) 表示に変更 (自己試験 equalizerCompleteness 追加)。
+  フレーム情報に "32-bit float" 表示を追加。文字コントラスト比 1.1〜1.5 → 2.4〜3.4。
+  処理・書き出しは不変 (g1_compare ALL SAME・compare_export ALL SAME)。
+- **統括の実画面確認**: マージ後の main を実ビルドして実画面で起動、
+  ウィンドウ内メニュー・中央タブ・Advanced Mode・灰色パレット・R/G/B イコライザを確認
+  (オブジェクト `native/nv_portable` などはすべて libnvcore に統合済み)。
+- **MIGRATION.md の訂正**: ABI 版数は 2 ではなく **3** (PR #5 が main を取り込んで更新。
+  repro/nv_native.py も ABI_VERSION = 3)。
   Python Preferences に Auto Fine-Tune 行を追加して両 UI の行を揃えた。
 - **Windows**: `.claude/tasks/native_windows_runbook.md` (Windows ホストの Claude が実行中) と
   native_windows.md (W1〜W5)。
