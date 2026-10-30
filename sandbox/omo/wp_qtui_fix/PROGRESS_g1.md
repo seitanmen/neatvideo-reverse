@@ -1,0 +1,17 @@
+# G1 進捗 (g1-design)
+- 2026-10-30: 設計承認 (U1〜U10 ★)。実装開始。
+- 10:20 before ベースライン取得 (g1/before: py/cpp selftest 96/105、export a/b/c1 SAME、g1eq default/reset/r4/b6tune/r4ac 両 UI 一致)
+- 10:40 Python 版・C ABI (nvcore_c_rgb)・qtui の実装、g1eq 7 ケース両 UI バイト一致、Python 自己試験 108/108 (ON/OFF)
+- 10:46 g1_compare 2 クリップ × 7 ケース ALL SAME (状態・フレーム・書き出し ON/OFF/C++、default は変更前とバイト一致)。C++ 自己試験 108/108
+- 10:48 compare_export a/b/c1 SAME かつ変更前とバイト一致。compare_ui (dump) RESULT EQUAL (Help の About Qt 1 件は既存差)
+- 11:20 make verify: quality 4000/4000・band 5706・curve ALL・lzma 667/667 (genuine blob はこの worktree に無く skip)・flat ALL・flat_cancel 676・model 1244・temporal 474・aft (combine 69/69) 済み。spatial・profile 実行中
+- 修正: quality.level_words が channels を持たない stand-in (verify_bridge_ui の PS) を旧モード扱いにする
+- 15:50 再開。spatial 1287/1287・profile 39/39 PASS を確認 (make verify 11 本すべて一致)
+- 22:00 verify_bridge: prof5 以外は全語一致、prof5 は検証側 C ラッパに ui_rgb_weights を足して 110/110
+- 22:10 最終: Python 自己試験 108/108 (ON/OFF)、qtui_selftest 108/108、g1_compare ALL SAME、compare_export ALL SAME かつ変更前とバイト一致、verify_rgb_eq 8983/8983
+- L-1 修正 (from_json で RGB キーの形と型を確認): Python 109/109 ON/OFF、qtui 109/109、g1_compare default+r4 ALL SAME (default は変更前と一致)
+- 23:32 C++ ファースト版: 新 worktree でビルド、変更前ビルド (5dabc1f + g1_eq) を scratchpad に作成。verify_rgb_eq を apply_aft 由来の参照に書き換え (quick 932/932、before lib との legacy 一致)。g1_compare を C++ 専用に (ALL SAME)。qtui_selftest 115/115 (g1EditMatchesAftCombine 追加)。verify_bridge_prof5 を main に戻し、g1_py_eq.py を削除
+- 23:59 make verify 11 本すべて一致 (rc=0, 1512 s)
+- 00:16 verify_bridge ALL MATCH (curve/profile/aft/frame/cancel 49/fallback/g8 152/prof5 110/ui/depth)
+- 00:18 Python 自己試験 97/97、g1_compare ALL SAME (default は 5dabc1f ビルドと frame/曲線/Quality/書き出しバイト一致)、compare_export a/b/c1 SAME
+- 00:50 Round 3 L-1: 変更前ビルド (5dabc1f) の nvc_aft_combine の値を固定フィクスチャ g1_before_combine.json に (生成 qtui/tools/g1_fixture/)。試験はフィクスチャとビット比較。フィクスチャ・コードの 1 ulp 変異と hash 変異で落ちることを確認。qtui_selftest 全件 PASS
