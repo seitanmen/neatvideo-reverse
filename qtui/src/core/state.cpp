@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <stdexcept>
 
 #include "nvcore_c_prof5.h"
@@ -267,6 +268,45 @@ PyObj ProfileState::to_json() const {
     return d;
 }
 
+void check_rgb_keys(const PyObj& b) {
+    auto num = [](const PyObj& v) {
+        return (v.type() == PyObj::INT || v.type() == PyObj::FLOAT || v.type() == PyObj::BOOL) && std::isfinite(v.as_double());
+    };
+    auto boolean = [](const PyObj& v) { return v.type() == PyObj::BOOL; };
+    auto grid = [](const PyObj& v, size_t r, size_t c, const std::function<bool(const PyObj&)>& ok) {
+        if (!v.is_list() || v.size() != r) return false;
+        for (size_t i = 0; i < r; ++i) {
+            if (!v[i].is_list() || v[i].size() != c) return false;
+            for (size_t j = 0; j < c; ++j)
+                if (!ok(v[i][j])) return false;
+        }
+        return true;
+    };
+    for (const auto& [k, c] : {std::pair<const char*, size_t>{"ui_rgb_weights", 3}, {"aft_color_weights", 3},
+                               {"aft_levels", 9}})
+        if (b.has(k) && !grid(b.get(k), 3, c, num))
+            throw std::runtime_error(std::string("profile ") + k + " must be 3 x " + std::to_string(c) + " finite numbers");
+    if (b.has("ui_pre_aft")) {
+        const PyObj& p = b.get("ui_pre_aft");
+        const size_t n = b.get("curve_centers").size();
+        bool ok = p.is_dict() && p.get("curve").is_dict() && p.get("sigma").is_dict();
+        for (const auto& [c, _] : CHANNELS) {
+            if (!ok) break;
+            const PyObj& cv = p.get("curve").get(c);
+            ok = cv.is_list() && cv.size() == n && num(p.get("sigma").get(c));
+            for (size_t i = 0; ok && i < cv.size(); ++i) ok = num(cv[i]);
+        }
+        if (!ok) throw std::runtime_error("profile ui_pre_aft must hold the curve and sigma of Y / Cb / Cr (finite numbers)");
+    }
+    if (b.has("aft_bin_flags")) {
+        const PyObj& f = b.get("aft_bin_flags");
+        bool ok = f.is_dict() && f.has("marker");
+        for (const char* k : {"marker", "clip", "gt3"})
+            if (ok && f.has(k)) ok = grid(f.get(k), 3, 9, boolean);
+        if (!ok) throw std::runtime_error("profile aft_bin_flags must be 3 x 9 booleans (marker, clip, gt3)");
+    }
+}
+
 ProfileState ProfileState::from_json(const PyObj& d) {
     if (!d.is_dict() || d.get("format").type() != PyObj::STR ||
         (d.get("format").as_str() != "nv_repro_profile" && d.get("format").as_str() != "nv_repro_profile_rgb"))
@@ -314,6 +354,7 @@ ProfileState ProfileState::from_json(const PyObj& d) {
     PyObj t2 = PyObj::dict();
     for (const auto& k : tune.keys())
         t2.set(k, PyObj::real(std::min(std::max(tune.get(k).as_double(), TUNE_MIN), TUNE_MAX)));
+    check_rgb_keys(b);
     if (rgb && !rgb_ready(b))
         throw std::runtime_error("R/G/B profile lacks its colour weights (ui_rgb_weights / aft_color_weights, ui_pre_aft)");
     ps.channels = rgb ? "RGB" : "YCbCr";

@@ -80,6 +80,9 @@ Factors auto_complete(const Factors& factors, const std::array<std::set<int>, 3>
 // None) / rgb_effective_profile (curve and sigma through nvc_rgb_effective_curve) / auto_complete_ps /
 // after_aft / reset_fine_tune
 bool rgb_ready(const PyObj& base);
+// state.check_rgb_keys: the keys the R/G/B equalizer reads, where present, in shape with finite numbers (throws
+// std::runtime_error with the Python texts)
+void check_rgb_keys(const PyObj& base);
 std::optional<Factors> rgb_reference(const PyObj& base);
 PyObj rgb_effective_profile(const PyObj& base, const Factors& levels, const PyObj& tune);
 Factors auto_complete(const ProfileState& ps);

@@ -146,3 +146,86 @@
 - 編集なしの既定出力と、tune だけ・旧形式の出力は、変更前のコードとバイト一致した。
 - 共通規約の 4 つの検証 (自己試験 ×2・make verify 11 本・verify_bridge・書き出し) もすべて通った。
 - 判定は **APPROVE**。L-1 (形の崩れたファイルの検査) は、マージの前か直後に両 UI 同時に直すことを勧める。
+
+---
+
+# Round 2 (L-1 の修正の確認、2026-10-30)
+
+対象: `git diff af81050` の差分。製品コードは `repro/nv_ui_qt/state.py` の `check_rgb_keys` と `qtui/src/core/state.{h,cpp}` の `check_rgb_keys` の 2 か所で、どちらも `from_json` から呼ぶ。ほかに両 UI の自己試験に 1 項目ずつ足している。
+C++ 側は `qtui/build_main` を作り直し、検証用の `indep_eq` と `loadcheck` も新しい `libnvui.a` にリンクし直した。
+
+## 判定: **APPROVE** (L-1 は解消)
+
+## 差分の読み [観測]
+- 両 UI とも、`from_json` が `rgb_ready` を調べる前に、全形式 (旧形式を含む) について `check_rgb_keys(base)` を呼ぶ。
+- 検査の内容:
+
+  | キー | 求める形 |
+  |---|---|
+  | `ui_rgb_weights`・`aft_color_weights` | 3×3 の有限の数 |
+  | `aft_levels` | 3×9 の有限の数 |
+  | `ui_pre_aft` | dict で、curve の Y/Cb/Cr が curve_centers と同じ長さの有限の数、sigma の Y/Cb/Cr が有限の数 |
+  | `aft_bin_flags` | dict で marker があり、marker・clip・gt3 のうちあるものが 3×9 の bool |
+
+  どのキーも、あるときだけ調べる。
+- 「数」の定義は両 UI で同じで、既存の factors の検査と同じく bool を数に含める (Python は `isinstance(v, (int, float))`、C++ は INT・FLOAT・BOOL)。
+- エラーの文言は、両 UI で一字一句同じ。
+
+## 再実行した検証 [観測]
+
+| 検証 | 結果 |
+|---|---|
+| Python 自己試験 NV_NATIVE=1 / 0 | **109/109 / 109/109** (G1 malformed の項目を含む) |
+| `qtui_selftest` | **109 passed, 0 failed** (`g1MalformedKeys` を含む) |
+| Round 1 の `cases_bad/` (x4〜x7) をそのまま読ませる | 4 件とも py1・py0・C++ が同じ文言で拒否する。x4 の C++ の SIGSEGV と、x7 で C++ だけ計算を続けた件は解消 |
+| 新しい突き方 27 件 (`independent/gen_bad.py`、test.mp4:600) | 下表。25 件は両 UI が一致。違う 2 件は既存の仕組みによるもの (I-6・I-7) |
+| Round 1 の正しいケース 16 件を再実行 | 状態・有効プロファイル・パラメータ・フレーム・Quality の 204 ファイルが、Round 1 の出力と**バイト一致** |
+| worktree 内のプロファイル JSON 220 件を読み込みだけで比較 (`loadcheck.py`・`loadcheck.cpp`) | 下の「正しいファイル」の節 |
+| Round 1 で UI が書いた `*.nvprof.json` 28 件 | 両 UI とも受理する (RGB) |
+
+### 突き方の結果 (py1・py0・C++ の 3 つの比較)
+
+| ケース | 結果 |
+|---|---|
+| 重み 2 列 (p01)・NaN (p03)・文字列 (p04)・ネスト (p06)・空リスト (p07)・空の行 (p08) | 3 つとも「ui_rgb_weights must be 3 x 3 finite numbers」で拒否 |
+| aft_levels が 2 行 (p02)・3×10 (p13)・行が dict (p14)・Infinity (p28) | 3 つとも「aft_levels must be 3 x 9 finite numbers」で拒否 |
+| AFT 前の RGB ファイルに形の崩れた aft_levels が紛れたもの (p25) | 同じ文言で拒否 (使わないキーでも拒否する) |
+| ui_pre_aft の sigma Cr がない (p15)・curve の長さ違い (p16)・list (p17)・null (p24)・sigma が文字列 (p30) | 3 つとも同じ文言で拒否 |
+| aft_bin_flags の marker が int 0 (p18)・marker がない (p20)・marker が null (p32) | 3 つとも同じ文言で拒否 |
+| 旧形式で aft_color_weights が文字列 (p22) | 3 つとも拒否 (旧形式にも検査が掛かる。下の「旧形式への副作用」) |
+| 重みが bool (p05)・巨大な有限値 1e308・DBL_MAX・非正規数・−0 (p09)・int (p11)・負の値 (p29) | 3 つとも受理し、出力 (往復・有効プロファイル・フレーム・Quality) がバイト一致 |
+| aft_levels に bool (p12)・curve に bool (p31) | 3 つとも受理し、出力が一致 |
+| aft_bin_flags が marker だけ (p19)・余分なキーがある (p21)・旧形式で flags がない (p23) | 3 つとも受理し、出力が一致 |
+| **p10**: 重みに 400 桁の整数 | Python は **OverflowError** (`math.isfinite`)、C++ は ValueError 相当の文言で拒否。どちらも拒否はする → I-6 |
+| **p27**: aft_levels に 2^70 の整数 | 3 つとも受理し、処理フレームと Quality は一致。往復 JSON と有効プロファイル JSON の数の書き方だけが違う (Python `1180591620717411303424`、C++ `1.1805916207174113e+21`) → I-7 |
+
+### 正しいファイルが引き続き読めること・旧形式への副作用
+対象は worktree 内の `format` が nv_repro_profile 系の JSON 214 件と、`qtui/tests/fixtures/*.json` を合わせた 220 件。
+
+- **修正の前後で受理が同じ**: 修正後 (Python) と修正前 af81050 (Python) で、受理・拒否と有効プロファイル JSON の md5 が 220 件すべて一致した (161 受理・59 拒否)。修正によって新たに拒否されたファイルはない。
+- **両 UI が一致**: 修正後の Python と C++ で、受理・拒否、文言、channels、有効プロファイル JSON の長さが 220/220 一致した。
+- **G1 より前のコードと一致**: G1 より前 (df46dda) が受理した旧形式 71 件は、すべて修正後も YCbCr として受理された。有効プロファイル JSON の md5 は 71/71 一致した。
+  - この 71 件には、以前の作業で古い UI が書いた `coord/verify_*` の保存物も含まれる。
+  - G1 より前が拒否していた 149 件の内訳: 新形式 RGB のため 96 件、もともと不正なもの (自己試験が書いた意図的な不正ファイル・プリセット・ui_profile) 53 件。
+
+## Round 2 の追加の指摘 (どちらも I)
+
+### I-6: 巨大な整数 (float に変換できない桁数) を Python は OverflowError で拒否し、UI の読み込みハンドラはこれを捕まえない
+- 再現: `<scratch>/cases_bad2/p10_w_bigint.json` を `ProfileState.from_json` に渡すと、OverflowError: int too large to convert to float になる。
+- `main_window.load_profile` などが捕まえる例外は `(ValueError, KeyError, TypeError, AttributeError, OSError)` で、OverflowError は外に出る。
+- C++ は拒否の文言を出す。
+- 同じことは G1 より前のコードの factors の検査でも起きる (df46dda で factors に 400 桁の整数を入れると OverflowError。確認済み)。既存の挙動で、L-1 の修正で生じた差ではない。
+- 手で作ったファイルでしか起きない。直すなら `num` の中で OverflowError を捕まえて偽にするか、ハンドラで ArithmeticError も捕まえる (factors の検査と同時に)。
+
+### I-7: int64 を超える整数は、C++ の PyObj が float として持つ
+- そのため、往復 JSON の数の書き方だけが Python と違う。処理の値 (double) は同じで、フレームと Quality は一致する。
+- PyObj の既存の制約で、G1 に固有ではない。
+
+## 結論
+- L-1 は両 UI 同時に直っており、エラーの文言も一致する。
+- Round 1 の不正ファイルと、新しく突いた 27 件のうち 25 件で、両 UI の挙動が一致した。残る 2 件は既存の仕組みによる差で、どちらも I。
+- 正しいファイル (フィクスチャ・旧形式・UI が書いたもの・リポジトリの保存物 220 件) の受理と出力は変わらない。
+- 自己試験は Python ON/OFF・C++ とも 109/109。
+- 判定は **APPROVE**。
+
+検証用のスクリプトは `sandbox/omo/coord_g1/independent/` にある (`gen_bad.py`・`agree.py`・`loadcheck.py`・`loadcheck.cpp`。`CMakeLists.txt` に loadcheck を追加、`indep_eq.py` は ValueError 以外の例外も記録するようにした)。出力は scratchpad の `g1v/` にある (`rb2/`・`rc_test_r2/`・`lc_*.txt`・`r2*.log`)。

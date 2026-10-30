@@ -313,6 +313,30 @@ def reset_fine_tune(ps):
     return n
 
 
+def check_rgb_keys(b):
+    """The keys the R/G/B equalizer reads (G1), where present, in their shape with finite numbers (ValueError
+    otherwise; qtui's ProfileState::from_json raises the same texts): ui_rgb_weights / aft_color_weights 3 x 3,
+    aft_levels 3 x 9, ui_pre_aft {curve: Y / Cb / Cr as long as curve_centers, sigma: Y / Cb / Cr}, aft_bin_flags
+    {marker, and clip / gt3 when given: 3 x 9}."""
+    num = lambda v: isinstance(v, (int, float)) and math.isfinite(v)                    # noqa: E731
+    grid = lambda v, r, c, ok: isinstance(v, list) and len(v) == r and all(              # noqa: E731
+        isinstance(row, list) and len(row) == c and all(ok(x) for x in row) for row in v)
+    for k, c in (("ui_rgb_weights", 3), ("aft_color_weights", 3), ("aft_levels", 9)):
+        if k in b and not grid(b[k], 3, c, num):
+            raise ValueError(f"profile {k} must be 3 x {c} finite numbers")
+    if "ui_pre_aft" in b:
+        p, n = b["ui_pre_aft"], len(b["curve_centers"])
+        if not (isinstance(p, dict) and isinstance(p.get("curve"), dict) and isinstance(p.get("sigma"), dict) and
+                all(isinstance(p["curve"].get(c), list) and len(p["curve"][c]) == n and all(num(x) for x in p["curve"][c])
+                    and num(p["sigma"].get(c)) for c, _ in CHANNELS)):
+            raise ValueError("profile ui_pre_aft must hold the curve and sigma of Y / Cb / Cr (finite numbers)")
+    if "aft_bin_flags" in b:
+        f = b["aft_bin_flags"]
+        if not (isinstance(f, dict) and "marker" in f and
+                all(grid(f[k], 3, 9, lambda x: isinstance(x, bool)) for k in ("marker", "clip", "gt3") if k in f)):
+            raise ValueError("profile aft_bin_flags must be 3 x 9 booleans (marker, clip, gt3)")
+
+
 PROFILE_KEYS = ("mode", "area", "levels", "band_ratio", "tot_ratio", "curve", "curve_centers", "sigma")
 PROFILE_FORMAT, PROFILE_FORMAT_RGB = "nv_repro_profile", "nv_repro_profile_rgb"
 
@@ -373,6 +397,7 @@ class ProfileState:
                 not all(isinstance(v, (int, float)) and math.isfinite(v) for v in tune.values()):
             raise ValueError("profile tune must be a dict of all / Y / Cb / Cr with finite values")
         tune = {k: float(min(max(float(v), TUNE_MIN), TUNE_MAX)) for k, v in tune.items()}
+        check_rgb_keys(b)
         if rgb and not rgb_ready(b):
             raise ValueError("R/G/B profile lacks its colour weights (ui_rgb_weights / aft_color_weights, ui_pre_aft)")
         return ProfileState(d["base"], [list(map(float, f)) for f in d.get("factors", unit_factors())],

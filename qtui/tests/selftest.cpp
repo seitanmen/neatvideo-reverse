@@ -2180,6 +2180,51 @@ private slots:
         (void)aft;
     }
 
+    void g1MalformedKeys() {   // "G1 malformed ui_rgb_weights / aft_color_weights / ... rejected" (L-1)
+        const PyObj& aft = g1_aft_;
+        QVERIFY(aft.is_dict());
+        ProfileState pe;
+        pe.base = aft;
+        pe.factors = *rgb_reference(aft);
+        const PyObj d = pe.to_json();
+        auto nums = [](std::initializer_list<double> v) { return PyObj::reals(std::vector<double>(v)); };
+        PyObj f8 = PyObj::list();
+        for (int i = 0; i < 8; ++i) f8.append(PyObj::boolean(false));
+        PyObj w2 = PyObj::list();
+        w2.append(nums({0.5, 0.5}));
+        struct Bad {
+            const char* text;
+            std::function<void(PyObj&)> edit;
+        };
+        const char* W = "profile ui_rgb_weights must be 3 x 3 finite numbers";
+        const char* C = "profile aft_color_weights must be 3 x 3 finite numbers";
+        const char* L9 = "profile aft_levels must be 3 x 9 finite numbers";
+        const char* P = "profile ui_pre_aft must hold the curve and sigma of Y / Cb / Cr (finite numbers)";
+        const char* F = "profile aft_bin_flags must be 3 x 9 booleans (marker, clip, gt3)";
+        const std::vector<Bad> bad = {
+            {W, [&](PyObj& b) { b.set("ui_rgb_weights", w2); }},
+            {C, [](PyObj& b) { b.at("aft_color_weights")[0][1] = PyObj::str("x"); }},
+            {L9, [](PyObj& b) { b.at("aft_levels")[2][8] = PyObj::real(NAN); }},
+            {L9, [&](PyObj& b) { b.at("aft_levels")[1] = nums({1, 1, 1, 1, 1, 1, 1, 1}); }},
+            {P, [&](PyObj& b) { b.at("ui_pre_aft").at("curve").set("Y", nums({1.0})); }},
+            {P, [](PyObj& b) { b.at("ui_pre_aft").at("sigma").set("Cr", PyObj::str("x")); }},
+            {F, [&](PyObj& b) { b.at("aft_bin_flags").at("marker")[0] = f8; }},
+            {F, [](PyObj& b) { b.at("aft_bin_flags").set("gt3", PyObj::integer(0)); }},
+        };
+        for (const auto& c : bad) {
+            PyObj x = d;
+            c.edit(x.at("base"));
+            QString got = "accepted";
+            try {
+                ProfileState::from_json(x);
+            } catch (const std::runtime_error& e) {
+                got = e.what();
+            }
+            QCOMPARE(got, QString(c.text));
+        }
+        QCOMPARE(ProfileState::from_json(d).channels, std::string("RGB"));      // the intact file still loads
+    }
+
     void cleanupTestCase() {
         if (win) {
             win->close();

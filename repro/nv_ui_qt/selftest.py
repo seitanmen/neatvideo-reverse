@@ -1293,6 +1293,20 @@ def main(video, outdir):
     return 1 if n_fail else 0
 
 
+G1_BAD_KEYS = [   # (the text, path in base, the value); qtui/tests/selftest.cpp g1MalformedKeys has the same list
+    ("profile ui_rgb_weights must be 3 x 3 finite numbers", ["ui_rgb_weights"], [[0.5, 0.5]]),
+    ("profile aft_color_weights must be 3 x 3 finite numbers", ["aft_color_weights", 0, 1], "x"),
+    ("profile aft_levels must be 3 x 9 finite numbers", ["aft_levels", 2, 8], float("nan")),
+    ("profile aft_levels must be 3 x 9 finite numbers", ["aft_levels", 1], [1.0] * 8),
+    ("profile ui_pre_aft must hold the curve and sigma of Y / Cb / Cr (finite numbers)", ["ui_pre_aft", "curve", "Y"],
+     [1.0]),
+    ("profile ui_pre_aft must hold the curve and sigma of Y / Cb / Cr (finite numbers)", ["ui_pre_aft", "sigma", "Cr"],
+     "x"),
+    ("profile aft_bin_flags must be 3 x 9 booleans (marker, clip, gt3)", ["aft_bin_flags", "marker", 0], [False] * 8),
+    ("profile aft_bin_flags must be 3 x 9 booleans (marker, clip, gt3)", ["aft_bin_flags", "gt3"], 0),
+]
+
+
 def g1_checks(app, win, wait, idle, outdir):
     """G1, the R/G/B equalizer (sandbox/omo/wp_qtui_fix/DESIGN_G1.md, the user's decisions U1-U10 there)."""
     import copy
@@ -1407,6 +1421,21 @@ def g1_checks(app, win, wait, idle, outdir):
             rej.append(True)
     check("G1 new format nv_repro_profile_rgb: round trip, older readers refuse it, malformed rejected",
           rt and old_refuses and all(rej), f"{rt} {old_refuses} {rej}")
+    # the R/G/B keys in a wrong shape or with non-finite values: rejected with the texts qtui raises (L-1)
+    texts = []
+    for k, path, v in G1_BAD_KEYS:
+        x = json.loads(json.dumps(d))
+        o = x["base"]
+        for key in path[:-1]:
+            o = o[key]
+        o[path[-1]] = v
+        try:
+            ProfileState.from_json(x)
+            texts.append(None)
+        except ValueError as e:
+            texts.append(str(e))
+    check("G1 malformed ui_rgb_weights / aft_color_weights / aft_levels / ui_pre_aft / aft_bin_flags rejected",
+          texts == [t for t, _, _ in G1_BAD_KEYS], str(texts))
     # older Y / Cb / Cr files (fixtures saved by the code before G1) give the same effective profile
     fx = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "qtui", "tests", "fixtures")
     leg_ok = []

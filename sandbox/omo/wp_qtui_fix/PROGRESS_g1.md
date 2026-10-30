@@ -9,3 +9,4 @@
 - 15:50 再開。spatial 1287/1287・profile 39/39 PASS を確認 (make verify 11 本すべて一致)
 - 22:00 verify_bridge: prof5 以外は全語一致、prof5 は検証側 C ラッパに ui_rgb_weights を足して 110/110
 - 22:10 最終: Python 自己試験 108/108 (ON/OFF)、qtui_selftest 108/108、g1_compare ALL SAME、compare_export ALL SAME かつ変更前とバイト一致、verify_rgb_eq 8983/8983
+- L-1 修正 (from_json で RGB キーの形と型を確認): Python 109/109 ON/OFF、qtui 109/109、g1_compare default+r4 ALL SAME (default は変更前と一致)

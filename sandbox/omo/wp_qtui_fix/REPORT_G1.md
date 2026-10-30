@@ -133,3 +133,16 @@ compare_ui を実行したのは、最後の 2 つの小さな修正 (未使用�
 - マージの下見 (`git merge-tree`): n3fix-b・n3fix-c とは衝突なし。n3fix-a とは `qtui/CMakeLists.txt` の末尾 (試験用の実行ファイルを 1 つずつ追加) だけが衝突し、両方残せば解消する
 - ABI の版数: G7/G8 が 2 に上げている。G1 は関数を 3 つ追加するので、統合時に 3 に上げることを提案する
 - 独立検証: `sandbox/omo/coord_g1/VERDICT_g1.md` — **APPROVE** (M 0 件、L 1 件、I 5 件)。L-1: 形の崩れた RGB 形式のプロファイル (`ui_rgb_weights` などの形・型の誤り) を読むと C++ UI が SIGSEGV、両 UI で結果も違う。UI が書いたファイルでは起きない。PR に追加のコミットで直す
+
+---
+## L-1 の修正 (作業者 g1-design、2026-10-30 夜)
+- 両 UI の `from_json` に `check_rgb_keys` を追加した。`ui_rgb_weights`・`aft_color_weights` (3×3)、`aft_levels` (3×9)、`ui_pre_aft`、`aft_bin_flags` の形と型 (有限の数・真偽値) を確かめ、崩れていれば両 UI が同じ文言で拒否する。旧形式のファイルにも同じ検査をかける (Reset で RGB に移るときにこれらのキーを使うため)
+- 自己試験に 1 項目ずつ追加した (崩れ方 8 種)。Python 109/109 (ON/OFF)・`qtui_selftest` 109/109。g1_compare (default・r4) ALL SAME、default は G1 前とバイト一致
+- 統括の再確認: qtui のビルドは警告 0、`qtui_selftest` 109/109 (`sandbox/omo/coord_g1/rerun2_cpp_st.log`)
+- 独立検証 Round 2: **APPROVE**。
+  - 前回の不正ファイル 4 件と新しく突いた 27 件で、3 つ (Python native on・off と C++) の挙動は 25 件が一致した。一致しなかった 2 件は下の I-6 と I-7。
+  - リポジトリ内のプロファイル 220 件で、受理と拒否の結果、有効プロファイルの md5 が修正の前後で 220 件すべて同じだった (受理 161・拒否 59)。
+  - G1 より前に受理されていた旧形式 71 件は、71/71 が今も同じ値で読める。
+  - 新しい指摘は I-6 と I-7。
+    - I-6: 400 桁の整数を入れると Python が OverflowError を出す。G1 より前から factors でも起きる。
+    - I-7: 2^70 の整数は、保存した JSON での数の書き方だけが両 UI で違う。
