@@ -281,3 +281,19 @@ Windows の目標は (1) C++ のクロスプラットフォーム決定論 (同�
 同じ出力。F4 の手法の延長) と (2) libm 差異 (pow/tanf/atan2/sincos) の解消か文書化。
 タスク: W1 CMake 化 + CI (N2 と並行可) → W2 libm 対策 → W3 Windows 検証 → W4 .exe 梱包 →
 W5 Windows OFX (N3 の後)。
+
+### N4 (macOS OFX プラグイン) 開始 (2026-10-31)
+
+委託済み: `.claude/tasks/native_n4_ofx.md`。
+- N4a: 3 関数エクスポート (`OfxGetPlugin` / `OfxGetNumberOfPlugins` (=1) /
+  `FoundryOfxAllowPluginUnload`) の .ofx バンドル (雛形は
+  reference/genuine/NeatVideo.ofx.bundle/)。pluginId = com.meatvideo.denoise
+- N4b: Render アクション (ホストから渡された画像を libnvcore で処理。
+  **ファイル読み込みなし**。パラメータ → v5_params の写像は ofx/params.cpp に集約)
+- N4c: 実用化 (R/G/B イコライザ・プロファイル JSON 読み込み・Windows .dll は W5)
+- 検証: ミニホスト (ofx/tools/minihost.cpp) で Render を呼び、
+  ブリッジ経路 (process_frame_v5) とビット一致
+- インターレース: docs/INTERLACE_PROGRESSIVE.md のとおり、まず「非対応」と
+  正直に報告する段階から (フィールド対応は docs の実装順に従う)
+- GPU: docs/GPU_STATUS.md (本家は Metal+OpenCL+CUDA、カーネル未解読。
+  最優先調査 = 本家の GPU 有効/無効 A/B 出力差の確認)
