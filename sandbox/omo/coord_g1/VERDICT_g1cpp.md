@@ -226,3 +226,40 @@ worktree を scratchpad に写し (`g1v3/mut`、NV_SOURCE_ROOT はその写し)�
 ### I-7: `make_g1_fixture.sh` は worktree のフィクスチャを直接上書きする
 - 加えて、既定の作業場所 (`$TMPDIR/g1_fixture_build`) を `rm -rf` する。
 - 再生成の手順としては正しい。ただし「置かれているものと一致するか確かめたい」ときは、出力先を引数で指定できると安全である。
+
+---
+
+# Round 5 (NVC_ABI_VERSION 2→3 と merge の確認、2026-10-31、軽め)
+
+対象: `n3fix-g1cpp` の 2 コミット。4b5e510 (origin/main c6d497b の merge) と 53a52e1 (版数 2→3、統括のコミット)。
+
+## 判定: **APPROVE**
+
+## 確かめたこと [観測]
+- **merge 4b5e510**
+  - 枝に入ったのは `.claude/tasks/native_n3_fixes2.md` (+23 行) と `sandbox/omo/readonly_snapshot_before.sha256` (1 行) だけで、製品コードは変わっていない。
+  - 8cb3ba3 の `qtui/`・`native/` のファイル 183 件を、Round 4 で検証した写し (`g1v3/mut`) と比べ、183/183 が一致した。
+- **53a52e1 の差分**: 次の 2 行だけ。
+  - `native/nvcore_c.h` の `#define NVC_ABI_VERSION 3` (コメントに G1 を追記)
+  - `repro/nv_native.py` の `ABI_VERSION = 3`
+- **版数を参照している箇所** (`native/`・`repro/`・`qtui/`・`packaging/`、ビルド出力の `__GXX_ABI_VERSION` を除く)
+  - 定義: `nvcore_c.h:28`・`nvcore_c.cpp:79` (定数を返すだけ)
+  - 比較: `repro/nv_native.py:77` の `!= ABI_VERSION` だけ
+  - `native/x86_bridge_cap.py:172` は呼び出しを記録するだけで、`x86_bridge_replay.py:182-184` は fallback 群以外では数えない。どちらも値 2 を前提にしていない。記録ファイルは git に入っておらず、毎回取り直す。
+  - qtui と packaging は版数を参照していない (packaging は `nv_native.AVAILABLE`/`LIB_PATH` を診断に出すだけ)。
+  - **漏れはない**。
+- **版数 3 の dylib を実際に読む**
+  - HEAD で `make -C native lib` (警告 0) をした後、`nv_native.LIB_PATH` = `<wt>/native/libnvcore.dylib`、`AVAILABLE` = True、`nvc_abi_version()` = 3 だった。
+- **版数 2 の古い dylib を置いたとき** (記録)
+  - 使ったのは、Round 3 で自分で作った 5dabc1f の dylib (`nvc_abi_version()` = 2)。
+  - Python 側: `NV_NATIVE_LIB` にそれを指定すると、`LIB_PATH` = None・`AVAILABLE` = False になる。`backend.native_enabled()` は NV_NATIVE=1 でも False。**警告もメッセージも出さず、黙って Python の経路に落ちる** (stderr は空)。
+    - 結果は Python の経路とビット一致なので、出力は変わらず遅くなるだけ。
+    - 気づけるのは packaging の診断 JSON (`native_available`) くらい。既存の設計どおりの挙動で、G1 で変わった点ではない。
+  - C++ 側 (参考): 同じ dylib を `DYLD_LIBRARY_PATH` で読ませると、`qtui_export` は「Symbol not found: _nvc_rgb_effective_curve」で起動時に止まる。黙って違う結果になることはない。
+- **`python3 native/verify_bridge.py --only fallback,cancel`**: **ALL MATCH** (fallback 9/9・691,209 語、cancel 49/49・199,807 語、付随の aft 2/2)。
+
+## 指摘 (I のみ)
+
+### I-8: 文書が版数 2 のまま
+- `native/MIGRATION.md:235` と `AGENTS.md:595` は、版数 2 (G7/G8 時点) の記録のままで、G1 の 3 への更新が書かれていない。履歴としては正しいので、G1 の節を足すときに「3 (nvc_rgb_*)」と一行添えればよい。
+- Round 3 の I-2「版数を上げてはいけない」は、`repro/nv_native.py` を同時に上げる前提で解消した。C++ ファースト方針のもとでも、版数の追従だけは `repro/` の変更として許容した、という扱いになる。統括の判断として記録しておくこと。

@@ -110,3 +110,28 @@ G1 を n3fix-g1cpp でやり直し、検証もすべて済みました。共通�
 - 生成ツールは 5dabc1f のライブラリだけでビルドできた。
 - Round 3 の試験では PASS のままだった共有部の変異 (float の sqrt) が、新しい試験では FAIL になる。循環は解消した。
 - I-7: `make_g1_fixture.sh` は worktree のフィクスチャを直接上書きする。一致を確かめるだけのときのために、出力先を引数で指定できるとよい (記録のみ)。
+
+---
+## main の取り込みと ABI 3 (統括、2026-10-31)
+- ユーザーの判断 (`.claude/tasks/native_n3_fixes2.md` の「統括の回答」) を受けて、次の 2 つを行った。
+  - origin/main (c6d497b) を取り込んだ (4b5e510)。
+  - `NVC_ABI_VERSION` を 3 に上げた (53a52e1)。
+- `repro/nv_native.py` は版数の完全一致を確かめているので、同じコミットで `ABI_VERSION = 3` にした。
+  - 上げないと、Python の native 経路が黙って使われなくなり、verify_bridge も通らない。
+  - `repro/` への変更はこの 1 行だけ。
+- 共通 4 検証 (統括の実行、ログは `sandbox/omo/coord_g1/abi3/`):
+  - `make -C native lib`・qtui のビルドは、どちらも警告 0。`nv_native.LIB_PATH` は worktree の dylib を指し、`nvc_abi_version()` = 3。
+  - `qtui_selftest`: 115/115。Python 自己試験 (NV_NATIVE=1): 97/97。
+  - `make -C native verify` 11 本: すべて一致 (ALL BIT-EXACT)。
+  - `verify_bridge.py` 全群 ALL MATCH: curve 20・profile 9・aft 26・frame 72 (3.06 億語)・cancel 49・fallback 9・g8 152・prof5 110 語・ui 34,755 語・depth 2.09 億語。
+  - `compare_export.py`: ALL SAME (C++ と Python の書き出しのバイト一致)。
+  - `g1_compare.py` (test_v02 n=100、default・r4): ALL SAME。default は変更前の C++ ビルドと一致した。
+- 独立検証 Round 5 (`sandbox/omo/coord_g1/VERDICT_g1cpp.md`): **APPROVE** (指摘は I-8 の 1 件だけ)
+  - 版数の値を比べているのは `repro/nv_native.py:77` だけで、参照漏れはない。
+  - 版数 3 の dylib が実際に使われていることを確かめた。
+  - 版数 2 の古い dylib を置いた場合:
+    - Python 側は黙って Python の経路に落ちる。出力は同じで、遅くなるだけ (G1 より前からの挙動)。
+    - C++ 側は `nvc_rgb_*` のシンボルが無いので、起動時に止まる。
+  - `verify_bridge --only fallback,cancel`: ALL MATCH。
+  - I-8: `native/MIGRATION.md`・`AGENTS.md` の版数の記述 (2) の更新は、ユーザーが行う。
+- 統括の判断として記録する: C++ ファースト方針のもとで、`repro/` の変更は版数の追従 (`ABI_VERSION`) に限って行った。
