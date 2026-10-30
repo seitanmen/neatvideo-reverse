@@ -115,6 +115,12 @@ bool PyObj::operator==(const PyObj& o) const {
 }
 
 // ------------------------------------------------------------------ float formatting
+std::string py_float_str(double v) {
+    if (std::isnan(v)) return "nan";
+    if (std::isinf(v)) return v > 0 ? "inf" : "-inf";
+    return py_float_repr(v);
+}
+
 std::string py_float_repr(double v) {
     if (std::isnan(v)) return "NaN";                       // json.dumps spelling
     if (std::isinf(v)) return v > 0 ? "Infinity" : "-Infinity";

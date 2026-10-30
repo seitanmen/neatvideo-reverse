@@ -1560,6 +1560,10 @@ void MainWindow::set_profile_check(bool on) {
     }
 }
 
+bool MainWindow::pc_cached() const {
+    return pc_cache.count(std::to_string(timeline->frame()) + "|" + std::to_string(engine_id) + "|" + profile_sig()) > 0;
+}
+
 void MainWindow::request_pcheck() {
     if (!pcheck || frames.empty()) return;
     const PyObj* eff = state->effective();
@@ -1982,12 +1986,28 @@ void MainWindow::change_default_preset(const QString& path_in) {
 }
 
 // ---------------------------------------------------------------- tools (N3c)
+namespace {
+
+// Preferences: accept() (OK, or a call) runs `check` first and stays open when it fails (the ffmpeg field; the
+// Python UI's _PrefsDialog)
+class PrefsDialog : public QDialog {
+public:
+    using QDialog::QDialog;
+    std::function<bool()> check;
+    void accept() override {
+        if (check && !check()) return;
+        QDialog::accept();
+    }
+};
+
+}  // namespace
+
 QDialog* MainWindow::preferences() {
     // Tools > Preferences… (F10), the Preferences… link of the General tab (main_window.preferences): the same rows,
-    // keys (prefs/<key> of the shared settings file) and defaults as the Python UI; two rows of the C++ UI follow
-    // them: Auto Fine-Tune after a profile build (prefs/auto_fine_tune, a Python preference without a row) and the
-    // ffmpeg location (prefs/ffmpeg, which the N2b launcher reads)
-    auto* dlg = new QDialog(this);
+    // keys (prefs/<key> of the shared settings file) and defaults as the Python UI, the last two rows Auto Fine-Tune
+    // after a profile build (prefs/auto_fine_tune) and the ffmpeg location (prefs/ffmpeg, which the N2b launcher
+    // and both UIs read at start; a path without ffmpeg and ffprobe keeps the dialog open with a warning)
+    auto* dlg = new PrefsDialog(this);
     dlg->setWindowTitle("Preferences");
     auto* f = new QFormLayout(dlg);
     auto* jobs = new QSpinBox();
@@ -2023,8 +2043,18 @@ QDialog* MainWindow::preferences() {
     aft->setToolTip("prefs/auto_fine_tune (the genuine runs AutoFineTune after a profile build, DefAutoFineTine = 1)");
     auto* ff = new QLineEdit(settings()->value("prefs/ffmpeg").toString());
     ff->setPlaceholderText(Q(ffmpeg_dir().empty() ? std::string("(not found)") : ffmpeg_dir()));
-    ff->setToolTip("ffmpeg / ffprobe: a binary or the directory holding both (prefs/ffmpeg); empty = $NV_FFMPEG, "
-                   "/opt/homebrew/bin, /usr/local/bin, /opt/local/bin, PATH");
+    ff->setToolTip(FFMPEG_TOOLTIP);
+    auto* ff_browse = new QPushButton("Browse…");
+    ff_browse->setToolTip("Choose the ffmpeg binary");
+    auto* ffw = new QWidget();
+    auto* ffl = new QHBoxLayout(ffw);
+    ffl->setContentsMargins(0, 0, 0, 0);
+    ffl->addWidget(ff, 1);
+    ffl->addWidget(ff_browse);
+    connect(ff_browse, &QPushButton::clicked, dlg, [this, ff] {
+        const QString p = ask_open("ffmpeg binary", "All files (*)");
+        if (!p.isEmpty()) ff->setText(p);
+    });
     f->addRow("Computing: export processes (jobs)", jobs);
     f->addRow("Output: x264 CRF", crf);
     f->addRow("Output: audio", audio);
@@ -2034,11 +2064,20 @@ QDialog* MainWindow::preferences() {
     f->addRow(autop);
     f->addRow(native);
     f->addRow(aft);
-    f->addRow("ffmpeg (directory or binary)", ff);
+    f->addRow("ffmpeg (directory or binary)", ffw);
     auto* bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(bb, &QDialogButtonBox::accepted, dlg, &QDialog::accept);
     connect(bb, &QDialogButtonBox::rejected, dlg, &QDialog::reject);
     f->addRow(bb);
+    dlg->check = [dlg, ff] {
+        const QString fp = ff->text().trimmed();
+        if (fp.isEmpty() || ffmpeg_tools_in(fp.toStdString())) return true;
+        auto* box = new QMessageBox(QMessageBox::Warning, "ffmpeg not found", Q(ffmpeg_missing_text(fp.toStdString())),
+                                    QMessageBox::Ok, dlg);
+        box->setAttribute(Qt::WA_DeleteOnClose);
+        box->open();
+        return false;
+    };
     connect(dlg, &QDialog::accepted, this, [this, jobs, crf, audio, area, mem, autop, depthb, aft, ff] {
         const bool reload = depthb->currentData().toString() != prefs["depth"].toString();
         prefs["jobs"] = jobs->value();
@@ -2448,7 +2487,7 @@ void MainWindow::set_ofx_frames(std::vector<Frame>&& fr, int W, int H, double fp
     VideoInfo vi;
     vi.W = W;
     vi.H = H;
-    vi.fps = py_float_repr(fps);
+    vi.fps = py_float_str(fps);
     vi.n = static_cast<int>(fr.size());
     info = vi;
     frames = std::move(fr);
@@ -2462,7 +2501,7 @@ void MainWindow::set_ofx_frames(std::vector<Frame>&& fr, int W, int H, double fp
     const int n = static_cast<int>(frames.size());
     timeline->set_count(n, fps);
     timeline->set_frame(std::min(n / 3, std::max(n - 3, 0)));
-    video_lbl->setText(QString("OFX host: %1x%2 · %3 frames · %4 fps").arg(W).arg(H).arg(n).arg(Q(py_float_repr(fps))));
+    video_lbl->setText(QString("OFX host: %1x%2 · %3 frames · %4 fps").arg(W).arg(H).arg(n).arg(Q(py_float_str(fps))));
     depth_lbl->setText(QString("source OFX host (%1-bit 4:2:0) · processing %1-bit").arg(depth));
     viewer_bar->set_frame_info(W, H, depth);
     update_performance();

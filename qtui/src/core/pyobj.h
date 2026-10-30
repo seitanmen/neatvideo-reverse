@@ -79,8 +79,11 @@ private:
     std::vector<std::string> keys_;        // dict keys in insertion order
 };
 
-// Python repr(float) (the shortest round-trip digits, exponent form outside 1e-4 <= |x| < 1e16).
+// Python repr(float) (the shortest round-trip digits, exponent form outside 1e-4 <= |x| < 1e16), with json.dumps'
+// spelling of the non-finite values (NaN, Infinity, -Infinity).
 std::string py_float_repr(double v);
+// Python repr(float) / str(float) / f"{v}": as py_float_repr, the non-finite values as nan, inf, -inf.
+std::string py_float_str(double v);
 // Python format(v, ".Nf") / "%.Nf" (correctly rounded, as CPython).
 std::string py_fixed(double v, int decimals);
 

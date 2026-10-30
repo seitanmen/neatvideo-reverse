@@ -133,6 +133,10 @@ PyObj build_profile(const std::vector<Frame>& frames, int f, bool full_range, co
     if (frames.empty()) throw std::runtime_error("no frames");
     f = std::max(0, std::min(f, static_cast<int>(frames.size()) - 1));
     const Planes pl = to_planes(frames[static_cast<size_t>(f)]);
+    // the search of a frame below 64 px is nvfilter.find_flat_area_gradient, whose np.gradient needs 2 samples a side
+    if (!area && (pl.H < 2 || pl.W < 2))
+        throw std::runtime_error("Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) "
+                                 "elements are required.");
     std::vector<Planes> more;
     for (int i = f + 1; i < std::min(f + 3, static_cast<int>(frames.size())); ++i)
         more.push_back(to_planes(frames[static_cast<size_t>(i)]));
@@ -417,6 +421,36 @@ void temporal(const std::vector<Planes>& window_in, int ci_in, const PyObj& prof
     const Blocks b = v5_blocks(prof, Q);
     const Planes& f0 = window_in[static_cast<size_t>(lo)];
     const int H = f0.H, W = f0.W, Hc = f0.Hc, Wc = f0.Wc, bs = b.qi[1];
+    if (bs >= 4 && std::min(H, W) < bs) {
+        // below the motion block nv_native.temporal_v5 returns None and the Python UI runs nvfilter.temporal_v5 itself:
+        // the first neighbour's estimate_flow_v5 raises (np.pad of the empty quarter-size pyramid level, else the max
+        // of the empty block vectors in _refine); with no neighbour to filter (one frame, Amount 0) the centre passes,
+        // out = p + a (acc / sw - p) and rv = ((1 - a) + a / sw)^2 + a^2 sf / sw^2 with acc = p, sw = 1, sf = 0, in
+        // float32 as numpy evaluates them (the Python float a as a weak scalar: float32(a), float32(1 - a))
+        const double a = Q.get("temporal").as_double();
+        if (nf > 1 && a > 0) {
+            if (H / 4 == 0) throw std::runtime_error("can't extend empty axis 0 using modes other than 'constant' or 'empty'");
+            if (W / 4 == 0) throw std::runtime_error("can't extend empty axis 1 using modes other than 'constant' or 'empty'");
+            throw std::runtime_error("zero-size array to reduction operation maximum which has no identity");
+        }
+        const Planes& cur = window_in[static_cast<size_t>(ci_in)];
+        *out = alloc_like(cur);
+        *rv = alloc_like(cur);
+        const float fa = static_cast<float>(a), f1a = static_cast<float>(1.0 - a), faa = static_cast<float>(a * a);
+        const float one = 1.0f, zero = 0.0f;
+        for (int c = 0; c < 3; ++c) {
+            const float* p = cur.p(c);
+            float* o = out->p(c);
+            float* r = rv->p(c);
+            const size_t n = (c == 0 ? cur.Y : c == 1 ? cur.Cb : cur.Cr).size();
+            for (size_t i = 0; i < n; ++i) {
+                o[i] = p[i] + fa * (p[i] / one - p[i]);
+                const float q = f1a + fa / one;
+                r[i] = q * q + faa * zero / (one * one);
+            }
+        }
+        return;
+    }
     if (bs < 1 || std::min(H, W) < bs) throw std::runtime_error("the frame is smaller than the motion block");
     const int nby = H / bs, nbx = W / bs;
     std::vector<const float*> planes;

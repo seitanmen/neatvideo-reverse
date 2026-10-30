@@ -126,6 +126,9 @@ public:
         return !timer->isActive() && !sel_timer->isActive() && !pc_timer->isActive() && !nlc_timer->isActive();
     }
     const std::optional<std::string>& nlc_shown_key() const { return nlc_shown; }
+    // for the tests: the Assist Image of the current frame and profile is in the Profile Check cache
+    // (main_window._pc_key() in _pc_cache)
+    bool pc_cached() const;
     void check_speed();
     void performance_tab();
     void reset_spatial();

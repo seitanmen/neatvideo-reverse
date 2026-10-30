@@ -22,9 +22,10 @@ sys.path.insert(0, REPRO)
 sys.path.insert(0, HERE)
 sys.dont_write_bytecode = True
 
-from PySide6.QtCore import QSettings  # noqa: E402
+from PySide6.QtCore import QSettings, Qt  # noqa: E402
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialogButtonBox, QDoubleSpinBox,  # noqa: E402
-                               QFormLayout, QLabel, QLineEdit, QListWidget, QPushButton, QSpinBox, QTextEdit)
+                               QFormLayout, QLabel, QLineEdit, QListWidget, QPushButton, QSpinBox, QTextEdit,
+                               QWidget)
 
 from py_dump import dump_state, qimage_bytes, wait  # noqa: E402
 
@@ -44,13 +45,18 @@ def widget_info(w):
     elif isinstance(w, QCheckBox):
         d.update(kind="check", text=w.text(), checked=w.isChecked())
     elif isinstance(w, QLineEdit):
-        d.update(kind="line", text=w.text())
+        d.update(kind="line", text=w.text(), placeholder=w.placeholderText())
     elif isinstance(w, QLabel):
         d.update(kind="label", text=w.text())
     elif isinstance(w, QDialogButtonBox):
         d.update(kind="buttons", texts=[b.text() for b in w.buttons()])
+    elif isinstance(w, QPushButton):
+        d.update(kind="button", text=w.text())
     else:
         d.update(kind=type(w).__name__)
+        kids = w.findChildren(QWidget, options=Qt.FindDirectChildrenOnly)
+        if kids:                    # a composite field (the ffmpeg row: line edit + Browse…)
+            d["children"] = [widget_info(c) for c in kids]
     return d
 
 

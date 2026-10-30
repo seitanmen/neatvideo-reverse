@@ -6,6 +6,8 @@
 // bit-exact agreement with the Python UI itself is checked by qtui/tools/compare_ui.py / compare_n3c.py /
 // compare_export.py / compare_ofx.py.  The OFX items run qtui_ofx_drv (built next to this binary).
 // Writes only into a temporary directory (settings, profile / preset files).
+// Every item also runs on its own (qtui_selftest <item>; init() and the precondition helpers, G5):
+// qtui/tools/selftest_each.py runs them one by one.
 #include <QApplication>
 #include <QWheelEvent>
 #include <QSlider>
@@ -32,9 +34,11 @@
 #include <QToolButton>
 
 #include <QDir>
+#include <QFileInfo>
 #include <QMenu>
 #include <QRegularExpression>
 
+#include <climits>
 #include <cmath>
 #include <random>
 #include <thread>
@@ -48,7 +52,9 @@
 #include "filter_panel.h"
 #include "noise_graph.h"
 #include "mainwindow.h"
+#include "ofx.h"
 #include "profile_panel.h"
+#include "pynum.h"
 #include "pyobj.h"
 #include "rows.h"
 #include "state.h"
@@ -105,7 +111,89 @@ class SelfTest : public QObject {
         QCoreApplication::processEvents();
     }
 
+    // G5 (N3c verification I-5): every item runs on its own (qtui_selftest <item>).  The items without the window are
+    // listed here; any other item gets the window with test.mp4 loaded and its Auto Profile + Auto Fine-Tune done
+    // (the state loadAndAutoProfile leaves) when no earlier item made one.  In a full run the window exists from
+    // loadAndAutoProfile on, so init() changes nothing there.
+    static bool without_window(const QString& item) {
+        static const QStringList pure = {"pyFloatRepr", "pyJsonRoundTrip", "pyIntFloatAsPython", "defaultsMapToV5",
+                                         "coerceRules", "autoCompleteBins", "selectionColours", "loadAndAutoProfile",
+                                         "depthConversionsRoundTrip", "ofxArgsAndNoFrames", "ofxTinyFramesAsPython",
+                                         "ffmpegSearchOrder"};
+        return pure.contains(item);
+    }
+    void ensure_window() {
+        if (win) return;
+        win = new MainWindow(test_video());
+        win->show();
+        QVERIFY(wait_until([&] { return aft_done(); }));
+    }
+    // the 10-bit source of the Bit depth items (bitDepth10Reload makes it; the later items reload it at 10 bits)
+    void make_v10() {
+        if (!v10.isEmpty() && QFileInfo::exists(v10)) return;
+        v10 = tmp.filePath("src10.mkv");
+        QProcess p8;
+        p8.start(QString::fromStdString(tool_path("ffmpeg")), QStringList{"-v", "error", "-i", test_video(), "-frames:v", "12", "-f", "rawvideo", "-pix_fmt", "yuv420p", "-"});
+        QVERIFY(p8.waitForFinished(60000));
+        const QByteArray raw8 = p8.readAllStandardOutput();
+        std::mt19937 rng(10);
+        a10.resize(raw8.size() * 2);
+        for (qsizetype i = 0; i < raw8.size(); ++i) {
+            const uint16_t u = static_cast<uint16_t>(static_cast<uint8_t>(raw8[i]) * 4 + rng() % 4);
+            std::memcpy(a10.data() + 2 * i, &u, 2);
+        }
+        QProcess pe;
+        pe.start(QString::fromStdString(tool_path("ffmpeg")), QStringList{"-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "yuv420p10le", "-s", "640x360", "-r", "30",
+                                       "-colorspace", "bt709", "-color_range", "tv", "-i", "-", "-c:v", "ffv1", "-pix_fmt",
+                                       "yuv420p10le", "-colorspace", "bt709", "-color_range", "tv", v10});
+        QVERIFY(pe.waitForStarted());
+        pe.write(a10);
+        pe.closeWriteChannel();
+        QVERIFY(pe.waitForFinished(60000) && pe.exitCode() == 0);
+    }
+    // v10 open at Bit depth 10 (the state bitDepth10Reload leaves)
+    void ensure_v10_at_10() {
+        make_v10();
+        if (win->src == v10 && win->fmt && win->fmt->bits == 10) return;
+        win->tabs->setCurrentIndex(0);
+        if (win->src != v10) {
+            win->open_video(v10);
+            QVERIFY(wait_until([&] { return win->src == v10 && aft_done(); }));
+        }
+        QDialog* dlg = win->preferences();
+        for (QComboBox* c : dlg->findChildren<QComboBox*>())
+            if (c->findData("10") >= 0) c->setCurrentIndex(c->findData("10"));
+        dlg->accept();
+        QVERIFY(wait_until([&] { return win->fmt && win->fmt->bits == 10 && aft_done(); }));
+    }
+
+    // the preconditions an item had from the items before it (each is a no-op in a full run, where they hold already)
+    void show_filtered_adjust() {        // the Adjust page with the filtered preview (adjustPreviewFiltered)
+        win->tabs->setCurrentIndex(1);
+        QVERIFY(wait_until([&] { return idle() && win->viewer->showing_filtered(); }));
+    }
+    void build_rect_profile() {          // the rectangular Build Profile + its Auto Fine-Tune (buildProfileFromSelection)
+        const PyObj& b = win->state->profile.base;
+        if (b.get("area").size() == 4 && b.get("area").dump() == "[40, 60, 128, 160]" && aft_done()) return;
+        win->on_area(40, 60, 128, 160);
+        win->build_profile(false);
+        QVERIFY(wait_until([&] {
+            const PyObj& pb = win->state->profile.base;
+            return aft_done() && pb.get("area").size() == 4 && pb.get("area")[1].as_int() == 60;
+        }));
+    }
+    void ensure_nlc_on() {               // Noise Level Check running (nlcRecomputesOnTemporalSettings leaves it on)
+        if (win->nlc) return;
+        win->tabs->setCurrentIndex(1);
+        win->filter_panel->nl_check->button->click();
+        QVERIFY(nlc_shown());
+    }
+
 private slots:
+    void init() {
+        if (!without_window(QTest::currentTestFunction())) ensure_window();
+    }
+
     void initTestCase() {
         QVERIFY(tmp.isValid());
         const QString ini = tmp.filePath("settings.ini");
@@ -145,6 +233,72 @@ private slots:
         d.set("a", PyObj::integer(7));              // an existing key keeps its place (Python dict)
         QCOMPARE(d.keys().front(), std::string("a"));
         QVERIFY(PyObj::parse("{\"x\": 1}") == PyObj::parse("{\"x\": 1.0}"));   // Python ==
+    }
+
+    void pyIntFloatAsPython() {   // G3 (N3c L-2): int() / float() of the OFX arguments as CPython 3.13 reads them
+        constexpr long long I_ERR = LLONG_MIN;
+        constexpr unsigned long long F_ERR = ~0ull;
+        struct Case {
+            std::u32string s;
+            long long i;               // int(s), I_ERR for ValueError
+            unsigned long long f;      // the bits of float(s), F_ERR for ValueError
+        };
+        // expected values: Python 3.13.5 (int(s), struct.pack("<d", float(s)))
+        const std::vector<Case> cases = {
+            {U"1e400", I_ERR, 0x7ff0000000000000ull},
+            {U"1e-400", I_ERR, 0x0000000000000000ull},
+            {U"1e-310", I_ERR, 0x000012688b70e62bull},
+            {U"0x10", I_ERR, F_ERR},
+            {U"\U00000666\U00000664\U00000660", 640LL, 0x4084000000000000ull},
+            {U"1_000", 1000LL, 0x408f400000000000ull},
+            {U"0x1p4", I_ERR, F_ERR},
+            {U"-1e-400", I_ERR, 0x8000000000000000ull},
+            {U"1.7976931348623159e308", I_ERR, 0x7ff0000000000000ull},
+            {U"4.9406564584124654e-324", I_ERR, 0x0000000000000001ull},
+            {U"\U00003000640\U00003000", 640LL, 0x4084000000000000ull},
+            {U"\U0000ff16\U0000ff14\U0000ff10", 640LL, 0x4084000000000000ull},
+            {U"nan(1)", I_ERR, F_ERR},
+            {U"Infinity", I_ERR, 0x7ff0000000000000ull},
+            {U"-inF", I_ERR, 0xfff0000000000000ull},
+            {std::u32string(4301, U'1'), I_ERR, 0x7ff0000000000000ull},
+            {U"\U00000661\U00000660", 10LL, 0x4024000000000000ull},
+            {U"\U0001d7d4\U0001d7d2\U0001d7ce", 640LL, 0x4084000000000000ull},
+            {U"\U00002212640", I_ERR, F_ERR},
+            {U"6__40", I_ERR, F_ERR},
+            {U"_640", I_ERR, F_ERR},
+            {U"640_", I_ERR, F_ERR},
+            {U"+6_40", 640LL, 0x4084000000000000ull},
+            {U"0640", 640LL, 0x4084000000000000ull},
+            {U"\U0000001c640", I_ERR, F_ERR},
+            {U"\U000000a0640\U00000009", 640LL, 0x4084000000000000ull},
+            {U"3.6e2", I_ERR, 0x4076800000000000ull},
+            {U"", I_ERR, F_ERR},
+            {U"2_9.9_7", I_ERR, 0x403df851eb851eb8ull},
+            {U"1_e5", I_ERR, F_ERR},
+            {U".5", I_ERR, 0x3fe0000000000000ull},
+            {U"1e", I_ERR, F_ERR},
+            {U"-0", 0LL, 0x8000000000000000ull},
+            {U"  +12_3.4_5e-1_0  ", I_ERR, 0x3e4a82bc4b32f8e3ull},
+        };
+        for (const Case& c : cases) {
+            const QString name = QString::fromStdU32String(c.s).left(40);
+            PyInt v;
+            const bool ok = py_int(c.s, &v);
+            QVERIFY2(ok == (c.i != I_ERR), qPrintable("int " + name));
+            if (ok) QVERIFY2(v.clamp_ll() == c.i, qPrintable("int " + name));
+            double d;
+            const bool fok = py_float(c.s, &d);
+            QVERIFY2(fok == (c.f != F_ERR), qPrintable("float " + name));
+            unsigned long long bits = 0;
+            std::memcpy(&bits, &d, 8);
+            if (fok) QVERIFY2(bits == c.f, qPrintable("float " + name));
+        }
+        PyInt v;
+        QVERIFY(py_int(std::u32string(4300, U'9'), &v) && v.clamp_ll() == LLONG_MAX);   // 4300 digits: a (big) int
+        QCOMPARE(py_float_str(INFINITY), std::string("inf"));          // f"{fps}" of the OFX label
+        QCOMPARE(py_float_str(-INFINITY), std::string("-inf"));
+        QCOMPARE(py_float_str(-std::nan("")), std::string("nan"));
+        QCOMPARE(py_float_str(29.97), std::string("29.97"));
     }
 
     void defaultsMapToV5() {   // "UI defaults map to nv.V5_DEFAULTS"
@@ -203,6 +357,10 @@ private slots:
 
     // ---------------- the window
     void loadAndAutoProfile() {   // "load + auto profile" (+ the automatic Auto Fine-Tune)
+        if (win) {                     // a window of an earlier item (a list of items run together): start afresh
+            win->close();
+            delete win;
+        }
         win = new MainWindow(test_video());
         win->show();
         QVERIFY(wait_until([&] { return aft_done(); }));
@@ -288,6 +446,7 @@ private slots:
     }
 
     void selectionMoveAndClear() {   // "move inside, click clears"
+        if (!win->sel_area) drag(QPointF(300, 40), QPointF(140, 200));     // the selection of selectionByMouse
         const Rect r = *win->sel_area;
         drag(QPointF(r.x0 + r.w / 2.0, r.y0 + r.h / 2.0), QPointF(r.x0 + r.w / 2.0 + 30, r.y0 + r.h / 2.0 + 20));
         QVERIFY(win->sel_area.has_value());
@@ -347,6 +506,7 @@ private slots:
     }
 
     void undoRedoProfile() {   // "undo AFT" / redo
+        build_rect_profile();
         const std::string after = win->profile_sig();
         win->state->undo->undo();                  // the AFT
         QVERIFY(!win->state->profile.base.get("aft_applied").truthy());
@@ -458,6 +618,7 @@ private slots:
     }
 
     void holdShowsOriginal() {   // "(e) press-and-hold shows the original ('Filtered' label off)"
+        show_filtered_adjust();
         const QPoint c = win->viewer->image_to_widget(320, 180).toPoint();
         QTest::mousePress(win->viewer, Qt::LeftButton, Qt::NoModifier, c);
         QVERIFY(win->viewer->hold());
@@ -467,6 +628,7 @@ private slots:
     }
 
     void previewArea() {   // "Preview Area (crop) filtering" / "preview area off -> whole frame"
+        show_filtered_adjust();
         win->area_btn->setChecked(true);
         QVERIFY(win->preview_sel.has_value());
         QCOMPARE(win->preview_sel->h, 180);                 // 50% of the frame, even coordinates
@@ -478,6 +640,7 @@ private slots:
     }
 
     void thumbnails() {   // "(g) thumbnails: blue = current, orange = Radius window, click = go to frame"
+        show_filtered_adjust();
         QVERIFY(!win->thumb(0).isNull());
         QCOMPARE(win->timeline->thumbs->radius, 2);         // Adjust page with the temporal filter on
         win->tabs->setCurrentIndex(0);
@@ -755,6 +918,7 @@ private slots:
     }
 
     void performanceTable() {   // the General tab's Performance box follows the settings
+        show_filtered_adjust();
         FilterPanel* fp = win->filter_panel;
         QString t = fp->perf->text();
         QVERIFY(t.contains("Frame Size:&nbsp;&nbsp;</td><td>640x360 progressive"));
@@ -913,6 +1077,7 @@ private slots:
     }
 
     void nlcAnotherFrameDropsImage() {   // "another frame drops the old image"
+        ensure_nlc_on();
         QVERIFY(win->nlc);
         const int t = win->timeline->frame();
         const int nxt = t + 1 < static_cast<int>(win->frames.size()) ? t + 1 : t - 1;
@@ -926,6 +1091,7 @@ private slots:
     }
 
     void nlcThreeEntriesAndAssist() {   // "NLC (d) one state for the panel, the toolbar menu and Tools; exclusive with Assist"
+        ensure_nlc_on();
         win->actions["nlc"]->trigger();                                      // off
         QVERIFY(nlc_synced(false));
         win->fsc_nlc->trigger();                                             // on
@@ -960,6 +1126,38 @@ private slots:
         QVERIFY(wait_until([&] { return idle() && win->viewer->showing_filtered(); }));
     }
 
+    void nlcPanelYellowAndDisabled() {   // "NLC R3 panel: Temporal Filter / Radius / Noise Level / Adapt yellow, other
+                                         // sections and Spatial / General tabs disabled; restored on Finish (n/a rows stay
+                                         // disabled)" (G4: item 20 of selftest.py)
+        FilterPanel* fp = win->filter_panel;
+        if (win->nlc) fp->nl_check->button->click();
+        const std::vector<QLabel*> labs = {fp->headers.at("Temporal Filter")->title, fp->headers.at("Adapt to Changing Noise")->title,
+                                           fp->row("t_radius")->label, fp->row("t_noise")->label};
+        std::vector<std::pair<QString, QString>> texts0;
+        for (QLabel* l : labs) texts0.emplace_back(l->text(), l->styleSheet());
+        win->tabs->setCurrentIndex(1);
+        fp->tabs->setCurrentIndex(1);
+        fp->nl_check->button->click();
+        QVERIFY(win->nlc);
+        for (QLabel* l : labs)
+            QVERIFY2(l->text().contains(ACTIVE_TITLE) || l->styleSheet().contains(ACTIVE_TITLE), qPrintable(l->text()));
+        QVERIFY(!fp->tabs->isTabEnabled(1) && !fp->tabs->isTabEnabled(2));
+        QCOMPARE(fp->tabs->currentIndex(), 0);
+        QVERIFY(!fp->controls.at("t_amount")->isEnabled());
+        QVERIFY(!fp->headers.at("Jitter of Details")->isEnabled() && !fp->headers.at("Repeated Frames")->isEnabled());
+        QVERIFY(fp->controls.at("t_noise")->isEnabled() && fp->controls.at("t_radius")->isEnabled() &&
+                fp->controls.at("t_enable")->isEnabled());
+        QVERIFY(fp->t_noise_header->body->isVisible());
+        fp->nl_check->button->click();
+        QVERIFY(!win->nlc);
+        std::vector<std::pair<QString, QString>> texts1;
+        for (QLabel* l : labs) texts1.emplace_back(l->text(), l->styleSheet());
+        QVERIFY(texts1 == texts0);
+        QVERIFY(fp->tabs->isTabEnabled(1) && fp->tabs->isTabEnabled(2));
+        QVERIFY(fp->controls.at("t_amount")->isEnabled() && fp->headers.at("Jitter of Details")->isEnabled());
+        QVERIFY(!fp->controls.at("flicker_local")->isEnabled() && !fp->controls.at("t_quality")->isEnabled());
+    }
+
     void exportFilterDefaults() { QCOMPARE(win->export_filter(), std::make_pair(QString("MP4 (*.mp4)"), QString(".mp4"))); }
 
     void exportLosslessEqualsProcessFrame() {   // "export (CRF 0) == backend.process_frame bit for bit" (+ the side files)
@@ -992,6 +1190,7 @@ private slots:
     }
 
     void exportTNoiseDiffersFromDefault() {   // "NLC (c) export with Temporal Noise Level -40% == process_frame, differs from +0%"
+        win->prefs["crf"] = 0;                                              // lossless, as exportLosslessEqualsProcessFrame set it
         win->state->new_edit();
         win->state->set_param("t_noise", PyObj::real(60.0));
         const QString dst = tmp.filePath("export_tnoise.mp4");
@@ -1290,7 +1489,7 @@ private slots:
         QCOMPARE(n, 2);
     }
 
-    void preferencesDialogRows() {   // Tools > Preferences… (F10): the Python rows, keys and defaults (+ the two C++ rows)
+    void preferencesDialogRows() {   // Tools > Preferences… (F10): the Python rows, keys and defaults (both UIs: 11 rows)
         QDialog* dlg = win->preferences();
         QVERIFY(dlg && dlg->isVisible());
         QCOMPARE(dlg->windowTitle(), QString("Preferences"));
@@ -1330,7 +1529,10 @@ private slots:
                                       "Auto Fine-Tune after Auto / Build Profile"}));
         QCheckBox* native = dlg->findChildren<QCheckBox*>()[1];
         QVERIFY(native->isChecked() && !native->isEnabled());               // the C++ UI always uses libnvcore
-        QVERIFY(dlg->findChild<QLineEdit*>()->text().isEmpty());
+        QLineEdit* ff = nullptr;
+        for (QLineEdit* e : dlg->findChildren<QLineEdit*>())
+            if (e->toolTip() == FFMPEG_TOOLTIP) ff = e;
+        QVERIFY(ff && ff->text().isEmpty());
         dlg->reject();
     }
 
@@ -1479,15 +1681,26 @@ private slots:
     }
 
     void componentPanesEveryMode() {   // "component panes computed for every mode"
+        // selftest.py: YCrCb + / YCrCb / RGB / Y Freq, each ready (computed), then the panes == ["rgb"] + PANES["Y Freq"];
+        // here every mode, against the Python UI's viewer.PANES (G4: the names and the order, not only "some panes")
+        const std::vector<std::pair<std::string, std::vector<std::string>>> panes = {
+            {"YCrCb +", {"Y+", "Cr+", "Cb+"}}, {"YCrCb", {"Y", "Cr", "Cb"}}, {"RGB", {"R", "G", "B"}},
+            {"Y Freq", {"Y High", "Y Mid", "Y Low"}}, {"Normal", {}}, {"Cr Freq", {"Cr High", "Cr Mid", "Cr Low"}},
+            {"Cb Freq", {"Cb High", "Cb Mid", "Cb Low"}}};
         win->tabs->setCurrentIndex(0);
         const std::string m0 = win->viewer->mode();
-        for (const auto& [mode, _] : MODES) {
+        QCOMPARE(MODES.size(), panes.size());
+        for (const auto& [mode, want] : panes) {
             win->viewer->set_mode(mode);
-            QVERIFY(wait_until([&] { return win->viewer->ready(); }, 120));
-            const auto ps = win->viewer->panes();
-            QVERIFY(!ps.empty());
-            for (const auto& [name, r] : ps) QVERIFY2(!win->viewer->pane_image(name, win->viewer->source()).isNull(), name.c_str());
-            if (mode == "Normal") QCOMPARE(static_cast<int>(ps.size()), 1);
+            QVERIFY2(wait_until([&] { return win->viewer->ready(); }, 120), mode.c_str());
+            std::vector<std::string> names = {"rgb"};
+            names.insert(names.end(), want.begin(), want.end());
+            std::vector<std::string> got;
+            for (const auto& [name, r] : win->viewer->panes()) {
+                got.push_back(name);
+                QVERIFY2(!win->viewer->pane_image(name, win->viewer->source()).isNull(), (mode + " " + name).c_str());
+            }
+            QVERIFY2(got == names, mode.c_str());
         }
         win->viewer->set_mode(m0);
     }
@@ -1610,16 +1823,29 @@ private slots:
     }
 
     void pcheckRecomputesOnNoiseLevel() {   // "R1 Noise Level slider recomputes the Assist Image; undo shows the cached one"
+        // selftest.py: the panel's Noise Level slider -> the new image is in the cache and equals
+        // rot90(engine.assist(t, effective profile, assist_params())); undo -> the image before, from the cache (G4)
         win->tabs->setCurrentIndex(0);
         win->set_profile_check(true);
         QVERIFY(wait_until([&] { return win->viewer->showing_pcheck() && idle() && win->timers_idle(); }));
-        const std::vector<float> a = win->viewer->image("pcheck").d;
+        const int t = win->timeline->frame();
+        const PyObj P = assist_params();
+        const int rot = (win->info->rotation / 90) % 4;
+        auto expected = [&] {
+            return rot90(win->engine->assist(t, *win->state->effective(), P), win->frames[0].H, win->frames[0].W, rot).d;
+        };
+        const std::vector<float> before = win->viewer->image("pcheck").d;
+        QVERIFY(before == expected());
         win->state->new_edit();
-        win->state->set_tune("all", 1.5);
-        QVERIFY(wait_until([&] { return idle() && win->timers_idle() && win->viewer->image("pcheck").d != a; }));
+        win->profile_panel->tune.at("all")->slider->setValue(50);
+        QVERIFY(wait_until([&] {
+            return idle() && win->timers_idle() && win->pc_cached() && win->viewer->image("pcheck").d != before;
+        }, 120));
+        QVERIFY(win->state->effective() != nullptr);
+        QVERIFY(win->viewer->image("pcheck").d == expected());
         win->state->undo->undo();
-        QVERIFY(wait_until([&] { return idle() && win->timers_idle(); }));
-        QVERIFY(win->viewer->image("pcheck").d == a);
+        QVERIFY(wait_until([&] { return idle() && win->timers_idle() && win->viewer->image("pcheck").d == before; }, 30));
+        QVERIFY(win->pc_cached());
         win->set_profile_check(false);
     }
 
@@ -1771,14 +1997,91 @@ private slots:
         const OfxRun r = ofx_run({"64", "36"}, QByteArray(10, '\0'), "close");
         QCOMPARE(r.code, 1);
         QVERIFY(QString(r.err).contains("no frames received on stdin"));
-        // W / H beyond int, a frame size beyond 64 bits, an integer beyond 64 bits (N3c verification L-1): never a
-        // complete frame -> "no frames received on stdin", exit 1 (as Python), within the timeout
-        const QByteArray two = ofx_bytes(100, 2, 8);
+        // the numbers as Python's int() / float() read them (G3): accepted -> "no frames" for an empty stdin, rejected
+        // -> usage
+        for (const QStringList& a : {QStringList{"640", "360", "1e400"}, QStringList{"640", "360", "1e-400"},
+                                     QStringList{"640", "360", "1e-310"}, QStringList{"\u0666\u0664\u0660", "360"},
+                                     QStringList{"640", "360", "1_000"}, QStringList{"\uff16\uff14\uff10", "3_60"},
+                                     QStringList{"640", "360", "30", "0", "--depth", "\uff11\uff16"}}) {
+            const OfxRun q = ofx_run(a, QByteArray(), "close", 30000);
+            QVERIFY2(q.code == 1 && q.out.isEmpty() && QString(q.err).trimmed() == "no frames received on stdin",
+                     qPrintable(a.join(" ")));
+        }
+        for (const QStringList& a : {QStringList{"0x10", "360"}, QStringList{"640", "360", "0x1p4"},
+                                     QStringList{"640", "360", "nan(1)"}, QStringList{"6__40", "360"},
+                                     QStringList{QString(4301, '1'), "360"}, QStringList{"\u2212640", "360"}}) {
+            const OfxRun q = ofx_run(a, QByteArray(), "close", 30000);
+            QVERIFY2(q.code == 1 && q.out.isEmpty() && QString(q.err).trimmed() == usage, qPrintable(a.join(" ").left(40)));
+        }
+        // W / H beyond int, a frame size beyond 64 bits (N3c verification L-1): never a complete frame -> "no frames
+        // received on stdin", exit 1 (as Python), within the timeout
+        const QByteArray two(2 * 100 * 2 * 3 / 2, '\x40');
         for (const QStringList& a : {QStringList{"4294967296", "120"}, QStringList{"2147483648", "1", "24", "2"},
-                                     QStringList{"4294967496", "120", "24", "2"}, QStringList{"99999999999999999999", "120"},
-                                     QStringList{"3037000500", "3037000500", "24", "0", "--depth", "32"}}) {
+                                     QStringList{"4294967496", "120", "24", "2"}}) {
             const OfxRun q = ofx_run(a, a[0] == "4294967296" ? QByteArray() : two, "close", 30000);
             QVERIFY2(q.code == 1 && q.out.isEmpty() && QString(q.err).contains("no frames received on stdin"), qPrintable(a.join(" ")));
+        }
+        // a frame size Python's first stdin read cannot hold (G6, N3c verification I-6): the traceback with Python's
+        // exception line, exit 1, nothing on stdout
+        const std::vector<std::pair<QStringList, QString>> tb = {
+            {{"2147483647", "2147483647"}, "MemoryError"},
+            {{"4611686018427387904", "1"}, "MemoryError"},
+            {{"9223372036854775807", "1"}, "OverflowError: byte string is too large"},
+            {{"99999999999999999999", "120"}, "OverflowError: cannot fit 'int' into an index-sized integer"},
+            {{"3037000500", "3037000500", "24", "0", "--depth", "32"},
+             "OverflowError: cannot fit 'int' into an index-sized integer"},
+            {{"2147483647", "2147483647", "24", "0", "--depth", "16"},
+             "OverflowError: cannot fit 'int' into an index-sized integer"}};
+        for (const auto& [a, last] : tb) {
+            const OfxRun q = ofx_run(a, two, "close", 30000);
+            const QStringList lines = QString(q.err).trimmed().split('\n');
+            QVERIFY2(q.code == 1 && q.out.isEmpty() && lines.first() == "Traceback (most recent call last):" &&
+                         lines.last() == last, qPrintable(a.join(" ") + ": " + lines.last()));
+        }
+    }
+
+    void ofxTinyFramesAsPython() {   // G6: frames below the motion block / 2 px, as the Python UI's _emit handles them
+        const PyObj P = backend_params(default_params());
+        PyObj P_off = P;
+        P_off.set("temporal", PyObj::real(0.0));
+        const std::string grad = "Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) "
+                                 "elements are required.";
+        struct Case {
+            int W, H, n;
+            const PyObj* P;
+            std::string err;   // the message of Python's exception, "" = a frame is written
+        };
+        const std::vector<Case> cases = {
+            {1, 1, 2, &P, grad},
+            {640, 1, 2, &P, grad},
+            {40, 2, 2, &P, "can't extend empty axis 0 using modes other than 'constant' or 'empty'"},
+            {3, 3, 2, &P, "can't extend empty axis 0 using modes other than 'constant' or 'empty'"},
+            {2, 40, 2, &P, "can't extend empty axis 1 using modes other than 'constant' or 'empty'"},
+            {15, 300, 2, &P, "zero-size array to reduction operation maximum which has no identity"},
+            {10, 10, 5, &P, "zero-size array to reduction operation maximum which has no identity"},
+            {8, 8, 1, &P, ""},                     // no neighbour: nvfilter.temporal_v5 passes the centre
+            {3, 5, 1, &P, ""},
+            {9, 4, 5, &P_off, ""},                 // Temporal off
+            {16, 16, 2, &P, ""}};
+        for (const Case& c : cases) {
+            const size_t fs = static_cast<size_t>(c.W) * c.H + 2 * static_cast<size_t>(c.W / 2) * (c.H / 2);
+            std::vector<uint8_t> raw(fs * static_cast<size_t>(c.n));
+            std::mt19937 rng(static_cast<unsigned>(c.W * 131 + c.H));
+            for (auto& b : raw) b = static_cast<uint8_t>(16 + rng() % 220);
+            std::vector<Frame> frames;
+            for (int k = 0; k < c.n; ++k) frames.push_back(ofx_frame(raw.data() + fs * static_cast<size_t>(k), c.W, c.H, 8, nullptr));
+            PreviewEngine engine(&frames, "bt709", false);
+            const int t = std::min(c.n / 3, std::max(c.n - 3, 0));
+            std::string err;
+            std::vector<uint8_t> out;
+            try {
+                out = ofx_process(frames, t, *c.P, nullptr, false, "bt709", engine, 8, nullptr);
+            } catch (const std::exception& e) {
+                err = e.what();
+            }
+            const QString name = QString("%1x%2 n%3").arg(c.W).arg(c.H).arg(c.n);
+            QVERIFY2(err == c.err, qPrintable(name + ": " + QString::fromStdString(err)));
+            if (c.err.empty()) QVERIFY2(out.size() == fs, qPrintable(name));
         }
     }
 
@@ -1896,27 +2199,85 @@ private slots:
         QVERIFY2(over.isEmpty(), qPrintable(over.join("; ")));
     }
 
+    void ffmpegSearchOrder() {   // G2: $NV_FFMPEG (binary or directory) -> prefs/ffmpeg -> the fixed places -> PATH, as
+                                 // nv_ui_qt/ffmpeg_path.py and packaging/main.py (packaging/test_launcher.py)
+        auto fake = [&](const QString& name) -> std::string {
+            const QString d = QDir(tmp.filePath(name)).absolutePath();
+            QDir().mkpath(d);
+            for (const char* t : {"ffmpeg", "ffprobe"}) {
+                QFile f(QDir(d).filePath(t));
+                if (!f.open(QIODevice::WriteOnly)) return "";
+                f.write("#!/bin/sh\nexit 1\n");
+                f.close();
+                f.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+            }
+            return d.toStdString();
+        };
+        const std::string a = fake("ff_env"), b = fake("ff_prefs"), c = fake("ff_path");
+        QVERIFY(!a.empty() && !b.empty() && !c.empty());
+        const QByteArray env0 = qgetenv("NV_FFMPEG"), path0 = qgetenv("PATH");
+        const bool had_env = qEnvironmentVariableIsSet("NV_FFMPEG");
+        qputenv("NV_FFMPEG", QByteArray::fromStdString(a));
+        QCOMPARE(find_ffmpeg_dir(b + "/ffmpeg"), a);                      // NV_FFMPEG (directory) first
+        qputenv("NV_FFMPEG", QByteArray::fromStdString(a + "/ffmpeg"));
+        QCOMPARE(find_ffmpeg_dir(b), a);                                   // NV_FFMPEG (binary) first
+        qunsetenv("NV_FFMPEG");
+        QCOMPARE(find_ffmpeg_dir(b + "/ffmpeg"), b);                       // the setting (binary) next
+        QCOMPARE(find_ffmpeg_dir(b), b);                                   // (directory)
+        qputenv("PATH", QByteArray::fromStdString(c + ":/usr/bin:/bin"));
+        std::string fixed;
+        for (const char* d : {"/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin"})
+            if (fixed.empty() && QFileInfo(QString(d) + "/ffmpeg").isExecutable() && QFileInfo(QString(d) + "/ffprobe").isExecutable())
+                fixed = d;
+        QCOMPARE(find_ffmpeg_dir(""), fixed.empty() ? c : fixed);          // the fixed places before PATH
+        QCOMPARE(find_ffmpeg_dir(tmp.filePath("nothing").toStdString()), fixed.empty() ? c : fixed);   // an invalid setting is skipped
+        QVERIFY(ffmpeg_tools_in(b) && ffmpeg_tools_in(b + "/ffmpeg") && !ffmpeg_tools_in(tmp.filePath("nothing").toStdString()));
+        QVERIFY(!ffmpeg_tools_in(""));
+        qputenv("PATH", path0);
+        if (had_env) qputenv("NV_FFMPEG", env0);
+    }
+
+    void preferencesFfmpegRow() {   // G2 (selftest.py "Preferences ffmpeg row"): a path without ffmpeg / ffprobe warns
+                                    // and keeps the dialog (nothing saved); the ffmpeg binary is saved and used, a video opens
+        const std::string good = ffmpeg_dir();
+        QVERIFY(!good.empty());
+        QDialog* dlg = win->preferences();
+        QLineEdit* ff = nullptr;
+        for (QLineEdit* e : dlg->findChildren<QLineEdit*>())
+            if (e->toolTip() == FFMPEG_TOOLTIP) ff = e;
+        QVERIFY(ff);
+        bool browse = false;
+        for (QPushButton* b : dlg->findChildren<QPushButton*>()) browse = browse || b->text() == QString::fromUtf8("Browse…");
+        QVERIFY(browse);
+        QCOMPARE(ff->placeholderText(), QString::fromStdString(good));
+        const QString bad = tmp.filePath("no_ffmpeg_here/ffmpeg");
+        ff->setText(bad);
+        dlg->accept();
+        QCoreApplication::processEvents();
+        QMessageBox* box = nullptr;
+        for (QMessageBox* b : dlg->findChildren<QMessageBox*>())
+            if (b->isVisible()) box = b;        // (macOS: a message box shows no window title)
+        QVERIFY(dlg->isVisible());
+        QVERIFY(box);
+        QCOMPARE(box->text(), QString::fromStdString(ffmpeg_missing_text(bad.toStdString())));
+        QVERIFY(!settings()->contains("prefs/ffmpeg"));
+        box->accept();
+        const QString bin = QDir(QString::fromStdString(good)).filePath("ffmpeg");
+        ff->setText(bin);
+        dlg->accept();
+        QVERIFY(!dlg->isVisible());
+        QCoreApplication::processEvents();
+        QCOMPARE(settings()->value("prefs/ffmpeg").toString(), bin);
+        QCOMPARE(ffmpeg_dir(), good);
+        win->tabs->setCurrentIndex(0);
+        win->open_video(test_video());
+        QVERIFY(wait_until([&] { return win->src == test_video() && aft_done(); }));
+        settings()->remove("prefs/ffmpeg");
+    }
+
     // ---------------- Bit depth (last: the window reloads its video)
     void bitDepth10Reload() {   // "10-bit: Bit depth 10 reloads as yuv420p10le float32 planes (0..255 scale)"
-        v10 = tmp.filePath("src10.mkv");
-        QProcess p8;
-        p8.start(QString::fromStdString(tool_path("ffmpeg")), QStringList{"-v", "error", "-i", test_video(), "-frames:v", "12", "-f", "rawvideo", "-pix_fmt", "yuv420p", "-"});
-        QVERIFY(p8.waitForFinished(60000));
-        const QByteArray raw8 = p8.readAllStandardOutput();
-        std::mt19937 rng(10);
-        a10.resize(raw8.size() * 2);
-        for (qsizetype i = 0; i < raw8.size(); ++i) {
-            const uint16_t u = static_cast<uint16_t>(static_cast<uint8_t>(raw8[i]) * 4 + rng() % 4);
-            std::memcpy(a10.data() + 2 * i, &u, 2);
-        }
-        QProcess pe;
-        pe.start(QString::fromStdString(tool_path("ffmpeg")), QStringList{"-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "yuv420p10le", "-s", "640x360", "-r", "30",
-                                       "-colorspace", "bt709", "-color_range", "tv", "-i", "-", "-c:v", "ffv1", "-pix_fmt",
-                                       "yuv420p10le", "-colorspace", "bt709", "-color_range", "tv", v10});
-        QVERIFY(pe.waitForStarted());
-        pe.write(a10);
-        pe.closeWriteChannel();
-        QVERIFY(pe.waitForFinished(60000) && pe.exitCode() == 0);
+        make_v10();
         win->tabs->setCurrentIndex(0);
         win->open_video(v10);
         QVERIFY(wait_until([&] { return win->src == v10 && aft_done(); }));
@@ -1937,6 +2298,7 @@ private slots:
     }
 
     void bitDepth10ExactValues() {   // "10-bit: frame 0 = the 10-bit values / 4 exactly (low bits kept)"
+        ensure_v10_at_10();
         const Frame& f0 = win->frames[0];
         const size_t n0 = f0.fY.size() + f0.fCb.size() + f0.fCr.size();
         int low = 0;
@@ -1952,6 +2314,7 @@ private slots:
     }
 
     void bitDepth10StatusBar() {   // "10-bit: status bar shows source pix_fmt and processing depth"
+        ensure_v10_at_10();
         const QString lbl = win->depth_lbl->text();
         QVERIFY2(lbl.contains("yuv420p10le (10-bit 4:2:0)") && lbl.contains("processing 10-bit"), qPrintable(lbl));
         QVERIFY(win->viewer_bar->size->text().contains("10-bit"));
@@ -1962,6 +2325,7 @@ private slots:
     }
 
     void bitDepth10Preview() {   // "10-bit: preview filtered (8-bit display)"
+        ensure_v10_at_10();
         win->tabs->setCurrentIndex(1);
         win->invalidate();
         win->schedule();
@@ -1969,36 +2333,55 @@ private slots:
     }
 
     void bitDepth10ExportFilter() {   // "10-bit: export dialog defaults"
+        ensure_v10_at_10();
         QCOMPARE(win->export_filter(), std::make_pair(QString("MP4 (*.mp4);;QuickTime (*.mov);;Matroska FFV1 (*.mkv)"), QString(".mp4")));
     }
 
     void bitDepth10ExportEqualsProcessFrame() {   // "10-bit: export (FFV1 yuv420p10le) == backend.process_frame bit for bit"
+        ensure_v10_at_10();
+        // selftest.py: the frames of the export against backend.process_frame of the source frames read from the file
+        // again (not the UI's frames) with the profile the export wrote (<stem>.ui_profile.json), in yuv420p10le (G4)
         const QString dst = tmp.filePath("export10.mkv");
         const int lo = 4, n = 3;
         win->process_video(dst, lo, n);
         QVERIFY(wait_until([&] { return win->export_ == nullptr; }, 1800) && win->export_ok);
         const VideoInfo vi = probe(dst.toStdString());
         QCOMPARE(vi.pix_fmt, std::string("yuv420p10le"));
-        const PixFmt f = *win->fmt;
+        const PyObj P = win->state->backend();
+        const PyObj prof = PyObj::parse(text_of(tmp.filePath("export10.ui_profile.json")).toStdString());
+        const int R = static_cast<int>(P.get("radius").as_int());
+        const PixFmt f = pixfmt("yuv420p10le");
         std::vector<Planes> got;
-        read_frames_fmt(dst.toStdString(), 640, 360, 0, -1, "", f, "bt709", "", [&](int, Planes&& p) {
+        read_frames_fmt(dst.toStdString(), vi.W, vi.H, 0, -1, vi.fps, f, win->matrix, "", [&](int, Planes&& p) {
             got.push_back(std::move(p));
             return true;
         });
         QCOMPARE(static_cast<int>(got.size()), n);
-        const PyObj P = win->state->backend(), prof = *win->state->effective();
+        const VideoInfo si = probe(v10.toStdString());
+        std::map<int, Planes> src;
+        read_frames_fmt(v10.toStdString(), si.W, si.H, lo - R, lo + n + R, si.fps, f, win->matrix, "", [&](int i, Planes&& p) {
+            src[i] = std::move(p);
+            return true;
+        });
         for (int k = 0; k < n; ++k) {
-            auto [idx, wv] = win->engine->window(lo + k, static_cast<int>(P.get("radius").as_int()), std::nullopt);
-            const int ci = static_cast<int>(std::find(idx.begin(), idx.end(), lo + k) - idx.begin());
+            const int c = lo + k;
+            std::vector<Planes> wv;
+            int ci = 0;
+            for (const auto& [i, p] : src)
+                if (std::abs(i - c) <= R) {
+                    if (i == c) ci = static_cast<int>(wv.size());
+                    wv.push_back(p);
+                }
             Planes tmp, rv;
             temporal(wv, ci, prof, P, nullptr, &tmp, &rv);
             const Planes o = finish(wv[static_cast<size_t>(ci)], tmp, rv, prof, P);
             QVERIFY2(from_internal(o, f, win->matrix, nullptr) == from_internal(got[static_cast<size_t>(k)], f, win->matrix, nullptr),
-                     qPrintable(QString("frame %1").arg(lo + k)));
+                     qPrintable(QString("frame %1").arg(c)));
         }
     }
 
     void bitDepthMemoryCapAndFloat() {   // the memory cap counts the float32 bytes; 32 = gbrpf32le (full-range 4:4:4)
+        ensure_v10_at_10();                                                 // Bit depth 10 (the items before)
         win->tabs->setCurrentIndex(0);
         win->open_video(test_video());
         QVERIFY(wait_until([&] { return win->src == test_video() && aft_done(); }));

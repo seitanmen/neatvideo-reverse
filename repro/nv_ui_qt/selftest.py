@@ -14,6 +14,8 @@ rectangular selection by mouse (corner = press point, <= 512 px, move inside, cl
 Noise Level label = display.noise_level, Not Uniform, Build Profile size rules (< 32 error, 32..127
 confirmation), menus / toolbars in the genuine order, viewer mode per page, rectangular profile through
 the export.
+Preferences > ffmpeg (G2, ffmpeg_path.py): a path without ffmpeg / ffprobe warns and keeps the dialog, the
+binary is saved and used, a video opens.
 High bit depth (written into OUTDIR as src10.mkv): Preferences > Bit depth 10 reloads a 10-bit copy,
 frames hold value/4 exactly, status bar, preview, FFV1 export == backend.process_frame bit for bit.
 Profile Check and the panel (2026-10-26, sandbox/omo/coord/genuine_ui2/SPEC.md R1-R3): Begin / toolbar /
@@ -1212,6 +1214,38 @@ def main(video, outdir):
         exp = [np.clip(np.rint(o), 0, 255).astype(np.uint8) for o in out]
         exact &= all(np.array_equal(a, b) for a, b in zip(exp, got[k]))
     check("export (CRF 0) == backend.process_frame bit for bit", exact, f"{len(got)} frames")
+
+    # Preferences > ffmpeg (G2): a path without ffmpeg / ffprobe -> warning, the dialog stays open, nothing saved;
+    # the ffmpeg binary of the tools found -> saved, used for this process (ffmpeg_path), a video opens
+    from PySide6.QtWidgets import QLineEdit, QMessageBox, QPushButton
+    from nv_ui_qt import ffmpeg_path
+    good = ffmpeg_path.ffmpeg_dir()
+    dlg = win.preferences()
+    ffs = [e for e in dlg.findChildren(QLineEdit) if e.toolTip() == ffmpeg_path.TOOLTIP]
+    browse = [b for b in dlg.findChildren(QPushButton) if b.text() == "Browse…"]
+    bad = os.path.join(outdir, "no_ffmpeg_here", "ffmpeg")
+    kept = saved = False
+    if ffs and good:
+        ffs[0].setText(bad)
+        dlg.accept()
+        app.processEvents()
+        boxes = [b for b in dlg.findChildren(QMessageBox) if b.isVisible()]   # (macOS: no window title shown)
+        kept = (dlg.isVisible() and len(boxes) == 1 and boxes[0].text() == ffmpeg_path.missing_text(bad)
+                and settings().value("prefs/ffmpeg") is None)
+        for b in boxes:
+            b.accept()
+        ffs[0].setText(os.path.join(good, "ffmpeg"))
+        dlg.accept()
+        closed = not dlg.isVisible()
+        app.processEvents()
+        saved = (closed and str(settings().value("prefs/ffmpeg")) == os.path.join(good, "ffmpeg")
+                 and ffmpeg_path.ffmpeg_dir() == good and os.environ["PATH"].split(os.pathsep)[0] == good)
+    win.open_video(video)
+    opened = wait(app, lambda: win.src == video and st.profile.base is not None and idle())
+    settings().remove("prefs/ffmpeg")
+    check("Preferences ffmpeg row: a path without ffmpeg / ffprobe warns and keeps the dialog (nothing saved); the "
+          "ffmpeg binary is saved and used, a video opens", bool(browse) and kept and saved and opened,
+          f"{bool(ffs)} {bool(browse)} {kept} {saved} {opened} {good}")
 
     # high bit depth: the first 12 frames x4 plus random low bits as 10-bit FFV1; Preferences > Bit
     # depth 10 reloads the video at 10 bits

@@ -19,6 +19,12 @@ std::string find_ffmpeg_dir(const std::string& pref = "");
 std::string ffmpeg_dir();          // the cached find_ffmpeg_dir() of the process (set_ffmpeg_dir overrides)
 void set_ffmpeg_dir(const std::string& d);
 std::string tool_path(const char* name);   // "<ffmpeg_dir()>/<name>", or the bare name when no directory is known
+// A prefs/ffmpeg value (a binary or its directory, ~ expanded) naming a directory that holds both tools
+bool ffmpeg_tools_in(const std::string& pref);
+// Preferences: the warning for a path without both tools (ffmpeg_path.missing_text of the Python UI), and the
+// tooltip of the field
+std::string ffmpeg_missing_text(const std::string& path);
+extern const char* FFMPEG_TOOLTIP;
 
 struct VideoInfo {
     int W = 0, H = 0;

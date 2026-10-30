@@ -35,6 +35,7 @@ def read_exact(stream, n):
     """Read exactly n bytes from a binary stream; return None on EOF."""
     buf = bytearray()
     while len(buf) < n:
+        # (the C++ UI's traceback copies this line's number and text: qtui/src/app/ofx.cpp print_read_exception)
         chunk = stream.read(n - len(buf))
         if not chunk:
             return None
@@ -105,6 +106,7 @@ class OfxFrameSource:
         """Read all available frames from stdin."""
         fs = frame_size(self.W, self.H, self.depth)
         while True:
+            # (the C++ UI's traceback copies this line's number and text: qtui/src/app/ofx.cpp print_read_exception)
             data = read_exact(sys.stdin.buffer, fs)
             if data is None:
                 break

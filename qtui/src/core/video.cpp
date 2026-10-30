@@ -22,8 +22,18 @@ std::mutex dir_mu;
 bool dir_known = false;
 std::string dir_value;
 
-bool has_tools(const QString& d) {
-    return QFileInfo(QDir(d).filePath("ffmpeg")).isExecutable() && QFileInfo(QDir(d).filePath("ffprobe")).isExecutable();
+bool has_tools(const QString& d) {      // ffmpeg_path.has_tools: executable files (not directories)
+    for (const char* t : {"ffmpeg", "ffprobe"}) {
+        const QFileInfo fi(QDir(d).filePath(t));
+        if (!fi.isFile() || !fi.isExecutable()) return false;
+    }
+    return true;
+}
+
+// ffmpeg_path.tool_dir: a binary or directory setting -> the directory to look in
+QString tool_dir(const QString& v) {
+    const QString e = QDir::fromNativeSeparators(v.startsWith("~") ? QDir::homePath() + v.mid(1) : v);
+    return QFileInfo(e).isFile() ? QFileInfo(e).absolutePath() : e;
 }
 
 QString tool(const char* name) {
@@ -59,11 +69,8 @@ double num(const PyObj& v, double def) {
 std::string find_ffmpeg_dir(const std::string& pref) {
     QStringList cands;
     const QByteArray env = qgetenv("NV_FFMPEG");
-    for (const QString& v : {QString::fromLocal8Bit(env), QString::fromStdString(pref)}) {
-        if (v.isEmpty()) continue;
-        const QString e = QDir::fromNativeSeparators(v.startsWith("~") ? QDir::homePath() + v.mid(1) : v);
-        cands << (QFileInfo(e).isFile() ? QFileInfo(e).absolutePath() : e);
-    }
+    for (const QString& v : {QString::fromLocal8Bit(env), QString::fromStdString(pref)})
+        if (!v.isEmpty()) cands << tool_dir(v);
     cands << "/opt/homebrew/bin" << "/usr/local/bin" << "/opt/local/bin";
     const QString path = QProcessEnvironment::systemEnvironment().value("PATH");
     for (const QString& p : path.split(':', Qt::SkipEmptyParts)) cands << p;
@@ -71,6 +78,17 @@ std::string find_ffmpeg_dir(const std::string& pref) {
         if (has_tools(c)) return QDir(c).absolutePath().toStdString();
     return "";
 }
+
+bool ffmpeg_tools_in(const std::string& pref) { return !pref.empty() && has_tools(tool_dir(QString::fromStdString(pref))); }
+
+std::string ffmpeg_missing_text(const std::string& path) {
+    return "No ffmpeg and ffprobe at " + path +
+           ".\n\nName the ffmpeg binary or the directory that holds ffmpeg and ffprobe, or leave the field empty: "
+           "ffmpeg is then looked for in $NV_FFMPEG, /opt/homebrew/bin, /usr/local/bin, /opt/local/bin and PATH.";
+}
+
+const char* FFMPEG_TOOLTIP = "ffmpeg / ffprobe: a binary or the directory holding both (prefs/ffmpeg); empty = "
+                             "$NV_FFMPEG, /opt/homebrew/bin, /usr/local/bin, /opt/local/bin, PATH";
 
 std::string ffmpeg_dir() {
     std::lock_guard<std::mutex> lk(dir_mu);

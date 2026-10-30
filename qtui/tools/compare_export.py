@@ -173,10 +173,10 @@ def norm_cmd(args, dst):
     output file (named per side) by '<dst>'."""
     out = [os.path.basename(args[0])]
     for a in args[1:]:
-        if a.startswith(("/var/folders", "/private/var/folders", "/tmp/", "/private/tmp/")):
-            a = "<tmp>/" + os.path.basename(a)
-        elif a == dst:
+        if a == dst:                        # (first: OUTDIR itself may be under /tmp)
             a = "<dst>"
+        elif a.startswith(("/var/folders", "/private/var/folders", "/tmp/", "/private/tmp/")):
+            a = "<tmp>/" + os.path.basename(a)
         out.append(a)
     return out
 

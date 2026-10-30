@@ -12,6 +12,7 @@
 #include <QLineEdit>
 #include <QMenu>
 #include <QMenuBar>
+#include <QPushButton>
 #include <QMessageBox>
 #include <QSpinBox>
 
@@ -65,6 +66,7 @@ inline PyObj widget_info(QWidget* w) {
     } else if (auto* le = qobject_cast<QLineEdit*>(w)) {
         d.set("kind", PyObj::str("line"));
         d.set("text", S(le->text()));
+        d.set("placeholder", S(le->placeholderText()));
     } else if (auto* lb = qobject_cast<QLabel*>(w)) {
         d.set("kind", PyObj::str("label"));
         d.set("text", S(lb->text()));
@@ -73,8 +75,17 @@ inline PyObj widget_info(QWidget* w) {
         PyObj t = PyObj::list();
         for (QAbstractButton* b : bb->buttons()) t.append(S(b->text()));
         d.set("texts", t);
+    } else if (auto* pb = qobject_cast<QPushButton*>(w)) {
+        d.set("kind", PyObj::str("button"));
+        d.set("text", S(pb->text()));
     } else {
         d.set("kind", PyObj::str(w->metaObject()->className()));
+        const QList<QWidget*> kids = w->findChildren<QWidget*>(QString(), Qt::FindDirectChildrenOnly);
+        if (!kids.isEmpty()) {             // a composite field (the ffmpeg row: line edit + Browse…)
+            PyObj c = PyObj::list();
+            for (QWidget* k : kids) c.append(widget_info(k));
+            d.set("children", c);
+        }
     }
     return d;
 }
