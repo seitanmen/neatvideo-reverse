@@ -3,8 +3,8 @@ on the same inputs, then compares
   - with compare_ui.py: state_*.json (main window strings + Performance table, Image information, export dialog
     defaults; Profile Viewer rows and text; Batch Profiler dialog), menus.json, panes/*.rgb (the viewer panes of
     10-bit, 4:2:2 and 32-bit float frames), *.png grabs (dialogs and windows);
-  - here: the Preferences rows (prefs_rows.json; the two rows the C++ UI adds and its fixed native-core box are
-    reported as the known differences), the Batch Profiler's profiles (batch_*.nvprof.json text), the exports
+  - here: the Preferences rows (prefs_rows.json; the C++ UI's fixed native-core box is reported as the known
+    difference), the Batch Profiler's profiles (batch_*.nvprof.json text), the exports
     (mp4 byte for byte, mkv decoded frames + file length) with their side files, runs.json and the [prefs] of
     settings.ini (both UIs write the shared keys).
 
@@ -22,7 +22,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 REPRO = os.path.join(ROOT, "repro")
-CPP_ONLY_ROWS = ("Auto Fine-Tune after Auto / Build Profile", "ffmpeg (directory or binary)")
+CPP_ONLY_ROWS = ()      # (G2: the Python UI has the Auto Fine-Tune and ffmpeg rows of the C++ UI too)
 
 
 def make_inputs(d):

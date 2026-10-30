@@ -27,7 +27,7 @@ import numpy as np
 from PySide6.QtCore import QSettings, Qt, QTimer
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox, QFileDialog,
-                               QFormLayout, QHBoxLayout, QInputDialog, QLabel, QListWidget, QMainWindow, QMenu,
+                               QFormLayout, QHBoxLayout, QInputDialog, QLabel, QLineEdit, QListWidget, QMainWindow, QMenu,
                                QMessageBox, QProgressBar, QPushButton, QSpinBox, QSplitter, QStackedWidget,
                                QStyle, QTabBar, QTextEdit, QToolButton, QVBoxLayout, QWidget)
 
@@ -37,6 +37,7 @@ from denoise_video_v5 import probe, read_frames, remove_output, sidecar_stem
 
 from . import backend
 from . import display as D
+from . import ffmpeg_path
 from .menus import build_menus
 from .pages.filter_page import FilterPage
 from .pages.profile_page import ProfilePage
@@ -61,6 +62,16 @@ DEPTHS = (("8-bit (legacy yuv420p)", "8"), ("Source depth", "source"), ("10-bit"
 SPATIAL_PREFIXES = ("s_", "amt_", "bamt_", "bnoise_", "noise_", "adv_noise_level", "art_", "edge_", "sharp_",
                     "adv_spatial")
 N_A = "Not available in the reproduction"
+
+
+class _PrefsDialog(QDialog):
+    """Preferences: accept() (OK, or a call) runs `check` first and stays open when it fails (the ffmpeg field)."""
+    check = None
+
+    def accept(self):
+        if self.check is not None and not self.check():
+            return
+        super().accept()
 
 
 def settings():
@@ -1666,7 +1677,11 @@ class MainWindow(QMainWindow):
 
     # ---------------- tools ----------------
     def preferences(self):
-        dlg = QDialog(self)
+        """Tools > Preferences… (F10): the same rows, keys (prefs/<key>) and defaults as the C++ UI's dialog
+        (qtui MainWindow::preferences); the last two rows: Auto Fine-Tune after a profile build
+        (prefs/auto_fine_tune) and the ffmpeg location (prefs/ffmpeg, ffmpeg_path.py: a binary or its
+        directory; a path without ffmpeg and ffprobe keeps the dialog open with a warning)."""
+        dlg = _PrefsDialog(self)
         dlg.setWindowTitle("Preferences")
         f = QFormLayout(dlg)
         jobs = QSpinBox()
@@ -1700,6 +1715,25 @@ class MainWindow(QMainWindow):
         depth.setToolTip("Bit depth of loading, profiling and export (nv_depth.py). 8-bit = yuv420p as before; "
                          "10/12/16 keep the source's chroma format (RGB sources: gbrp), 32 = RGB float. "
                          "Changing it reloads the video")
+        aft = QCheckBox("Auto Fine-Tune after Auto / Build Profile")
+        aft.setChecked(bool(self.prefs["auto_fine_tune"]))
+        aft.setToolTip("prefs/auto_fine_tune (the genuine runs AutoFineTune after a profile build, DefAutoFineTine = 1)")
+        ff = QLineEdit(str(settings().value("prefs/ffmpeg") or ""))
+        ff.setPlaceholderText(ffmpeg_path.ffmpeg_dir() or "(not found)")
+        ff.setToolTip(ffmpeg_path.TOOLTIP)
+        ff_browse = QPushButton("Browse…")
+        ff_browse.setToolTip("Choose the ffmpeg binary")
+        ffw = QWidget()
+        ffl = QHBoxLayout(ffw)
+        ffl.setContentsMargins(0, 0, 0, 0)
+        ffl.addWidget(ff, 1)
+        ffl.addWidget(ff_browse)
+
+        def browse():
+            p = self._ask_open("ffmpeg binary", "All files (*)")
+            if p:
+                ff.setText(p)
+        ff_browse.clicked.connect(browse)
         f.addRow("Computing: export processes (jobs)", jobs)
         f.addRow("Output: x264 CRF", crf)
         f.addRow("Output: audio", audio)
@@ -1708,22 +1742,43 @@ class MainWindow(QMainWindow):
         f.addRow("Bit depth", depth)
         f.addRow(auto)
         f.addRow(native)
+        f.addRow(aft)
+        f.addRow("ffmpeg (directory or binary)", ffw)
         bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         bb.accepted.connect(dlg.accept)
         bb.rejected.connect(dlg.reject)
         f.addRow(bb)
 
+        def check():
+            fp = ff.text().strip()
+            if not fp or ffmpeg_path.tools_in(fp):
+                return True
+            box = QMessageBox(QMessageBox.Warning, ffmpeg_path.NOT_FOUND_TITLE, ffmpeg_path.missing_text(fp),
+                              QMessageBox.Ok, dlg)
+            box.setAttribute(Qt.WA_DeleteOnClose)
+            box.open()
+            return False
+        dlg.check = check
+
         def accept():
             reload = str(depth.currentData()) != str(self.prefs["depth"])
             self.prefs.update(jobs=jobs.value(), crf=crf.value(), audio=audio.currentText(),
                               preview_area=area.value(), mem_gb=mem.value(), auto_profile=auto.isChecked(),
-                              depth=str(depth.currentData()))
+                              depth=str(depth.currentData()), auto_fine_tune=aft.isChecked())
             if native.isEnabled():          # without the library the stored choice is kept
                 self.prefs["native"] = native.isChecked()
             backend.set_native(self.prefs["native"])
             s = settings()
             for k, v in self.prefs.items():
                 s.setValue(f"prefs/{k}", v)
+            fp = ff.text().strip()
+            if fp:
+                s.setValue("prefs/ffmpeg", fp)
+            else:
+                s.remove("prefs/ffmpeg")
+            d = ffmpeg_path.find_ffmpeg_dir(pref=fp)
+            if d:
+                ffmpeg_path.use_dir(d)
             if reload and self.src is not None and self.export is None and self.src != "<OFX host>":
                 self.open_video(self.src)       # frames are held at the processing depth
                 return

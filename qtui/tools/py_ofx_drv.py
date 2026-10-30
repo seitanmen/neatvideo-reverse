@@ -51,6 +51,8 @@ def run_steps(win):
             win.state.set_param(w[1], bool(int(w[2])))
         elif c == "tune":
             win.state.set_tune(w[1], float(w[2]))
+        elif c == "info":
+            print(f"INFO: {win.video_lbl.text()} | {win.depth_lbl.text()}", file=sys.stderr, flush=True)
         elif c == "dump":
             import json
             from py_dump_n3c import extras, menus, state_with

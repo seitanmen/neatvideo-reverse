@@ -872,7 +872,7 @@ int run_export(const ExportOptions& o, const std::function<void(const std::strin
             const PyObj& s = prof.get("sigma");
             for (size_t i = 0; i < s.keys().size(); ++i) {
                 const double v = s.get(s.keys()[i]).as_double();
-                sg += std::string(i ? ", " : "") + pyrepr(s.keys()[i]) + ": " + py_float_repr(std::nearbyint(v * 1000.0) / 1000.0);
+                sg += std::string(i ? ", " : "") + pyrepr(s.keys()[i]) + ": " + py_float_str(std::nearbyint(v * 1000.0) / 1000.0);
             }
             sg += "}";
             print("profile frame " + std::to_string(pf) + ": mode=" + prof.get("mode").as_str() + " area=" + prof.get("area").dump() +

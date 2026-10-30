@@ -1,7 +1,7 @@
 // qtui_ofx_drv - test driver of the OFX host mode (qtui/tools/compare_ofx.py): runs nvqt::ofx_main with the arguments
 // after the program name (--ofx W H ...) and, once the window is up, the steps of $NV_OFX_SCRIPT (";"-separated, the
 // same script as qtui/tools/py_ofx_drv.py for the Python UI).  After every step it waits until the UI is idle and
-// prints "MSG: <status bar text>" to stderr.  Steps: wait | apply | cancel | close | auto (Auto Profile, Current
+// prints "MSG: <status bar text>" to stderr.  Steps: wait | info ("INFO: <video label> | <depth label>") | apply | cancel | close | auto (Auto Profile, Current
 // Frame) | frame N | tab N | set KEY VALUE (a float parameter) | setb KEY 0|1 | tune KEY VALUE (profile Noise Level) |
 // dump DIR (menus_ofx.json, state_ofx.json and win_ofx.png of the window, as py_ofx_drv.py writes them).
 #include <QApplication>
@@ -53,6 +53,9 @@ void run_steps(MainWindow* win, std::shared_ptr<QStringList> steps) {
                 win->state->set_param(w[1].toStdString(), PyObj::boolean(w[2].toInt() != 0));
             else if (c == "tune" && w.size() > 2)
                 win->state->set_tune(w[1].toStdString(), w[2].toDouble());
+            else if (c == "info")
+                std::fprintf(stderr, "INFO: %s | %s\n", win->video_lbl->text().toUtf8().constData(),
+                             win->depth_lbl->text().toUtf8().constData());
             else if (c == "dump" && w.size() > 1) {
                 QFile mf(w[1] + "/menus_ofx.json");
                 if (mf.open(QIODevice::WriteOnly)) mf.write(QByteArray::fromStdString(dump::menus(*win).dump(1)));

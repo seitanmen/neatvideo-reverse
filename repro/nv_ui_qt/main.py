@@ -2,7 +2,8 @@
 
 Standalone mode (default):
   python3 -m nv_ui_qt.main [video]
-  Loads a video file with ffmpeg, shows the UI, exports with denoise_video_v5.
+  Loads a video file with ffmpeg, shows the UI, exports with denoise_video_v5.  ffmpeg / ffprobe are looked
+  for as ffmpeg_path.py describes ("ffmpeg not found" dialog when there are none).
 
 OFX host mode:
   python3 -m nv_ui_qt.main --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]
@@ -22,16 +23,24 @@ import sys
 def main(argv=None):
     argv = sys.argv if argv is None else argv
     args = argv[1:]
+    # ffmpeg / ffprobe: $NV_FFMPEG, prefs/ffmpeg, /opt/homebrew/bin, /usr/local/bin, /opt/local/bin, PATH
+    # (ffmpeg_path.py; the same search as the MeatVideo.app launcher and the C++ UI)
+    from nv_ui_qt import ffmpeg_path
+    ffmpeg_path.setup()
 
-    # --ofx W H [FPS] [MAX_FRAMES]
+    # --ofx W H [FPS] [MAX_FRAMES]  (no ffmpeg needed)
     if args and args[0] == "--ofx":
+        # (the C++ UI's traceback copies this line's number and text: qtui/src/app/ofx.cpp print_read_exception)
         return _ofx_main(args[1:], argv)
 
     # standalone (default)
-    from PySide6.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication, QMessageBox
     from nv_ui_qt.main_window import MainWindow
-    app = QApplication(argv)
+    app = QApplication.instance() or QApplication(argv)
     app.setApplicationName("nv_ui_qt")
+    if not ffmpeg_path.ffmpeg_dir():
+        QMessageBox.critical(None, ffmpeg_path.NOT_FOUND_TITLE, ffmpeg_path.NOT_FOUND_TEXT)
+        args = []                   # opening a video would fail in ffprobe
     win = MainWindow(args[0] if args else None)
     win.show()
     return app.exec()
@@ -60,6 +69,7 @@ def _ofx_main(rest, argv):
     # read frames from stdin before starting the UI (the host writes them all upfront)
     from nv_ui_qt.ofx_bridge import OfxFrameSource
     src = OfxFrameSource(W, H, fps, max_frames, depth)
+    # (the C++ UI's traceback copies this line's number and text: qtui/src/app/ofx.cpp print_read_exception)
     frames = src.read_all()
     if not frames:
         print("no frames received on stdin", file=sys.stderr)
@@ -143,4 +153,5 @@ def _ofx_main(rest, argv):
 
 
 if __name__ == "__main__":
+    # (the C++ UI's traceback copies this line's number and text: qtui/src/app/ofx.cpp print_read_exception)
     sys.exit(main())

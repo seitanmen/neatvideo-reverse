@@ -14,16 +14,16 @@ runs this file first):
   - multiprocessing.freeze_support() (the AFT child of backend.run_in_child and the frame workers of
     denoise_video_v5 are spawned: frozen, they re-run this executable);
   - ffmpeg / ffprobe (not bundled, GPL): the first directory holding both of $NV_FFMPEG (the binary or its
-    directory), the QSettings key prefs/ffmpeg if it was set by hand, /opt/homebrew/bin, /usr/local/bin,
+    directory), the QSettings key prefs/ffmpeg (Preferences > ffmpeg), /opt/homebrew/bin, /usr/local/bin,
     /opt/local/bin, then $PATH goes to the front of $PATH (a Finder launch has only /usr/bin:/bin:...).
-    repro calls "ffmpeg" / "ffprobe" by name and the children inherit the environment;
+    repro calls "ffmpeg" / "ffprobe" by name and the children inherit the environment (nv_ui_qt/ffmpeg_path.py,
+    the search of both UIs);
   - data/ref_floor.npy: nv_profile.reference_floor() looks for <dir of repro>/../data, which frozen is outside
     the bundle; its default argument is pointed at sys._MEIPASS/data/ref_floor.npy (else ~7 s recomputation).
 """
 import os
 import sys
 
-FFMPEG_DIRS = ("/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin")
 FROZEN = getattr(sys, "frozen", False)
 BASE = getattr(sys, "_MEIPASS", None) or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REF_FLOOR = os.path.join(BASE, "data", "ref_floor.npy")
@@ -32,47 +32,22 @@ if not FROZEN:      # python3 packaging/main.py ... (checks of the launcher with
                os.path.join(BASE, "repro")):
         if _p not in sys.path:
             sys.path.insert(0, _p)
+FFMPEG_DIRS = ("/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin")    # = ffmpeg_path.FFMPEG_DIRS
 
 
-def _has_tools(d):
-    return all(os.path.isfile(os.path.join(d, t)) and os.access(os.path.join(d, t), os.X_OK)
-               for t in ("ffmpeg", "ffprobe"))
+from nv_ui_qt import ffmpeg_path    # noqa: E402 - the search shared with the UIs (repro/nv_ui_qt/ffmpeg_path.py)
 
-
-def _settings_ffmpeg():
-    """prefs/ffmpeg of the UI's QSettings file (read only; the UI has no control for it)."""
-    path = os.environ.get("NV_UI_QT_SETTINGS")
-    try:
-        from PySide6.QtCore import QSettings
-        s = (QSettings(path, QSettings.IniFormat) if path else
-             QSettings(QSettings.IniFormat, QSettings.UserScope, "NeatRepro", "nv_ui_qt"))
-        v = s.value("prefs/ffmpeg")
-        return str(v) if v else None
-    except Exception:
-        return None
+_has_tools = ffmpeg_path.has_tools
+_settings_ffmpeg = ffmpeg_path.settings_ffmpeg
 
 
 def find_ffmpeg_dir():
-    cands = []
-    for v in (os.environ.get("NV_FFMPEG"), _settings_ffmpeg()):
-        if v:
-            v = os.path.expanduser(v)
-            cands.append(os.path.dirname(v) if os.path.isfile(v) else v)
-    cands += FFMPEG_DIRS
-    cands += [d for d in os.environ.get("PATH", "").split(os.pathsep) if d]
-    for d in cands:
-        if _has_tools(d):
-            return os.path.abspath(d)
-    return None
+    return ffmpeg_path.find_ffmpeg_dir(dirs=FFMPEG_DIRS)
 
 
 def _setup_env():
     if "NV_FFMPEG_DIR" not in os.environ:        # once per process tree: children inherit the result
-        d = find_ffmpeg_dir()
-        os.environ["NV_FFMPEG_DIR"] = d or ""
-        if d:
-            path = [p for p in os.environ.get("PATH", "").split(os.pathsep) if p and p != d]
-            os.environ["PATH"] = os.pathsep.join([d] + path)
+        ffmpeg_path.use_dir(find_ffmpeg_dir())
 
 
 def _setup_ref_floor():
@@ -153,12 +128,7 @@ def _ui(args):
     app = QApplication.instance() or QApplication([sys.argv[0]] + args)
     app.setApplicationName("nv_ui_qt")
     if not os.environ.get("NV_FFMPEG_DIR"):
-        QMessageBox.critical(
-            None, "ffmpeg not found",
-            "ffmpeg and ffprobe were not found.\n\nMeatVideo reads and writes video with them; they are not "
-            "bundled. Install them (e.g. `brew install ffmpeg`), or name the ffmpeg binary in the environment "
-            "variable NV_FFMPEG or as ffmpeg=<path> under [prefs] in ~/.config/NeatRepro/nv_ui_qt.ini, then "
-            "start the app again.\n\nLooked in: " + ", ".join(FFMPEG_DIRS + ("PATH",)))
+        QMessageBox.critical(None, ffmpeg_path.NOT_FOUND_TITLE, ffmpeg_path.NOT_FOUND_TEXT)
         args = []                   # opening a video would fail in ffprobe
     win = MainWindow(args[0] if args else None)
     win.show()

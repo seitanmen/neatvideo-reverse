@@ -80,11 +80,14 @@ def run(side, exe, args, data, script, out, tag, timeout=600):
     err = r.stderr.decode(errors="replace").splitlines()
     msgs = [l for l in err if l.startswith("MSG: ")]
     errs = [l for l in err if l.startswith(("OFX emit error", "usage:", "no frames"))]
+    last = next((l for l in reversed(err) if l.strip()), "")       # the exception line of a traceback
+    if last.startswith("MSG: "):
+        last = ""
     with open(os.path.join(out, f"{tag}_{side}.out"), "wb") as fh:
         fh.write(r.stdout)
     with open(os.path.join(out, f"{tag}_{side}.err"), "w") as fh:
         fh.write(r.stderr.decode(errors="replace"))
-    return r.returncode, r.stdout, msgs, errs
+    return r.returncode, r.stdout, msgs, errs, last
 
 
 def main():
@@ -158,16 +161,12 @@ def main():
                        (["3037000500", "3037000500", "24", "0", "--depth", "32"], ins["t640"][2][8])):
         tag = "args_" + "_".join(a.replace("-", "") for a in args)
         res = {s: run(s, A.exe, args, data, "close", out, tag, 60) for s in ("py", "cpp")}
+        # (a frame size beyond Py_ssize_t: Python's stdin.read raises OverflowError, the C++ UI prints the same
+        # traceback since G6; the last stderr line is compared with the rest)
         same = res["py"] == res["cpp"]
-        note = ""
-        if not same and res["py"][:2] == res["cpp"][:2] and res["cpp"][3] == ["no frames received on stdin"] \
-                and "OverflowError" in open(os.path.join(out, f"{tag}_py.err")).read():
-            # a frame size beyond Py_ssize_t: Python's stdin.read raises OverflowError (traceback, exit 1); the C++ UI
-            # reports the incomplete frame (exit 1); both write nothing (known difference of the message only)
-            same, note = True, " (known: Python OverflowError traceback, C++ 'no frames'; exit and stdout equal)"
         ok_all &= same
         print(f"{' '.join(args):28s} exit {res['py'][0]} / {res['cpp'][0]}, stdout {len(res['py'][1])} / "
-              f"{len(res['cpp'][1])} B, {'SAME' if same else 'DIFF'} {res['cpp'][3]}{note}", flush=True)
+              f"{len(res['cpp'][1])} B, {'SAME' if same else 'DIFF'} {res['cpp'][3] or res['cpp'][4]}", flush=True)
     print("RESULT:", "ALL SAME" if ok_all else "DIFFERENCES")
     return 0 if ok_all else 1
 

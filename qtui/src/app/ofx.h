@@ -9,14 +9,31 @@
 
 #include <QStringList>
 
+#include <cstdint>
 #include <functional>
+#include <string>
+#include <vector>
+
+#include "depth.h"
+#include "engine.h"
 
 namespace nvqt {
 
 class MainWindow;
 
+// ofx_bridge.unpack_yuv420p: one frame of stdin (frame_size bytes) as the UI holds it (restore receives the
+// non-finite samples of a depth-32 frame)
+Frame ofx_frame(const uint8_t* data, int w, int h, int depth, RestoreMap* restore);
+// main.py _emit after its signature check: frame t processed with P and the effective profile `eff` (the Auto Profile
+// of frame t for nullptr) and packed for stdout; throws what the Python UI raises (e.what() = its message)
+std::vector<uint8_t> ofx_process(const std::vector<Frame>& frames, int t, const PyObj& P, const PyObj* eff,
+                                 bool full_range, const std::string& matrix, const PreviewEngine& engine, int depth,
+                                 const RestoreMap* restore);
+
 // rest = the arguments after --ofx; on_shown (tests: qtui/tests/ofx_drv.cpp) runs once the event loop has started,
-// after the window is set up.  Returns the exit code (1 with the usage or "no frames received on stdin" on stderr).
+// after the window is set up.  Returns the exit code (1 with the usage, "no frames received on stdin", or the
+// traceback of a frame size Python cannot read (MemoryError / OverflowError) on stderr).  The numbers are read as
+// Python's int() / float() read them (pynum.h).
 int ofx_main(const QStringList& rest, const std::function<void(MainWindow*)>& on_shown = {});
 
 }  // namespace nvqt

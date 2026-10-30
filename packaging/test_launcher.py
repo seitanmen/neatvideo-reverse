@@ -78,6 +78,35 @@ def main(work):
     rc = L._ui([])
     check("ffmpeg-not-found dialog shown", rc == 0 and len(seen) == 1 and seen[0][1].startswith("ffmpeg and ffprobe were not found")
           and "brew install ffmpeg" in seen[0][1], seen[:1])
+    # the PySide6 UI's own start (nv_ui_qt.main, ffmpeg_path.py): the same search and the same dialog (G2)
+    from nv_ui_qt import ffmpeg_path as FP
+    from nv_ui_qt import main as M
+    a2 = fake_tools(os.path.join(work, "env_dir2"))
+    with open(ini, "w") as fh:
+        fh.write(f"[prefs]\nffmpeg={b}/ffmpeg\n")
+    os.environ.update(NV_FFMPEG=a2, PATH=f"{c}:/usr/bin:/bin")
+    check("ffmpeg_path: NV_FFMPEG first", FP.find_ffmpeg_dir() == a2 == L.find_ffmpeg_dir(), FP.find_ffmpeg_dir())
+    del os.environ["NV_FFMPEG"]
+    check("ffmpeg_path: prefs/ffmpeg next", FP.find_ffmpeg_dir() == b == L.find_ffmpeg_dir(), FP.find_ffmpeg_dir())
+    FP.FFMPEG_DIRS = ()
+    os.remove(ini)
+    check("ffmpeg_path: PATH last", FP.find_ffmpeg_dir() == c, FP.find_ffmpeg_dir())
+    # I3: a directory set in Preferences and cleared again is not found through the PATH front entry use_dir added
+    os.environ["PATH"] = f"/usr/bin:{c}:/bin"
+    for k in ("NV_FFMPEG_DIR", "NV_FFMPEG_PATH0", "NV_FFMPEG_PATH_SET"):
+        os.environ.pop(k, None)
+    FP.setup()
+    FP.use_dir(FP.find_ffmpeg_dir(pref=b))
+    back = FP.find_ffmpeg_dir(pref="")
+    check("ffmpeg_path: the search ignores its own PATH front entry (setting cleared -> PATH again)",
+          back == c and os.environ["PATH"].split(":")[0] == b, f"{back} {os.environ['PATH']}")
+    os.environ["PATH"] = "/usr/bin:/bin"
+    os.environ.pop("NV_FFMPEG_DIR", None)
+    seen.clear()
+    QTimer.singleShot(200, close_box)
+    rc = M.main([sys.argv[0]])
+    check("nv_ui_qt.main: the same ffmpeg-not-found dialog", rc == 0 and len(seen) == 1 and seen[0][1] == FP.NOT_FOUND_TEXT
+          and os.environ.get("NV_FFMPEG_DIR") == "", seen[:1])
     os.environ.clear()
     os.environ.update(env0)
     n_fail = RESULTS.count(False)
