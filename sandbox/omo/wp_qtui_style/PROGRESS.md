@@ -177,3 +177,9 @@ worktree `.claude/worktrees/n3fix-style` (branch n3fix-style、基点 53a52e1)�
 - `compare_export` (NV_NATIVE=1): RESULT: ALL SAME。
 - 新しいビルド先での clean ビルド: 警告 0。
 - cocoa の grab: `shots/after3_native_prepare.png` と `cmp_eq_completeness.png` で、欄が 22% と出ることを目で確かめた。
+
+---
+**統括による訂正の注記 (2026-10-31):** §3.2 の「本家は全面を見本にした (23/27 = 85%)」という説明と、「統括が "Full frame" の表示を見て読み違えた」という記述は、根拠を失った。
+- 根拠: "Profiled with: Full frame (WxH)" は見本の領域ではなく、フレームかフィールドかを表す欄とみられる。本家の文字列の選択肢が Full frame / Two fields / One field だからである。
+- 本家の 65% / 85% との差の原因は未確定とする。
+- 確定した事実と推測の区別は `REPORT.md` の「Completeness の値」と、`VERDICT_style.md` の「Round 2 追記」による。
