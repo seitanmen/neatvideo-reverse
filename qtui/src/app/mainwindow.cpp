@@ -1718,11 +1718,7 @@ void MainWindow::auto_fine_tune() {
                 say("Auto Fine-Tune result discarded: the profile changed while it ran");
                 return;
             }
-            ProfileState n = state->profile;
-            n.base = std::any_cast<PyObj>(res);
-            n.factors = unit_factors();
-            n.pinned = {};
-            state->set_profile(n, "Auto Fine-Tune");
+            state->set_profile(after_aft(state->profile, std::any_cast<PyObj>(res)), "Auto Fine-Tune");
             say("Auto Fine-Tune applied");
             emit aftFinished();
         },
@@ -1746,7 +1742,7 @@ void MainWindow::busy(const std::string& slot, bool on) {
 
 void MainWindow::auto_complete() {
     ProfileState n = state->profile;
-    n.factors = nvqt::auto_complete(n.factors, n.pinned);
+    n.factors = nvqt::auto_complete(n);
     state->set_profile(n, "Auto Complete");
 }
 
@@ -1765,11 +1761,8 @@ void MainWindow::edit_device(const QString& name_in) {
 }
 
 void MainWindow::reset_fine_tune() {
-    ProfileState n = state->profile;
-    n.factors = unit_factors();
-    n.pinned = {};
-    if (n.has_profile()) n.base.set("aft_reset", PyObj::boolean(true));
-    state->set_profile(n, "Reset Fine-Tuning Results");
+    // an R/G/B profile then runs on the curve before AFT (levels 1.0, state.reset_fine_tune)
+    state->set_profile(nvqt::reset_fine_tune(state->profile), "Reset Fine-Tuning Results");
 }
 
 void MainWindow::generic_profile() {

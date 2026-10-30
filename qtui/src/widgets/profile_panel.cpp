@@ -374,7 +374,7 @@ void ProfilePanel::show_profile(const ProfileState& ps, const PyObj*, std::optio
         const double lvl = ps.base.has("area_level") ? ps.base.get("area_level").as_double() : 128.0;
         main_bin = static_cast<int>(std::min(std::max(std::nearbyint(lvl / 32.0), 0.0), 8.0));
     }
-    curve->set_factors(ps.factors, ps.pinned, main_bin);
+    curve->set_factors(ps.factors, ps.pinned, main_bin, ps.channels);
     for (auto& [kk, r] : tune) r->set_value(ps.tune_value(kk));
     const QString W = frame_info ? QString::number(frame_info->first) : QString::fromUtf8("—");
     const QString H = frame_info ? QString::number(frame_info->second) : QString::fromUtf8("—");

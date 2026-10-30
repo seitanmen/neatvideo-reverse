@@ -303,7 +303,7 @@ def profile_check_checks(app, win, wait, idle, outdir):
     lay = ppn.curve.buttons
     ws = [lay.itemAt(i).widget() for i in range(lay.count()) if lay.itemAt(i).widget()]
     order = ws == [ppn.b_aft, ppn.b_manual, ppn.b_complete] + \
-        [ppn.curve.target_buttons[k] for k in ("all", "Y", "Cr", "Cb")] + [ppn.complete_lbl, ppn.b_reset]
+        [ppn.curve.target_buttons[k] for k in ("all", "R", "G", "B")] + [ppn.complete_lbl, ppn.b_reset]
     tips = (ppn.b_aft.toolTip().startswith("Use to automatically fine-tune the current noise profile using the "
                                            "whole input image") and ppn.b_manual.toolTip() == EQ_TIPS["manual"]
             and not ppn.b_manual.isEnabled() and ppn.b_reset.toolTip() == "Reset all fine-tuning"
@@ -811,15 +811,27 @@ def main(video, outdir):
     check("malformed profile / preset files rejected", json.dumps(st.profile.to_json()) == good)
 
     # manual fine-tune + auto complete
+    # (R/G/B profile, G1: the R levels start at the AFT's; Auto Complete keeps the edited bins and the bins the AFT
+    # measured, U6, and interpolates the others between them)
     ed = win.profile_page.panel.curve
+    f0 = list(st.profile.factors[0])
+    a = list(f0)
+    a[2] = 1.5
     st.new_edit()
-    ed.edited.emit(0, [1.0, 1.0, 1.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], 2)
+    ed.edited.emit(0, a, 2)
+    a = list(st.profile.factors[0])
+    a[6] = 0.5
     st.new_edit()
-    ed.edited.emit(0, [1.0, 1.0, 1.5, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0], 6)
+    ed.edited.emit(0, a, 6)
     win.auto_complete()
     f = st.profile.factors[0]
-    check("manual fine-tune + auto complete", abs(f[2] - 1.5) < 1e-9 and abs(f[6] - 0.5) < 1e-9 and
-          abs(f[4] - 1.0) < 1e-9 and abs(f[0] - 1.5) < 1e-9 and abs(f[8] - 0.5) < 1e-9, str(f))
+    mk = st.profile.base["aft_bin_flags"]["marker"][0]
+    fixed = sorted({2, 6} | {k for k in range(9) if not mk[k]})
+    val = {k: 1.5 if k == 2 else 0.5 if k == 6 else f0[k] for k in fixed}
+    exp = [val[k] if k in val else float(np.interp(32.0 * k, [32.0 * i for i in fixed], [val[i] for i in fixed]))
+           for k in range(9)]
+    check("manual fine-tune + auto complete", st.profile.channels == "RGB" and
+          all(abs(x - y) < 1e-12 for x, y in zip(f, exp)), f"{f} vs {exp}")
     eff = st.effective_profile()
     check("fine-tune changes the effective curve", eff["curve"]["Y"] != st.profile.base["curve"]["Y"])
     pf = os.path.join(outdir, "prof.nvprof.json")
@@ -946,16 +958,14 @@ def main(video, outdir):
 
     # (d) profile Noise Level (tune): multiplies the curve, undo, JSON
     base_c = list(st.effective_profile()["curve"]["Y"])
+    base_cr = list(st.effective_profile()["curve"]["Cr"])
     st.new_edit()
     ppn.tune["all"].slider.setValue(50)
     eff2 = st.effective_profile()
     scaled = st.profile.tune_value("all") == 1.5 and np.allclose(eff2["curve"]["Y"], np.asarray(base_c) * 1.5, rtol=1e-5)
     st.new_edit()
     ppn.tune["Cr"].slider.setValue(-50)
-    cr_ok = np.allclose(st.effective_profile()["curve"]["Cr"],
-                        np.asarray(st.profile.base["curve"]["Cr"]) * 0.75 * np.interp(
-                            st.profile.base["curve_centers"], [32.0 * k for k in range(9)], st.profile.factors[2]),
-                        rtol=1e-5)
+    cr_ok = np.allclose(st.effective_profile()["curve"]["Cr"], np.asarray(base_cr) * 0.75, rtol=1e-5)
     tp = os.path.join(outdir, "tune.nvprof.json")
     win.save_profile(tp)
     saved = json.load(open(tp))["tune"] == {"all": 1.5, "Cr": 0.5}
@@ -1274,11 +1284,144 @@ def main(video, outdir):
     check("10-bit: export (FFV1 yuv420p10le) == backend.process_frame bit for bit", exact,
           f"{len(got)} frames, {info['pix_fmt']}")
 
+    g1_checks(app, win, wait, idle, outdir)
+
     win.close()
     app.processEvents()
     n_fail = sum(1 for _, ok in RESULTS if not ok)
     print(f"{len(RESULTS) - n_fail}/{len(RESULTS)} passed")
     return 1 if n_fail else 0
+
+
+def g1_checks(app, win, wait, idle, outdir):
+    """G1, the R/G/B equalizer (sandbox/omo/wp_qtui_fix/DESIGN_G1.md, the user's decisions U1-U10 there)."""
+    import copy
+    import nv_aft_v5
+    import nvfilter as nv
+    from nv_ui_qt import backend, quality
+    from nv_ui_qt.state import (ProfileState, after_aft, auto_complete_ps, reset_fine_tune, rgb_effective_profile,
+                                rgb_reference)
+    st = win.state
+    F32 = np.float32
+    bits = lambda v: np.asarray(v, F32).view(np.uint32).tolist()             # noqa: E731
+    frames, fr, mat = win.frames, win.full_range, win.matrix
+    f = min(4, len(frames) - 3)
+    fresh = backend.build_profile(frames, f, fr, mat, "auto")
+    ps0 = ProfileState(base=fresh)
+    eff0 = ps0.effective()
+    check("G1 fresh profile: R/G/B channels, unit levels, colour weights, effective profile is base",
+          ps0.channels == "RGB" and ps0.factors == [[1.0] * 9] * 3 and len(fresh["ui_rgb_weights"]) == 3
+          and eff0 is fresh and ps0.to_json()["format"] == "nv_repro_profile_rgb")
+    # the AFT through the probe (backend._run_aft) == nv_aft_v5.apply_aft on the profile (Python, native off)
+    aft = backend.run_aft(fresh, frames[f], fr, mat)
+    rgb = np.clip(nv.yuv_to_rgb(tuple(np.asarray(p, F32) for p in frames[f]), mat, fr), 0, 255).astype(F32)
+    ref = nv_aft_v5.apply_aft(copy.deepcopy(fresh), rgb)
+    same = all(bits(aft["curve"][c]) == bits(ref["curve"][c]) for c in ("Y", "Cb", "Cr")) and \
+        aft["sigma"] == ref["sigma"] and all(aft[k] == ref[k] for k in (
+            "aft_face_curves", "aft_color_weights", "aft_band", "aft_bin_flags")) and \
+        list(aft)[-3:] == ["aft_bin_flags", "aft_levels", "ui_pre_aft"]
+    check("G1 run_aft (AFT on the 9-bin probe + R/G/B combination) == nv_aft_v5.apply_aft bit for bit", same,
+          f"native {backend.native_enabled()}")
+    check("G1 build-time colour weights == the AFT's (same frame and area)",
+          fresh["ui_rgb_weights"] == aft["aft_color_weights"])
+    ps1 = after_aft(ps0, aft)
+    eff1 = ps1.effective()
+    check("G1 after AFT: levels = the AFT's R/G/B levels (not flat), effective profile is base",
+          ps1.factors == aft["aft_levels"] and ps1.factors != [[1.0] * 9] * 3 and eff1 is aft
+          and rgb_reference(aft) == ps1.factors)
+    st.set_profile(ps1, "G1 test")
+    ed = win.profile_page.panel.curve
+    check("G1 equalizer: R / G / B lines and toggles RGB / R / G / B", ed.channels == "RGB" and
+          list(ed.target_buttons) == ["all", "R", "G", "B"] and ed.factors == ps1.factors and
+          ed.target_buttons["R"].toolTip().endswith("for the Red channel alone"))
+    # R bin 4 +20%: only the centres interpolating bin 4 (112, 144) change; the value of the combination
+    L = [list(r) for r in ps1.factors]
+    L[0][4] = 1.2
+    st.new_edit()
+    ed.edited.emit(0, L[0], 4)
+    e = st.effective_profile()
+    pre = aft["ui_pre_aft"]["curve"]
+    cw = aft["aft_color_weights"]
+    xs = np.array(aft["curve_centers"])
+    fc = [np.interp(xs, np.linspace(0, 256, 9), np.array(L[j])) for j in range(3)]
+    exp = {c: (np.array(pre[c], F32) * np.sqrt(np.maximum(cw[i][0] * fc[0] + cw[i][1] * fc[1] + cw[i][2] * fc[2],
+                                                           0))).astype(F32) for i, c in enumerate(("Y", "Cb", "Cr"))}
+    moved = [i for i, x in enumerate(aft["curve_centers"]) if abs(x - 128.0) < 32.0]
+    ok = all(bits(e["curve"][c]) == bits(exp[c]) for c in exp) and all(
+        (bits([e["curve"][c][i]]) == bits([aft["curve"][c][i]])) == (i not in moved) for c in exp
+        for i in range(len(xs))) and e["ui_channels"] == "RGB" and e["ui_factors"] == L
+    check("G1 R bin 4 +20%: the combined curves, only centres 112 / 144 change", ok)
+    undo0 = st.undo.index()
+    # All channels, every bin +20%: curve = pre-AFT curve x sqrt(1.2)
+    U = [[1.2] * 9 for _ in range(3)]
+    e2 = rgb_effective_profile(aft, U, {})
+    ok = all(np.allclose(e2["curve"][c], np.asarray(pre[c]) * np.sqrt(1.2), rtol=1e-6) for c in exp)
+    st.undo.undo()
+    ok_undo = st.undo.index() == undo0 - 1 and st.effective_profile() is st.profile.base
+    check("G1 All +20% on every bin = x sqrt(1.2) (apply_aft's combination); undo restores the profile", ok and ok_undo)
+    # Reset Fine-Tuning: the curve and sigma before AFT exactly, Completeness 0%
+    ps_r = reset_fine_tune(ps1)
+    er = ps_r.effective()
+    qn = quality.profile_numbers(ps_r, frames, fr, mat)
+    check("G1 Reset: levels 1.0 -> the curve and sigma before AFT (U5), Completeness 0%",
+          ps_r.factors == [[1.0] * 9] * 3 and er["curve"] == pre and er["sigma"] == aft["ui_pre_aft"]["sigma"]
+          and qn[1] == 0, f"{qn}")
+    # Auto Complete keeps the AFT-measured bins (U6)
+    psa = ps1.clone()
+    ac = auto_complete_ps(psa)
+    mk = aft["aft_bin_flags"]["marker"]
+    keep = all(ac[c][k] == ps1.factors[c][k] for c in range(3) for k in range(9) if not mk[c][k])
+    check("G1 Auto Complete: the bins the AFT measured stay (U6)", keep)
+    # Quality: level words 1.0 except edited bins, no tune (U3 / U4)
+    leg = ProfileState(aft, [[1.0] * 9 for _ in range(3)], [set(), set(), set()], channels="YCbCr")
+    q_rgb, q_leg = quality.profile_numbers(ps1, frames, fr, mat), quality.profile_numbers(leg, frames, fr, mat)
+    pt = ps1.clone()
+    pt.tune = {"all": 1.1}
+    pe = ps1.clone()
+    pe.factors[0][4] = 1.2
+    pe.pinned[0].add(4)
+    words, tk = quality.level_words(pe)
+    check("G1 Quality: unedited AFT levels count as 1.0 (U3), tune not written (U4), edited bin's level written",
+          q_rgb == q_leg and quality.profile_numbers(pt, frames, fr, mat) == q_rgb and tk == [1.0] * 3 and
+          words[0][4] == 1.2 and words[0][3] == 1.0 and words[1] == [1.0] * 9, f"{q_rgb} {q_leg}")
+    # files: the new format round trip; older readers refuse it; malformed R/G/B files are rejected
+    pe.tune = {"all": 1.1, "Cr": 0.8}
+    pth = os.path.join(outdir, "g1_rgb.nvprof.json")
+    json.dump(pe.to_json(), open(pth, "w"), indent=1)
+    d = json.load(open(pth))
+    back = ProfileState.from_json(d)
+    rt = back.channels == "RGB" and back.factors == pe.factors and back.pinned == pe.pinned and \
+        json.dumps(back.effective()) == json.dumps(pe.effective())
+    old_refuses = d["format"] != "nv_repro_profile" and d["channels"] == "RGB" and d["version"] == 2
+    rej = []
+    for mut in ("channels", "weights"):
+        x = json.loads(json.dumps(d))
+        if mut == "channels":
+            x.pop("channels")
+        else:
+            x["base"].pop("ui_pre_aft")
+        try:
+            ProfileState.from_json(x)
+            rej.append(False)
+        except ValueError:
+            rej.append(True)
+    check("G1 new format nv_repro_profile_rgb: round trip, older readers refuse it, malformed rejected",
+          rt and old_refuses and all(rej), f"{rt} {old_refuses} {rej}")
+    # older Y / Cb / Cr files (fixtures saved by the code before G1) give the same effective profile
+    fx = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "qtui", "tests", "fixtures")
+    leg_ok = []
+    for name in ("g1_legacy_r4", "g1_legacy_b6tune"):
+        lp = ProfileState.from_json(json.load(open(os.path.join(fx, name + ".nvprof.json"))))
+        exp_eff = json.load(open(os.path.join(fx, name + ".ui_profile.json")))
+        leg_ok.append(lp.channels == "YCbCr" and json.dumps(lp.effective()) == json.dumps(exp_eff)
+                      and lp.to_json()["format"] == "nv_repro_profile")
+    st.set_profile(lp, "G1 legacy")
+    leg_ui = ed.channels == "YCbCr" and list(ed.target_buttons) == ["all", "Y", "Cr", "Cb"]
+    lr = reset_fine_tune(ProfileState.from_json(json.load(open(os.path.join(fx, "g1_legacy_r4.nvprof.json")))))
+    check("G1 older Y / Cb / Cr files: same effective profile as before G1, Y / Cr / Cb equalizer, Reset -> R/G/B",
+          all(leg_ok) and leg_ui and lr.channels == "RGB" and lr.effective()["curve"] == lp.base["ui_pre_aft"]["curve"],
+          f"{leg_ok} {leg_ui}")
+    st.undo.undo()
 
 
 if __name__ == "__main__":

@@ -104,11 +104,11 @@ nv_aft_test: $(AFT_SRC) $(AFT_HDR)
 LIB_SRC = nvcore_c.cpp nv_aft.cpp nv_profile.cpp nv_model.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp \
           nv_linekernel.cpp nv_portable.cpp nv_lzma.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp \
           nv_ui.cpp nvcore_c_ui.cpp nv_quality.cpp nv_prof5.cpp nv_lstsq.cpp nvcore_c_prof5.cpp \
-          nv_depth.cpp nvcore_c_depth.cpp
+          nv_depth.cpp nvcore_c_depth.cpp nvcore_c_rgb.cpp
 LIB_HDR = nvcore_c.h nv_aft.h nv_profile.h nv_model.h nv_flat.h nv_band.h nv_curve.h nv_linekernel.h \
           nv_portable.h nv_lzma.h nv_ndimage.h nv_spatial.h nv_temporal.h \
           nv_ui.h nvcore_c_ui.h nv_quality.h nv_prof5.h nv_lstsq.h nvcore_c_prof5.h \
-          nv_depth.h nvcore_c_depth.h
+          nv_depth.h nvcore_c_depth.h nvcore_c_rgb.h
 
 libnvcore$(SUF).dylib: $(LIB_SRC) $(LIB_HDR) $(SDK_OBJ)
 	$(CXX) $(CXXFLAGS) $(XFLAGS) -D_7ZIP_ST -dynamiclib -install_name @rpath/libnvcore$(SUF).dylib \

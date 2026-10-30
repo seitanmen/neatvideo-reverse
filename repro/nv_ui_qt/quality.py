@@ -27,8 +27,9 @@ curve_post zeroes it, curve_fill write() sets it only on filled-in bins).
 Completeness = g * 100, shown as qRound(g * 100) + "%" next to Quality
 (RS 0xe2e20 / 0xe437c for the panels, 0x118ef8 / 0x119038 for Profile Viewer).
 
-The repro maps its own state onto the genuine curve bytes:
-    bin level word = factor[bin] * tune_all * tune_channel   (1.0 exactly when untouched)
+The repro maps its own state onto the genuine curve bytes (level_words):
+    R/G/B profile (G1): bin level word = the R/G/B level of a bin edited by hand, 1.0 elsewhere (no tune)
+    Y / Cb / Cr profile: bin level word = factor[bin] * tune_all * tune_channel   (1.0 exactly when untouched)
     markers / clip / >3.0 flags after AFT: stored per bin by nv_aft_v5.apply_aft
         (prof["aft_bin_flags"], read from the AFT port's own bytes; older saved
         profiles without it fall back to all-marked)
@@ -137,6 +138,22 @@ def quality_from_blob(blob):
     return q
 
 
+def level_words(ps):
+    """(factors 3 x 9, tk[3]) whose float32 product is each curve bin's level word.
+    R/G/B profile (G1): channel c = face R/G/B c (the genuine order); the level of a bin edited by hand (pinned),
+    1.0 elsewhere - also the bins the AFT wrote (U3: the genuine's 85% after AFT agrees with level words 1.0) -
+    and no tune (U4: the profile Noise Level is a repro multiplier, not a bin level).
+    Y / Cb / Cr profile (older files): factor x tune_all x tune_channel with the channel order ("Y", "Cr", "Cb")
+    of the tune against the factors' Y, Cb, Cr (kept as it was for the same numbers, U10); also a state without
+    channels (the stand-in of native/verify_bridge_ui.py)."""
+    if getattr(ps, "channels", "YCbCr") == "RGB":
+        return ([[float(ps.factors[c][k]) if k in ps.pinned[c] else 1.0 for k in range(9)] for c in range(3)],
+                [1.0, 1.0, 1.0])
+    tune = ps.tune or {}
+    chans = ("Y", "Cr", "Cb")                            # repro channel order (the genuine: R, G, B)
+    return ps.factors, [float(tune.get("all", 1.0)) * float(tune.get(c, 1.0)) for c in chans]
+
+
 def _curve_blob(ps, planes, full_range, matrix):
     """The bytes Quality reads, from the repro profile state (module docstring: the mapping)."""
     import nv_band as nb
@@ -185,13 +202,11 @@ def _curve_blob(ps, planes, full_range, matrix):
     else:
         stored = None
     buf[0xc2a4] = 0 if reset else 1
-    tune = ps.tune or {}
-    chans = ("Y", "Cr", "Cb")                            # repro channel order (the genuine: R, G, B)
-    tk = [float(tune.get("all", 1.0)) * float(tune.get(c, 1.0)) for c in chans]
+    factors, tk = level_words(ps)
     for c in range(3):
         for k in range(9):
             e = 0xbf44 + 0x120 * c + 0x20 * k
-            lvl = F32(F32(ps.factors[c][k]) * F32(tk[c]))    # 1.0 exactly when untouched
+            lvl = F32(F32(factors[c][k]) * F32(tk[c]))       # 1.0 exactly when untouched
             f32[e // 4:e // 4 + 6] = F32(1.0)
             f32[e // 4] = lvl                                # word 0 = the bin's level
             if stored is not None:

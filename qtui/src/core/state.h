@@ -61,9 +61,12 @@ struct ProfileState {
     std::array<std::set<int>, 3> pinned;
     std::string device = "Unspecified device";
     PyObj tune = PyObj::dict();                    // "all", "Y", "Cb", "Cr" (missing = 1.0)
+    // "RGB": factors = the R / G / B bin levels (G1); "YCbCr": Y / Cb / Cr factors (files made before G1)
+    std::string channels = "RGB";
 
     bool has_profile() const { return !base.is_none(); }
     double tune_value(const std::string& k) const;
+    PyObj effective() const;                        // ProfileState.effective (by the channels)
     PyObj to_json() const;
     static ProfileState from_json(const PyObj& d);   // throws std::runtime_error as Python's ValueError
 };
@@ -72,6 +75,16 @@ struct ProfileState {
 PyObj effective_profile(const PyObj& base, const Factors& factors, const PyObj& tune);
 // state.auto_complete(factors, pinned)
 Factors auto_complete(const Factors& factors, const std::array<std::set<int>, 3>& pinned);
+
+// G1, the R/G/B equalizer (sandbox/omo/wp_qtui_fix/DESIGN_G1.md): state.rgb_ready / rgb_reference (nullopt =
+// None) / rgb_effective_profile (curve and sigma through nvc_rgb_effective_curve) / auto_complete_ps /
+// after_aft / reset_fine_tune
+bool rgb_ready(const PyObj& base);
+std::optional<Factors> rgb_reference(const PyObj& base);
+PyObj rgb_effective_profile(const PyObj& base, const Factors& levels, const PyObj& tune);
+Factors auto_complete(const ProfileState& ps);
+ProfileState after_aft(const ProfileState& ps, const PyObj& prof);
+ProfileState reset_fine_tune(const ProfileState& ps);
 
 PyObj preset_json(const PyObj& params);
 PyObj params_from_json(const PyObj& d);           // throws std::runtime_error

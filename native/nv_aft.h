@@ -96,4 +96,16 @@ struct Combine {
 void combine(const uint8_t* raw, const uint8_t* aft, const double* centers, int n, const float* const curves[3],
              double area_level, const double tot_ratio[3], int band, Combine* out);
 
+// the two parts of combine: _color_weights of the faces' model q99 (a_j), and the levels -> curves step with the
+// 9 levels of each face given (face[j] = prof["aft_face_curves"][j], curve_out[c] = the float32 curves).
+void color_weights(const float q99[3], double cw[3][3]);
+void combine_levels(const double cw[3][3], const double levels[3][9], const double* centers, int n,
+                    const float* const curves[3], std::vector<double> face[3], std::vector<float> curve_out[3]);
+
+// G1 (repro/nv_ui_qt/state.rgb_effective_profile): combine_levels on the curve src (before AFT), each curve then
+// times float32(tk[c]) in float32, sigma = interp(area_level, centres, curve) * tot_ratio.
+void rgb_effective(const double* centers, int n, const float* const src[3], const double cw[3][3],
+                   const double levels[3][9], const double tk[3], double area_level, const double tot_ratio[3],
+                   std::vector<float> curve_out[3], double sigma[3]);
+
 }  // namespace nva

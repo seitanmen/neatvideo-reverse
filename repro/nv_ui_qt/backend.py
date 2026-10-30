@@ -250,6 +250,7 @@ def build_profile(frames, f, full_range, matrix, mode, area=None, cancel=None):
     prof = build(planes, full_range, area=area, pair=more[0] if more else None, mode=mode,
                  more=more, matrix=matrix, cancel=cancel)
     prof["ui_frame"] = f
+    prof["ui_rgb_weights"] = rgb_weights(planes, prof["area"], full_range, matrix)    # G1: R/G/B equalizer
     return prof
 
 
@@ -287,6 +288,38 @@ def hh1_sigma(Y):
     return float(np.median(np.abs(a - b - c + d) / 2.0)) / 0.6745
 
 
+# ---------------- R/G/B equalizer (G1, sandbox/omo/wp_qtui_fix/DESIGN_G1.md) ----------------
+CURVE_X9 = [32.0 * k for k in range(9)]       # the genuine curve bins (centres 0, 32, ..., 256)
+
+
+def rgb_weights(planes, area, full_range, matrix):
+    """The AFT's colour weights c_cj (nv_aft_v5._color_weights) for a fresh profile: a_j = the R / G / B model
+    q99 (word 5, the finest band) of the profile area, from nv_band.model_levels of the RGB crop the AFT
+    models (nv_profile.build_profile faces 0..2, whose words 0..54 are model_levels: the same weights)."""
+    import nv_aft_v5
+    import nv_band as nb
+    rgb = np.clip(nv.yuv_to_rgb(tuple(np.asarray(p, np.float32) for p in planes), matrix, full_range),
+                  0, 255).astype(np.float32)
+    y0, x0, h = (int(v) for v in area[:3])
+    w = int(area[3]) if len(area) == 4 else h
+    crop = rgb[y0:y0 + h, x0:x0 + w]
+    q99 = [float(np.asarray(nb.model_levels(np.ascontiguousarray(crop[..., j])), np.float32)[5]) for j in range(3)]
+    return nv_aft_v5._color_weights(q99)
+
+
+def rgb_combine(curve, centers, cw, levels):
+    """nv_aft_v5.apply_aft steps 4-6 with the 9 R/G/B levels given: (face curves on the v5 centres, the Y / Cb /
+    Cr curves curve_c * sqrt(max(sum_j cw_cj f_j, 0)) as float32 lists)."""
+    v5c = np.array(centers)
+    raw_c = np.linspace(0, 256, 9)
+    faces = [np.interp(v5c, raw_c, np.array([float(v) for v in levels[j]])) for j in range(3)]
+    out = {}
+    for ci, c in enumerate(CHANNEL_NAMES):
+        ws = sum(cw[ci][j] * faces[j] for j in range(3))
+        out[c] = (np.array(curve[c], np.float32) * np.sqrt(np.maximum(ws, np.float32(0)))).astype(np.float32)
+    return faces, out
+
+
 def aft_frame(base, frames):
     """Index of the profile frame (clamped: a loaded profile may come from another clip)."""
     return max(0, min(int(base.get("ui_frame", 0)), len(frames) - 1))
@@ -315,10 +348,28 @@ def _run_aft(base, planes, full_range, matrix, mode=0, cancel=None, native=None)
     keep = {"curve": copy.deepcopy(prof["curve"]), "sigma": dict(prof["sigma"])}
     rgb = np.clip(nv.yuv_to_rgb(tuple(np.asarray(p, np.float32) for p in planes), matrix, full_range),
                   0, 255).astype(np.float32)
-    res = nv_native.apply_aft(prof, rgb, mode=mode, cancel=cancel) if native else None
+    # G1: the AFT on a stand-in profile whose curve centres are the 9 bins returns the R/G/B levels themselves
+    # (np.interp at the knots) with the colour weights and bin flags of the real call; the real curve is then
+    # apply_aft's combination of those levels (bit for bit apply_aft on prof, DESIGN_G1.md §2.6)
+    probe = {"area": prof["area"], "curve_centers": list(CURVE_X9), "curve": {c: [1.0] * 9 for c in CHANNEL_NAMES},
+             "tot_ratio": dict(prof["tot_ratio"]), "area_level": prof.get("area_level", 128.0)}
+    res = nv_native.apply_aft(probe, rgb, mode=mode, cancel=cancel) if native else None
     if res is None and strict:
         return None
-    prof = res if res is not None else nv_aft_v5.apply_aft(prof, rgb, mode=mode)
+    res = res if res is not None else nv_aft_v5.apply_aft(probe, rgb, mode=mode)
+    levels = [list(map(float, l)) for l in res["aft_face_curves"]]
+    faces, curves = rgb_combine(prof["curve"], prof["curve_centers"], res["aft_color_weights"], levels)
+    for c in CHANNEL_NAMES:
+        prof["curve"][c] = curves[c].tolist()
+    lvl = prof.get("area_level", 128.0)
+    prof["sigma"] = {c: float(np.interp(lvl, prof["curve_centers"], prof["curve"][c]) * prof["tot_ratio"][c])
+                     for c in CHANNEL_NAMES}
+    prof["aft_applied"] = True
+    prof["aft_face_curves"] = [f.tolist() for f in faces]
+    prof["aft_color_weights"] = res["aft_color_weights"]
+    prof["aft_band"] = res["aft_band"]
+    prof["aft_bin_flags"] = res["aft_bin_flags"]
+    prof["aft_levels"] = levels
     prof.pop("aft_reset", None)     # a run after Reset Fine-Tuning rewrites the curve flags
     prof["ui_pre_aft"] = keep
     return prof

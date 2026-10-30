@@ -1,12 +1,13 @@
-"""Noise profile equalizer (Manual Fine-Tune) in the genuine look: the per-brightness noise factors of
-the three components drawn together (Luminance white, Cr red, Cb purple; the genuine shows R / G /
-B, the reproduction's factors are Y / Cb / Cr), vertical axis (factor - 1) x 100% from -100% to
-+200%, on the panel grey with a dotted grid (every bin, every 50%), a black -> white brightness bar
-under the horizontal axis. Knots are small yellow squares (edited ones filled with the component's
-colour); the knot of the bin holding the profile's sample brightness is drawn larger, as the genuine
-draws one knot larger (g0_eq.png; that this is the sample's bin is an inference). The edit target is
-chosen with round toggles (all components = three-colour disc, Y white, Cr pink, Cb lilac; the
-genuine's are all / R / G / B)."""
+"""Noise profile equalizer (Manual Fine-Tune) in the genuine look: the per-brightness noise levels of the
+three channels drawn together, vertical axis (level - 1) x 100% from -100% to +200%, on the panel grey with a
+dotted grid (every bin, every 50%), a black -> white brightness bar under the horizontal axis. Knots are small
+yellow squares (edited ones filled with the channel's colour); the knot of the bin holding the profile's sample
+brightness is drawn larger, as the genuine draws one knot larger (g0_eq.png; that this is the sample's bin is an
+inference). The edit target is chosen with round toggles (all channels = three-colour disc, then one per
+channel).
+An R/G/B profile (G1) shows the genuine's R / G / B levels (red, green, blue; toggles RGB / R / G / B): after
+Auto Fine-Tune its curves are the AFT's levels. A Y / Cb / Cr profile of an older file keeps the reproduction's
+former Y / Cr / Cb factors (Luminance white, Cr red, Cb purple)."""
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QBrush, QColor, QIcon, QLinearGradient, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QButtonGroup, QHBoxLayout, QSizePolicy, QToolButton, QVBoxLayout, QWidget
@@ -18,14 +19,20 @@ D_MIN, D_MAX = -100.0, 200.0
 PANEL_GREY = QColor(89, 89, 89)              # genuine panel / plot background (g0.png)
 
 
-def all_icon(size=18):
-    """Three-colour disc of the 'all components' toggle."""
+# the channels of the equalizer in drawing / toggle order with their index in ProfileState.factors
+ORDER = {"RGB": [("R", 0), ("G", 1), ("B", 2)],
+         "YCbCr": [(c, CH_INDEX[c]) for c, _ in UI_CHANNELS]}          # Y, Cr, Cb (factors Y, Cb, Cr)
+NAMES = {"Y": "Luminance (Y)", "Cr": "Cr", "Cb": "Cb", "R": "Red", "G": "Green", "B": "Blue"}
+
+
+def all_icon(size=18, keys=("Y", "Cr", "Cb")):
+    """Three-colour disc of the 'all channels' toggle."""
     pm = QPixmap(size, size)
     pm.fill(Qt.transparent)
     p = QPainter(pm)
     p.setRenderHint(QPainter.Antialiasing)
     r = QRectF(1.5, 1.5, size - 3, size - 3)
-    for k, c in enumerate(("Y", "Cr", "Cb")):
+    for k, c in enumerate(keys):
         p.setPen(Qt.NoPen)
         p.setBrush(CH_COLORS[c])
         p.drawPie(r, (90 + 120 * k) * 16, 120 * 16)
@@ -81,17 +88,17 @@ class EqualizerPlot(QWidget):
         p.setPen(QPen(QColor(40, 40, 40), 1))
         p.drawRect(bar)
         tgt = self.o.target
-        order = [c for c, _ in UI_CHANNELS]
+        order = [c for c, _ in self.o.order()]
         order = [c for c in order if c != tgt] + ([tgt] if tgt in order else [])
         for c in order:
-            fs = self.o.factors[CH_INDEX[c]]
+            fs = self.o.factors[self.o.index(c)]
             pts = [self.pt(i, fs[i]) for i in range(9)]
             active = tgt in ("all", c)
             p.setPen(QPen(CH_COLORS[c], 2 if active else 1))
             for a, b in zip(pts, pts[1:]):
                 p.drawLine(a, b)
             for i, q in enumerate(pts):
-                pinned = i in self.o.pinned[CH_INDEX[c]]
+                pinned = i in self.o.pinned[self.o.index(c)]
                 p.setPen(QPen(QColor(20, 20, 20), 1))
                 p.setBrush(QBrush(CH_COLORS[c] if pinned else QColor(250, 220, 0)))
                 s = (6 if active else 5) + (4 if i == self.o.main_bin else 0)
@@ -99,10 +106,10 @@ class EqualizerPlot(QWidget):
         p.end()
 
     def _hit(self, pos):
-        chans = [c for c, _ in UI_CHANNELS] if self.o.target == "all" else [self.o.target]
+        chans = [c for c, _ in self.o.order()] if self.o.target == "all" else [self.o.target]
         best = None
         for c in chans:
-            fs = self.o.factors[CH_INDEX[c]]
+            fs = self.o.factors[self.o.index(c)]
             for i in range(9):
                 q = self.pt(i, fs[i])
                 d = abs(q.x() - pos.x()) + abs(q.y() - pos.y())
@@ -126,14 +133,15 @@ class EqualizerPlot(QWidget):
 
 
 class CurveEditor(QWidget):
-    edited = Signal(int, list, int)        # channel index (state.CHANNELS), 9 factors, edited bin
-    editedAll = Signal(list, int)          # same bin edit on all components
+    edited = Signal(int, list, int)        # factor index (R/G/B, or state.CHANNELS), 9 levels, edited bin
+    editedAll = Signal(list, int)          # same bin edit on all channels
     editStarted = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.factors = [[1.0] * 9 for _ in UI_CHANNELS]
         self.pinned = [set() for _ in UI_CHANNELS]
+        self.channels = "RGB"
         self.target = "all"
         self.main_bin = None                 # bin of the profile's sample brightness (larger knot)
         v = QVBoxLayout(self)
@@ -144,28 +152,51 @@ class CurveEditor(QWidget):
         row.setSpacing(2)
         self.group = QButtonGroup(self)
         self.target_buttons = {}
-        names = {"Y": "Luminance (Y)", "Cr": "Cr", "Cb": "Cb"}
-        for key, text in (("all", "All"), ("Y", "Y"), ("Cr", "Cr"), ("Cb", "Cb")):
+        self._buttons = []
+        for _ in range(4):
             b = QToolButton()
-            b.setText(text)
-            b.setIcon(all_icon() if key == "all" else QIcon(dot_pixmap(key, 18)))
             b.setIconSize(QSize(18, 18))
             b.setToolButtonStyle(Qt.ToolButtonIconOnly)
             b.setFixedSize(26, 24)
             b.setCheckable(True)
-            b.setToolTip("Show the noise graphs (noise level vs brightness level) for all three color channels\n"
-                         "(repro: Luminance, Cr and Cb; the genuine's channels are R, G, B)" if key == "all" else
-                         f"Show the noise graph (noise level vs brightness level) for the {names[key]} channel "
-                         f"alone\n(repro: the genuine's buttons are Red, Green, Blue)")
             b.setStyleSheet("QToolButton{border:1px solid #3a3a3a; border-radius:3px; background:#6a6a6a}"
                             "QToolButton:checked{background:#6f6fd8}")
             self.group.addButton(b)
-            b.clicked.connect(lambda _=False, key=key: self.set_target(key))
+            b.clicked.connect(lambda _=False, b=b: self.set_target(b.property("key")))
             row.addWidget(b)
-            self.target_buttons[key] = b
+            self._buttons.append(b)
+        self._label_buttons()
         self.target_buttons["all"].setChecked(True)
         self.buttons = row
         v.addLayout(row)
+
+    def order(self):
+        return ORDER[self.channels]
+
+    def index(self, c):
+        return dict(self.order())[c]
+
+    def _label_buttons(self):
+        """The toggles of the current channels: all, then one per channel in the panel order."""
+        rgb = self.channels == "RGB"
+        keys = [c for c, _ in self.order()]
+        self.target_buttons = {}
+        for b, key in zip(self._buttons, ["all"] + keys):
+            b.setProperty("key", key)
+            b.setText("RGB" if key == "all" and rgb else "All" if key == "all" else key)
+            b.setIcon(all_icon(keys=keys) if key == "all" else QIcon(dot_pixmap(key, 18)))
+            if rgb:
+                b.setToolTip("Show the noise graphs (noise level vs brightness level) for all three color channels"
+                             if key == "all" else
+                             f"Show the noise graph (noise level vs brightness level) for the {NAMES[key]} channel alone")
+            else:
+                b.setToolTip("Show the noise graphs (noise level vs brightness level) for all three color channels\n"
+                             "(repro: Luminance, Cr and Cb of a profile made before the R/G/B equalizer; the "
+                             "genuine's channels are R, G, B)" if key == "all" else
+                             f"Show the noise graph (noise level vs brightness level) for the {NAMES[key]} channel "
+                             f"alone\n(repro: a profile made before the R/G/B equalizer; the genuine's buttons are "
+                             f"Red, Green, Blue)")
+            self.target_buttons[key] = b
 
     def set_target(self, key):
         self.target = key
@@ -173,9 +204,13 @@ class CurveEditor(QWidget):
         self.plot.update()
 
     def channel(self):
-        return 0 if self.target == "all" else CH_INDEX[self.target]
+        return 0 if self.target == "all" else self.index(self.target)
 
-    def set_factors(self, factors, pinned, main_bin=None):
+    def set_factors(self, factors, pinned, main_bin=None, channels="RGB"):
+        if channels != self.channels:
+            self.channels = channels
+            self._label_buttons()
+            self.set_target("all")
         self.factors = [list(f) for f in factors]
         self.pinned = [set(p) for p in pinned]
         self.main_bin = main_bin
@@ -183,9 +218,9 @@ class CurveEditor(QWidget):
 
     def move_knot(self, c, i, f):
         f = min(max(f, FACTOR_MIN), FACTOR_MAX)
-        fs = list(self.factors[CH_INDEX[c]])
+        fs = list(self.factors[self.index(c)])
         fs[i] = f
         if self.target == "all":
             self.editedAll.emit(fs, i)
         else:
-            self.edited.emit(CH_INDEX[c], fs, i)
+            self.edited.emit(self.index(c), fs, i)

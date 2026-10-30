@@ -9,6 +9,7 @@
 
 #include "nvcore_c_prof5.h"
 #include "nvcore_c_ui.h"
+#include "nvcore_c_rgb.h"
 
 namespace nvqt {
 
@@ -240,10 +241,20 @@ double ProfileState::tune_value(const std::string& k) const {
     return tune.has(k) ? tune.get(k).as_double() : 1.0;
 }
 
+PyObj ProfileState::effective() const {
+    return channels == "RGB" ? rgb_effective_profile(base, factors, tune) : effective_profile(base, factors, tune);
+}
+
 PyObj ProfileState::to_json() const {
     PyObj d = PyObj::dict();
-    d.set("format", PyObj::str("nv_repro_profile"));
-    d.set("version", PyObj::integer(1));
+    if (channels == "RGB") {            // G1: older UIs refuse the format instead of misreading R/G/B levels
+        d.set("format", PyObj::str("nv_repro_profile_rgb"));
+        d.set("version", PyObj::integer(2));
+        d.set("channels", PyObj::str("RGB"));
+    } else {
+        d.set("format", PyObj::str("nv_repro_profile"));
+        d.set("version", PyObj::integer(1));
+    }
     d.set("device", PyObj::str(device));
     d.set("base", base);
     PyObj f = PyObj::list();
@@ -257,8 +268,12 @@ PyObj ProfileState::to_json() const {
 }
 
 ProfileState ProfileState::from_json(const PyObj& d) {
-    if (!d.is_dict() || d.get("format").type() != PyObj::STR || d.get("format").as_str() != "nv_repro_profile")
+    if (!d.is_dict() || d.get("format").type() != PyObj::STR ||
+        (d.get("format").as_str() != "nv_repro_profile" && d.get("format").as_str() != "nv_repro_profile_rgb"))
         throw std::runtime_error("not a repro profile file (format nv_repro_profile)");
+    const bool rgb = d.get("format").as_str() == "nv_repro_profile_rgb";
+    if (rgb && !(d.get("channels").type() == PyObj::STR && d.get("channels").as_str() == "RGB"))
+        throw std::runtime_error("profile channels must be RGB (format nv_repro_profile_rgb)");
     const PyObj& b = d.get("base");
     static const char* KEYS[] = {"mode", "area", "levels", "band_ratio", "tot_ratio", "curve", "curve_centers", "sigma"};
     std::string missing;
@@ -299,6 +314,9 @@ ProfileState ProfileState::from_json(const PyObj& d) {
     PyObj t2 = PyObj::dict();
     for (const auto& k : tune.keys())
         t2.set(k, PyObj::real(std::min(std::max(tune.get(k).as_double(), TUNE_MIN), TUNE_MAX)));
+    if (rgb && !rgb_ready(b))
+        throw std::runtime_error("R/G/B profile lacks its colour weights (ui_rgb_weights / aft_color_weights, ui_pre_aft)");
+    ps.channels = rgb ? "RGB" : "YCbCr";
     ps.base = b;
     if (d.has("factors"))
         for (size_t c = 0; c < 3; ++c)
@@ -368,6 +386,115 @@ Factors auto_complete(const Factors& factors, const std::array<std::set<int>, 3>
         for (size_t k = 0; k < qi.size(); ++k) out[c][qi[k]] = r[k];
     }
     return out;
+}
+
+// ---------------- the R/G/B equalizer (G1) ----------------
+bool rgb_ready(const PyObj& base) {
+    if (base.is_none()) return false;
+    if (base.get("aft_applied").truthy()) return base.has("ui_pre_aft") && base.has("aft_color_weights");
+    return base.has("ui_rgb_weights");
+}
+
+std::optional<Factors> rgb_reference(const PyObj& base) {
+    if (!base.is_none() && base.get("aft_applied").truthy()) {
+        if (!base.has("aft_levels")) return std::nullopt;
+        Factors f;
+        const PyObj& l = base.get("aft_levels");
+        for (size_t j = 0; j < 3; ++j)
+            for (size_t k = 0; k < 9; ++k) f[j][k] = l[j][k].as_double();
+        return f;
+    }
+    return unit_factors();
+}
+
+PyObj rgb_effective_profile(const PyObj& base, const Factors& levels, const PyObj& tune) {
+    if (base.is_none()) return PyObj::none();
+    auto tv = [&](const char* k) { return tune.has(k) ? tune.get(k).as_double() : 1.0; };
+    const double t4[4] = {tv("all"), tv("Y"), tv("Cb"), tv("Cr")};
+    const auto ref = rgb_reference(base);
+    if (ref && *ref == levels && t4[0] * t4[1] == 1.0 && t4[0] * t4[2] == 1.0 && t4[0] * t4[3] == 1.0) return base;
+    if (!rgb_ready(base)) throw std::runtime_error("the profile has no colour weights for the R/G/B equalizer");
+    const bool aft = base.get("aft_applied").truthy();
+    const PyObj& src = aft ? base.get("ui_pre_aft").get("curve") : base.get("curve");
+    const PyObj& cwo = aft ? base.get("aft_color_weights") : base.get("ui_rgb_weights");
+    const PyObj& centers = base.get("curve_centers");
+    const int n = static_cast<int>(centers.size());
+    std::vector<double> cx = centers.as_doubles(), sv(3 * static_cast<size_t>(n)), cw(9), lv(27), tot(3);
+    for (int c = 0; c < 3; ++c) {
+        const auto v = src.get(CHANNELS[c].first).as_doubles();
+        for (int i = 0; i < n; ++i) sv[static_cast<size_t>(c * n + i)] = v[static_cast<size_t>(i)];
+        for (int j = 0; j < 3; ++j) cw[static_cast<size_t>(3 * c + j)] = cwo[static_cast<size_t>(c)][static_cast<size_t>(j)].as_double();
+        for (int k = 0; k < 9; ++k) lv[static_cast<size_t>(9 * c + k)] = levels[c][k];
+        tot[static_cast<size_t>(c)] = base.get("tot_ratio").get(CHANNELS[c].first).as_double();
+    }
+    if (aft && levels == unit_factors() && t4[0] * t4[1] == 1.0 && t4[0] * t4[2] == 1.0 && t4[0] * t4[3] == 1.0) {
+        // levels 1.0 after AFT (Reset Fine-Tuning): the curve and sigma before AFT as they were
+        PyObj prof = base;
+        prof.set("curve", base.get("ui_pre_aft").get("curve"));
+        prof.set("sigma", base.get("ui_pre_aft").get("sigma"));
+        prof.set("ui_channels", PyObj::str("RGB"));
+        PyObj uf = PyObj::list();
+        for (const auto& row : levels) uf.append(PyObj::reals(std::vector<double>(row.begin(), row.end())));
+        prof.set("ui_factors", uf);
+        prof.set("ui_tune", tune);
+        return prof;
+    }
+    const double lvl = base.has("area_level") ? base.get("area_level").as_double() : 128.0;
+    std::vector<double> cout(sv.size()), sig(3);
+    if (nvc_rgb_effective_curve(cx.data(), n, sv.data(), cw.data(), lv.data(), t4, lvl, tot.data(), cout.data(),
+                                sig.data()) != 0)
+        throw std::runtime_error("nvc_rgb_effective_curve failed");
+    PyObj prof = base;
+    for (int c = 0; c < 3; ++c) {
+        std::vector<double> v(cout.begin() + c * n, cout.begin() + (c + 1) * n);
+        prof.at("curve").set(CHANNELS[c].first, PyObj::reals(v));
+    }
+    PyObj s = PyObj::dict();
+    for (int c = 0; c < 3; ++c) s.set(CHANNELS[c].first, PyObj::real(sig[static_cast<size_t>(c)]));
+    prof.set("sigma", s);
+    prof.set("ui_channels", PyObj::str("RGB"));
+    PyObj uf = PyObj::list();
+    for (const auto& row : levels) uf.append(PyObj::reals(std::vector<double>(row.begin(), row.end())));
+    prof.set("ui_factors", uf);
+    prof.set("ui_tune", tune);
+    return prof;
+}
+
+Factors auto_complete(const ProfileState& ps) {
+    std::array<std::set<int>, 3> fixed = ps.pinned;
+    const PyObj& b = ps.base;
+    if (ps.channels == "RGB" && !b.is_none() && b.get("aft_applied").truthy() && !b.get("aft_reset").truthy() &&
+        b.get("aft_bin_flags").truthy()) {
+        const PyObj& mk = b.get("aft_bin_flags").get("marker");
+        for (size_t c = 0; c < 3; ++c)
+            for (size_t k = 0; k < 9; ++k)
+                if (!mk[c][k].truthy()) fixed[c].insert(static_cast<int>(k));
+    }
+    return auto_complete(ps.factors, fixed);
+}
+
+ProfileState after_aft(const ProfileState& ps, const PyObj& prof) {
+    ProfileState n = ps;
+    n.base = prof;
+    if (rgb_ready(prof) && prof.has("aft_levels")) {
+        n.channels = "RGB";
+        n.factors = *rgb_reference(prof);
+    } else {
+        n.factors = unit_factors();
+    }
+    n.pinned = {};
+    return n;
+}
+
+ProfileState reset_fine_tune(const ProfileState& ps) {
+    ProfileState n = ps;
+    n.factors = unit_factors();
+    n.pinned = {};
+    if (n.has_profile()) {
+        n.base.set("aft_reset", PyObj::boolean(true));
+        if (rgb_ready(n.base)) n.channels = "RGB";
+    }
+    return n;
 }
 
 PyObj preset_json(const PyObj& params) {
@@ -492,7 +619,7 @@ void AppState::set_tune(const std::string& k, double value) {
 }
 
 const PyObj* AppState::effective() {
-    if (!eff_ && profile.has_profile()) eff_ = effective_profile(profile.base, profile.factors, profile.tune);
+    if (!eff_ && profile.has_profile()) eff_ = profile.effective();
     return eff_ ? &*eff_ : nullptr;
 }
 

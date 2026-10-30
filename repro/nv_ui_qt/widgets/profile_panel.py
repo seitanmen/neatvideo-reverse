@@ -17,9 +17,9 @@ Profile Noise Level is a repro multiplier of the profile curve (state.effective_
 curve has no bands, so the Frequencies rows are shown disabled.
 Band bars (repro definition): the profile's Y band ratio of band j divided by that of white noise
 (nvfilter._wn_band_std), relative to the largest band; the genuine's bar values are not decoded.
-Equalizer: the genuine draws R / G / B; the reproduction's fine-tune factors multiply the Y / Cb / Cr
-curves of the v5 backend (the AFT's R / G / B factors are combined into Y / Cb / Cr by nv_aft_v5), so the
-editor keeps the Y / Cr / Cb lines."""
+Equalizer (G1): the R / G / B bin levels as the genuine draws them (after Auto Fine-Tune the AFT's levels); the
+backend combines them into the Y / Cb / Cr curve factors of the v5 backend as nv_aft_v5.apply_aft combines the
+AFT's (state.rgb_effective_profile). Profiles of older files keep the former Y / Cr / Cb factors."""
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (QComboBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QScrollArea,
@@ -350,7 +350,7 @@ class ProfilePanel(QWidget):
         if self.device.text() != ps.device:
             self.device.setText(ps.device)
         main_bin = None if ps.base is None else int(min(max(round(ps.base.get("area_level", 128.0) / 32.0), 0), 8))
-        self.curve.set_factors(ps.factors, ps.pinned, main_bin)
+        self.curve.set_factors(ps.factors, ps.pinned, main_bin, ps.channels)
         for k, r in self.tune.items():
             r.set_value(ps.tune_value(k))
         W, H = frame_info or ("—", "—")

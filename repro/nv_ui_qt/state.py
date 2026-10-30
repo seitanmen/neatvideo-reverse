@@ -202,6 +202,61 @@ def effective_profile(base, factors, tune=None):
     return prof
 
 
+def rgb_ready(base):
+    """An R/G/B equalizer can drive this profile: after AFT the curve before AFT and the AFT's colour weights,
+    before AFT the build's colour weights (profiles made before G1 lack them and stay Y / Cb / Cr)."""
+    if base is None:
+        return False
+    if base.get("aft_applied"):
+        return "ui_pre_aft" in base and "aft_color_weights" in base
+    return "ui_rgb_weights" in base
+
+
+def rgb_reference(base):
+    """The R/G/B levels the profile's own curve stands for: the AFT levels after AFT, else 1.0 (G1 §2.2); None
+    for an AFT result made before G1 (no aft_levels: its curve stands for no R/G/B levels)."""
+    if base is not None and base.get("aft_applied"):
+        return [list(map(float, l)) for l in base["aft_levels"]] if "aft_levels" in base else None
+    return unit_factors()
+
+
+def rgb_effective_profile(base, levels, tune=None):
+    """Manual Fine-Tune of an R/G/B profile (G1): the 9 R / G / B bin levels are combined into the Y / Cb / Cr
+    curve factors as nv_aft_v5.apply_aft combines the AFT levels, f_c = sqrt(max(sum_j c_cj f_j, 0)) on the
+    curve before AFT, then the profile Noise Level tune t * t_c multiplies each curve (float32, as the Y / Cb / Cr
+    path). Levels equal to rgb_reference and tune 1 return base unchanged; levels 1.0 and tune 1 after AFT give
+    the curve and sigma before AFT unchanged (Reset Fine-Tuning, G1 U5)."""
+    if base is None:
+        return None
+    tune = tune or {}
+    tk = {c: float(tune.get("all", 1.0)) * float(tune.get(c, 1.0)) for c, _ in CHANNELS}
+    lv = [[float(v) for v in l] for l in levels]
+    if lv == rgb_reference(base) and all(v == 1.0 for v in tk.values()):
+        return base
+    if not rgb_ready(base):
+        raise ValueError("the profile has no colour weights for the R/G/B equalizer")
+    aft = bool(base.get("aft_applied"))
+    src = base["ui_pre_aft"]["curve"] if aft else base["curve"]
+    cw = base["aft_color_weights"] if aft else base["ui_rgb_weights"]
+    prof = copy.deepcopy(base)
+    if aft and lv == unit_factors() and all(v == 1.0 for v in tk.values()):
+        # levels 1.0 after AFT (Reset Fine-Tuning): the curve and sigma before AFT as they were
+        prof["curve"] = copy.deepcopy(base["ui_pre_aft"]["curve"])
+        prof["sigma"] = dict(base["ui_pre_aft"]["sigma"])
+    else:
+        from .backend import rgb_combine
+        _, curves = rgb_combine(src, prof["curve_centers"], cw, lv)      # nv_aft_v5.apply_aft steps 4-6
+        for c, _ in CHANNELS:
+            prof["curve"][c] = (curves[c] * np.float32(tk[c])).tolist()
+        lvl = prof.get("area_level", 128.0)
+        prof["sigma"] = {c: float(np.interp(lvl, prof["curve_centers"], prof["curve"][c]) * prof["tot_ratio"][c])
+                         for c, _ in CHANNELS}
+    prof["ui_channels"] = "RGB"
+    prof["ui_factors"] = lv
+    prof["ui_tune"] = dict(tune)
+    return prof
+
+
 def auto_complete(factors, pinned):
     """Auto Complete (repro): bins that were not edited by hand are linearly interpolated
     between the edited ones (constant beyond the outermost edited bin)."""
@@ -217,7 +272,49 @@ def auto_complete(factors, pinned):
     return out
 
 
+def auto_complete_ps(ps):
+    """Auto Complete of a profile state: an R/G/B profile after AFT also keeps the bins the AFT measured
+    (aft_bin_flags marker false; G1 U6), a Y / Cb / Cr profile only the edited ones."""
+    fixed = [set(p) for p in ps.pinned]
+    b = ps.base
+    if ps.channels == "RGB" and b is not None and b.get("aft_applied") and not b.get("aft_reset") \
+            and b.get("aft_bin_flags"):
+        for c in range(3):
+            fixed[c] |= {k for k in range(9) if not b["aft_bin_flags"]["marker"][c][k]}
+    return auto_complete(ps.factors, fixed)
+
+
+def after_aft(ps, prof):
+    """The profile state after Auto Fine-Tune: the new profile, the equalizer at the AFT's R/G/B levels (G1;
+    a result without them keeps the channels and resets the factors), no edited bins."""
+    n = ps.clone()
+    n.base = prof
+    if rgb_ready(prof) and "aft_levels" in prof:
+        n.channels = "RGB"
+        n.factors = [list(map(float, l)) for l in prof["aft_levels"]]
+    else:
+        n.factors = unit_factors()
+    n.pinned = [set() for _ in CHANNELS]
+    return n
+
+
+def reset_fine_tune(ps):
+    """Reset Fine-Tuning Results: levels / factors 1.0, no edited bins, base["aft_reset"] (quality._curve_blob).
+    An R/G/B profile then runs on the curve before AFT (levels 1.0 = no AFT correction, G1 U5); a Y / Cb / Cr
+    profile that can drive the R/G/B equalizer moves to it (U9)."""
+    n = ps.clone()
+    n.factors = unit_factors()
+    n.pinned = [set() for _ in CHANNELS]
+    if n.base is not None:
+        n.base = copy.deepcopy(n.base)
+        n.base["aft_reset"] = True
+        if rgb_ready(n.base):
+            n.channels = "RGB"
+    return n
+
+
 PROFILE_KEYS = ("mode", "area", "levels", "band_ratio", "tot_ratio", "curve", "curve_centers", "sigma")
+PROFILE_FORMAT, PROFILE_FORMAT_RGB = "nv_repro_profile", "nv_repro_profile_rgb"
 
 
 @dataclass
@@ -227,22 +324,36 @@ class ProfileState:
     pinned: list = field(default_factory=lambda: [set() for _ in CHANNELS])
     device: str = "Unspecified device"
     tune: dict = field(default_factory=dict)     # profile Noise Level: "all", "Y", "Cb", "Cr" (missing = 1.0)
+    channels: str = "RGB"                        # "RGB": factors = R/G/B levels (G1); "YCbCr": Y/Cb/Cr factors (older files)
 
     def clone(self):
         return ProfileState(copy.deepcopy(self.base), [list(f) for f in self.factors],
-                            [set(p) for p in self.pinned], self.device, dict(self.tune))
+                            [set(p) for p in self.pinned], self.device, dict(self.tune), self.channels)
 
     def tune_value(self, k):
         return float(self.tune.get(k, 1.0))
 
+    def effective(self):
+        """The effective profile (state.effective_profile / rgb_effective_profile by the channels)."""
+        if self.channels == "RGB":
+            return rgb_effective_profile(self.base, self.factors, self.tune)
+        return effective_profile(self.base, self.factors, self.tune)
+
     def to_json(self):
-        return {"format": "nv_repro_profile", "version": 1, "device": self.device, "base": self.base,
+        if self.channels == "RGB":                # G1: older UIs refuse the format instead of misreading R/G/B
+            return {"format": PROFILE_FORMAT_RGB, "version": 2, "channels": "RGB", "device": self.device,
+                    "base": self.base, "factors": self.factors, "pinned": [sorted(p) for p in self.pinned],
+                    "tune": self.tune}
+        return {"format": PROFILE_FORMAT, "version": 1, "device": self.device, "base": self.base,
                 "factors": self.factors, "pinned": [sorted(p) for p in self.pinned], "tune": self.tune}
 
     @staticmethod
     def from_json(d):
-        if not isinstance(d, dict) or d.get("format") != "nv_repro_profile":
+        if not isinstance(d, dict) or d.get("format") not in (PROFILE_FORMAT, PROFILE_FORMAT_RGB):
             raise ValueError("not a repro profile file (format nv_repro_profile)")
+        rgb = d["format"] == PROFILE_FORMAT_RGB
+        if rgb and d.get("channels") != "RGB":
+            raise ValueError("profile channels must be RGB (format nv_repro_profile_rgb)")
         b = d.get("base")
         missing = [k for k in PROFILE_KEYS if not isinstance(b, dict) or k not in b]
         if missing:
@@ -262,9 +373,11 @@ class ProfileState:
                 not all(isinstance(v, (int, float)) and math.isfinite(v) for v in tune.values()):
             raise ValueError("profile tune must be a dict of all / Y / Cb / Cr with finite values")
         tune = {k: float(min(max(float(v), TUNE_MIN), TUNE_MAX)) for k, v in tune.items()}
+        if rgb and not rgb_ready(b):
+            raise ValueError("R/G/B profile lacks its colour weights (ui_rgb_weights / aft_color_weights, ui_pre_aft)")
         return ProfileState(d["base"], [list(map(float, f)) for f in d.get("factors", unit_factors())],
                             [set(p) for p in d.get("pinned", [[], [], []])], d.get("device", "Unspecified device"),
-                            tune)
+                            tune, "RGB" if rgb else "YCbCr")
 
 
 def preset_json(params):
@@ -411,7 +524,7 @@ class AppState(QObject):
 
     def effective_profile(self):
         if self._eff is None and self.profile.base is not None:
-            self._eff = effective_profile(self.profile.base, self.profile.factors, self.profile.tune)
+            self._eff = self.profile.effective()
         return self._eff
 
 

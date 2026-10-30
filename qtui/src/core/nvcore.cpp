@@ -14,6 +14,7 @@
 #include <utility>
 
 #include "nvcore_c.h"
+#include "nvcore_c_rgb.h"
 #include "nvcore_c_prof5.h"
 #include "nvcore_c_ui.h"
 #include "state.h"
@@ -180,6 +181,20 @@ PyObj build_profile(const std::vector<Frame>& frames, int f, bool full_range, co
     p.set("area_level", PyObj::real(od[67]));
     p.set("sigma", ycbcr_dict(PyObj::real(od[68]), PyObj::real(od[69]), PyObj::real(od[70])));
     p.set("ui_frame", PyObj::integer(f));
+    // G1: the colour weights of the R/G/B equalizer (backend.rgb_weights on the profile frame's RGB)
+    {
+        const std::vector<float> rgb = to_rgb(pl, matrix, full_range, 1);
+        const PyObj& a = p.get("area");
+        const int area4[4] = {static_cast<int>(a[0].as_int()), static_cast<int>(a[1].as_int()),
+                              static_cast<int>(a[2].as_int()),
+                              static_cast<int>(a.size() == 4 ? a[3].as_int() : a[2].as_int())};
+        double cw[9];
+        if (nvc_rgb_weights(rgb.data(), pl.H, pl.W, area4, cw) != 0)
+            throw std::runtime_error("nvc_rgb_weights failed");
+        PyObj w = PyObj::list();
+        for (int c = 0; c < 3; ++c) w.append(reals(cw + 3 * c, 3));
+        p.set("ui_rgb_weights", w);
+    }
     return p;
 }
 
@@ -309,6 +324,18 @@ PyObj run_aft(const PyObj& base_in, const Frame& frame, bool full_range, const s
         bf.set(FK[k], rows);
     }
     prof.set("aft_bin_flags", bf);
+    // G1: the R/G/B levels the AFT wrote (backend._run_aft's aft_levels: float(f32) of the curve words)
+    PyObj lv = PyObj::list();
+    for (int j = 0; j < 3; ++j) {
+        std::vector<double> row(9);
+        for (int k = 0; k < 9; ++k) {
+            float v;
+            std::memcpy(&v, aft.data() + 0xbf44 + 0x120 * j + 0x20 * k, 4);
+            row[static_cast<size_t>(k)] = static_cast<double>(v);
+        }
+        lv.append(PyObj::reals(row));
+    }
+    prof.set("aft_levels", lv);
     prof.pop("aft_reset");
     prof.set("ui_pre_aft", keep);
     return prof;
@@ -550,10 +577,15 @@ std::optional<std::pair<int, int>> profile_numbers(const ProfileState& ps, const
     const int f = aft_frame(base, frames.size());
     const Planes pl = to_planes(frames[static_cast<size_t>(f)]);
     const std::vector<float> rgb = to_rgb(pl, matrix, full_range, 1);
+    // quality.level_words: an R/G/B profile writes the levels of the bins edited by hand (1.0 elsewhere) and no
+    // tune (G1 U3 / U4); a Y / Cb / Cr profile factor x tune as before
+    const bool rgb_mode = ps.channels == "RGB";
     double fac[27];
     for (int c = 0; c < 3; ++c)
-        for (int k = 0; k < 9; ++k) fac[9 * c + k] = ps.factors[c][k];
-    const double tune[4] = {ps.tune_value("all"), ps.tune_value("Y"), ps.tune_value("Cb"), ps.tune_value("Cr")};
+        for (int k = 0; k < 9; ++k)
+            fac[9 * c + k] = !rgb_mode ? ps.factors[c][k] : ps.pinned[c].count(k) ? ps.factors[c][k] : 1.0;
+    const double tune[4] = {rgb_mode ? 1.0 : ps.tune_value("all"), rgb_mode ? 1.0 : ps.tune_value("Y"),
+                            rgb_mode ? 1.0 : ps.tune_value("Cb"), rgb_mode ? 1.0 : ps.tune_value("Cr")};
     const bool aft = base.get("aft_applied").truthy(), reset = base.get("aft_reset").truthy();
     std::vector<uint8_t> flags;
     const PyObj& st = base.get("aft_bin_flags");

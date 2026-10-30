@@ -34,7 +34,30 @@ def c_build_profile(frames, f, full_range, matrix, mode, area=None, cancel=None)
     prof = vp.c_build(planes, full_range, area, more[0] if more else None, mode, 5, more, matrix, cancel)
     if isinstance(prof, dict):
         prof["ui_frame"] = f
+        prof["ui_rgb_weights"] = c_rgb_weights(planes, prof["area"], full_range, matrix)   # G1, as qtui nvcore
     return prof
+
+
+def c_rgb_weights(planes, area, full_range, matrix):
+    """backend.rgb_weights through the C ABI as the C++ UI computes it (nvc_yuv_to_rgb with the clip, then
+    nvcore_c_rgb.h nvc_rgb_weights)."""
+    import ctypes
+    import verify_prof5 as vp
+    L = vp.lib()
+    P, I = ctypes.c_void_p, ctypes.c_int
+    L.nvc_yuv_to_rgb.argtypes = [P, P, P, I, I, I, I, I, I, I, P]
+    L.nvc_yuv_to_rgb.restype = None
+    L.nvc_rgb_weights.argtypes = [P, I, I, P, P]
+    L.nvc_rgb_weights.restype = I
+    Y, Cb, Cr = (np.ascontiguousarray(p, F32) for p in planes)
+    H, W = Y.shape
+    rgb = np.zeros((H, W, 3), F32)
+    L.nvc_yuv_to_rgb(Y.ctypes.data, Cb.ctypes.data, Cr.ctypes.data, H, W, Cb.shape[0], Cb.shape[1],
+                     vp.MATRIX.get(matrix, 0), int(bool(full_range)), 1, rgb.ctypes.data)
+    a4 = np.ascontiguousarray([area[0], area[1], area[2], area[3] if len(area) == 4 else area[2]], np.int32)
+    cw = np.zeros(9)
+    assert L.nvc_rgb_weights(rgb.ctypes.data, H, W, a4.ctypes.data, cw.ctypes.data) == 0
+    return [cw[3 * c:3 * c + 3].tolist() for c in range(3)]
 
 
 def _cases(quick):

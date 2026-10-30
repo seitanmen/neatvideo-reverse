@@ -18,7 +18,6 @@ in the colours of display.nlc_image, computed in a worker thread from the previe
 cached per (frame, video, profile, temporal parameters) and recomputed 100 ms after a temporal setting
 changes. It excludes Filter Tuning Assist and ends on another page, a new video or without a profile."""
 import collections
-import copy
 import json
 import os
 import time
@@ -40,7 +39,8 @@ from . import display as D
 from .menus import build_menus
 from .pages.filter_page import FilterPage
 from .pages.profile_page import ProfilePage
-from .state import (BANDS, CHANNELS, PARAM_SPECS, AppState, ProfileState, auto_complete, backend_params,
+from .state import (BANDS, CHANNELS, PARAM_SPECS, AppState, ProfileState, after_aft, auto_complete_ps,
+                    backend_params, reset_fine_tune,
                     default_params, dump_json, load_json, params_from_json, preset_json)
 from .widgets.noise_graph import NoiseGraph
 from .widgets.timeline import Timeline
@@ -1285,11 +1285,7 @@ class MainWindow(QMainWindow):
             if self.state.profile.base != base:
                 self.say("Auto Fine-Tune result discarded: the profile changed while it ran")
                 return
-            new = self.state.profile.clone()
-            new.base = prof
-            new.factors = [[1.0] * 9 for _ in CHANNELS]
-            new.pinned = [set() for _ in CHANNELS]
-            self.state.set_profile(new, "Auto Fine-Tune")
+            self.state.set_profile(after_aft(self.state.profile, prof), "Auto Fine-Tune")
             self.say("Auto Fine-Tune applied")
 
         def failed(tag, msg):
@@ -1308,7 +1304,7 @@ class MainWindow(QMainWindow):
 
     def auto_complete(self):
         new = self.state.profile.clone()
-        new.factors = auto_complete(new.factors, new.pinned)
+        new.factors = auto_complete_ps(new)
         self.state.set_profile(new, "Auto Complete")
 
     def edit_device(self, name=None):
@@ -1327,14 +1323,9 @@ class MainWindow(QMainWindow):
         levels/scales 1.0, bin flags cleared, and the LZMA success flag (profile byte 0xc2a4)
         cleared as the profile constructor does (RS 0xa49e28 strb wzr).  Hence g = 0 and
         Completeness 0% (observed 2026-10-26), while a fresh Build keeps the flag (g = 1/81).
-        The repro records that with the aft_reset annotation (quality._curve_blob)."""
-        new = self.state.profile.clone()
-        new.factors = [[1.0] * 9 for _ in CHANNELS]
-        new.pinned = [set() for _ in CHANNELS]
-        if new.base is not None:
-            new.base = copy.deepcopy(new.base)
-            new.base["aft_reset"] = True
-        self.state.set_profile(new, "Reset Fine-Tuning Results")
+        The repro records that with the aft_reset annotation (quality._curve_blob). An R/G/B profile then runs on
+        the curve before AFT (levels 1.0, state.reset_fine_tune)."""
+        self.state.set_profile(reset_fine_tune(self.state.profile), "Reset Fine-Tuning Results")
 
     def generic_profile(self):
         """No genuine generic profile in the reproduction: the Default Profile if one is assigned,
