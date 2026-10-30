@@ -297,3 +297,17 @@ W5 Windows OFX (N3 の後)。
   正直に報告する段階から (フィールド対応は docs の実装順に従う)
 - GPU: docs/GPU_STATUS.md (本家は Metal+OpenCL+CUDA、カーネル未解読。
   最優先調査 = 本家の GPU 有効/無効 A/B 出力差の確認)
+
+### GPU (Metal → Windows) と インターレース対応 — 委託済み (2026-10-31)
+
+- GPU: `.claude/tasks/native_gpu.md` (GPU-0 プローブ+監査 → GPU-1 定義済み演算 →
+  GPU-2 空間 → GPU-3 時間+動き → GPU-4 ハイブリッド → GPU-5 Windows HLSL)。
+  設計の柱: fp64 を使う段 (曲線ビン集計・プロファイル統計) は CPU のまま、
+  超越関数は CPU で事前計算した表を渡す、除算/平方根は ARM の FRECPE+FRECPS 系の
+  定義済みアルゴリズムを GPU でも再現してビット一致を維持。整数 SAD は順序自由。
+  Windows はベンダー差のプローブを行い、一致しなければ「速度優先モード (既定 OFF)」に分離。
+- インターレース: `.claude/tasks/interlace.md` (INT-1 属性検出+分離/再結合 →
+  INT-2 フィールド単位パイプライン → INT-3 プロファイル+UI+書き出し →
+  INT-4 OFX+本家比較)。既定は progressive のまま (1 ビットも変えない)。
+  背景の本家観測は docs/INTERLACE_PROGRESSIVE.md。
+- 実行順序: N4 (OFX) のマージ後に base を main に変えて各タスクを開始する。
