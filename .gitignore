@@ -211,3 +211,4 @@ sandbox/omo/wp_native_flat/tmp/
 
 # ワーカーの一時キャッシュ全般 (10MB 超の検証入出力)
 sandbox/omo/wp_native_*/tmp/
+.omc/

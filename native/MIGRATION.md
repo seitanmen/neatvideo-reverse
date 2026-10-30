@@ -202,6 +202,34 @@ N1g 時間カーネル / N1h 空間カーネル / N1i AFT。依存グラフと�
   (C++ 固有の 2 キーを追加、既存キーは削除しない)。(2) polyfit は OpenBLAS 0.3.29 固定。
   (3) W2 は W2c。(4) 1080p 比較用の生画像は検証のたびに再生成 (コミットしない)。
   (5) 書き出し CLI の UI 設定依存は当面許容 (N4 でスタンドアロン化)。
+
+### N3 fixes2 完了 (2026-10-30、PR #1/#2/#3 をマージ。独立検証 3 件 APPROVE)
+
+- **G3 (L-2 解消)**: `qtui/src/core/pynum.{h,cpp}` — OFX 引数の数値解析を CPython 3.13 の
+  int()/float() に準拠 (0x10 は ValueError、1e400 は inf、Unicode Nd 数字 670 文字対応)。
+  edge 16/16・extra 20/20・size 14/14。traceback の 5 フレームまで一致。
+- **G4/G5 (L-3・I-5 解消)**: C++ 自己試験の弱い 3 項目を Python 版同等に強化、項目 20 を追加、
+  動画を要する項目を自己完結化 (`qtui/tools/selftest_each.py` で単項目実行を確認)。
+  自己試験は 105 件 → 110 項目。
+- **G6 (I-6 解消)**: 異常終了時に Python 版と同じ形の traceback と最終行を出力。
+  極端サイズ 4810 ジョブが一致。
+- **G2 (E3 解消)**: 両 UI の Preferences に ffmpeg 欄を追加
+  (`prefs/ffmpeg`。探索順 NV_FFMPEG → prefs → PATH)。新規 `repro/nv_ui_qt/ffmpeg_path.py`。
+  Python 自己試験は 96 → 97 項目。
+- **G7 (E1 解消)**: `nvc_profile_build_cancel` (戻り値 3 = 取り消し) を追加。
+  取り消しは構築の全段で効く。verify_bridge の cancel は 23 → 49 ケース。
+- **G8 (E2 解消)**: `build_profile_v5` の UI 出力全部 (曲線・band_ratio・tot_ratio・
+  sigma・levels・flat_status) を C (nv_prof5) で計算、Python とビット一致。
+  `nvn::b3` を NEON 化。`NVC_ABI_VERSION` を 2 に更新。
+  verify_bridge に g8 152/152 (1px 辺を含む) を追加。
+- **G9 (x86 検証)**: 記録/再生ブリッジ (`native/x86cap/`・`verify_x86_bridge.sh`) で
+  arm64 3577/3577・portable 3577/3577・x86 3546/3577 (差 31 件は nvc_temporal で
+  W2c 既知の差のみ)。nv_depth も x86 で照合済み。nv_ndimage の asm 部分のみ
+  「x86 未保証」が残る。
+- **残った記録**: Qt C++ の aftCancellable 試験は弱い (マージ後の強化候補)。
+  取り消し ABI は int(*)(void) 型。1×1 の手動領域で Python と結果が違う
+  (UI からは作れない)。Python 自己試験の終了時まれな停止は別タスク。
+  Python Preferences に Auto Fine-Tune 行を追加して両 UI の行を揃えた。
 - **Windows**: `.claude/tasks/native_windows_runbook.md` (Windows ホストの Claude が実行中) と
   native_windows.md (W1〜W5)。
 

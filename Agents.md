@@ -586,6 +586,17 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   `verify_libm_alt.py` (NV_LIBM_ALT 切替)。N2/N3 運用: 設定ファイルは Python 版と共有、
   1080p 比較画像は都度再生成、書き出し CLI の UI 設定依存は当面許容。既知差
   (L-2/L-3/I-5/I-6・nv_depth x86 未照合・実画面未確認) は MIGRATION.md に記録。
+- **N3 fixes2 完了 (2026-10-30、PR #1/#2/#3 マージ、独立検証 3 件 APPROVE)**:
+  L-2 解消 (qtui の引数解析を CPython 3.13 準拠に。pynum.{h,cpp})、L-3/I-5 解消
+  (自己試験の強化と自己完結化。105 → 110 項目)、I-6 解消 (traceback 整形)、
+  E3 解消 (両 UI の Preferences に ffmpeg 欄。ffmpeg_path.py。Python 自己試験 96 → 97)、
+  E1 解消 (nvc_profile_build_cancel。取り消しは構築の全段で効く)、
+  E2 解消 (build_profile_v5 の UI 出力を nv_prof5 で完全 C 化、Python とビット一致。
+  NVC_ABI_VERSION = 2)、G9 完了 (x86 検証: 記録/再生ブリッジで arm64↔x86 を比較、
+  差は W2c 既知の temporal の expf のみ。nv_depth も照合済み)。
+  verify_bridge のグループ拡張: cancel 49・g8 152・prof5/ui/depth 追加。
+  残った記録: aftCancellable 試験の弱さ、1×1 手動領域の差 (UI から到達不可)、
+  Python 自己試験の終了時まれな停止 (別タスク)。
 
 ## 8. 共同作業ルール (複数エージェント共有)
 
