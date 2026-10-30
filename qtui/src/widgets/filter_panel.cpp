@@ -297,7 +297,7 @@ void FilterPanel::general_() {
     perf->setTextFormat(Qt::RichText);
     perf->setFrameShape(QFrame::StyledPanel);
     perf->setAlignment(Qt::AlignTop | Qt::AlignLeft);
-    perf->setStyleSheet("background:white; padding:4px");
+    perf->setStyleSheet("background:white; color:black; padding:4px");   // dark text on the white box (dark palette)
     perf->setMinimumHeight(200);
     perf->setWordWrap(true);
     h->add(perf);

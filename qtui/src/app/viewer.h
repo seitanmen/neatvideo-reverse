@@ -219,7 +219,7 @@ public:
     explicit ViewerBar(Viewer* viewer, QWidget* parent = nullptr);
     void sync();
     void set_selection(std::optional<Rect> rect);
-    void set_frame_info(int W, int H, int bits = 8);
+    void set_frame_info(int W, int H, int bits = 8, bool is_float = false);   // "Frame: WxH, N-bit[ float]"
 
     Viewer* v;
     QToolButton *zoom, *mode, *pan, *bright_reset, *info;

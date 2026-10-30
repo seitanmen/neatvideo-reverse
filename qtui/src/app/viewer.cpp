@@ -593,7 +593,7 @@ Rect Viewer::display_to_coded(double x0d, double y0d, double wd, double hd) cons
 // ---------------------------------------------------------------- painting
 void Viewer::paintEvent(QPaintEvent*) {
     QPainter p(this);
-    p.fillRect(rect(), QColor(40, 40, 40));
+    p.fillRect(rect(), QColor(58, 58, 58));      // genuine viewer background
     if (!has_orig_) {
         p.setPen(QColor(170, 170, 170));
         p.drawText(rect(), Qt::AlignCenter, QString::fromUtf8("Open a video (Effect > Open Input Video…)"));
@@ -1003,9 +1003,10 @@ void ViewerBar::set_selection(std::optional<Rect> r) {
                    : QString::fromStdString("W: " + std::to_string(r->w) + "  H: " + std::to_string(r->h)));
 }
 
-void ViewerBar::set_frame_info(int W, int H, int bits) {
+void ViewerBar::set_frame_info(int W, int H, int bits, bool is_float) {
+    // genuine: "Frame: 3840x2160, 32-bit float" (coord/genuine_ui/OBSERVED.md); the integer depths stay "N-bit"
     size->setText(QString::fromStdString("Frame: " + std::to_string(W) + "x" + std::to_string(H) + ", " +
-                                         std::to_string(bits) + "-bit"));
+                                         std::to_string(bits) + "-bit" + (is_float ? " float" : "")));
 }
 
 }  // namespace nvqt

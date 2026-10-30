@@ -357,7 +357,7 @@ void ProfilePanel::set_name(std::optional<QString> text, bool dirty) {
     name->clear();
     if (!text) {
         name->addItem("profile not ready");
-        name->setStyleSheet("QComboBox{color:#d01010}");
+        name->setStyleSheet("QComboBox{color:#ff6060}");
         name->setToolTip("Build a noise profile by analysing a uniform area or load a ready-made profile.");
     } else {
         name->addItem(*text + (dirty ? " *" : ""));
