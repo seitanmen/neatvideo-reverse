@@ -634,9 +634,21 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   自己試験 117/117、`--ofx` モード 29 ケース同一。
   インターレース素材はエラーメッセージで拒否 (プログレッシブのみ)。
 - **MOV 決定**: 復元せず、本家比較は別素材で実施 (E9)。
-- **次**: N4e (独自 Auto Match — 本家の Auto Match は空機能と解読済み。
-  「repro」表示の独自実装。計画は `.claude/tasks/native_n4_ofx.md`)、
-  N4c (実用化)、Resolve 実機確認の残項目 (ユーザー操作)、
+- **N4e マージ (2026-10-31、n4e-automatch ブランチ、独立検証 Round 2 APPROVE)**:
+  本家どおりの Profile フォルダ (既定 `<書類>/Meat Video/Profiles`、
+  `MEATVIDEO_PATH`/`prefs/profile_dir` 上書き、Preferences > Folders に編集/選択/既定に戻す) と
+  保存済みプロファイル一覧 (▼。QDir の本家フラグで再帰・フォルダ先頭・大小無視。
+  `*.json` から `*.nvpreset.json`/`*.ui_params.json` を除く。空の文言は本家の製品名置換)。
+  独自の Auto Match (repro): Prepare ツールバーのボタン + Profile メニュー (Ctrl+M)。
+  スコア = 32×32 タイルごとに similarity × penalty(F₅/m₅) × penalty(F₆/m₆) (NaN→0) の
+  ファジー Jaccard (Σmin/Σmax)、最大のプロファイルを読み込む (同点は一覧順、最大 ≤0 は読まない)。
+  部品は照合済み移植 (model_full・is_clip_genuine・similarity・penalty)。
+  新規 JSON に match_model キー (~13KB hex、492+51 語/面)。NVC_ABI_VERSION は 3 のまま (追加のみ)。
+  自己試験 126/126 (+9)。verify_match (make verify に追加、12 本目) 1107 スコア ALL MATCH。
+  既知正解の選択を確認 (Auto Profile 1.0000、テクスチャ領域 0.0324、白 σ8 0.0739、白 σ1 0)。
+  独立検証 Round 2 APPROVE (R2-L1〜L3 は記録後回し: 取り消し直後の再押しで
+  新 Auto Match が始まらない等。いずれも Low)。
+- **次**: N4c (実用化)、Resolve 実機確認の残項目 (ユーザー操作)、
   INT-2 以降 (インターレース、INT-1 は作業中)、GPU-1 以降 (GPU-0 の監査表待ち)。
 
 ## 8. 共同作業ルール (複数エージェント共有)
