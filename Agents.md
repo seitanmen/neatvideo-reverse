@@ -654,8 +654,36 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   **L-1 (INT-2 前に修正必須)**: ffmpeg 8.0.1 は TFF の素材に **tb** と書く (FFV1/ProRes)。
   フィールド順はストリームの tb/bt からではなく、最初のフレームの
   `top_field_first` (ffprobe -read_intervals %+#1) から決めること。
-- **次**: N4e マージ済み。N4c (実用化)、Resolve 実機確認の残項目 (ユーザー操作)、
-  INT-2 以降 (L-1 修正後)、GPU-1 以降 (GPU-0 の監査表待ち)。
+- **INT-2〜4 + E9 マージ (2026-11-02、PR #8、独立検証 INT-2 APPROVE・INT-3 Round 2 APPROVE・INT-4 Round 2 APPROVE)**:
+  **インターレース (フィールド単位) 処理を実装**。フィールド系列は [n top, n bottom, …]
+  (BFF は下が先)、時間半径はフィールド数。半ラインのずれは 3 方式 (PLAIN/SHIFT/SAME)。
+  qtui は走査方式 (既定自動、不明なら本家文言で尋ねる)、Two fields / One field の
+  プロファイル (JSON の fields 属性、インターレース時のみ)、読み込みの `scale=interl=1`、
+  書き出しのフラグ (x264 +ilme+ildct + tff/bff、ProRes +ildct、FFV1 setfield、
+  x265/EXR は不可を警告)。OFX はプラグイン内でフィールド分離処理
+  (FieldToRender は要求側の行のみ書く、ClipParams はインターレース時 version 2)。
+  `nvc_temporal_shift` を追加 (NVC_ABI_VERSION は 3 のまま)。
+  検証: progressive 不変 (旧新 nv_v5_test 570 件同一・verify_bridge 全語一致・
+  qtui 書き出し 82 ファイル同一・OFX 61/61・compare_export 19/19)、
+  フィールド経路は fields_ref とビット一致 (変異 30 種以上検出)、
+  自己試験 138/138、verify_ofx --quick 109 比較 0/89,831,040 語、
+  make verify (14 本) + verify_bridge 全語一致 — 統括がマージ後に再実行して確認。
+  **E9 (別素材での本家比較)**: Resolve 21.1.1 上の本家 6.1.3 Pro (GPU 12CPU+1GPU auto)
+  と、Xiph derf SVT 1080p50 (park_joy・old_town_cross) と Sintel 予告編 (CC-BY 3.0) に
+  ガウス雑音 (Y σ3/σ6) を足した素材で比較 (正解 = きれいな元画像)。
+  プログレッシブ: Sintel σ3 39.03→当方 43.59/本家 45.48、σ6 33.09→39.27/40.41、
+  old_town_cross σ3 38.55→36.75/37.42、σ6 32.56→35.94/36.36、
+  park_joy σ3 38.57→32.15/40.28、σ6 32.71→31.47/36.46。
+  インターレース (1080i TFF): フレーム単位処理では Sintel σ3 が入力より悪化 (39.01→33.14)。
+  フィールド単位 (新既定) で悪化を解消 (41.32/37.24/34.29/31.90) が本家 (44.83/39.81/35.80/34.17) には及ばず。
+  コーミング比はフレーム単位 0.06〜0.63 → フィールド単位 0.60〜0.96 (本家 0.84〜0.99)。
+  **差の原因 (推測)**: 較正は test_v02 1 本のみ (雑音過大・色差 Cb3/Cr4 が強すぎ・低域を削りすぎ)。
+  処理コアは変更していない。見直しは別に判断する。
+  素材 (~20GB) はリポジトリ外。作り直し方とハッシュは work/omo/wp_e9/clips/*/manifest.json。
+- **次**: N4c (実用化)、Resolve 実機確認の残項目 (ユーザー操作)、
+  較正の見直し (E9 の結果を受けて)、INT の残る Low 項目
+  (既定プロファイルのままのフィールド処理警告、Batch Profiler 非対応等)、
+  GPU-1 以降 (GPU-0 の監査表待ち)、Windows (.dll は W5)。
 
 ## 8. 共同作業ルール (複数エージェント共有)
 
