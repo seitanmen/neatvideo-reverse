@@ -13,6 +13,7 @@
 #   make -C native && python3 native/verify_spatial.py   (N1h)
 #   make -C native && python3 native/verify_profile.py   (N1f)
 #   make -C native && python3 native/verify_aft.py       (N1i)
+#   make -C native && python3 native/verify_fields.py    (INT-1: field split / join; --video for interlaced clips)
 #   make -C native verify                                 (all of the above)
 #   make -C native portable x86 && native/verify_x86.sh  (F4: portable build, x86_64 vs arm64 bytes)
 #   make -C native lib && python3 native/verify_bridge.py   (N2a: libnvcore.dylib via ctypes vs the Python path)
@@ -39,7 +40,7 @@ SDK_OBJ = $(SDK_SRC:lzma/%.c=$(SDK_OBJDIR)/%.o)
 SDK_HDR = $(wildcard lzma/*.h)
 
 all: nv_quality_test nv_band_test nv_curve_test nv_lzma_test nv_flat_test nv_model_test nv_v5_test lib \
-     nv_profile_test nv_aft_test
+     nv_profile_test nv_aft_test nv_fields_test
 
 nv_quality_test: main.cpp nv_quality.cpp nv_quality.h
 	$(CXX) $(CXXFLAGS) -o $@ main.cpp nv_quality.cpp
@@ -103,17 +104,21 @@ AFT_HDR = nv_aft.h nv_band.h nv_curve.h nv_model.h nv_ndimage.h nv_linekernel.h 
 nv_aft_test: $(AFT_SRC) $(AFT_HDR)
 	$(CXX) $(CXXFLAGS) $(MUTFLAGS) -o $@ $(AFT_SRC) -lpthread
 
+# INT-1: the field split / join of interlaced frames (nv_fields.h; only bytes move, no arithmetic)
+nv_fields_test: nv_fields_main.cpp nv_fields.cpp nv_fields.h
+	$(CXX) $(CXXFLAGS) $(MUTFLAGS) -o $@ nv_fields_main.cpp nv_fields.cpp
+
 # N2a: libnvcore.dylib, the C ABI (nvcore_c.h) of the N1 ports for ctypes (repro/nv_native.py,
 # native/verify_bridge.py).  `make lib` builds it; `make lib SUF=_p XFLAGS=-DNV_PORTABLE` (= `make lib_portable`)
 # builds libnvcore_p.dylib with the portable float operations.
 LIB_SRC = nvcore_c.cpp nv_aft.cpp nv_profile.cpp nv_model.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp \
           nv_linekernel.cpp nv_portable.cpp nv_lzma.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp \
           nv_ui.cpp nvcore_c_ui.cpp nv_quality.cpp nv_prof5.cpp nv_lstsq.cpp nvcore_c_prof5.cpp \
-          nv_depth.cpp nvcore_c_depth.cpp nvcore_c_rgb.cpp
+          nv_depth.cpp nvcore_c_depth.cpp nvcore_c_rgb.cpp nv_fields.cpp
 LIB_HDR = nvcore_c.h nv_aft.h nv_profile.h nv_model.h nv_flat.h nv_band.h nv_curve.h nv_linekernel.h \
           nv_portable.h nv_lzma.h nv_ndimage.h nv_spatial.h nv_temporal.h \
           nv_ui.h nvcore_c_ui.h nv_quality.h nv_prof5.h nv_lstsq.h nvcore_c_prof5.h \
-          nv_depth.h nvcore_c_depth.h nvcore_c_rgb.h
+          nv_depth.h nvcore_c_depth.h nvcore_c_rgb.h nv_fields.h
 
 libnvcore$(SUF).dylib: $(LIB_SRC) $(LIB_HDR) $(SDK_OBJ)
 	$(CXX) $(CXXFLAGS) $(XFLAGS) -D_7ZIP_ST -dynamiclib -install_name @rpath/libnvcore$(SUF).dylib \
@@ -149,6 +154,7 @@ verify: all
 	python3 verify_spatial.py $(VJ)
 	python3 verify_profile.py $(VJ)
 	python3 verify_aft.py $(VJ)
+	python3 verify_fields.py
 
 # N2a: the ctypes bridge against the Python path (needs the test videos, ffmpeg and PySide6: nv_ui_qt.state)
 verify_bridge: lib
@@ -156,7 +162,7 @@ verify_bridge: lib
 
 clean:
 	rm -rf nv_quality_test tmp_blobs.bin tmp_results.bin nv_band_test nv_curve_test \
-	       nv_lzma_test lzma/obj lzma/obj_x86 nv_flat_test nv_model_test nv_v5_test nv_profile_test nv_aft_test \
+	       nv_lzma_test lzma/obj lzma/obj_x86 nv_flat_test nv_model_test nv_v5_test nv_profile_test nv_aft_test nv_fields_test \
 	       $(PORT_BINS:%=%_p) $(PORT_BINS:%=%_x86) libnvcore.dylib libnvcore_p.dylib libnvcore_x86.dylib
 
 # W2a: the libm sensitivity builds in libm_alt/bin/ (Makefile.libm_alt, libm_alt.h)

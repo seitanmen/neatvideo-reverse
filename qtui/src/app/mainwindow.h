@@ -91,7 +91,7 @@ public:
     FilterPanel* filter_panel;
     Timeline* timeline;
     QPushButton *b_cancel, *b_apply, *cancel_btn;
-    QLabel *msg, *video_lbl, *depth_lbl, *prof_lbl;
+    QLabel *msg, *video_lbl, *scan_lbl, *depth_lbl, *prof_lbl;   // scan_lbl: scan_text (INT-1)
     QProgressBar* prog;
     QToolButton *auto_btn, *load_btn, *generic_btn, *check_btn, *variants_btn;
     QMenu* auto_menu;

@@ -46,6 +46,7 @@
 #include <fstream>
 #include <functional>
 #include <sstream>
+#include <tuple>
 
 #include "depth.h"
 #include "export.h"
@@ -124,7 +125,7 @@ class SelfTest : public QObject {
         static const QStringList pure = {"pyFloatRepr", "pyJsonRoundTrip", "pyIntFloatAsPython", "defaultsMapToV5",
                                          "coerceRules", "autoCompleteBins", "selectionColours", "loadAndAutoProfile",
                                          "depthConversionsRoundTrip", "ofxArgsAndNoFrames", "ofxTinyFramesAsPython",
-                                         "ffmpegSearchOrder"};
+                                         "ffmpegSearchOrder", "fieldOrderText", "fieldOrderProbe"};
         return pure.contains(item);
     }
     void ensure_window() {
@@ -132,6 +133,28 @@ class SelfTest : public QObject {
         win = new MainWindow(test_video());
         win->show();
         QVERIFY(wait_until([&] { return aft_done(); }));
+    }
+    // INT-1: an interlaced clip of 4 frames of the test video, field flag "tff" / "bff":
+    //   x264: tinterlace (interleave_top / interleave_bottom) + lossless x264 with interlaced coding (-x264-params
+    //         tff / bff: the stream says tt / bb)
+    //   ffv1 (mkv), prores (mov, prores_ks -flags +ildct): setfield only (ffmpeg 8.0.1 writes tb / bt for them)
+    QString interlaced_clip(const QString& flag, const QString& codec = "x264") {
+        const QString ext = codec == "ffv1" ? ".mkv" : codec == "prores" ? ".mov" : ".mp4";
+        const QString dst = tmp.filePath("interlaced_" + codec + "_" + flag + ext);
+        if (QFileInfo::exists(dst)) return dst;
+        QStringList a{"-y", "-v", "error", "-nostdin", "-i", test_video(), "-frames:v", "4", "-vf"};
+        if (codec == "x264")
+            a << "tinterlace=mode=" + QString(flag == "tff" ? "interleave_top" : "interleave_bottom") + ",setfield=" + flag
+              << "-c:v" << "libx264" << "-qp" << "0" << "-preset" << "ultrafast" << "-pix_fmt" << "yuv420p" << "-flags"
+              << "+ilme+ildct" << "-x264-params" << flag + "=1";
+        else if (codec == "ffv1")
+            a << "setfield=" + flag << "-c:v" << "ffv1";
+        else
+            a << "setfield=" + flag << "-c:v" << "prores_ks" << "-flags" << "+ildct";
+        QProcess p;
+        p.start(QString::fromStdString(tool_path("ffmpeg")), a << dst);
+        if (!p.waitForFinished(120000) || p.exitCode() != 0) return QString();
+        return dst;
     }
     // the 10-bit source of the Bit depth items (bitDepth10Reload makes it; the later items reload it at 10 bits)
     void make_v10() {
@@ -375,6 +398,7 @@ private slots:
         QVERIFY(win->video_lbl->text().contains("640x360"));
         QVERIFY(win->depth_lbl->text().startsWith("source yuv420p (8-bit 4:2:0)"));
         QVERIFY(win->prof_lbl->text().startsWith(QString::fromUtf8("Unspecified device · auto · σ Y=")));
+        QCOMPARE(win->scan_lbl->text(), QString("progressive"));        // INT-1: ffprobe field_order of test.mp4
     }
 
     void menusInGenuineOrder() {   // "menus Effect View Profile Filter Variants Tools Help"
@@ -2005,6 +2029,17 @@ private slots:
         delete ow;
     }
 
+    void ofxHidesScan() {   // INT-1 (I-4): the OFX host mode shows no scan (the host's field order is INT-4)
+        std::vector<Frame> fr(win->frames.begin(), win->frames.begin() + 3);
+        auto* ow = new MainWindow();
+        ow->scan_lbl->setText("stale");
+        ow->scan_lbl->setToolTip("stale");
+        ow->set_ofx_frames(std::move(fr), 640, 360, 30.0, 8);
+        QCOMPARE(ow->scan_lbl->text(), QString());
+        QCOMPARE(ow->scan_lbl->toolTip(), QString());
+        delete ow;
+    }
+
     void frameInfoFloat32() {   // the viewer bar's frame info as the genuine one: "Frame: 3840x2160, 32-bit float"
         ViewerBar bar(win->viewer);
         bar.set_frame_info(3840, 2160, 32, true);
@@ -2282,6 +2317,78 @@ private slots:
         QVERIFY(!ffmpeg_tools_in(""));
         qputenv("PATH", path0);
         if (had_env) qputenv("NV_FFMPEG", env0);
+    }
+
+    void fieldOrderText() {   // INT-1: the scan from the stream's field_order and the first frame's flags
+        struct C {
+            const char* fo;
+            int fi, tff;
+            Scan scan;
+            int first;
+            const char* text;
+        };
+        const C cs[] = {
+            {"progressive", 0, 0, Scan::Progressive, -1, "progressive"},
+            {"progressive", -1, -1, Scan::Progressive, -1, "progressive"},
+            {"tt", 1, 1, Scan::TopFirst, 0, "interlaced, top field first"},
+            {"bb", 1, 0, Scan::BottomFirst, 1, "interlaced, bottom field first"},
+            // ffmpeg's ffv1 / prores: tb for top-field-first frames, bt for bottom-field-first ones
+            {"tb", 1, 1, Scan::TopFirst, 0, "interlaced, top field first (stream field_order: tb)"},
+            {"bt", 1, 0, Scan::BottomFirst, 1, "interlaced, bottom field first (stream field_order: bt)"},
+            {"tt", 1, 0, Scan::BottomFirst, 1, "interlaced, bottom field first (stream field_order: tt)"},   // disagree
+            {"progressive", 1, 1, Scan::TopFirst, 0, "interlaced, top field first (stream field_order: progressive)"},
+            {"tt", 0, 0, Scan::TopFirst, 0, "interlaced, top field first (first frame not flagged interlaced)"},
+            {"bb", -1, -1, Scan::BottomFirst, 1, "interlaced, bottom field first"},
+            {"tb", 0, 0, Scan::Interlaced, -1,
+             "interlaced, field order unknown (stream field_order: tb, first frame not flagged interlaced)"},
+            {"bt", -1, -1, Scan::Interlaced, -1, "interlaced, field order unknown (stream field_order: bt)"},
+            {"", 0, 0, Scan::Unknown, -1, "scan unknown"},
+            {"", -1, -1, Scan::Unknown, -1, "scan unknown"},
+            {"unknown", 0, 0, Scan::Unknown, -1, "scan unknown"},
+            {"", 1, 1, Scan::TopFirst, 0, "interlaced, top field first"},
+            {"mb", 0, 0, Scan::Unknown, -1, "scan unknown (stream field_order: mb)"},
+        };
+        for (const C& c : cs) {
+            const QString what = QString("%1 %2 %3").arg(c.fo).arg(c.fi).arg(c.tff);
+            QVERIFY2(scan_of(c.fo, c.fi, c.tff) == c.scan, qPrintable(what));
+            QCOMPARE(first_field(scan_of(c.fo, c.fi, c.tff)), c.first);
+            QCOMPARE(scan_text(c.fo, c.fi, c.tff), std::string(c.text));
+        }
+    }
+
+    void fieldOrderProbe() {   // INT-1: the UI's probe reads field_order and the first frame's flags; the export's
+                               // probe stays as it was
+        const VideoInfo p = probe(test_video().toStdString(), true);
+        QCOMPARE(std::make_tuple(p.field_order, p.frame_interlaced, p.frame_tff), std::make_tuple(std::string("progressive"), 0, 0));
+        const VideoInfo e = probe(test_video().toStdString());          // the export's call (compare_export.py)
+        QCOMPARE(std::make_tuple(e.field_order, e.frame_interlaced, e.frame_tff), std::make_tuple(std::string(), -1, -1));
+        QCOMPARE(std::make_tuple(e.W, e.H, e.fps, e.n, e.pix_fmt, e.tags, e.bits_raw, e.full_range, e.rotation),
+                 std::make_tuple(p.W, p.H, p.fps, p.n, p.pix_fmt, p.tags, p.bits_raw, p.full_range, p.rotation));
+        struct C {
+            const char* codec;
+            const char* flag;
+            const char* stream;
+            int tff;
+            const char* text;
+        };
+        const C cs[] = {
+            {"x264", "tff", "tt", 1, "interlaced, top field first"},
+            {"x264", "bff", "bb", 0, "interlaced, bottom field first"},
+            {"ffv1", "tff", "tb", 1, "interlaced, top field first (stream field_order: tb)"},
+            {"ffv1", "bff", "bt", 0, "interlaced, bottom field first (stream field_order: bt)"},
+            {"prores", "tff", "tb", 1, "interlaced, top field first (stream field_order: tb)"},
+            {"prores", "bff", "bt", 0, "interlaced, bottom field first (stream field_order: bt)"},
+        };
+        for (const C& c : cs) {
+            const QString clip = interlaced_clip(c.flag, c.codec);
+            QVERIFY2(!clip.isEmpty(), qPrintable(QString("ffmpeg could not make the %1 %2 clip").arg(c.codec, c.flag)));
+            const VideoInfo v = probe(clip.toStdString(), true);
+            QCOMPARE(std::make_tuple(v.field_order, v.frame_interlaced, v.frame_tff), std::make_tuple(std::string(c.stream), 1, c.tff));
+            QCOMPARE(scan_text(v.field_order, v.frame_interlaced, v.frame_tff), std::string(c.text));
+            QCOMPARE(first_field(scan_of(v.field_order, v.frame_interlaced, v.frame_tff)), c.tff ? 0 : 1);
+            const VideoInfo x = probe(clip.toStdString());
+            QCOMPARE(std::make_tuple(x.field_order, x.frame_interlaced, x.frame_tff), std::make_tuple(std::string(), -1, -1));
+        }
     }
 
     void preferencesFfmpegRow() {   // G2 (selftest.py "Preferences ffmpeg row"): a path without ffmpeg / ffprobe warns
@@ -2723,6 +2830,32 @@ private slots:
             QCOMPARE(QString(hx), QString::fromStdString(e.get("frame_fnv1a64").as_str()));
             QVERIFY2(!(eff.get("curve") == aftp.get("curve")), name);   // the edit changed the curve
         }
+    }
+
+    void fieldOrderShownOnOpen() {   // INT-1: an interlaced clip shows its field order; its frames load as before
+        const QString clip = interlaced_clip("bff");
+        QVERIFY(!clip.isEmpty());
+        win->tabs->setCurrentIndex(0);
+        win->open_video(clip);
+        QVERIFY(wait_until([&] { return win->src == clip && aft_done(); }));
+        QCOMPARE(win->scan_lbl->text(), QString("interlaced, bottom field first"));
+        QVERIFY(win->scan_lbl->toolTip().startsWith("ffprobe: stream field_order bb; first frame interlaced_frame 1, "
+                                                    "top_field_first 0"));
+        // the frames are the progressive reader's (read_frames, yuv420p) bytes: display only, nothing else changes
+        const VideoInfo vi = probe(clip.toStdString());
+        std::vector<Frame> ref;
+        read_frames(clip.toStdString(), vi.W, vi.H, 0, -1, vi.fps, [&](int, Frame&& f) {
+            ref.push_back(std::move(f));
+            return true;
+        });
+        QVERIFY(win->fmt && win->fmt->legacy());                         // Bit depth 8: the uint8 planes
+        QCOMPARE(win->frames.size(), ref.size());
+        QCOMPARE(static_cast<int>(ref.size()), 4);
+        for (size_t i = 0; i < ref.size(); ++i)
+            QVERIFY(win->frames[i].Y == ref[i].Y && win->frames[i].Cb == ref[i].Cb && win->frames[i].Cr == ref[i].Cr);
+        win->open_video(test_video());                                   // back to the test video (later items, if any)
+        QVERIFY(wait_until([&] { return win->src == test_video() && aft_done(); }));
+        QCOMPARE(win->scan_lbl->text(), QString("progressive"));
     }
 
     void cleanupTestCase() {

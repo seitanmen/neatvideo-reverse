@@ -35,11 +35,34 @@ struct VideoInfo {
     int bits_raw = 0;
     bool full_range = false;
     int rotation = 0;              // degrees counter-clockwise
+    // INT-1 (probe(path, true) only; otherwise "" / -1): the stream's field_order (progressive / tt / bb / tb / bt;
+    // "" when not reported) and the first decoded frame's interlaced_frame / top_field_first (-1: no frame decoded)
+    std::string field_order;
+    int frame_interlaced = -1, frame_tff = -1;
     double fps_value() const;      // num / den (24 on errors), as main_window.open_video
 };
 
-// denoise_video_v5.probe (the fields the UI uses; the first decoded frame's time is not read: export only)
-VideoInfo probe(const std::string& path);
+// denoise_video_v5.probe (the fields the UI uses; the first decoded frame's time is not read: export only).
+// with_field_order (INT-1, the UI's open_video): the stream's field_order in the same ffprobe call, and a second
+// ffprobe that decodes the first frame (-read_intervals %+#1) for its interlaced_frame / top_field_first.  The export
+// keeps the call without them (its command is the one of the Python export).
+VideoInfo probe(const std::string& path, bool with_field_order = false);
+
+// The scan of a video (INT-1, display only; INT-2 takes the field order from here).  The first frame's flags decide:
+// interlaced_frame 1 -> top_field_first 1 top field first / 0 bottom field first.  Without the flag (0, or no frame)
+// the stream's field_order is used: tt top first, bb bottom first, progressive progressive; tb / bt only say
+// "interlaced": ffmpeg 8.0.1 writes tb for top-field-first frames and bt for bottom-field-first ones in ffv1 / prores
+// (mkv, mov), against AVFieldOrder's "tb = bottom displayed first", so they do not give the order.
+enum class Scan { Unknown, Progressive, TopFirst, BottomFirst, Interlaced };
+Scan scan_of(const std::string& field_order, int frame_interlaced, int frame_tff);
+// the first field in time: 0 top, 1 bottom, -1 (progressive, unknown, or interlaced without a known order)
+int first_field(Scan s);
+// The status bar text: "progressive", "interlaced, top field first", "interlaced, bottom field first", "interlaced,
+// field order unknown" or "scan unknown", followed by "(...)" when the two sources do not agree: "stream field_order:
+// X" when the stream's value is not the one of the result (tt / bb / progressive), "first frame not flagged
+// interlaced" when the result is interlaced from the stream alone
+std::string scan_text(const std::string& field_order, int frame_interlaced, int frame_tff);
+
 
 // denoise_video_v5.read_frames(path, W, H, lo, hi, fps) (yuv420p uint8, constant-rate timeline when fps is
 // given): calls on_frame(index, frame) until it returns false or the stream ends.
