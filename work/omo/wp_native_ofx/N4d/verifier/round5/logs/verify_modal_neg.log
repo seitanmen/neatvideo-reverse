@@ -1,0 +1,9 @@
+== window-closed: rc 0; press status 0, clip_params unchanged, wait 10.05 s, message ""
+   host CPU in the wait (ps, another process): 3.970 s in 4.05 s
+   main thread 3.0 s into the session (sample): 40/846 asleep in the kernel (0 of them in read / write / wait4), 0 in the event drain
+   main thread 6.5 s into the session (sample): 40/846 asleep in the kernel (0 of them in read / write / wait4), 0 in the event drain
+   input: 5 dispatched before the wait, 48 posted during it, dispatched during it [] (NSEvent types), 0 in the 1 s after it; CGSEventIsAppUnresponsive 0/28
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']
+   -> FAIL
+FAILURES: window-closed

@@ -954,6 +954,7 @@ int run(const std::string& bundle, int argc, char** argv) {
     log.push_back("create instance: adjust_enabled=" + std::to_string(adjust_enabled()) + " clip_params_bytes=" +
                   std::to_string(clip_param ? clip_param->svalue.size() : 0) + " message=\"" + g.persistent + "\"");
     // g_poke (ofx/tools/cocoahost.mm): the host calls the plug-in from a timer / block / thread of its own
+    // ("press": Prepare Noise Profile, "clip": InstanceChanged of ClipParams, "destroy": DestroyInstance)
     g_poke = [&](const std::string& what, const std::string& from) {
         PropSet in;
         propSetString(H(&in), kOfxPropType, 0, kOfxTypeParameter);
@@ -961,7 +962,8 @@ int run(const std::string& bundle, int argc, char** argv) {
         propSetString(H(&in), kOfxPropChangeReason, 0, kOfxChangeUserEdited);
         propSetDouble(H(&in), kOfxPropTime, 0, g.first);
         const double a = wall();
-        const OfxStatus s2 = act(&L, kOfxActionInstanceChanged, inst.get(), &in);
+        const OfxStatus s2 = what == "destroy" ? act(&L, kOfxActionDestroyInstance, inst.get())
+                                               : act(&L, kOfxActionInstanceChanged, inst.get(), &in);
         std::lock_guard<std::mutex> lk(g_poke_mu);
         char b[600];
         std::snprintf(b, sizeof b, "poke %s from %s wall=%.3f..%.3f status=%d message=\"%s\"", what.c_str(), from.c_str(),

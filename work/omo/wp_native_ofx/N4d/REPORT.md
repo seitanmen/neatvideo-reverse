@@ -584,3 +584,173 @@ N4d 修正報告「応答なし」(3/3): 本家の静的確認・残るリスク
 ### 統括の再実行
 - verifier/round4/scripts/timing.py: 対照 0.68 秒 / 0.68 秒、修正版 10.32 秒 / 10.70 秒 (R4-2 を再現)。
 - CPU 時間 (cocoahost、"sleep 8000;close"、1080p×11、起動から 4 s → 8 s の ps time): 対照 0:00.29 → 0:00.29、修正版 0:03.48 → 0:07.47。4 秒で約 4 秒 = 1 コアを使い切る (R4-1 を再現)。
+
+
+---
+
+# Round 5: R4-1〜R4-4 の修正 (2026-11-01)
+
+## 作業者の報告 (原文、3 通)
+
+N4d Round 4 修正報告 (1/3): 変更内容と設計の選択
+
+結論: R4-1〜R4-4 を直した。
+- 待ちの間のホストの CPU: 0.01〜0.03 秒 / 4 秒 (対照 0.000 秒、修正前 4.01 秒)。
+- 主スレッド: sample の 96〜99% がカーネルでの待ち (poll)。
+- 1080p×11 でウィンドウが開くまで: 0.64 秒 (対照 0.67 秒、修正前 10.5 秒)。
+- 入力は捨てたまま。ただし押下と離しの対は崩さない。タイマーと main queue は止めたまま。
+- 既存の照合はすべて合格。ofx/build/MeatVideo.ofx.bundle は作り直した (署名 OK)。backup_r3 は触っていない。コミットはしていない。
+
+## 変更したファイル (行数は backup_r3 との差分の +/− 行の合計)
+- ofx/src/modal_wait.{h,cpp} (68 / 209 行。書き直し)
+  - wait_fd(fd, events): drain() → poll(fd, events, 10 ms) を、fd が準備できるかエラーになるまで繰り返す。主スレッドは poll の中、つまりカーネルで眠る。
+  - drain(): `nextEventMatchingMask:… untilDate:[NSDate distantPast] inMode:"MeatVideoOFXModal" dequeue:YES` を、nil が返るまで (最大 256 件) 繰り返す。待たずにキューを空にする。
+  - wait_child(pid): waitpid(WNOHANG) → drain → poll(NULL, 0, 10 ms)。
+  - run(f): 新設。f をワーカースレッドで実行し、その間は主スレッドで drain と poll(NULL, 0, 10 ms) を繰り返す。f が終わったら join してから戻る。
+  - 非 active のとき (主スレッドでない・NSApp が動いていない・MV_MODAL_WAIT=OFF): wait_fd はすぐ戻り、wait_child は EINTR を再試行する従来の waitpid、run は f をその場で実行する。従来とまったく同じ。
+- ofx/src/session.cpp (±21 行)
+  - 送信: 従来どおりのブロッキング書き込み (1 MiB 単位、EINTR を再試行)。それを mw.run() の中で実行するので、active のときはワーカースレッドで書く。
+  - 前の版で入れた O_NONBLOCK と EAGAIN の扱いは削除した。
+  - 受信: mw.wait_fd(out[0], POLLIN) の後にブロッキングの read。poll が読めると言った後なので read は止まらない。
+  - F_DUPFD_CLOEXEC ≥3・F_SETNOSIGPIPE・CLOEXEC_DEFAULT・fd 2 の扱い・長さで区切る読み取りは変えていない。
+- ofx/src/plugin.cpp (±38 行。前回の g_window_open を含む)
+  - Instance に window と destroyed の旗を追加した (R4-4)。
+  - open_window は run_session の前に window=true にし、戻ったら window=false。その時点で destroyed なら、インスタンスを delete して、ホストのハンドルには触れずに戻る。
+  - destroy_instance は、window が立っていれば destroyed=true だけにして解放を後に回す。立っていなければ従来どおり delete する。
+- ofx/tools/cocoahost.mm (144 行)
+  - --held: セッションの前に、左ボタンとキー "s" (keyCode 1) の押下を sendEvent: で配っておく。
+  - --destroy: 3 秒後に別スレッドから DestroyInstance を呼ぶ。
+- ofx/tools/minihost.cpp: g_poke に "destroy" を追加した (DestroyInstance)。
+- ofx/tools/verify_modal.py (375 行。書き直し): 合格の条件を CPU・sample の睡眠・開く時間・入力の対・解放の後回しにした (2/3)。
+- ofx/CMakeLists.txt、qtui は今回変えていない。
+
+## 設計の選択
+- 待ち方: 「poll(fd, 10 ms) でカーネルで待ち、その合間にイベントを待たずに取る」を選んだ。
+  - 理由 1: 独自のモードは空のままでよい。CFFileDescriptor をそのモードに登録すると、モードに CF のソースを足すことになる。そのソースのコールバックがランループの中で走り、待ちの最中にホストのコードに近い場所で動く。poll のほうが単純で、ホストのランループに何も残さない。
+  - 理由 2: 入力の遅れは最大 10 ms。CPU は 1 秒に 100 回起きる分だけで、測定では 4 秒あたり 0.01〜0.03 秒。
+  - 理由 3: sample では、主スレッドの先端が `poll (in libsystem_kernel)` にある (眠っている) ことが見える。
+  - 推定: _DPSNextEvent は、イベントを NSEventThread (WindowServer からの受信スレッド) が積んだキューから直接取る。そのため distantPast でも新しいイベントを取れる。観測でも、待ち中に送った入力は待ちの後に配られなかった (取られて捨てられた)。
+- 送信: パイプが一杯になるたびにイベントを回す方式はやめた。
+  - 代わりに、ブロッキング書き込み (1 MiB ずつ) をワーカースレッドに任せ、主スレッドは 10 ms ごとにイベントを取る。
+  - ワーカースレッドが触るのは、パイプの write と close だけ (ホストの API は呼ばない)。
+  - フレームは呼び出し元の SessionRequest にあり、run() は join するまで戻らない。
+- 入力の一貫性 (R4-3): ホストには、押下なしの離しも、離しなしの押下も見せない。
+  - マウスボタン (buttonNumber ごと) とキー (keyCode ごと) の押下が待ち中に来たら、記録してから捨てる (ビープを鳴らし、ウィンドウを前面にする)。対応する離しも捨てる。
+  - 記録にない離し (押下が待ちの前にホストへ届いたもの) は sendEvent: で渡す。
+  - FlagsChanged (修飾キー) は常に sendEvent: で渡す。ホストの修飾キーの状態はキーボードに従う。
+  - キーのリピート・ドラッグ・移動・スクロール・タブレット・ジェスチャ・カーソル更新・SystemDefined は捨てる。
+  - AppKitDefined は sendEvent: で渡す。ApplicationDefined と Periodic は取らない (前回と同じ)。
+  - 残る推定: 待ち中に押されたまま窓が閉じた場合、その離しは待ちの後にホストへ届く。ホストから見ると、押下のない離しが 1 つ来る。Qt は対応のない離しを無視するとみられる。
+- 解放の後回し (R4-4): 窓を待っている間に DestroyInstance が来たら、旗を立てて解放を後に回す。待ちが終わった時点でインスタンスを解放し、ホストの API は呼ばない。
+
+(続く: 2/3 試験と数値、3/3 残るリスク)
+
+N4d Round 4 修正報告 (2/3): 試験と数値 (対照との比較)
+
+## verify_modal.py
+コマンド: `caffeinate -i python3 ofx/tools/verify_modal.py --control <MV_MODAL_WAIT=OFF のバンドル>`。ログは logs/verify_modal_r5.txt と logs/verify_modal_r5_dies.txt。
+- 対照のバンドル: 同じソースを -DMV_MODAL_WAIT=OFF でビルドしたもの (scratchpad の mctl/ctl.ofx.bundle。警告 0)。
+- ホストの CPU: 別プロセスから `ps -o time=` を、待ちの中で 4 秒の間をあけて 2 回読んだ差。合格は 0.2 秒未満。
+- 主スレッド: `sample` で 1 秒ずつ取った。「カーネルで待機」は、先端が poll / mach_msg2_trap / kevent / wait4 / read / write / __semwait などにあるサンプル。合格は 80% 以上で、かつ drain のサンプルがあること (イベントを取っている)。
+
+| 場面 | 結果 | CPU / 4 s | 主スレッド (sample) | 待ち中に配られた入力 / 待ち後 1 s |
+|---|---|---|---|---|
+| apply-10s (修正版) | status 0、ClipParams 変更 | **0.020 s** | 827/840・827/847 がカーネルで待機 (poll)、drain 12・20、read/write での停止 0 | [] / 0 |
+| apply-10s **対照 (OFF)** | status 0、変更 | 0.000 s | 864/864・868/868 が read で停止、drain 0 | [] / **41** (溜まって後で配られた) |
+| 修正前 (Round 4、検証者の測定) | — | 4.010 s | mach_msg 0・空回り | — |
+| helper-dies (7 s 後に kill -9) | status 1 "terminated by signal 9"、不変 | 0.030 s | 826/843 待機、drain 16 | [] / 0 |
+| no-reply-eof (9 s 後に何も返さず終了) | status 1 "unexpected reply (0 bytes)"、不変 | 0.020 s | 821/840・835/855 待機 | [] / 0 |
+| window-closed (C++ UI ドライバ、9 s 後に close) | status 0、不変 | 0.020 s | 822/839・851/856 待機 | [] / 0 |
+| held (下記) | status 0、変更 | 0.020 s | 820/841・833/850 待機 | [2, 11, 12, 12] / 0 |
+| destroy (下記) | status 0、不変 | 0.020 s | 819/839・837/851 待機 | [] / 0 |
+
+- すべての場面で、待ち中の default モードのタイマーの tick は 0。main queue のブロックは、待ちが終わった直後 (+0.00 s) に実行された。
+- 別スレッドからの押下 (--poke) は status 0 で "a Meat Video window is already open; close it first."。
+- プラグインのトレース: cocoahost では "host event loop (MeatVideoOFXModal)"、対照と minihost では "blocking"。
+- held (R4-3): セッションの前に左ボタンとキー "s" の押下を配っておいた。待ちに入って 1 s 後に、左ボタンの離し・"s" の離し・Shift の flagsChanged を 2 回送った。3 s 後に、新しい左クリックの押下と離し・キー 0 の押下と離し・マウス移動を送った。
+  - 待ち中にホストが配ったもの: [LeftMouseUp 2, KeyUp 11, FlagsChanged 12, FlagsChanged 12]。待ちの前に押されたものの離しと、修飾キーだけが届いた。
+  - LeftMouseDown・KeyDown・MouseMoved は 0。待ち中の押下は、その離しと一緒に捨てられた。待ちの後に配られたものも 0。
+- destroy (R4-4): 待ちに入って 3 s 後に、別スレッドから DestroyInstance を呼んだ (MallocScribble=1、MallocGuardEdges=1)。
+  - DestroyInstance は status 0 で戻った。待ちが終わると press も status 0 で戻り、ClipParams は不変、ホストのプロセスは rc 0 (落ちない)。
+  - 解放は待ちの後に行われた (コードで確認。解放済みのメモリへの書き込みがあれば MallocScribble で壊れて表に出るはずだが、出なかった)。
+- 開くまでの時間 (R4-2): 1080p×11 フレーム (test_v02 の n=312..322)、Prepare@5、すぐ閉じるセッション。press の wall 区間を、対照と交互に 2 回ずつ測った。合格は、修正版の最悪値が対照の最良値の 1.5 倍以内。
+  - C++ UI ドライバ (script "close"): 対照 0.668 / 0.672 s、修正版 **0.641 / 0.640 s** (比 0.96)。修正前は 10.3〜10.7 s。
+  - すぐ読み捨てる stub (drain): 対照 0.113 / 0.114 s、修正版 0.123 / 0.124 s (比 1.10)。修正前は 2.86 s。
+- minihost (NSApp なし): トレースは "blocking" ×2 で、従来の待ちのまま。press は status 0・変更。
+- 1 回目の全体実行では、helper-dies が失敗した。stub が 3 s で死ぬため、2 回目の CPU の読み取りが待ちの外にずれたのが原因 (試験側のタイミング)。stub を 7 s で死ぬようにし、読み取りを 1 s と 5 s に直して再実行し、ok (logs/verify_modal_r5_dies.txt)。製品のコードは変えていない。
+- CGSEventIsAppUnresponsive は全場面で 0 (前回の報告どおり、合成のイベントでは立たないので参考値)。
+
+## 既存の照合
+- `verify_ofx.py --pure --mutate` (logs/verify_r5_full.txt): **163 比較 0/170,596,864 語不一致、ALL MATCH**。
+  - 内訳はブリッジ経路 76・純 Python 76・qtui 自身の処理 11。拒否 19・ヘルパー失敗 6・変異 13 も期待どおり。dlopen_noload は 0。
+  - **fd を閉じた起動 8 通りすべて ok** (出力と ClipParams は、全部開いた起動とバイト同一)。
+  - fsguard: レンダーだけの場面 6 件はバンドルの dlopen 1 件だけ。ほかの場面も dlopen と posix_spawn (--ofx-default / --ofx-session) だけ。
+- qtui_selftest: **117 passed / 0 failed** (logs/qtui_selftest6.txt)。
+- 既存の --ofx モード (HEAD のソースからビルドしたものと今回のもの): **29/29 SAME** (logs/ofx_mode_29_r5.txt)。
+- クリーンビルド: build_ofx.sh を新しいディレクトリへ (cocoahost を含む) で警告 0・エラー 0 (logs/build_clean6.txt)。qtui の --clean-first で警告 0 (logs/qtui_build_clean6.txt)。
+- ~/.config/NeatRepro/nv_ui_qt.ini: sha256 45d4258c53337ee4aa60017a4a4cce72b9f4bf3dc71303406cfb5c1c7d80fcc6 で、すべての前後で不変。
+- 最後に ofx/build/MeatVideo.ofx.bundle を作り直した (codesign --verify --strict --deep OK)。作り直したバンドルで verify_modal の全場面を実行し合格 (上の数値)。
+
+(続く: 3/3)
+
+N4d Round 4 修正報告 (3/3): 残るリスク (観測と推定を分けて)
+
+- 観測: ホストのイベントは最大 10 ms 待たされる (poll の間隔)。CPU は 1 秒に 100 回起きる分だけで、4 秒あたり 0.01〜0.03 秒 (1 コアの 0.25〜0.75%)。
+- 推定: Resolve がボタンの InstanceChanged を主スレッド以外で呼び、主スレッドがその完了を待つ作りなら、この修正は効かない (前回から変わらず)。Terminal から `MEATVIDEO_OFX_TRACE=1` 付きで起動すれば、"host event loop" か "blocking" かで、どちらの経路を通ったか分かる。
+- 推定: WindowServer の「応答なし」の旗そのものは、合成のイベントでは確かめられない (SIGSTOP でも立たない)。
+  - 判定の代わりにしたのは 3 点: 主スレッドがイベントを 10 ms 以内に取り続けること (sample の drain と poll)、待ち中に送った入力が溜まらないこと、CPU が使われないこと。
+  - Resolve を実際のカーソルで操作して「応答なし」が出ないかは、ユーザーの確認が要る。
+- 推定: R4-3 の扱いで、押下が待ちの前にホストへ届いたボタンやキーの離しは、待ちの最中にホストへ渡る。
+  - Resolve のボタンが離しで動く作り (Qt の QPushButton の clicked と同じ) なら、離しが待ちの前に終わっているので、この場面は起きない。
+  - 押下で動く作りなら、その離しが待ち中に Resolve のウィンドウへ渡る。その結果、Resolve 側で「クリック」が完了する (ボタンの見た目が戻るなど)。
+- 推定: 待ち中に押されたボタンやキーが、窓を閉じた後に離されると、ホストには対応のない離しが 1 つ届く (Qt は無視するとみられる)。
+- 推定: AppKitDefined と、待ちの前に押されたものの離し・FlagsChanged を sendEvent: に渡すと、ホストのハンドラが待ちの最中に同期で走り得る。
+  - そこから DestroyInstance が来ても、解放は後に回る (別スレッドからの呼び出しで観測)。
+  - そこから同じ主スレッドで別の押下が来た場合は、g_window_open で拒否される。これは別スレッドからの押下で観測した経路と同じコードを通る (推定)。
+  - 同じ主スレッドでの再入そのものは、合成できずに試していない。
+- 観測: 開いているウィンドウの最中に DestroyInstance が来た場合、Apply の結果は保存されない (インスタンスが無いので捨てる)。ヘルパーのプロセスは返事をして終わる。
+- 推定: 前面化 (yield → activate) は、ヘルパーが本物の app (同梱の MeatVideoQt.app) のときだけ効く。試験では観測していない (前回から変わらず)。
+- 観測: 4K 以上での開く時間は測っていない。送信はブロッキング書き込みなので、対照と同じくデータ量に比例するとみられる (推定)。
+- 既知のまま: L2 (ClipParams が空のまま保存したノードは、開き直したときに新規として既定が入る)。
+
+## Resolve での確認手順 (前回に加えるもの)
+1. ofx/build/MeatVideo.ofx.bundle を入れ直して、Resolve を再起動する。
+2. ウィンドウを開いたまま 10 秒以上待つ。次を確かめる:
+   - アクティビティモニタで Resolve の CPU が上がっていない (前の版では 100% だった)。
+   - CleanMyMac やアクティビティモニタで「応答なし」にならない。
+3. ボタンを押してから、1080p や 4K のウィンドウが出るまでの時間を確かめる (前の版は 1080p で約 10 秒)。
+4. ウィンドウを閉じた後に、Resolve のクリックやドラッグ、Shift / Command などの修飾キーが正しく効くことを確かめる (押されたままになっていない)。
+5. 可能なら `MEATVIDEO_OFX_TRACE=1` 付きで Terminal から起動し、stderr の "helper wait:" の行を見る。
+
+ファイル: work/omo/wp_native_ofx/N4d/PROGRESS.md (末尾に追記)、logs/ の verify_modal_r5*.txt・verify_r5_full.txt・ofx_mode_29_r5.txt・build_clean6.txt・qtui_build_clean6.txt・qtui_selftest6.txt。
+
+## 統括の再実行 5 (2026-11-01)
+- 対照: 統括の対照のビルド (`-DMV_MODAL_WAIT=OFF`) を今のソースで作り直し、最終バンドルの写しに入れて再署名した。警告 0。Mach-O は修正版と異なる。
+- 条件: cocoahost、C++ UI ドライバ、1080p×11 (検証者の clip_1080x11.f32)、Prepare@5。
+- ウィンドウが開くまで (script "close"、交互に 2 回ずつ):
+  - 対照 0.68 / 0.66 s
+  - 修正版 0.64 / 0.65 s
+  - トレースは対照が "blocking"、修正版が "host event loop"。
+- 待ち中の CPU ("sleep 9000;close"。cocoahost のプロセスを ps で、3 s → 7 s の 4 秒):
+  - 対照 0:00.29 → 0:00.29
+  - 修正版 0:00.31 → 0:00.33 (0.02 s / 4 s)
+- sample (修正版、待ち中に 1 秒):
+  - 主スレッド 850 サンプル中 834 が ModalWait::wait_fd → poll (カーネルで待機)、15 が drain。
+  - 先端の集計は poll 834、mach_msg2_trap 850、__workq_kernreturn 1700。
+- `verify_ofx.py --quick`: 81 比較、0/67,028,480 語不一致、ALL MATCH。
+
+## 独立検証 Round 5: APPROVE (verify-n4d、詳細は verifier/VERDICT.md の Round 5 節)
+- 条件 1 (CPU): 待ち中 0.020 s / 4 s (2 回)。今のソースで作った対照は 0.010 s、Round 4 は 4.01 s。
+- 条件 2 (開くまで、1080p×11): 0.630〜0.638 s。対照は 0.656〜0.667 s (交互に 3 回ずつ)。
+- 条件 3 (sample): 主スレッドの 824/842・824/846 が poll で眠り、drain は 18・22 サンプル。待ち中に送った入力は後から配られない。
+- 新しい verify_modal.py は空回りを検出する。Round 4 のバンドルでは FAIL (CPU 3.97 s、カーネルでの待ち 40/846)。
+- 敵対的な試験はすべて合格: 押下と離しの対の管理、ヘルパーが 6 秒読まない場合、ヘルパーが要求の途中で終了する場合。
+- 残る指摘:
+  - R5-1 (Low): run_session が例外で抜けると、in->window が true のまま残る。その後の DestroyInstance で解放されず漏れる。std::thread の生成に失敗すると fd も閉じない。いずれも資源が尽きたときだけ。
+  - R5-2〜R5-4 (情報): リピートでない KeyDown の扱い、閉じた後に対応のない離しが 1 つ届く件、前面化が未観測な件。
+- 回帰はすべて合格:
+  - verify_ofx 163 比較、0/170,596,864 語不一致。closed-fd 8 通りとも ok。
+  - 自作の場面 0/59,616,000 語不一致。
+  - selftest 117/117、--ofx モード 29 件同一。
+  - 警告 0、ini は不変。
+- Resolve の実機確認は保留のまま。

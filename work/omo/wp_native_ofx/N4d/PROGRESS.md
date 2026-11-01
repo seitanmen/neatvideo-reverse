@@ -60,3 +60,11 @@
 - ofx/tools/cocoahost.mm (NSApp 内の試験ホスト)、verify_modal.py。CGSEventIsAppUnresponsive は SIGSTOP したホストでも立たないので判定に使わず、
   sample(1) の主スレッドと、待ち中に送った入力が後で配られるかで判定。対照 (MV_MODAL_WAIT=OFF) は主スレッドが read で止まり、入力が溜まって後で配られる。
 - 照合: verify_ofx 163 比較 0 語、fd 閉じ 8 通り同一、selftest 117/117、--ofx 29 件同一、クリーンビルド警告 0、ini 不変。最後に ofx/build のバンドルを作り直した。
+
+## Round 4 の指摘 (空回り・開くのが遅い) への対応 (同日)
+- ModalWait: poll(fd, 10 ms) でカーネル待ち + untilDate: distantPast でイベントを空になるまで取る (空のモードでの空回りをやめた)。
+  要求の送信は従来どおりのブロッキング書き込み (1 MiB 単位) をワーカースレッドで行い、主スレッドは 10 ms ごとに起きてイベントを取る。
+- R4-3: 待ち中に押されたボタン・キーは離しと一緒に捨て、待ちの前に押されたものの離しは sendEvent:、flagsChanged は sendEvent:。
+- R4-4: 窓が開いている間の DestroyInstance は待ちの後に解放 (window / destroyed 旗)。cocoahost --destroy で試験 (MallocScribble)。
+- verify_modal.py: CPU (ps) < 0.2 s/4 s、sample で主スレッドの 80% 以上がカーネル待ち、1080p×11 の開く時間が対照の 1.5 倍以内、held / destroy を合格条件に。
+- 結果: CPU 0.01〜0.03 s / 4 s (対照 0.000)、sample 96〜99% がカーネル待ち、開く時間 0.64 s (対照 0.67)。verify_ofx 163 比較 0 語、fd 閉じ 8 通り、selftest 117、--ofx 29 件、警告 0、ini 不変。

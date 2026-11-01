@@ -10,7 +10,6 @@ make: Nothing to be done for `lib'.
 [ 85%] Built target nvui
 [ 85%] Built target MeatVideoQt_autogen_timestamp_deps
 [ 89%] Built target MeatVideoQt_autogen
-[ 92%] Linking CXX executable MeatVideoQt.app/Contents/MacOS/MeatVideoQt
 [100%] Built target MeatVideoQt
 /Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/Frameworks/libnvcore.dylib: replacing existing signature
 /Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/Helpers/MeatVideoQt.app: replacing existing signature

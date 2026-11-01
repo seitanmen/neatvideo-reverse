@@ -65,6 +65,8 @@ struct Instance {
     std::string pending;
     bool committing = false;                       // commit_defaults running
     bool store_warned = false;                     // the "could not be stored" warning is shown
+    bool window = false;                           // open_window is waiting for this instance's window
+    bool destroyed = false;                        // DestroyInstance came meanwhile (freed after the wait)
     std::string note;                              // why the defaults could not be loaded ("" = nothing to say)
 };
 
@@ -355,7 +357,14 @@ OfxStatus destroy_instance(OfxImageEffectHandle fx) {
     check(g_fx->getPropertySet(fx, &props), "getPropertySet");
     void* p = nullptr;
     g_prop->propGetPointer(props, kOfxPropInstanceData, 0, &p);
-    delete static_cast<Instance*>(p);
+    Instance* in = static_cast<Instance*>(p);
+    bool later = false;
+    if (in) {
+        std::lock_guard<std::mutex> lk(in->mu);
+        later = in->window;                   // its window is open: open_window frees it when the wait ends
+        in->destroyed = true;
+    }
+    if (!later) delete in;
     g_prop->propSetPointer(props, kOfxPropInstanceData, 0, nullptr);
     return kOfxStatOK;
 }
@@ -492,8 +501,24 @@ void open_window(Instance* in, const char* page, double t) {
     check(g_fx->clipGetPropertySet(in->src, &cp), "clipGetPropertySet");
     if (g_prop->propGetDouble(cp, kOfxImageEffectPropFrameRate, 0, &rq.fps) != kOfxStatOK || !(rq.fps > 0)) rq.fps = 24.0;
 
+    {
+        std::lock_guard<std::mutex> lk(in->mu);
+        in->window = true;
+    }
     const SessionResult r = run_session(rq);
     rq.frames.clear();
+    // a DestroyInstance the host sent while the window was open (from an event handler or another thread) was put
+    // off to here: the instance is freed now and its handles are not used any more
+    bool gone;
+    {
+        std::lock_guard<std::mutex> lk(in->mu);
+        in->window = false;
+        gone = in->destroyed;
+    }
+    if (gone) {
+        delete in;
+        return;
+    }
     if (r.kind == SessionResult::CANCEL) return;
     if (r.kind == SessionResult::FAILED) throw Failure(kOfxStatFailed, r.error + "; the settings were not changed");
     // Apply: the new state, checked before it is stored

@@ -41,13 +41,11 @@ bool dropped(const char* kv) {
     return false;
 }
 
-// (mw active: fd is non-blocking, the host's events are pumped while the pipe is full)
-bool write_all(int fd, const void* data, size_t n, ModalWait& mw) {
+bool write_all(int fd, const void* data, size_t n) {
     const char* p = static_cast<const char*>(data);
     while (n > 0) {
-        mw.wait_fd(fd, POLLOUT);
         const ssize_t w = ::write(fd, p, n > (1u << 20) ? (1u << 20) : n);
-        if (w < 0 && (errno == EINTR || (mw.active() && errno == EAGAIN))) continue;
+        if (w < 0 && errno == EINTR) continue;
         if (w <= 0) return false;
         p += w;
         n -= static_cast<size_t>(w);
@@ -184,20 +182,22 @@ std::string run_helper(const char* arg, const std::string& head, const std::vect
     }
     // the request; a helper that exits early makes the writes fail (EPIPE, no SIGPIPE on this descriptor)
     fcntl(in[1], F_SETNOSIGPIPE, 1);
-    // on the main thread of a running Cocoa host the waits below pump its events (modal_wait.h); else they block
+    // on the main thread of a running Cocoa host the waits below serve its events (modal_wait.h); else they block.
+    // The request is written by blocking writes in large pieces - on a worker thread while the events are served
+    bool sent = true;
     ModalWait mw(pid);
-    if (mw.active())
-        for (int fd : {in[1], out[0]}) ::fcntl(fd, F_SETFL, ::fcntl(fd, F_GETFL) | O_NONBLOCK);
-    bool sent = write_all(in[1], head.data(), head.size(), mw);
-    for (const std::vector<float>& f : frames)
-        if (sent) sent = write_all(in[1], f.data(), f.size() * sizeof(float), mw);
-    ::close(in[1]);
+    mw.run([&] {
+        sent = write_all(in[1], head.data(), head.size());
+        for (const std::vector<float>& f : frames)
+            if (sent) sent = write_all(in[1], f.data(), f.size() * sizeof(float));
+        ::close(in[1]);
+    });
     // the reply: the window writes it when it closes; read until EOF or until it is complete
     char buf[65536];
     while (!reply_complete(*reply)) {
-        mw.wait_fd(out[0], POLLIN);
+        mw.wait_fd(out[0], POLLIN);                     // (active: until readable; the read then does not block)
         const ssize_t r = ::read(out[0], buf, sizeof buf);
-        if (r < 0 && (errno == EINTR || (mw.active() && errno == EAGAIN))) continue;
+        if (r < 0 && errno == EINTR) continue;
         if (r <= 0) break;
         reply->append(buf, static_cast<size_t>(r));
     }

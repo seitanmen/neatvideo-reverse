@@ -305,3 +305,83 @@ Round 1 の M1・L1〜L6、Round 2 の R2-1 と軽微 4 件はすべて解消し
 1. R4-1: 待ち中のホストの CPU がほぼ 0 になる (例: 上の 4 秒の測定で < 0.2 秒)。
 2. R4-2: Cocoa ホストでウィンドウが開くまでの時間が対照並みになる (1080p×11 で 1 秒前後)。
 3. その上で、応答性の観測 (sample で主スレッドが mach_msg で待っていること、入力が溜まらないこと) が保たれる。
+
+---
+
+# Round 5 (2026-11-01、R4-1〜R4-4 の修正後の再検証)
+
+## 総合判定: **APPROVE**
+Round 4 で示した APPROVE の条件 3 つを、今のソースから新規にビルドしたもので自分で測り、すべて満たした。
+- 待ち中の CPU はほぼ 0。
+- 1080p×11 でウィンドウが開くまでの時間は対照並み。
+- 主スレッドはカーネルで眠りながらイベントを取り、入力は溜まらない。
+
+新しい設計 (poll で待ち、合間に distantPast でイベントを取る / 送信はワーカースレッド / 押下と離しの対の管理 / DestroyInstance の後回し) に、差し戻すほどの問題は見つからなかった。回帰もすべて合格。残るのは Low・情報の 4 件。
+
+## APPROVE の条件の確認 (観測)
+| 条件 | 結果 | 試験 | 出力 |
+|---|---|---|---|
+| 1. 待ち中の CPU < 0.2 s / 4 s | pass | round5/scripts/cpu.py: cocoahost、C++ UI ドライバ "sleep 9000;close"、640×360×8。待ちの中で 4 秒あけて `ps -o time` を 2 回 | 修正版 **0.020 s / 0.020 s** (2 回)。対照 (今のソースを -DMV_MODAL_WAIT=OFF でビルドし、バンドルの写しで再署名) 0.010 s。Round 4 は 4.010 s |
+| 2. 開くまでの時間が対照並み | pass | round5/scripts/measure.py: cocoahost、1080p×11 (test_v02 n=100..110)、Prepare@5、script "close"。対照と交互に 3 回ずつ | 対照 0.661 / 0.667 / 0.656 s、修正版 **0.638 / 0.633 / 0.630 s**。Round 4 は 10.5 s。作業者の verify_modal でも、私の対照で modal 0.620/0.628 s 対 対照 0.649/0.651 s (比 0.97)、drain stub で比 1.10 |
+| 3. カーネルで眠り、イベントを取る | pass | 同じ待ちを `sample` で 1 秒、主スレッドの先端を集計 | 修正版: 842 中 824 が `poll (in libsystem_kernel)`、18 が `ModalWait::drain`、read は 0。2 回目は 846 中 824 / drain 22。対照: 863/863 が read |
+| 3'. 入力が溜まらない | pass | 作業者の verify_modal.py を私の対照で実行 (ALL OK) と、自作の input2 | apply-10s で待ち中に送った入力は、待ち中にも待ちの後 1 s にも配られない。対照では溜まって後で配られた |
+
+**判定条件が空回りを見分けられるか (陰性対照)**: verify_modal.py の今の判定を、Round 4 の (空回りする) バンドルに向けて実行した (`V.BUNDLE` を差し替え)。
+window-closed の結果は **FAIL**: CPU 3.970 s / 4.05 s、カーネルで眠っていたのは 40/846、drain 0。
+新しい条件 (CPU < 0.2 s、カーネル ≥ 80%、drain > 0) は、空回りと本当の待ちを区別できる。
+
+## 自作の敵対的な試験 (round5/scripts/adv.py、cocoahost で ModalWait が有効)
+- **input2 (R4-3 の対の管理)**: `--held` (左ボタンとキー 's' を待ちの前に押下) のうえで、待ち中に次を送った。
+  - 's' の自動リピートの KeyDown ×2 (kCGKeyboardEventAutorepeat = 1)
+  - 右ボタンの押下と離し
+  - Shift の flagsChanged を押下・離しの 2 回
+  - 待ちの前に押した左ボタンの離しと 's' の離し
+  - 新しい左ボタンの押下 (離しは待ちの後)
+  - キー 7 の押下・リピート・離し
+  
+  待ち中にホストへ配られたのは **[FlagsChanged, FlagsChanged, LeftMouseUp, KeyUp]** だけ (期待どおり)。リピート、待ち中の押下とその離し、右ボタンの対はすべて捨てられた。CPU 0.030 s、カーネルで眠っていたのは 824/843。
+- **stall (ヘルパーが要求の途中で 6 秒読むのを止める)**: 1080p×11 で、3 MB 読んだあと 6 秒止まり、その後に読み切って CANCEL を返す偽ヘルパー。
+  ワーカースレッドは write で止まり、主スレッドはカーネルで眠りながらイベントを取り続けた (821/838、CPU 0.020 s / 4 s)。最後に status 0・不変で戻った。
+- **middie (ヘルパーが要求の途中で終了)**: 3 MB 読んで exit 0。
+  0.09 s で status 1 "unexpected reply (0 bytes)"・不変。ワーカーは EPIPE で抜け、join されて、ホストは rc 0 で終了した。
+
+## コードレビュー
+- run(): ワーカーが触るのは pipe の write と close だけ。終わりは std::atomic の done で知り、join してから戻るので、ワーカーが呼び出しより長く生きることはない。
+  フレームは呼び出し元の SessionRequest にあり、join の後で消える。f (write_all) は例外を投げない。
+- 非 active の経路は従来どおり: run は f をその場で実行し、wait_fd はすぐ戻り、read はブロッキング、wait_child は EINTR ループの waitpid。
+  write_all は backup_r3 と同じ (差分なし)。O_NONBLOCK と EAGAIN の扱いは削除済み。
+  minihost (NSApp なし) と対照は "blocking" で、照合と fd を閉じた 8 通りは従来とバイト同一。
+- 押下と離しの管理: buttonNumber (0〜31) と keyCode の集合で持つ。待ちの前の押下の離しと FlagsChanged は sendEvent: で渡す。リピートは捨て、集合にも入れない。
+- 解放の後回し:
+  - 窓が開いている間の DestroyInstance は、destroyed を立て、インスタンスのデータを nullptr にして返る。
+  - open_window は待ちが終わると、ホストの API を呼ばずに delete して返る。instance_changed も、その後にインスタンスやハンドルを使わない (コードで確認)。
+  - 2 回目の DestroyInstance は nullptr を受けるので、二重には解放しない。
+  - 解放の後の別スレッドの Render は、instance_of が "no instance data" で失敗する (解放済みのメモリは触らない)。
+  - 作業者の destroy の場面 (別スレッドから、MallocScribble 付き) は ok。
+
+## 指摘 (すべて Low・情報、差し戻しの理由ではない)
+- **R5-1 (Low、コードレビュー)**: run_session が例外で抜けると、in->window が true のまま残る。その後の DestroyInstance は解放を後に回したまま、どこでも解放されない (インスタンス 1 つ分のメモリ漏れ)。
+  同じく、run() の std::thread の生成が失敗した場合 (std::system_error)、in[1] と out[0] の fd が閉じられず、ヘルパーも回収されない。どちらも資源が尽きたときにしか起きない。
+  in->window の後始末を RAII にすればよい。
+- **R5-2 (情報)**: 待ちの前に押したキーのリピートでない KeyDown が待ち中に来ると、その離しも捨てられる。実際のキーボードはリピート扱いで送るので起きないとみられる (推定)。
+- **R5-3 (情報、作業者の記載どおり)**: 待ち中に押したボタンを窓が閉じた後に離すと、ホストには対応のない離しが 1 つ届く。
+- **R5-4 (情報、未観測)**: front() の前面化 (yield → activate) は、試験のヘルパーが本物の app でないため観測していない。ホストを前面にして実際の入力を使う確認も、ユーザーのフォーカスを奪うので行っていない。Resolve での確認項目に残す。
+
+## 回帰 (今回のソースで新規にビルド)
+| 確認 | 結果 | 出力 |
+|---|---|---|
+| クリーンビルド (build_ofx.sh、新規ディレクトリ。cocoahost を含む) | pass | 警告・エラー 0。MeatVideo.ofx・minihost・cocoahost・fsguard は worktree の ofx/build と sha256 一致。codesign --deep --strict 有効 |
+| qtui 全ターゲット | pass | 警告 0 |
+| 対照 (MV_MODAL_WAIT=OFF) のビルド | pass | 警告 0。修正版の Mach-O とは異なる |
+| verify_ofx.py --pure --mutate | pass | **163 比較 0/170,596,864 語不一致、ALL MATCH**。fd を閉じた起動 8 通りすべて ok、dlopen_noload 0 |
+| verify_modal.py --control (私の対照) | pass | ALL OK (apply-10s・対照・helper-dies・no-reply-eof・window-closed・held・destroy・開く時間 2 種・minihost) |
+| 自作の場面 (my_scen.py --pure) | pass | 36 比較 0/59,616,000 |
+| qtui_selftest | pass | 117/117 |
+| 既存の --ofx モード (HEAD vs 今回) | pass | 29 件 ALL SAME |
+| ~/.config/NeatRepro/nv_ui_qt.ini | pass | 45d4258c…fcc6 (前後で同一) |
+
+## Resolve での確認 (ユーザー、作業者の手順に加えて)
+- `MEATVIDEO_OFX_TRACE=1` で "host event loop" の経路を通ること (主スレッドで呼ばれていること)
+- ウィンドウ表示中の Resolve の CPU と「応答なし」
+- 前面化の振る舞い
+- 閉じた後のクリック・修飾キー
