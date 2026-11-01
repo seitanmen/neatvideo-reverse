@@ -29,10 +29,10 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
   - 確認済み (2026-10-31): Git LFS・git オブジェクト・Time Machine・ゴミ箱の
     いずれにも実ファイルは無し (git 内の 101MB 級 blob は本家内部形式
     NVLIBMLG のデータで、動画ではなかった)。
-  - **復元手順**: ユーザーが原本を `test_v02_reduce.mov` としてリポジトリの
-    ルートに置き、`git add test_v02_reduce.mov` してコミット
-    (LFS 登録済みパターン。101MB 超 = GitHub の通常上限を超えるため LFS 必須)。
-    壊れたシンボリックリンクは git から削除済みなので、そのまま置けば認識される。
+  - **決定 (2026-10-31)**: 復元は行わない。本家との比較は
+    **別の動画素材で改めて実施する** (§8 の E9)。壊れたシンボリックリンクは
+    git から削除済み。`test_v02_reduce.mov` の LFS パターンは登録済みのため、
+    将来同じ名前で参照データを置く場合はそのまま使える。
 
 ### 展開・解析 (`reference/genuine/`, 71MB)
 - `NeatVideo6.ofx.bundle/` — OFX バンドル一式。主バイナリは `Contents/MacOS/NeatVideo6.ofx`
