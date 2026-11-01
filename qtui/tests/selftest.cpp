@@ -3363,6 +3363,8 @@ private slots:
         QVERIFY(win->profile_panel->match->toolTip().contains("no match model"));
         win->state->set_profile(keep, "test");
         set_profile_dir(QString());
+    }
+
     void fieldOrderShownOnOpen() {   // INT-1: an interlaced clip shows its field order; its frames load as before
         const QString clip = interlaced_clip("bff");
         QVERIFY(!clip.isEmpty());
