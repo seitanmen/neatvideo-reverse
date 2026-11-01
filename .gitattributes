@@ -3,3 +3,4 @@ disasm_full.txt filter=lfs diff=lfs merge=lfs -text
 *.dmg filter=lfs diff=lfs merge=lfs -text
 test_v02.mp4 filter=lfs diff=lfs merge=lfs -text
 test.mp4 filter=lfs diff=lfs merge=lfs -text
+test_v02_reduce.mov filter=lfs diff=lfs merge=lfs -text
