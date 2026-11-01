@@ -1,0 +1,12 @@
+ffv1_bff.mkv           actual first field 1 (frames [1, 1, 1, 1]), qtui first_field 1: agrees
+ffv1_tff.mkv           actual first field 0 (frames [0, 0, 0, 0]), qtui first_field 0: agrees
+ffv1_bff.mov           actual first field 1 (frames [1, 1, 1, 1]), qtui first_field 1: agrees
+ffv1_tff.mov           actual first field 0 (frames [0, 0, 0, 0]), qtui first_field 0: agrees
+prores_bff.mov         actual first field 1 (frames [1, 1, 1, 1]), qtui first_field 1: agrees
+prores_noild_tff.mov   actual first field 0 (frames [0, 0, 0, 0]), qtui first_field -1: order unknown (not used)
+prores_tff.mov         actual first field 0 (frames [0, 0, 0, 0]), qtui first_field 0: agrees
+mpeg2_bb.mpg           actual first field 1 (frames [1, 1, 1, 1]), qtui first_field 1: agrees
+mpeg2_tt.mpg           actual first field 0 (frames [0, 0, 0, 0]), qtui first_field 0: agrees
+x264_bb.mp4            actual first field 1 (frames [1, 1, 1, 1]), qtui first_field 1: agrees
+x264_tt.mp4            actual first field 0 (frames [0, 0, 0, 0]), qtui first_field 0: agrees
+L-1: qtui's field order agrees with the content

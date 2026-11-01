@@ -1,0 +1,19 @@
+{
+ "clip": "sintel/tff_y6",
+ "test": "genuine/interlaced_noRI/Event_バージョン 1_0001_0004",
+ "name": "genuine",
+ "static_pairs_pixels": 31619310,
+ "temporal_static": {
+  "rms_d_clean": 0.4165,
+  "rms_d_added": 5.3499,
+  "rms_d_out": 1.3215,
+  "keep_clean": 0.519,
+  "keep_added": 0.151
+ },
+ "cross_corr": {
+  "added_Y_Cb": -0.2361,
+  "removed_Y_Cb": -0.2734,
+  "added_Y_Cr": -0.1853,
+  "removed_Y_Cr": -0.1934
+ }
+}

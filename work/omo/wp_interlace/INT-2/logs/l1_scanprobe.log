@@ -1,0 +1,12 @@
+ffv1_bff.mkv	stream=bt	interlaced_frame=1	top_field_first=0	first_field=1	interlaced, bottom field first (stream field_order: bt)
+ffv1_tff.mkv	stream=tb	interlaced_frame=1	top_field_first=1	first_field=0	interlaced, top field first (stream field_order: tb)
+prog.mkv	stream=progressive	interlaced_frame=0	top_field_first=0	first_field=-1	progressive
+ffv1_bff.mov	stream=bt	interlaced_frame=1	top_field_first=0	first_field=1	interlaced, bottom field first (stream field_order: bt)
+ffv1_tff.mov	stream=tb	interlaced_frame=1	top_field_first=1	first_field=0	interlaced, top field first (stream field_order: tb)
+prores_bff.mov	stream=bt	interlaced_frame=1	top_field_first=0	first_field=1	interlaced, bottom field first (stream field_order: bt)
+prores_noild_tff.mov	stream=tb	interlaced_frame=0	top_field_first=0	first_field=-1	interlaced, field order unknown (stream field_order: tb, first frame not flagged interlaced)
+prores_tff.mov	stream=tb	interlaced_frame=1	top_field_first=1	first_field=0	interlaced, top field first (stream field_order: tb)
+mpeg2_bb.mpg	stream=bb	interlaced_frame=1	top_field_first=0	first_field=1	interlaced, bottom field first
+mpeg2_tt.mpg	stream=tt	interlaced_frame=1	top_field_first=1	first_field=0	interlaced, top field first
+x264_bb.mp4	stream=bb	interlaced_frame=1	top_field_first=0	first_field=1	interlaced, bottom field first
+x264_tt.mp4	stream=tt	interlaced_frame=1	top_field_first=1	first_field=0	interlaced, top field first

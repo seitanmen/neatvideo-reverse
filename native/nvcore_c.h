@@ -27,7 +27,9 @@ extern "C" {
 
 #define NVC_ABI_VERSION 3       /* 2 (G7/G8): nvc_profile_build_cancel; repro/nv_native.py calls nvc_build_profile_v5. 3 (G1): nvc_rgb_* (nvcore_c_rgb.h) */
 /* N4e: nvc_match_model / nvc_match_score (nvcore_c_match.h) are additions only and keep version 3: no existing function,
- * argument or block changed meaning, and their only caller (qtui) links the same build of libnvcore. */
+ * argument or block changed meaning, and their only caller (qtui) links the same build of libnvcore.
+ * INT-2: nvc_temporal_shift is an addition of the same kind and keeps version 3 (repro/nv_native.py requires exactly 3
+ * and does not call it; a caller that needs it looks the symbol up). */
 #define NVC_PROF_I 4
 #define NVC_PROF_D 82
 #define NVC_PAR_I 4
@@ -81,6 +83,16 @@ int nvc_temporal(int nf, int ci, int H, int W, int Hc, int Wc, const float* cons
                  const double* prof_d, const int* par_i, const double* par_d, int nin, const int* off_in,
                  const float* const* flow_in, float* const* flow_out, uint8_t* new_flow, float* const* out,
                  float* const* rv);
+
+/* nvc_temporal with the known vertical offsets of the window frames (INT-2: the fields of an interlaced frame,
+ * native/nv_fieldproc.h; native/fields_ref.py temporal_shift): shift[2k], shift[2k + 1] = the offset of window frame k
+ * against the centre in rows of the luma and of the chroma planes (nvt::temporal_v5's shift).  shift = NULL, or every
+ * offset 0, is nvc_temporal.  The block vectors are those of the motion left after the offsets (flow_in / flow_out
+ * are exchanged in that sense). */
+int nvc_temporal_shift(int nf, int ci, int H, int W, int Hc, int Wc, const float* const* planes, const int* prof_i,
+                       const double* prof_d, const int* par_i, const double* par_d, int nin, const int* off_in,
+                       const float* const* flow_in, float* const* flow_out, uint8_t* new_flow, float* const* out,
+                       float* const* rv, const double* shift);
 
 /* nvs::spatial_v5 (nvfilter.spatial_v5(planes, prof, rv, P)): planes / rv / out = Y (H x W), Cb, Cr (Hc x Wc).
  * mask: bit c set = compute plane c (out[c] untouched otherwise).  Returns 0. */

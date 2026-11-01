@@ -6,8 +6,8 @@
 CXX ?= clang++
 CXXFLAGS ?= -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra
 
-V5_SRC = nv_v5_main.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp
-V5_HDR = nv_ndimage.h nv_spatial.h nv_temporal.h
+V5_SRC = nv_v5_main.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp nv_fieldproc.cpp nv_fields.cpp
+V5_HDR = nv_ndimage.h nv_spatial.h nv_temporal.h nv_fieldproc.h nv_fields.h
 
 all: nv_v5_test
 

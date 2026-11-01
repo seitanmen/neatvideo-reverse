@@ -1,0 +1,20 @@
+== TFF (16 interlaced frames, evaluated 2..13; RMS error vs the clean interlaced frames, comb = RMS of the vertical high-pass of the luma error)
+run                         Y stat   Y mov  U stat   U mov  V stat   V mov  comb mv  comb st  PSNR Y   time
+input                       10.003  10.008   2.536   2.515   2.529   2.516   12.270   12.251   28.13    0.0
+a frame R2                   1.811   8.660   0.392   5.229   0.520   6.729   14.629    1.857   40.11    0.4
+b plain R2                   2.826   5.811   0.400   3.951   0.861   5.332    7.238    2.664   38.77    0.4
+b shift R2                   2.833   5.936   0.399   3.879   0.858   5.240    7.363    2.601   38.73    0.4
+b same R2                    2.441   6.007   0.419   4.575   1.000   6.104    7.592    2.728   39.62    0.3
+b shift R4                   2.653   6.344   0.385   3.464   0.756   4.624    7.911    2.524   39.05    0.7
+b same R4                    1.965   6.298   0.396   4.078   0.852   5.473    7.957    2.192   40.78    0.4
+b shift R2 frame-profile     2.870   6.053   0.396   4.082   0.796   5.345    7.530    2.622   38.61    0.4
+== BFF (16 interlaced frames, evaluated 2..13; RMS error vs the clean interlaced frames, comb = RMS of the vertical high-pass of the luma error)
+run                         Y stat   Y mov  U stat   U mov  V stat   V mov  comb mv  comb st  PSNR Y   time
+input                       10.007   9.986   2.529   2.521   2.533   2.525   12.220   12.249   28.13    0.0
+a frame R2                   1.817   8.594   0.384   5.100   0.514   6.501   14.545    1.852   40.13    0.4
+b plain R2                   2.833   5.742   0.397   4.201   0.822   5.275    7.142    2.675   38.77    0.4
+b shift R2                   2.827   5.929   0.395   4.154   0.824   5.180    7.363    2.599   38.74    0.4
+b same R2                    2.448   5.978   0.414   4.837   0.944   6.016    7.543    2.722   39.61    0.3
+b shift R4                   2.647   6.357   0.382   3.669   0.729   4.571    7.937    2.521   39.05    0.7
+b same R4                    1.970   6.291   0.393   4.330   0.819   5.413    7.939    2.189   40.76    0.4
+b shift R2 frame-profile     2.852   6.009   0.390   4.009   0.776   5.386    7.482    2.615   38.66    0.4

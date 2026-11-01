@@ -1,0 +1,19 @@
+{
+ "clip": "old_town_cross/p_y6",
+ "test": "genuine/progressive/Event_バージョン 1_0001_0002",
+ "name": "genuine",
+ "static_pairs_pixels": 54780077,
+ "temporal_static": {
+  "rms_d_clean": 5.2754,
+  "rms_d_added": 8.4893,
+  "rms_d_out": 2.6303,
+  "keep_clean": 0.1671,
+  "keep_added": 0.0844
+ },
+ "cross_corr": {
+  "added_Y_Cb": -0.5453,
+  "removed_Y_Cb": -0.3978,
+  "added_Y_Cr": -0.4343,
+  "removed_Y_Cr": -0.3226
+ }
+}

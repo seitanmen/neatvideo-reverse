@@ -8,7 +8,7 @@
 //       of the bundle's libnvcore.dylib (computed, no file).
 // minihost does not link libnvcore: the plug-in loads the copy in its bundle (Contents/Frameworks).
 //   minihost BUNDLE --frames F.f32 --size W H N [--first T0] [--origin X Y] [--layout pad|neg] [--field-order O]
-//            [--missing t1,t2,..] [--depth float|short|byte] [--reenter]
+//            [--missing t1,t2,..] [--depth float|short|byte] [--reenter] [--field-to-render none|both|lower|upper]
 //            [--set name=value[,name=value..]] [--render t1,t2,..] [--range A,B] [--set ..] [--render ..] .. [--out OUT.f32]
 //       the host (this program) reads N RGBA float32 frames (top-down rows, W x H x 4 each) from F.f32 into memory,
 //       then - with the file-access monitor armed (fsguard, when injected) - loads the plug-in and renders: each
@@ -21,6 +21,9 @@
 //       --reenter: inside every Source clipGetImage of a render the host calls GetFramesNeeded and InstanceChanged
 //       (ClipParams) on the same instance, from the same thread (a plug-in holding a lock across clipGetImage would
 //       deadlock here).
+//       INT-4: --field-order OfxFieldLower | OfxFieldUpper makes the Source clip fielded: its images carry
+//       kOfxImagePropField = OfxFieldBoth (both fields interleaved, the plug-in's FieldExtraction); --field-to-render
+//       (anywhere) sets kOfxImageEffectPropFieldToRender of every Render (default none).
 //       N4d: --init-clip-params FILE: ClipParams holds FILE's text when the instance is created (a saved project);
 //       --clip-params FILE (a step): the host sets ClipParams to FILE's text and calls InstanceChanged (a paste / undo);
 //       --press prepare@T | adjust@T (a step): the button is pressed at time T (InstanceChanged, kOfxChangeUserEdited;
@@ -385,6 +388,8 @@ struct Host {
     std::set<double> missing;        // times without an image
     double lo = 0, hi = -1;          // current frame range of the Source clip (default first .. first + N - 1)
     std::string depth = kOfxBitDepthFloat;
+    bool fielded = false;                                  // INT-4: --field-order Lower / Upper
+    std::string field_to_render = kOfxImageFieldNone;      // INT-4: --field-to-render
     bool reenter = false, rendering = false;
     int reentries = 0;
     std::function<void(double)> reenter_fn;   // set by run()
@@ -435,7 +440,7 @@ Image* make_image(double t, bool output) {
     propSetDouble(H(p), kOfxImageEffectPropRenderScale, 0, 1.0);
     propSetDouble(H(p), kOfxImageEffectPropRenderScale, 1, 1.0);
     propSetDouble(H(p), kOfxImagePropPixelAspectRatio, 0, 1.0);
-    propSetString(H(p), kOfxImagePropField, 0, kOfxImageFieldNone);
+    propSetString(H(p), kOfxImagePropField, 0, g.fielded ? kOfxImageFieldBoth : kOfxImageFieldNone);
     propSetString(H(p), kOfxImagePropUniqueIdentifier, 0, ((output ? "out" : "src") + std::to_string(t)).c_str());
     Image* r = im.get();
     g.live.push_back(std::move(im));
@@ -881,6 +886,11 @@ int run(const std::string& bundle, int argc, char** argv) {
             g.oy = std::atoi(next().c_str());
         } else if (a == "--layout") g.neg = next() == "neg";
         else if (a == "--field-order") field_order = next();
+        else if (a == "--field-to-render") {
+            const std::string v = next();
+            g.field_to_render = v == "both" ? kOfxImageFieldBoth : v == "lower" ? kOfxImageFieldLower
+                                : v == "upper" ? kOfxImageFieldUpper : kOfxImageFieldNone;
+        }
         else if (a == "--missing")
             for (const std::string& m : split(next(), ',')) g.missing.insert(std::atof(m.c_str()));
         else if (a == "--depth") {
@@ -926,6 +936,7 @@ int run(const std::string& bundle, int argc, char** argv) {
         return 1;
     }
     auto desc = describe(&L);
+    g.fielded = field_order == kOfxImageFieldLower || field_order == kOfxImageFieldUpper;
     auto inst = instantiate(desc.get(), field_order);
     Param* clip_param = inst->params.find("ClipParams");
     Param* adjust_param = inst->params.find("Adjust Filters...");
@@ -1130,7 +1141,7 @@ int run(const std::string& bundle, int argc, char** argv) {
             if (nr) propGetDoubleN(H(&fout), "OfxImageClipPropFrameRange_Source", nr, ranges.data());
             PropSet rin;
             propSetDouble(H(&rin), kOfxPropTime, 0, t);
-            propSetString(H(&rin), kOfxImageEffectPropFieldToRender, 0, kOfxImageFieldNone);
+            propSetString(H(&rin), kOfxImageEffectPropFieldToRender, 0, g.field_to_render.c_str());
             const int win[4] = {static_cast<int>(rod[0]), static_cast<int>(rod[1]), static_cast<int>(rod[2]),
                                 static_cast<int>(rod[3])};
             propSetIntN(H(&rin), kOfxImageEffectPropRenderWindow, 4, win);

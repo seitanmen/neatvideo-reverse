@@ -1,0 +1,40 @@
+make: Nothing to be done for `lib'.
+[  7%] Built target nvcore_build
+[ 21%] Built target minihost
+[ 35%] Built target fsguard
+[ 50%] Built target cocoahost
+[ 64%] Building CXX object CMakeFiles/MeatVideo_ofx.dir/src/plugin.cpp.o
+[ 64%] Building CXX object CMakeFiles/MeatVideo_ofx.dir/src/params.cpp.o
+[ 71%] Building CXX object CMakeFiles/MeatVideo_ofx.dir/src/core.cpp.o
+[ 78%] Linking CXX shared module MeatVideo.ofx
+[100%] Built target MeatVideo_ofx
+[  3%] Built target nvcore_build
+[  3%] Built target nvui_autogen_timestamp_deps
+[  6%] Automatic MOC for target nvui
+[  6%] Built target nvui_autogen
+[ 10%] Building CXX object CMakeFiles/nvui.dir/src/app/ofx_session.cpp.o
+[ 13%] Linking CXX static library libnvui.a
+[ 86%] Built target nvui
+[ 86%] Built target MeatVideoQt_autogen_timestamp_deps
+[ 90%] Built target MeatVideoQt_autogen
+[ 93%] Building CXX object CMakeFiles/MeatVideoQt.dir/src/main.cpp.o
+[ 96%] Linking CXX executable MeatVideoQt.app/Contents/MacOS/MeatVideoQt
+[100%] Built target MeatVideoQt
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/int2/ofx/build/MeatVideo.ofx.bundle/Contents/Frameworks/libnvcore.dylib: replacing existing signature
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/int2/ofx/build/MeatVideo.ofx.bundle/Contents/Helpers/MeatVideoQt.app: replacing existing signature
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/int2/ofx/build/MeatVideo.ofx.bundle: replacing existing signature
+exports:
+  _FoundryOfxAllowPluginUnload
+  _OfxGetNumberOfPlugins
+  _OfxGetPlugin
+rpaths:
+  @loader_path/../Frameworks
+libraries:
+	@rpath/libnvcore.dylib (compatibility version 0.0.0, current version 0.0.0)
+	/usr/lib/libobjc.A.dylib (compatibility version 1.0.0, current version 228.0.0)
+	/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2100.43.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)
+helper: /Users/seitan/Desktop/work/reverse/.claude/worktrees/int2/ofx/build/MeatVideo.ofx.bundle/Contents/Helpers/MeatVideoQt.app ( 50M)
+helper rpaths:
+  @executable_path/../Frameworks
+bundle: /Users/seitan/Desktop/work/reverse/.claude/worktrees/int2/ofx/build/MeatVideo.ofx.bundle

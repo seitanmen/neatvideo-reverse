@@ -74,6 +74,12 @@ const std::map<int, std::string> FLAT_STATUS = {{0, "ok"},
 QString U(const char* s) { return QString::fromUtf8(s); }
 QString Q(const std::string& s) { return QString::fromStdString(s); }
 
+// INT-4: the difference from the genuine's Video Scan Type menu (the lead's screen record, interlaced_scan_type_menu.png)
+const char* const SCAN_REPRO_NOTE =
+    "repro: the genuine offers Progressive / Interlaced only (field order not selectable; presumably taken from the "
+    "host: TFF material was processed correctly with no field order set). Here the order is chosen explicitly (top / "
+    "bottom field first), defaulting to the detected one";
+
 std::string f1(double v) {
     char b[64];
     std::snprintf(b, sizeof(b), "%.1f", v);
@@ -243,8 +249,26 @@ MainWindow::MainWindow(const QString& video, QWidget* parent) : QMainWindow(pare
 
     auto* bottom = new QHBoxLayout();
     bottom->setSpacing(4);
+    // INT-3: Video Scan Type (genuine: the bottom row's scan type button): Progressive / Interlaced, top field first /
+    // Interlaced, bottom field first; the default is the probe's (the first frame's flags, INT-1 L-1)
+    scan_btn = new QToolButton();
+    scan_btn->setPopupMode(QToolButton::InstantPopup);
+    {
+        auto* m = new QMenu(scan_btn);
+        m->setToolTipsVisible(true);
+        const std::pair<int, const char*> items[3] = {{-1, "Progressive"},
+                                                     {0, "Interlaced, top field first"},
+                                                     {1, "Interlaced, bottom field first"}};
+        for (const auto& [v, label] : items) {
+            QAction* a = m->addAction(label, [this, v = v] { set_scan(v); });
+            a->setCheckable(true);
+            a->setData(v);
+            a->setToolTip(QString(label) + "\n" + SCAN_REPRO_NOTE);
+        }
+        scan_btn->setMenu(m);
+    }
+    bottom->addWidget(scan_btn, 0, Qt::AlignBottom);
     const std::vector<std::pair<QString, QString>> bb = {
-        {U("P ▾"), "Video Scan Type: Progressive (n/a: the reproduction processes progressive frames only)"},
         {U("γ ▾"), "Input Data Gamma: Gamma Corrected (n/a)"},
         {U("x1.0 ▾"), "Input Data Gain: x1.0 (n/a: the v5 backend has no input gain)"}};
     for (const auto& [t, tip] : bb) {
@@ -400,6 +424,7 @@ MainWindow::MainWindow(const QString& video, QWidget* parent) : QMainWindow(pare
     for (const auto& kv : param_specs()) all << Q(kv.first);
     on_params(all);
     on_profile();
+    update_scan_widgets();
     on_page(0);
     if (!video.isEmpty()) open_video(video);
 }
@@ -412,6 +437,10 @@ void MainWindow::load_prefs() {
              {"preview_area", 0.5}, {"auto_fine_tune", true}, {"mem_gb", 4.0}, {"auto_profile", true},
              {"depth", "8"}, {"profile_mode", "auto"}, {"native", true}};
     auto s = settings();
+    // INT-3: the interlaced settings (C++ UI only: interlace/<key>, outside the prefs/ keys shared with the Python UI)
+    field_mode_pref = s->value("interlace/field_mode", "same").toString().toStdString();
+    if (field_mode_of(field_mode_pref) < 0) field_mode_pref = "same";
+    field_radius_pref = s->value("interlace/field_radius", "fields").toString() == "frames" ? "frames" : "fields";
     for (auto& [k, d] : prefs) {
         const QVariant v = s->value(Q("prefs/" + k));
         if (!v.isValid()) continue;
@@ -466,6 +495,19 @@ QWidget* MainWindow::prepare_toolbar() {
                      false, st, QStyle::SP_FileDialogContentsView);
     connect(match_btn, &QToolButton::clicked, this, [this] { auto_match(); });
     for (QToolButton* b : {auto_btn, generic_btn, load_btn, match_btn}) h->addWidget(b);
+    // INT-3: the profile of an interlaced clip (genuine "Profiled with": Two fields / One field); shown when interlaced
+    fprof_box = new QComboBox();
+    fprof_box->addItem("Two fields", "two");
+    fprof_box->addItem("One field (top)", "one0");
+    fprof_box->addItem("One field (bottom)", "one1");
+    fprof_box->setToolTip("Interlaced clip: profile with both fields (Two fields: the area on the first field in time, "
+                          "the noise curve from both fields) or with one field only (One field)");
+    connect(fprof_box, &QComboBox::currentIndexChanged, this, [this](int) {
+        const QString d = fprof_box->currentData().toString();
+        field_kind = d == "two" ? "two" : "one";
+        field_one = d == "one1" ? 1 : 0;
+    });
+    h->addWidget(fprof_box);
     h->addStretch(1);
     h->addWidget(check_btn);
     variants_btn = tool("Variants", QString(N_A) + " (Variants: alternative filter settings)");
@@ -522,6 +564,8 @@ QWidget* MainWindow::adjust_toolbar() {
     });
     fsc_btn->setMenu(m);
     for (QToolButton* b : {area_btn, preview_btn, play_btn}) h->addWidget(b);
+    fields_lbl = new QLabel();     // INT-3: the field processing of an interlaced clip
+    h->addWidget(fields_lbl);
     h->addStretch(1);
     h->addWidget(fsc_btn);
     auto* vb = tool("Variants", QString(N_A) + " (Variants: alternative filter settings)");
@@ -788,7 +832,9 @@ int MainWindow::page() const { return tabs->currentIndex(); }
 
 void MainWindow::update_radius() {
     const PyObj& P = state->params;
-    timeline->set_radius(P.get("t_enable").truthy() && page() == 1 ? static_cast<int>(P.get("t_radius").as_int()) : 0);
+    // interlaced: the frames the field window reaches ((radius in fields + 1) / 2 on each side)
+    const int R = scan >= 0 ? (field_radius() + 1) / 2 : static_cast<int>(P.get("t_radius").as_int());
+    timeline->set_radius(P.get("t_enable").truthy() && page() == 1 ? R : 0);
 }
 
 void MainWindow::on_page(int i) {
@@ -873,7 +919,15 @@ void MainWindow::open_video(const QString& path_in) {
         return;
     }
     const std::string mat = matrix_from_tags(vi.tags, H);
-    const std::string vf = pf.legacy() ? std::string() : read_filter(vi, pf, mat);
+    // INT-3: the scan of the clip (the first frame's flags, INT-1) unless a reload carries the user's choice; an
+    // interlaced source converted to 4:2:0 chroma is read with scale=interl=1 (fields kept apart)
+    const Scan sd = scan_of(vi.field_order, vi.frame_interlaced, vi.frame_tff);
+    const int det = sd == Scan::Interlaced ? -2 : first_field(sd);
+    const bool forced = scan_force.has_value();
+    const int sc = forced ? *scan_force : std::max(det, -1);
+    scan_force.reset();
+    std::string vf = pf.legacy() ? std::string() : read_filter(vi, pf, mat);
+    if (sc >= 0) vf = interlaced_vf(vf, vi.pix_fmt, pf.chroma);
     const long long fs = pf.internal_bytes(W, H);           // bytes of one frame in memory (uint8 or float32 planes)
     const long long cap = std::max(3LL, static_cast<long long>(prefs["mem_gb"].toDouble() * 1073741824.0) / fs);
     const int n = vi.n;
@@ -891,11 +945,14 @@ void MainWindow::open_video(const QString& path_in) {
                     task.report(100.0 * i / std::max(n ? std::min(n, hi) : hi, 1), QString("loading frame %1").arg(i));
             };
             if (pf.legacy()) {
-                read_frames(p, W, H, 0, hi, fps, [&](int i, Frame&& f) {
-                    fr->push_back(std::move(f));
-                    report(i);
-                    return !task.cancelled.load();
-                });
+                read_frames(
+                    p, W, H, 0, hi, fps,
+                    [&](int i, Frame&& f) {
+                        fr->push_back(std::move(f));
+                        report(i);
+                        return !task.cancelled.load();
+                    },
+                    vf);
             } else {
                 read_frames_fmt(p, W, H, 0, hi, fps, pf, mat, vf, [&](int i, Planes&& pl) {
                     fr->push_back(frame_from_planes(std::move(pl)));
@@ -905,7 +962,7 @@ void MainWindow::open_video(const QString& path_in) {
             }
             return fr;
         },
-        [this, path, vi, mat, pf, dep](const std::any&, std::any& res) {
+        [this, path, vi, mat, pf, dep, sc, det, forced](const std::any&, std::any& res) {
             prog->setVisible(false);
             auto fr = std::any_cast<std::shared_ptr<std::vector<Frame>>>(res);
             if (!fr || fr->empty()) {
@@ -939,7 +996,11 @@ void MainWindow::open_video(const QString& path_in) {
                                    "; first frame interlaced_frame " + flag(vi.frame_interlaced) + ", top_field_first " +
                                    flag(vi.frame_tff) +
                                    "\nThe first frame's flags decide the field order (the stream's tb / bt do not).\n"
-                                   "Shown only: the frames are processed as progressive frames."));
+                                   "The Video Scan Type button (bottom row) sets how the clip is processed."));
+            scan = sc;
+            scan_detected = det;
+            update_scan_widgets();
+            update_radius();
             depth_lbl->setText(depth_text());
             say(QFileInfo(path).fileName() +
                 Q(": " + std::to_string(vi.W) + "x" + std::to_string(vi.H) + " " + std::to_string(nf) + "f " + vi.fps +
@@ -950,6 +1011,8 @@ void MainWindow::open_video(const QString& path_in) {
             on_profile();
             on_params({});
             emit videoLoaded();
+            const bool ask = det == -2 && !forced;   // the order is not known: the user chooses (progressive until then)
+            if (ask) ask_scan();
             const QVariant dprof = settings()->value("default_profile");
             if (dprof.isValid() && !dprof.toString().isEmpty()) {
                 try {
@@ -960,7 +1023,7 @@ void MainWindow::open_video(const QString& path_in) {
                     say(Q(std::string("default profile ignored: ") + e.what()));
                 }
             }
-            if (prefs["auto_profile"].toBool()) auto_profile(false);
+            if (prefs["auto_profile"].toBool() && !ask) auto_profile(false);
         },
         [this](const std::any&, const QString& m) { failed("load", m); },
         [this](double pct, const QString& text) { progress(pct, text); });
@@ -983,6 +1046,119 @@ void MainWindow::install_frames() {
     timeline->set_count(static_cast<int>(frames.size()), info->fps_value());
     const int nf = static_cast<int>(frames.size());
     timeline->set_frame(std::min(nf / 3, std::max(nf - 3, 0)));
+}
+
+// ---------------------------------------------------------------- INT-3: scan type
+std::optional<Interlace> MainWindow::interlace() const {
+    if (scan < 0) return std::nullopt;
+    Interlace il;
+    il.first = scan;
+    il.mode = field_mode_of(field_mode_pref);
+    il.radius = field_radius();
+    return il;
+}
+
+int MainWindow::field_radius() const {
+    // Preferences > Interlaced: the Temporal Radius counts "fields" (default, as the genuine: R fields; INT-4, the
+    // genuine comparison work/omo/wp_e9/eval/E9_interlaced_findings.md) or "frames" (the frame path's time span, 2 R)
+    const int R = static_cast<int>(state->params.get("t_radius").as_int());
+    return field_radius_pref == "fields" ? R : 2 * R;
+}
+
+PyObj MainWindow::proc_params() const {
+    PyObj P = state->backend();
+    if (auto il = interlace()) P.set("interlace", interlace_json(*il));
+    return P;
+}
+
+void MainWindow::update_scan_widgets() {
+    static const char* TEXT[3] = {"P", "TFF", "BFF"};
+    scan_btn->setText(Q(std::string(TEXT[scan + 1]) + " ▾"));
+    const char* name = scan < 0 ? "Progressive" : scan == 0 ? "Interlaced, top field first" : "Interlaced, bottom field first";
+    std::string det = scan_detected == -2   ? "interlaced, field order unknown"
+                      : scan_detected == 0  ? "interlaced, top field first"
+                      : scan_detected == 1  ? "interlaced, bottom field first"
+                                            : "progressive / unknown";
+    scan_btn->setToolTip(Q(std::string("Video Scan Type: ") + name + " (detected: " + det +
+                           "). Interlaced clips are profiled and processed field by field.\n") + SCAN_REPRO_NOTE);
+    for (QAction* a : scan_btn->menu()->actions()) a->setChecked(a->data().toInt() == scan);
+    scan_btn->setEnabled(!ofx_depth || ofx_scan);
+    fprof_box->setVisible(scan >= 0);
+    if (auto il = interlace()) {
+        fields_lbl->setText(Q(std::string("Fields: ") + (il->first == 0 ? "TFF" : "BFF") + U(" · ").toStdString() +
+                              (il->mode == FIELD_SAME ? "same parity" : il->mode == FIELD_SHIFT ? "half-line shift" : "plain") +
+                              U(" · radius ").toStdString() + std::to_string(il->radius) + " fields"));
+        fields_lbl->setToolTip("Interlaced processing: every field is filtered over its neighbours in the field sequence "
+                               "(Temporal Radius in fields; Preferences > Interlaced), then the fields are joined");
+        fields_lbl->setVisible(true);
+    } else {
+        fields_lbl->clear();
+        fields_lbl->setVisible(false);
+    }
+}
+
+void MainWindow::set_scan(int s, bool reset) {
+    if (s < -1 || s > 1 || s == scan) {
+        update_scan_widgets();
+        return;
+    }
+    const int old = scan;
+    // the frames of a source whose chroma is converted to 4:2:0 are read field-aware when interlaced: reload
+    if (!src.isEmpty() && !ofx_depth && fmt && info && !export_) {
+        const std::string pix = info->pix_fmt;
+        const std::string base = fmt->legacy() ? std::string() : read_filter(*info, *fmt, matrix);
+        auto vf = [&](int sc) { return sc < 0 ? base : interlaced_vf(base, pix, fmt->chroma); };
+        if (vf(old) != vf(s)) {
+            scan_force = s;
+            if (reset && state->profile.has_profile()) {
+                state->set_profile(ProfileState(), "Scan type changed");
+                scan_box = info_box("Video Scan Type", "The noise profile has been reset because the scan type of the "
+                                                       "clip has changed.");
+            }
+            open_video(src);
+            return;
+        }
+    }
+    scan = s;
+    pc_cache.clear();
+    pc_order.clear();
+    nlc_cache.clear();
+    nlc_order.clear();
+    update_scan_widgets();
+    update_radius();
+    invalidate();
+    if (reset && state->profile.has_profile()) {
+        state->set_profile(ProfileState(), "Scan type changed");
+        scan_box = info_box("Video Scan Type", "The noise profile has been reset because the scan type of the clip has "
+                                               "changed.");
+    } else {
+        on_profile();
+    }
+    // INT-4 (L-3): a scan change starts a new history - an undo would bring back a profile made for the other scan
+    if (reset) state->undo->clear();
+    say(Q(std::string("Video Scan Type: ") +
+          (s < 0 ? "Progressive" : s == 0 ? "Interlaced, top field first" : "Interlaced, bottom field first")));
+}
+
+QWidget* MainWindow::ask_scan() {
+    auto* box = new QMessageBox(QMessageBox::Question, "Video Scan Type",
+                                "Please specify the scan type of the current video clip.", QMessageBox::NoButton, this);
+    box->setInformativeText("The clip is interlaced but its field order is not known (the stream says only \"interlaced\").");
+    QPushButton* p = box->addButton("Progressive", QMessageBox::RejectRole);
+    QPushButton* t = box->addButton("Interlaced, top field first", QMessageBox::AcceptRole);
+    QPushButton* b = box->addButton("Interlaced, bottom field first", QMessageBox::AcceptRole);
+    box->setAttribute(Qt::WA_DeleteOnClose);
+    connect(box, &QMessageBox::buttonClicked, this, [this, p, t, b](QAbstractButton* c) {
+        const int want = c == t ? 0 : c == b ? 1 : -1;
+        if (c != p && c != t && c != b) return;
+        set_scan(want);
+        // the Auto Profile that open_video held back for the answer (a reload for the read filter runs its own)
+        if (scan == want && !state->profile.has_profile() && prefs["auto_profile"].toBool() && !frames.empty())
+            auto_profile(false);
+    });
+    box->open();
+    scan_box = box;
+    return box;
 }
 
 QString MainWindow::depth_text() const {
@@ -1100,7 +1276,7 @@ void MainWindow::request_preview() {
         return;
     }
     if (nlc) return;                        // the viewer shows the mask; Finish schedules the preview
-    const PyObj P = state->backend();
+    const PyObj P = proc_params();
     const PyObj prof = *eff;
     const long token = prof_token;
     PreviewEngine* eng = engine.get();
@@ -1135,6 +1311,7 @@ void MainWindow::on_params(const QStringList& keys) {
     const PyObj& P = state->params;
     filter_panel->set_values(P, keys);
     update_radius();
+    if (scan_btn && scan >= 0) update_scan_widgets();    // the radius in fields
     bool dirty = false;
     for (const auto& k : P.keys()) dirty = dirty || !(P.get(k) == preset_clean.get(k));
     filter_panel->name->setItemText(0, preset_name + (dirty ? " *" : ""));
@@ -1186,18 +1363,24 @@ void MainWindow::check_speed() {
         return;
     }
     const int t = timeline->frame();
-    const PyObj P = state->backend(), prof = *eff;
+    const PyObj P = proc_params(), prof = *eff;
     PreviewEngine* eng = engine.get();
     filter_panel->speed->setText(U("measuring…"));
     runner->submit(
         "speed", QString("speed"),
         [eng, t, P, prof](Task&) -> std::any {
-            auto [idx, win] = eng->window(t, static_cast<int>(P.get("radius").as_int()), std::nullopt);
+            const std::optional<Interlace> il = interlace_of(P);
+            auto [idx, win] = eng->window(t, il ? frame_margin(*il) : static_cast<int>(P.get("radius").as_int()),
+                                          std::nullopt);
             const int ci = static_cast<int>(std::find(idx.begin(), idx.end(), t) - idx.begin());
             const auto t0 = std::chrono::steady_clock::now();
-            Planes tmp, rv;
-            temporal(win, ci, prof, P, nullptr, &tmp, &rv);
-            finish(win[static_cast<size_t>(ci)], tmp, rv, prof, P);
+            if (il) {
+                process_fields(win, ci, *il, prof, P);
+            } else {
+                Planes tmp, rv;
+                temporal(win, ci, prof, P, nullptr, &tmp, &rv);
+                finish(win[static_cast<size_t>(ci)], tmp, rv, prof, P);
+            }
             return std::chrono::duration<double>(std::chrono::steady_clock::now() - t0).count();
         },
         [this](const std::any&, std::any& res) {
@@ -1249,7 +1432,12 @@ void MainWindow::update_quality() {
     const std::string mat = matrix;
     runner->submit(
         "quality", req,
-        [psc, fr, frr, mat](Task&) -> std::any { return profile_numbers(psc, *fr, frr, mat); },
+        [psc, fr, frr, mat](Task&) -> std::any {
+            if (profile_parity(psc.base) >= 0)       // INT-3: a field profile's numbers on its field image
+                return profile_numbers(psc, profile_image(psc.base, (*fr)[static_cast<size_t>(aft_frame(psc.base, fr->size()))]),
+                                       frr, mat);
+            return profile_numbers(psc, *fr, frr, mat);
+        },
         [this](const std::any& tag, std::any& res) {
             if (std::any_cast<long>(tag) != quality_req) return;
             auto pair = std::any_cast<std::optional<std::pair<int, int>>>(res);
@@ -1307,6 +1495,10 @@ void MainWindow::on_profile() {
                 t += " · chroma format differs: rebuild the profile";
                 say("the profile was made at another chroma format (bit-depth setting); export will refuse it");
             }
+            // INT-3: a profile of the other scan type (still used: the curves do not depend on it)
+            const bool fp = profile_fields(*eff) != "frame";
+            if (fp && scan < 0) t += " · field profile on a progressive clip";
+            if (!fp && scan >= 0) t += " · full-frame profile on an interlaced clip: rebuild on fields";
         }
         prof_lbl->setText(Q(t));
     }
@@ -1342,6 +1534,10 @@ void MainWindow::sync_selection() {
     std::optional<double> mainv, selv;
     if (state->profile.has_profile()) {
         main_rect = area_rect(base.get("area"));
+        if (profile_parity(base) >= 0) {       // INT-3: a field profile's area is in field rows
+            main_rect->y0 *= 2;
+            main_rect->h *= 2;
+        }
         mainv = nl(base.has("ui_frame") ? static_cast<int>(base.get("ui_frame").as_int()) : t, main_rect);
     }
     std::optional<Rect> rect;
@@ -1535,7 +1731,7 @@ void MainWindow::sync_nlc_widgets() {
 std::string MainWindow::nlc_key() const {
     // (frame, id(engine), prof_token) + backend.temporal_sig(P)
     return std::to_string(timeline->frame()) + "|" + std::to_string(engine_id) + "|" + std::to_string(prof_token) + "|" +
-           temporal_sig(state->backend());
+           temporal_sig(proc_params());
 }
 
 void MainWindow::request_nlc() {
@@ -1562,7 +1758,7 @@ void MainWindow::request_nlc() {
     const int t = timeline->frame();
     PreviewEngine* eng = engine.get();
     const long token = prof_token;
-    const PyObj P = state->backend(), prof = *eff;
+    const PyObj P = proc_params(), prof = *eff;
     say(QString("Noise Level Check: computing the mask of frame %1…").arg(t));
     runner->submit(
         "nlc", key,
@@ -1631,7 +1827,8 @@ void MainWindow::request_pcheck() {
         return;
     }
     const PyObj prof = *eff;
-    const PyObj P = assist_params();
+    PyObj P = assist_params();
+    if (auto il = interlace()) P.set("interlace", interlace_json(*il));   // INT-3: the Assist Image field by field
     PreviewEngine* eng = engine.get();
     say(QString("Profile Check: computing the Assist Image of frame %1…").arg(t));
     runner->submit(
@@ -1668,21 +1865,27 @@ void MainWindow::profile_job(bool noisy, std::optional<Rect> area, const QString
     const bool frr = full_range;
     const std::string mat = matrix, mode = profile_mode();
     const int cur = timeline->frame();
+    // INT-3: an interlaced clip is profiled on fields (Two fields: on the first field in time; One field: that field)
+    const std::string fkind = scan >= 0 ? field_kind : std::string();
+    const int fpar = field_kind == "one" ? field_one : scan;
     busy("profile", true);
     say(text + U("…"));
     runner->cancel("profile");
     runner->submit(
         "profile", req,
-        [this, req, fr, frr, mat, mode, cur, noisy, area](Task& task) -> std::any {
+        [this, req, fr, frr, mat, mode, cur, noisy, area, fkind, fpar](Task& task) -> std::any {
             CancelFn cancel = [this, req, &task] { return req != prof_req.load() || task.cancelled.load(); };
             const int f = noisy ? noisiest_frame(*fr, cancel) : cur;
             std::vector<int> a;
             if (area) a = {area->y0, area->x0, area->h, area->w};
-            PyObj base = ::nvqt::build_profile(*fr, f, frr, mat, mode, area ? &a : nullptr, cancel);
+            PyObj base = fkind.empty() ? ::nvqt::build_profile(*fr, f, frr, mat, mode, area ? &a : nullptr, cancel)
+                                       : build_profile_fields(*fr, f, frr, mat, mode, area ? &a : nullptr, fkind, fpar,
+                                                              cancel);
             // N4e: the repro match model of the area (the AFT's profile model, kept in the file as "match_model")
             std::optional<std::vector<float>> mm;
             try {
-                mm = match_model_of(base, (*fr)[static_cast<size_t>(aft_frame(base, fr->size()))], frr, mat, cancel);
+                mm = match_model_of(base, profile_image(base, (*fr)[static_cast<size_t>(aft_frame(base, fr->size()))]),
+                                    frr, mat, cancel);
             } catch (const Cancelled&) {
                 throw ProfileCancelled();
             }
@@ -1697,7 +1900,8 @@ void MainWindow::profile_job(bool noisy, std::optional<Rect> area, const QString
             if (built.second && !frames.empty()) {
                 const Rect r = area_rect(n.base.get("area"));
                 const int xywh[4] = {r.x0, r.y0, r.w, r.h};
-                n.match = match_model_json(*built.second, frames[0].W, frames[0].H, xywh,
+                const int ph = profile_parity(n.base) < 0 ? frames[0].H : (frames[0].H + 1) / 2;   // a field's rows
+                n.match = match_model_json(*built.second, frames[0].W, ph, xywh,
                                            static_cast<int>(n.base.get("sub").as_int()), mat, frr, dep);
             }
             n.device = state->profile.device;
@@ -1776,16 +1980,19 @@ void MainWindow::auto_fine_tune() {
         return;
     }
     const PyObj base = state->profile.base;
+    // INT-3: a field profile is fine-tuned on its field image
     const Frame* fr = &frames[static_cast<size_t>(aft_frame(base, frames.size()))];
+    std::shared_ptr<const Frame> img;
+    if (profile_parity(base) >= 0) img = std::make_shared<const Frame>(profile_image(base, *fr));
     const bool frr = full_range;
     const std::string mat = matrix;
     busy("aft", true);
     say(U("Auto Fine-Tune (static AFT port, several seconds)…"));
     runner->submit(
         "aft", QString("aft"),
-        [base, fr, frr, mat](Task& task) -> std::any {
+        [base, fr, img, frr, mat](Task& task) -> std::any {
             if (task.cancelled) throw Cancelled();
-            PyObj res = run_aft(base, *fr, frr, mat, [&task] { return task.cancelled.load(); });
+            PyObj res = run_aft(base, img ? *img : *fr, frr, mat, [&task] { return task.cancelled.load(); });
             if (task.cancelled) throw Cancelled();
             return res;
         },
@@ -1950,7 +2157,8 @@ void MainWindow::auto_match() {
         busy("profile", false);
     }
     const long req = ++automatch_req;
-    const Frame fr = frames[static_cast<size_t>(cur)];
+    // INT-3: an interlaced clip is matched on the current frame's first field in time (field profiles' models)
+    const Frame fr = scan >= 0 ? field_frame(frames[static_cast<size_t>(cur)], scan) : frames[static_cast<size_t>(cur)];
     const bool frr = full_range;
     const std::string mat = matrix, dep = depth_used;
     busy("automatch", true);
@@ -2045,7 +2253,8 @@ void MainWindow::update_match() {
     if (match_key && *match_key == key) return;
     match_key = key;
     const long req = ++match_req;
-    const Frame fr = frames[static_cast<size_t>(cur)];
+    // INT-3: an interlaced clip is matched on the current frame's first field in time (field profiles' models)
+    const Frame fr = scan >= 0 ? field_frame(frames[static_cast<size_t>(cur)], scan) : frames[static_cast<size_t>(cur)];
     const std::vector<std::vector<float>> models = {match_model_words(ps.match)};
     const bool frr = full_range;
     const std::string mat = matrix;
@@ -2312,6 +2521,23 @@ QDialog* MainWindow::preferences() {
     depthb->setCurrentIndex(std::max(depthb->findData(Q(depth())), 0));
     depthb->setToolTip("Bit depth of loading, profiling and export (nv_depth.py). 8-bit = yuv420p as before; 10/12/16 "
                        "keep the source's chroma format (RGB sources: gbrp), 32 = RGB float. Changing it reloads the video");
+    // the field processing of interlaced clips; defaults (INT-4, from the genuine comparison
+    // work/omo/wp_e9/eval/E9_interlaced_findings.md): same parity, the Temporal Radius counted in fields as the genuine
+    auto* fmode = new QComboBox();
+    fmode->setObjectName("field_mode");
+    fmode->addItem("Same parity fields (default)", "same");
+    fmode->addItem("Both parities, half-line shift", "shift");
+    fmode->addItem("Both parities, as they are", "plain");
+    fmode->setCurrentIndex(std::max(fmode->findData(Q(field_mode_pref)), 0));
+    fmode->setToolTip("interlace/field_mode: the neighbours of a field in the temporal filter (Same parity: the fields "
+                      "of its own parity; half-line shift: both parities, the other parity moved half a field line)");
+    auto* frad = new QComboBox();
+    frad->setObjectName("field_radius");
+    frad->addItem("Fields: R fields, as the genuine (default)", "fields");
+    frad->addItem("Frames: R frames = 2R fields", "frames");
+    frad->setCurrentIndex(std::max(frad->findData(Q(field_radius_pref)), 0));
+    frad->setToolTip("interlace/field_radius: how the Temporal Radius counts for an interlaced clip (Fields: radius 2 = "
+                     "the fields 2 before and after, the genuine's reading; Frames: the time span of the frame path)");
     auto* aft = new QCheckBox("Auto Fine-Tune after Auto / Build Profile");
     aft->setChecked(prefs["auto_fine_tune"].toBool());
     aft->setToolTip("prefs/auto_fine_tune (the genuine runs AutoFineTune after a profile build, DefAutoFineTine = 1)");
@@ -2362,6 +2588,13 @@ QDialog* MainWindow::preferences() {
     });
     connect(pd_reset, &QPushButton::clicked, dlg, [pdir] { pdir->setText(default_profile_dir()); });
     f->addRow(folders);
+    auto* ilg = new QGroupBox("Interlaced clips (fields)");
+    ilg->setToolTip("The field processing of an interlaced clip (Video Scan Type: Interlaced); interlace/field_mode and "
+                    "interlace/field_radius of the C++ UI's settings");
+    auto* ilf = new QFormLayout(ilg);
+    ilf->addRow("Temporal neighbours", fmode);
+    ilf->addRow("Temporal Radius counts", frad);
+    f->addRow(ilg);
     auto* bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(bb, &QDialogButtonBox::accepted, dlg, &QDialog::accept);
     connect(bb, &QDialogButtonBox::rejected, dlg, &QDialog::reject);
@@ -2375,7 +2608,7 @@ QDialog* MainWindow::preferences() {
         box->open();
         return false;
     };
-    connect(dlg, &QDialog::accepted, this, [this, jobs, crf, audio, area, mem, autop, depthb, aft, ff, pdir] {
+    connect(dlg, &QDialog::accepted, this, [this, jobs, crf, audio, area, mem, autop, depthb, aft, ff, pdir, fmode, frad] {
         const bool reload = depthb->currentData().toString() != prefs["depth"].toString();
         prefs["jobs"] = jobs->value();
         prefs["crf"] = crf->value();
@@ -2386,6 +2619,15 @@ QDialog* MainWindow::preferences() {
         prefs["depth"] = depthb->currentData().toString();
         prefs["auto_fine_tune"] = aft->isChecked();
         auto st = settings();
+        const std::string fm = fmode->currentData().toString().toStdString(), fr = frad->currentData().toString().toStdString();
+        if (fm != field_mode_pref || fr != field_radius_pref) {
+            field_mode_pref = fm;
+            field_radius_pref = fr;
+            st->setValue("interlace/field_mode", Q(fm));
+            st->setValue("interlace/field_radius", Q(fr));
+            update_scan_widgets();
+            update_radius();
+        }
         for (const auto& [k, v] : prefs) st->setValue(Q("prefs/" + k), v);
         const QString fp = ff->text().trimmed();
         if (fp.isEmpty())
@@ -2696,7 +2938,7 @@ void MainWindow::process_video(const QString& dst_in, std::optional<int> start, 
     dst = QFileInfo(dst).absoluteFilePath();
     const QString base = Q(sidecar_stem(dst.toStdString()));   // without %05d for an EXR sequence
     const QString ppath = base + ".ui_params.json", fpath = base + ".ui_profile.json";
-    const PyObj P = state->backend();
+    const PyObj P = proc_params();
     write_file(ppath, P.dump(1));
     write_file(fpath, eff->dump(1));
     ExportOptions o;
@@ -2811,6 +3053,8 @@ void MainWindow::set_ofx_frames(std::vector<Frame>&& fr, int W, int H, double fp
                             : QString("source OFX host (%1-bit 4:2:0) · processing %1-bit").arg(depth));
     scan_lbl->clear();             // the host's field order is not read yet (INT-4)
     scan_lbl->setToolTip(QString());
+    scan = scan_detected = -1;     // progressive until the plug-in's window sets the scan (ofx_session.cpp, INT-4)
+    update_scan_widgets();
     viewer_bar->set_frame_info(W, H, depth, depth == 32);   // --depth 32: the host sends float32 (ofx.h)
     update_performance();
     set_ofx_mode(true);

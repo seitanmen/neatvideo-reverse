@@ -1,0 +1,407 @@
+{
+ "clip": "sintel/tff_y6",
+ "test": "runs/ours_field/sintel/tff_y6/out.mp4",
+ "frames": 60,
+ "result": {
+  "Y": {
+   "rho": 0.7749,
+   "beta": 0.8045,
+   "noise_share": 0.6005,
+   "rms_added": 5.6583,
+   "rms_removed": 5.8744,
+   "rms_other": 3.7128
+  },
+  "Y.static": {
+   "rho": 0.7587,
+   "beta": 0.5615,
+   "noise_share": 0.5756,
+   "rms_added": 4.8585,
+   "rms_removed": 3.5958,
+   "rms_other": 2.3424
+  },
+  "Y.small": {
+   "rho": 0.9025,
+   "beta": 0.9005,
+   "noise_share": 0.8146,
+   "rms_added": 5.8969,
+   "rms_removed": 5.8836,
+   "rms_other": 2.5334
+  },
+  "Y.large": {
+   "rho": 0.7634,
+   "beta": 0.8531,
+   "noise_share": 0.5827,
+   "rms_added": 5.9152,
+   "rms_removed": 6.6107,
+   "rms_other": 4.2702
+  },
+  "Y.field_top": {
+   "rho": 0.7743,
+   "beta": 0.8036,
+   "noise_share": 0.5996,
+   "rms_added": 5.6587,
+   "rms_removed": 5.8724,
+   "rms_other": 3.716
+  },
+  "Y.field_top.static": {
+   "rho": 0.7572,
+   "beta": 0.5612,
+   "noise_share": 0.5734,
+   "rms_added": 4.8591,
+   "rms_removed": 3.6015,
+   "rms_other": 2.3525
+  },
+  "Y.field_top.small": {
+   "rho": 0.9002,
+   "beta": 0.8986,
+   "noise_share": 0.8104,
+   "rms_added": 5.8936,
+   "rms_removed": 5.8829,
+   "rms_other": 2.5616
+  },
+  "Y.field_top.large": {
+   "rho": 0.7629,
+   "beta": 0.8521,
+   "noise_share": 0.582,
+   "rms_added": 5.9166,
+   "rms_removed": 6.6082,
+   "rms_other": 4.2723
+  },
+  "Y.field_bottom": {
+   "rho": 0.7756,
+   "beta": 0.8055,
+   "noise_share": 0.6015,
+   "rms_added": 5.6579,
+   "rms_removed": 5.8764,
+   "rms_other": 3.7096
+  },
+  "Y.field_bottom.static": {
+   "rho": 0.7602,
+   "beta": 0.5618,
+   "noise_share": 0.5779,
+   "rms_added": 4.858,
+   "rms_removed": 3.59,
+   "rms_other": 2.3324
+  },
+  "Y.field_bottom.small": {
+   "rho": 0.9049,
+   "beta": 0.9025,
+   "noise_share": 0.8189,
+   "rms_added": 5.9002,
+   "rms_removed": 5.8843,
+   "rms_other": 2.5043
+  },
+  "Y.field_bottom.large": {
+   "rho": 0.7639,
+   "beta": 0.8542,
+   "noise_share": 0.5835,
+   "rms_added": 5.9139,
+   "rms_removed": 6.6131,
+   "rms_other": 4.268
+  },
+  "Y.band1": {
+   "rho": 0.8818,
+   "beta": 0.8869,
+   "noise_share": 0.7775,
+   "rms_added": 4.8281,
+   "rms_removed": 4.8561,
+   "rms_other": 2.2905
+  },
+  "Y.band2": {
+   "rho": 0.8101,
+   "beta": 0.8573,
+   "noise_share": 0.6563,
+   "rms_added": 1.0906,
+   "rms_removed": 1.154,
+   "rms_other": 0.6765
+  },
+  "Y.band3": {
+   "rho": 0.5072,
+   "beta": 0.7185,
+   "noise_share": 0.2573,
+   "rms_added": 0.4714,
+   "rms_removed": 0.6678,
+   "rms_other": 0.5755
+  },
+  "Y.band4": {
+   "rho": 0.2044,
+   "beta": 0.4227,
+   "noise_share": 0.0418,
+   "rms_added": 0.2481,
+   "rms_removed": 0.5132,
+   "rms_other": 0.5024
+  },
+  "Y.band5": {
+   "rho": -0.0233,
+   "beta": -0.0615,
+   "noise_share": 0.0005,
+   "rms_added": 0.1836,
+   "rms_removed": 0.4847,
+   "rms_other": 0.4846
+  },
+  "Y.residual": {
+   "rho": -0.0059,
+   "beta": -0.0056,
+   "noise_share": 0.0,
+   "rms_added": 1.5473,
+   "rms_removed": 1.4662,
+   "rms_other": 1.4662
+  },
+  "Cb": {
+   "rho": 0.7624,
+   "beta": 0.9704,
+   "noise_share": 0.5812,
+   "rms_added": 2.4028,
+   "rms_removed": 3.0584,
+   "rms_other": 1.9792
+  },
+  "Cb.band1": {
+   "rho": 0.8704,
+   "beta": 0.9888,
+   "noise_share": 0.7575,
+   "rms_added": 2.1265,
+   "rms_removed": 2.416,
+   "rms_other": 1.1897
+  },
+  "Cb.band2": {
+   "rho": 0.7042,
+   "beta": 0.973,
+   "noise_share": 0.4959,
+   "rms_added": 0.4828,
+   "rms_removed": 0.6671,
+   "rms_other": 0.4737
+  },
+  "Cb.band3": {
+   "rho": 0.4327,
+   "beta": 0.892,
+   "noise_share": 0.1872,
+   "rms_added": 0.2095,
+   "rms_removed": 0.4318,
+   "rms_other": 0.3893
+  },
+  "Cb.band4": {
+   "rho": 0.2149,
+   "beta": 0.6572,
+   "noise_share": 0.0462,
+   "rms_added": 0.1064,
+   "rms_removed": 0.3254,
+   "rms_other": 0.3178
+  },
+  "Cb.residual": {
+   "rho": -0.0637,
+   "beta": -0.2452,
+   "noise_share": 0.0041,
+   "rms_added": 0.2308,
+   "rms_removed": 0.8883,
+   "rms_other": 0.8865
+  },
+  "Cb.static": {
+   "rho": 0.9199,
+   "beta": 0.9911,
+   "noise_share": 0.8462,
+   "rms_added": 1.6804,
+   "rms_removed": 1.8105,
+   "rms_other": 0.71
+  },
+  "Cb.small": {
+   "rho": 0.8616,
+   "beta": 0.9776,
+   "noise_share": 0.7424,
+   "rms_added": 2.5909,
+   "rms_removed": 2.9397,
+   "rms_other": 1.4922
+  },
+  "Cb.large": {
+   "rho": 0.7242,
+   "beta": 0.9651,
+   "noise_share": 0.5245,
+   "rms_added": 2.6121,
+   "rms_removed": 3.481,
+   "rms_other": 2.4005
+  },
+  "Cb.tex_low": {
+   "rho": 0.9362,
+   "beta": 0.9832,
+   "noise_share": 0.8764,
+   "rms_added": 1.9339,
+   "rms_removed": 2.0311,
+   "rms_other": 0.714
+  },
+  "Cb.tex_mid": {
+   "rho": 0.859,
+   "beta": 0.9814,
+   "noise_share": 0.7378,
+   "rms_added": 2.5929,
+   "rms_removed": 2.9624,
+   "rms_other": 1.5168
+  },
+  "Cb.tex_high": {
+   "rho": 0.6407,
+   "beta": 0.9525,
+   "noise_share": 0.4105,
+   "rms_added": 2.6187,
+   "rms_removed": 3.8936,
+   "rms_other": 2.9895
+  },
+  "Cb.luma0-63": {
+   "rho": 0.864,
+   "beta": 0.982,
+   "noise_share": 0.7465,
+   "rms_added": 2.215,
+   "rms_removed": 2.5175,
+   "rms_other": 1.2675
+  },
+  "Cb.luma64-127": {
+   "rho": 0.6896,
+   "beta": 0.9548,
+   "noise_share": 0.4756,
+   "rms_added": 2.6988,
+   "rms_removed": 3.7363,
+   "rms_other": 2.7056
+  },
+  "Cb.luma128-191": {
+   "rho": 0.6484,
+   "beta": 0.9818,
+   "noise_share": 0.4204,
+   "rms_added": 2.6414,
+   "rms_removed": 3.9998,
+   "rms_other": 3.0451
+  },
+  "Cb.luma192-255": {
+   "rho": 0.7342,
+   "beta": 0.9311,
+   "noise_share": 0.5391,
+   "rms_added": 2.6438,
+   "rms_removed": 3.3526,
+   "rms_other": 2.2761
+  },
+  "Cr": {
+   "rho": 0.6784,
+   "beta": 0.9704,
+   "noise_share": 0.4602,
+   "rms_added": 2.5146,
+   "rms_removed": 3.5971,
+   "rms_other": 2.6429
+  },
+  "Cr.band1": {
+   "rho": 0.8038,
+   "beta": 0.9931,
+   "noise_share": 0.6461,
+   "rms_added": 2.2168,
+   "rms_removed": 2.7388,
+   "rms_other": 1.6292
+  },
+  "Cr.band2": {
+   "rho": 0.6651,
+   "beta": 0.9769,
+   "noise_share": 0.4423,
+   "rms_added": 0.5005,
+   "rms_removed": 0.7352,
+   "rms_other": 0.549
+  },
+  "Cr.band3": {
+   "rho": 0.3659,
+   "beta": 0.9056,
+   "noise_share": 0.1339,
+   "rms_added": 0.2156,
+   "rms_removed": 0.5337,
+   "rms_other": 0.4967
+  },
+  "Cr.band4": {
+   "rho": 0.1825,
+   "beta": 0.7362,
+   "noise_share": 0.0333,
+   "rms_added": 0.1114,
+   "rms_removed": 0.4495,
+   "rms_other": 0.442
+  },
+  "Cr.residual": {
+   "rho": 0.0234,
+   "beta": 0.0878,
+   "noise_share": 0.0005,
+   "rms_added": 0.3388,
+   "rms_removed": 1.2719,
+   "rms_other": 1.2716
+  },
+  "Cr.static": {
+   "rho": 0.9132,
+   "beta": 0.9798,
+   "noise_share": 0.834,
+   "rms_added": 1.7546,
+   "rms_removed": 1.8824,
+   "rms_other": 0.767
+  },
+  "Cr.small": {
+   "rho": 0.7698,
+   "beta": 0.9742,
+   "noise_share": 0.5925,
+   "rms_added": 2.6979,
+   "rms_removed": 3.4145,
+   "rms_other": 2.1795
+  },
+  "Cr.large": {
+   "rho": 0.638,
+   "beta": 0.968,
+   "noise_share": 0.407,
+   "rms_added": 2.7377,
+   "rms_removed": 4.1538,
+   "rms_other": 3.1987
+  },
+  "Cr.tex_low": {
+   "rho": 0.9155,
+   "beta": 0.9788,
+   "noise_share": 0.8381,
+   "rms_added": 1.998,
+   "rms_removed": 2.1362,
+   "rms_other": 0.8596
+  },
+  "Cr.tex_mid": {
+   "rho": 0.8024,
+   "beta": 0.9757,
+   "noise_share": 0.6439,
+   "rms_added": 2.7277,
+   "rms_removed": 3.3168,
+   "rms_other": 1.9793
+  },
+  "Cr.tex_high": {
+   "rho": 0.547,
+   "beta": 0.9608,
+   "noise_share": 0.2992,
+   "rms_added": 2.7454,
+   "rms_removed": 4.8222,
+   "rms_other": 4.0369
+  },
+  "Cr.luma0-63": {
+   "rho": 0.7373,
+   "beta": 0.9909,
+   "noise_share": 0.5436,
+   "rms_added": 2.373,
+   "rms_removed": 3.1892,
+   "rms_other": 2.1546
+  },
+  "Cr.luma64-127": {
+   "rho": 0.5834,
+   "beta": 0.9808,
+   "noise_share": 0.3403,
+   "rms_added": 2.7868,
+   "rms_removed": 4.6856,
+   "rms_other": 3.8057
+  },
+  "Cr.luma128-191": {
+   "rho": 0.6396,
+   "beta": 0.9577,
+   "noise_share": 0.4091,
+   "rms_added": 2.7588,
+   "rms_removed": 4.131,
+   "rms_other": 3.1756
+  },
+  "Cr.luma192-255": {
+   "rho": 0.7029,
+   "beta": 0.8631,
+   "noise_share": 0.4941,
+   "rms_added": 2.5421,
+   "rms_removed": 3.1213,
+   "rms_other": 2.22
+  }
+ }
+}

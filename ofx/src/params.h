@@ -7,12 +7,16 @@
 //   session.h); its Apply writes ClipParams.
 //
 // ClipParams (JSON text, written by qtui/src/app/ofx_session.cpp clip_params_json):
-//   {"format": "meatvideo_ofx_clip_params", "version": 1,
+//   {"format": "meatvideo_ofx_clip_params", "version": 1 (progressive) | 2 (INT-4: interlaced),
 //    "frame_size": [W, H],
 //    "preset": <the filter preset as the UI saves it (format nv_repro_filter_preset)>,
 //    "profile": <the noise profile as the UI saves it (nv_repro_profile[_rgb])> | null,
 //    "render": {"matrix": "bt709" | "bt601" | "bt2020" | "auto", "full_range": true,
-//               "P": <state.backend_params(ui)>, "profile": <ProfileState.effective()>} | null}
+//               "P": <state.backend_params(ui)>, "profile": <ProfileState.effective()>} | null,
+//    "scan": "tff" | "bff"}   (INT-4: version 2 only, an interlaced clip; render.P then holds "interlace":
+//                              {"first": 0 | 1 (= scan), "mode": "same" | "shift" | "plain", "radius": fields}).
+//    Version 2 makes a plug-in older than INT-4 refuse the state ("version 2 is not supported") instead of
+//    rendering an interlaced state as progressive frames.
 // "preset" and "profile" restore the window; the render reads "render" only (render is null without a profile).
 // A new instance gets the ClipParams of the Default Profile / Preset (session.h request_defaults; matrix "auto",
 // frame_size null).
@@ -70,6 +74,11 @@ struct RenderState {
     V5Blocks spatial_all;           // uniform: v5_blocks(prof, P)
     V5Blocks spatial_ch[3];         // else: v5_blocks(prof, _channel_params(P, c)), c = Y, Cb, Cr
     double mix = 0;                 // P["mix"]
+    // INT-4: P["interlace"] of an interlaced clip (the window's Video Scan Type, qtui fields.h): the render splits the
+    // frames into fields and filters them field by field; field_first -1 = progressive (no "interlace")
+    int field_first = -1;           // 0 top / 1 bottom field first in time (top-down rows of the planes)
+    int field_mode = 2;             // 0 plain, 1 shift (half-line offsets), 2 same parity
+    int field_radius = 0;           // the Temporal Radius in fields
 };
 
 // ClipParams -> RenderState; "" -> has_profile false.  Throws Error for text that is not a ClipParams of this

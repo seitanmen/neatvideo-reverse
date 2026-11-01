@@ -66,6 +66,7 @@ std::string header(const SessionRequest& rq) {
     h.set("times", PyObj::reals(rq.times));
     h.set("current", PyObj::integer(rq.current));
     h.set("clip_params", PyObj::str(rq.clip_params));
+    if (rq.field_order >= 0) h.set("field_order", PyObj::str(rq.field_order == 0 ? "tff" : "bff"));
     return h.dump() + "\n";
 }
 

@@ -1,0 +1,23 @@
+{
+ "old_town_cross": {
+  "white_sigma_p10": 3.04,
+  "white_sigma_p25": 3.29,
+  "white_sigma_p50": 4.35,
+  "blocks": 48240,
+  "zero_blocks": 0
+ },
+ "park_joy": {
+  "white_sigma_p10": 1.65,
+  "white_sigma_p25": 1.87,
+  "white_sigma_p50": 4.41,
+  "blocks": 48240,
+  "zero_blocks": 0
+ },
+ "sintel": {
+  "white_sigma_p10": 0.2,
+  "white_sigma_p25": 0.3,
+  "white_sigma_p50": 0.69,
+  "blocks": 48240,
+  "zero_blocks": 11542
+ }
+}

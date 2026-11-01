@@ -1,0 +1,856 @@
+{
+ "source": {
+  "file": "media/park_joy_1080p50_f150.y4m",
+  "sha256": "9e9f83696dc7b01d89181c617a18c191076fb1e3dc2545feb00283973f766f6e",
+  "credit": "Xiph derf SVT park_joy_1080p50 (first 150 frames)",
+  "original_frames": {
+   "progressive": [
+    0,
+    59
+   ],
+   "interlaced": [
+    0,
+    119
+   ]
+  },
+  "media_frames": {
+   "progressive": [
+    0,
+    59
+   ],
+   "interlaced": [
+    0,
+    119
+   ]
+  },
+  "field_map_note": "fields[].top / bottom are media frame numbers"
+ },
+ "frames": 60,
+ "fps": {
+  "progressive": "25:1 (each source frame is one frame)",
+  "interlaced": "25:1 frames, 50:1 fields/s (two consecutive source frames per woven frame)",
+  "fields_files": "50:1"
+ },
+ "colour": "8-bit limited range BT.709 4:2:0, untagged (as the source); RGB = e9_common.yuv_to_rgb (nvfilter.yuv_to_rgb: chroma repetition, interlaced within the field), 0..255 float64",
+ "noise": {
+  "space": "RGB (independent per channel, before the 4:2:0 conversion)",
+  "seed": "numpy.random.default_rng([233, 1, k]).standard_normal((3, 1080, 1920)), k = clip frame; the same unit noise for every layout and level",
+  "levels": {
+   "y3": {
+    "sigma_rgb": 4.659926376201864,
+    "sigma_y_nominal": 3.0
+   },
+   "y6": {
+    "sigma_rgb": 9.319852752403728,
+    "sigma_y_nominal": 6.0
+   }
+  },
+  "pipeline": "clip(RGB_unclipped(clean) + sigma*n, 0, 255) -> YCbCr (exact inverse) -> 4:2:0 mean (interlaced: within the field) -> rint, 8-bit"
+ },
+ "tiff": "uncompressed 16-bit RGB (rgb48le), code = rint(clip(yuv_to_rgb(noisy), 0, 255)*257), numbered from 0",
+ "fields": {
+  "tff": [
+   {
+    "frame": 0,
+    "top": 0,
+    "bottom": 1,
+    "first": "top"
+   },
+   {
+    "frame": 1,
+    "top": 2,
+    "bottom": 3,
+    "first": "top"
+   },
+   {
+    "frame": 2,
+    "top": 4,
+    "bottom": 5,
+    "first": "top"
+   },
+   {
+    "frame": 3,
+    "top": 6,
+    "bottom": 7,
+    "first": "top"
+   },
+   {
+    "frame": 4,
+    "top": 8,
+    "bottom": 9,
+    "first": "top"
+   },
+   {
+    "frame": 5,
+    "top": 10,
+    "bottom": 11,
+    "first": "top"
+   },
+   {
+    "frame": 6,
+    "top": 12,
+    "bottom": 13,
+    "first": "top"
+   },
+   {
+    "frame": 7,
+    "top": 14,
+    "bottom": 15,
+    "first": "top"
+   },
+   {
+    "frame": 8,
+    "top": 16,
+    "bottom": 17,
+    "first": "top"
+   },
+   {
+    "frame": 9,
+    "top": 18,
+    "bottom": 19,
+    "first": "top"
+   },
+   {
+    "frame": 10,
+    "top": 20,
+    "bottom": 21,
+    "first": "top"
+   },
+   {
+    "frame": 11,
+    "top": 22,
+    "bottom": 23,
+    "first": "top"
+   },
+   {
+    "frame": 12,
+    "top": 24,
+    "bottom": 25,
+    "first": "top"
+   },
+   {
+    "frame": 13,
+    "top": 26,
+    "bottom": 27,
+    "first": "top"
+   },
+   {
+    "frame": 14,
+    "top": 28,
+    "bottom": 29,
+    "first": "top"
+   },
+   {
+    "frame": 15,
+    "top": 30,
+    "bottom": 31,
+    "first": "top"
+   },
+   {
+    "frame": 16,
+    "top": 32,
+    "bottom": 33,
+    "first": "top"
+   },
+   {
+    "frame": 17,
+    "top": 34,
+    "bottom": 35,
+    "first": "top"
+   },
+   {
+    "frame": 18,
+    "top": 36,
+    "bottom": 37,
+    "first": "top"
+   },
+   {
+    "frame": 19,
+    "top": 38,
+    "bottom": 39,
+    "first": "top"
+   },
+   {
+    "frame": 20,
+    "top": 40,
+    "bottom": 41,
+    "first": "top"
+   },
+   {
+    "frame": 21,
+    "top": 42,
+    "bottom": 43,
+    "first": "top"
+   },
+   {
+    "frame": 22,
+    "top": 44,
+    "bottom": 45,
+    "first": "top"
+   },
+   {
+    "frame": 23,
+    "top": 46,
+    "bottom": 47,
+    "first": "top"
+   },
+   {
+    "frame": 24,
+    "top": 48,
+    "bottom": 49,
+    "first": "top"
+   },
+   {
+    "frame": 25,
+    "top": 50,
+    "bottom": 51,
+    "first": "top"
+   },
+   {
+    "frame": 26,
+    "top": 52,
+    "bottom": 53,
+    "first": "top"
+   },
+   {
+    "frame": 27,
+    "top": 54,
+    "bottom": 55,
+    "first": "top"
+   },
+   {
+    "frame": 28,
+    "top": 56,
+    "bottom": 57,
+    "first": "top"
+   },
+   {
+    "frame": 29,
+    "top": 58,
+    "bottom": 59,
+    "first": "top"
+   },
+   {
+    "frame": 30,
+    "top": 60,
+    "bottom": 61,
+    "first": "top"
+   },
+   {
+    "frame": 31,
+    "top": 62,
+    "bottom": 63,
+    "first": "top"
+   },
+   {
+    "frame": 32,
+    "top": 64,
+    "bottom": 65,
+    "first": "top"
+   },
+   {
+    "frame": 33,
+    "top": 66,
+    "bottom": 67,
+    "first": "top"
+   },
+   {
+    "frame": 34,
+    "top": 68,
+    "bottom": 69,
+    "first": "top"
+   },
+   {
+    "frame": 35,
+    "top": 70,
+    "bottom": 71,
+    "first": "top"
+   },
+   {
+    "frame": 36,
+    "top": 72,
+    "bottom": 73,
+    "first": "top"
+   },
+   {
+    "frame": 37,
+    "top": 74,
+    "bottom": 75,
+    "first": "top"
+   },
+   {
+    "frame": 38,
+    "top": 76,
+    "bottom": 77,
+    "first": "top"
+   },
+   {
+    "frame": 39,
+    "top": 78,
+    "bottom": 79,
+    "first": "top"
+   },
+   {
+    "frame": 40,
+    "top": 80,
+    "bottom": 81,
+    "first": "top"
+   },
+   {
+    "frame": 41,
+    "top": 82,
+    "bottom": 83,
+    "first": "top"
+   },
+   {
+    "frame": 42,
+    "top": 84,
+    "bottom": 85,
+    "first": "top"
+   },
+   {
+    "frame": 43,
+    "top": 86,
+    "bottom": 87,
+    "first": "top"
+   },
+   {
+    "frame": 44,
+    "top": 88,
+    "bottom": 89,
+    "first": "top"
+   },
+   {
+    "frame": 45,
+    "top": 90,
+    "bottom": 91,
+    "first": "top"
+   },
+   {
+    "frame": 46,
+    "top": 92,
+    "bottom": 93,
+    "first": "top"
+   },
+   {
+    "frame": 47,
+    "top": 94,
+    "bottom": 95,
+    "first": "top"
+   },
+   {
+    "frame": 48,
+    "top": 96,
+    "bottom": 97,
+    "first": "top"
+   },
+   {
+    "frame": 49,
+    "top": 98,
+    "bottom": 99,
+    "first": "top"
+   },
+   {
+    "frame": 50,
+    "top": 100,
+    "bottom": 101,
+    "first": "top"
+   },
+   {
+    "frame": 51,
+    "top": 102,
+    "bottom": 103,
+    "first": "top"
+   },
+   {
+    "frame": 52,
+    "top": 104,
+    "bottom": 105,
+    "first": "top"
+   },
+   {
+    "frame": 53,
+    "top": 106,
+    "bottom": 107,
+    "first": "top"
+   },
+   {
+    "frame": 54,
+    "top": 108,
+    "bottom": 109,
+    "first": "top"
+   },
+   {
+    "frame": 55,
+    "top": 110,
+    "bottom": 111,
+    "first": "top"
+   },
+   {
+    "frame": 56,
+    "top": 112,
+    "bottom": 113,
+    "first": "top"
+   },
+   {
+    "frame": 57,
+    "top": 114,
+    "bottom": 115,
+    "first": "top"
+   },
+   {
+    "frame": 58,
+    "top": 116,
+    "bottom": 117,
+    "first": "top"
+   },
+   {
+    "frame": 59,
+    "top": 118,
+    "bottom": 119,
+    "first": "top"
+   }
+  ],
+  "bff": [
+   {
+    "frame": 0,
+    "top": 1,
+    "bottom": 0,
+    "first": "bottom"
+   },
+   {
+    "frame": 1,
+    "top": 3,
+    "bottom": 2,
+    "first": "bottom"
+   },
+   {
+    "frame": 2,
+    "top": 5,
+    "bottom": 4,
+    "first": "bottom"
+   },
+   {
+    "frame": 3,
+    "top": 7,
+    "bottom": 6,
+    "first": "bottom"
+   },
+   {
+    "frame": 4,
+    "top": 9,
+    "bottom": 8,
+    "first": "bottom"
+   },
+   {
+    "frame": 5,
+    "top": 11,
+    "bottom": 10,
+    "first": "bottom"
+   },
+   {
+    "frame": 6,
+    "top": 13,
+    "bottom": 12,
+    "first": "bottom"
+   },
+   {
+    "frame": 7,
+    "top": 15,
+    "bottom": 14,
+    "first": "bottom"
+   },
+   {
+    "frame": 8,
+    "top": 17,
+    "bottom": 16,
+    "first": "bottom"
+   },
+   {
+    "frame": 9,
+    "top": 19,
+    "bottom": 18,
+    "first": "bottom"
+   },
+   {
+    "frame": 10,
+    "top": 21,
+    "bottom": 20,
+    "first": "bottom"
+   },
+   {
+    "frame": 11,
+    "top": 23,
+    "bottom": 22,
+    "first": "bottom"
+   },
+   {
+    "frame": 12,
+    "top": 25,
+    "bottom": 24,
+    "first": "bottom"
+   },
+   {
+    "frame": 13,
+    "top": 27,
+    "bottom": 26,
+    "first": "bottom"
+   },
+   {
+    "frame": 14,
+    "top": 29,
+    "bottom": 28,
+    "first": "bottom"
+   },
+   {
+    "frame": 15,
+    "top": 31,
+    "bottom": 30,
+    "first": "bottom"
+   },
+   {
+    "frame": 16,
+    "top": 33,
+    "bottom": 32,
+    "first": "bottom"
+   },
+   {
+    "frame": 17,
+    "top": 35,
+    "bottom": 34,
+    "first": "bottom"
+   },
+   {
+    "frame": 18,
+    "top": 37,
+    "bottom": 36,
+    "first": "bottom"
+   },
+   {
+    "frame": 19,
+    "top": 39,
+    "bottom": 38,
+    "first": "bottom"
+   },
+   {
+    "frame": 20,
+    "top": 41,
+    "bottom": 40,
+    "first": "bottom"
+   },
+   {
+    "frame": 21,
+    "top": 43,
+    "bottom": 42,
+    "first": "bottom"
+   },
+   {
+    "frame": 22,
+    "top": 45,
+    "bottom": 44,
+    "first": "bottom"
+   },
+   {
+    "frame": 23,
+    "top": 47,
+    "bottom": 46,
+    "first": "bottom"
+   },
+   {
+    "frame": 24,
+    "top": 49,
+    "bottom": 48,
+    "first": "bottom"
+   },
+   {
+    "frame": 25,
+    "top": 51,
+    "bottom": 50,
+    "first": "bottom"
+   },
+   {
+    "frame": 26,
+    "top": 53,
+    "bottom": 52,
+    "first": "bottom"
+   },
+   {
+    "frame": 27,
+    "top": 55,
+    "bottom": 54,
+    "first": "bottom"
+   },
+   {
+    "frame": 28,
+    "top": 57,
+    "bottom": 56,
+    "first": "bottom"
+   },
+   {
+    "frame": 29,
+    "top": 59,
+    "bottom": 58,
+    "first": "bottom"
+   },
+   {
+    "frame": 30,
+    "top": 61,
+    "bottom": 60,
+    "first": "bottom"
+   },
+   {
+    "frame": 31,
+    "top": 63,
+    "bottom": 62,
+    "first": "bottom"
+   },
+   {
+    "frame": 32,
+    "top": 65,
+    "bottom": 64,
+    "first": "bottom"
+   },
+   {
+    "frame": 33,
+    "top": 67,
+    "bottom": 66,
+    "first": "bottom"
+   },
+   {
+    "frame": 34,
+    "top": 69,
+    "bottom": 68,
+    "first": "bottom"
+   },
+   {
+    "frame": 35,
+    "top": 71,
+    "bottom": 70,
+    "first": "bottom"
+   },
+   {
+    "frame": 36,
+    "top": 73,
+    "bottom": 72,
+    "first": "bottom"
+   },
+   {
+    "frame": 37,
+    "top": 75,
+    "bottom": 74,
+    "first": "bottom"
+   },
+   {
+    "frame": 38,
+    "top": 77,
+    "bottom": 76,
+    "first": "bottom"
+   },
+   {
+    "frame": 39,
+    "top": 79,
+    "bottom": 78,
+    "first": "bottom"
+   },
+   {
+    "frame": 40,
+    "top": 81,
+    "bottom": 80,
+    "first": "bottom"
+   },
+   {
+    "frame": 41,
+    "top": 83,
+    "bottom": 82,
+    "first": "bottom"
+   },
+   {
+    "frame": 42,
+    "top": 85,
+    "bottom": 84,
+    "first": "bottom"
+   },
+   {
+    "frame": 43,
+    "top": 87,
+    "bottom": 86,
+    "first": "bottom"
+   },
+   {
+    "frame": 44,
+    "top": 89,
+    "bottom": 88,
+    "first": "bottom"
+   },
+   {
+    "frame": 45,
+    "top": 91,
+    "bottom": 90,
+    "first": "bottom"
+   },
+   {
+    "frame": 46,
+    "top": 93,
+    "bottom": 92,
+    "first": "bottom"
+   },
+   {
+    "frame": 47,
+    "top": 95,
+    "bottom": 94,
+    "first": "bottom"
+   },
+   {
+    "frame": 48,
+    "top": 97,
+    "bottom": 96,
+    "first": "bottom"
+   },
+   {
+    "frame": 49,
+    "top": 99,
+    "bottom": 98,
+    "first": "bottom"
+   },
+   {
+    "frame": 50,
+    "top": 101,
+    "bottom": 100,
+    "first": "bottom"
+   },
+   {
+    "frame": 51,
+    "top": 103,
+    "bottom": 102,
+    "first": "bottom"
+   },
+   {
+    "frame": 52,
+    "top": 105,
+    "bottom": 104,
+    "first": "bottom"
+   },
+   {
+    "frame": 53,
+    "top": 107,
+    "bottom": 106,
+    "first": "bottom"
+   },
+   {
+    "frame": 54,
+    "top": 109,
+    "bottom": 108,
+    "first": "bottom"
+   },
+   {
+    "frame": 55,
+    "top": 111,
+    "bottom": 110,
+    "first": "bottom"
+   },
+   {
+    "frame": 56,
+    "top": 113,
+    "bottom": 112,
+    "first": "bottom"
+   },
+   {
+    "frame": 57,
+    "top": 115,
+    "bottom": 114,
+    "first": "bottom"
+   },
+   {
+    "frame": 58,
+    "top": 117,
+    "bottom": 116,
+    "first": "bottom"
+   },
+   {
+    "frame": 59,
+    "top": 119,
+    "bottom": 118,
+    "first": "bottom"
+   }
+  ]
+ },
+ "files": {
+  "clean_p.y4m": {
+   "bytes": 186624396,
+   "sha256": "845323f815f9db286518fcee625e0ae06214c3c8000a333fb6ef771d5ee1a00a"
+  },
+  "noisy_p_y3.y4m": {
+   "bytes": 186624396,
+   "sha256": "8b0faefeb1d1002d243ff010131997a2bbddc8295288ef14a516203c7aa0fcad"
+  },
+  "tiff/p_y3": {
+   "count": 60,
+   "bytes": 747027480,
+   "sha256_concat": "e9b0ed7517a0faa4cf242d1ccd1b6434e31be955fbe95df392199884d95065f7",
+   "first": "park_joy_p_y3_00000.tif",
+   "regenerated": "2026-11-02 by lead (make_clips.py --tiff p:y3); concat sha256 re-verified equal"
+  },
+  "noisy_p_y6.y4m": {
+   "bytes": 186624396,
+   "sha256": "f5518b2e7ff434f984fa564d7e8ddddbda6f7796962602ac290981eb590aeda6"
+  },
+  "tiff/p_y6": {
+   "count": 60,
+   "bytes": 747027480,
+   "sha256_concat": "d4f6f54608e085c7e68088d279a94c946e19b0175f398b7de8ca29a22fde538e",
+   "first": "park_joy_p_y6_00000.tif"
+  },
+  "clean_tff.y4m": {
+   "bytes": 186624396,
+   "sha256": "4386670d8583903cdefab0f2a6610b44ed0cc7496d630ebde18102d2e44f5cf1"
+  },
+  "clean_tff_fields.y4m": {
+   "bytes": 186624755,
+   "sha256": "ac11a8214548f51a4ed2c3c083f46c684274a1c052dd4c8241b98b2a022d4c7a"
+  },
+  "noisy_tff_y3.y4m": {
+   "bytes": 186624396,
+   "sha256": "6e37d8e567b83f5f19ac0abba9c69d0aa3c3d098590b8100355c235d153b10eb"
+  },
+  "tiff/tff_y3": {
+   "count": 60,
+   "bytes": 747027480,
+   "sha256_concat": "d8ffe6436f8b3335f626f0a2b589e9fb74b529f6ec488f98cca6fe0aef414c25",
+   "first": "park_joy_tff_y3_00000.tif",
+   "removed": "2026-11-02, to keep wp_e9 near 20 GB (σ6 is the main level of this source); regenerate bit-identically with: python3 tools/make_clips.py --src park_joy --tiff tff:y3 (rewrites the y4m files with the same bytes and this manifest)"
+  },
+  "noisy_tff_y6.y4m": {
+   "bytes": 186624396,
+   "sha256": "a43a7fa7ee5857857fef023762df805c91a1561d98e34f40258342b1b239acc3"
+  },
+  "tiff/tff_y6": {
+   "count": 60,
+   "bytes": 747027480,
+   "sha256_concat": "0f170b1d204b21521d131416846ec7b6981faecafee130e9ebbd9c663fcff19e",
+   "first": "park_joy_tff_y6_00000.tif"
+  },
+  "clean_bff.y4m": {
+   "bytes": 186624396,
+   "sha256": "3ca85195fbc6d1569da17f0fa1ceef7da01e171dfb4d1cf73456367c03656b41"
+  },
+  "clean_bff_fields.y4m": {
+   "bytes": 186624755,
+   "sha256": "17e3f708217580fec6bc624fbeb9df5fa5a27df683b3b8715153592366e11e23"
+  },
+  "noisy_bff_y3.y4m": {
+   "bytes": 186624396,
+   "sha256": "fd47d83f4f03ef7a76780be472f4543304ea08e1c2f8e40d21c7211b68f5499c"
+  },
+  "tiff/bff_y3": {
+   "count": 60,
+   "bytes": 747027480,
+   "sha256_concat": "7e3a2cee695baa22a1e5c7fbe65af645ee990c950fbb9dcb40fbf4e2b92ba352",
+   "first": "park_joy_bff_y3_00000.tif",
+   "removed": "2026-11-02, to keep wp_e9 near 20 GB (σ6 is the main level of this source); regenerate bit-identically with: python3 tools/make_clips.py --src park_joy --tiff bff:y3 (rewrites the y4m files with the same bytes and this manifest)"
+  },
+  "noisy_bff_y6.y4m": {
+   "bytes": 186624396,
+   "sha256": "75aaba14bf2e6c4e771c8be7371029d7399d1a89951ddf7d0d4e9fd60dc6d258"
+  }
+ }
+}

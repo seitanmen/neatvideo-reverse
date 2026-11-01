@@ -1,0 +1,19 @@
+{
+ "clip": "sintel/tff_y3",
+ "test": "runs/ours_frame/sintel/tff_y3/out.mp4",
+ "name": "ours_frame",
+ "static_pairs_pixels": 31619310,
+ "temporal_static": {
+  "rms_d_clean": 0.4165,
+  "rms_d_added": 2.7182,
+  "rms_d_out": 0.7917,
+  "keep_clean": 0.2391,
+  "keep_added": 0.0991
+ },
+ "cross_corr": {
+  "added_Y_Cb": -0.2242,
+  "removed_Y_Cb": -0.2976,
+  "added_Y_Cr": -0.1795,
+  "removed_Y_Cr": -0.028
+ }
+}

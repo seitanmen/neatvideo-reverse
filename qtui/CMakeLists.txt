@@ -62,6 +62,11 @@ target_link_libraries(qtui_dump PRIVATE nvui)
 set_target_properties(qtui_dump PROPERTIES BUILD_RPATH "${NVCORE_DIR}")
 
 # command-line export (N3b): the same arguments as `python3 -m nv_ui_qt.export` (qtui/tools/compare_export.py)
+# INT-3: the field profiles (qtui/tools/verify_interlace.py)
+add_executable(qtui_fieldprof tests/fieldprof.cpp)
+target_link_libraries(qtui_fieldprof PRIVATE nvui)
+set_target_properties(qtui_fieldprof PROPERTIES BUILD_RPATH "${NVCORE_DIR}")
+
 add_executable(qtui_export tests/export_cli.cpp)
 target_link_libraries(qtui_export PRIVATE nvui)
 set_target_properties(qtui_export PROPERTIES BUILD_RPATH "${NVCORE_DIR}")

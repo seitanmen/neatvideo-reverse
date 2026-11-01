@@ -142,10 +142,19 @@ PyObj build_profile(const std::vector<Frame>& frames, int f, bool full_range, co
     std::vector<Planes> more;
     for (int i = f + 1; i < std::min(f + 3, static_cast<int>(frames.size())); ++i)
         more.push_back(to_planes(frames[static_cast<size_t>(i)]));
+    return build_profile_planes(pl, more.empty() ? nullptr : &more[0], more, f, full_range, matrix, mode, area, cancel);
+}
+
+PyObj build_profile_planes(const Planes& pl, const Planes* pair, const std::vector<Planes>& more, int f,
+                           bool full_range, const std::string& matrix, const std::string& mode,
+                           const std::vector<int>* area, const CancelFn& cancel) {
     const float* planes[3] = {pl.Y.data(), pl.Cb.data(), pl.Cr.data()};
     std::vector<const float*> mp;
     for (const auto& m : more)
         for (int c = 0; c < 3; ++c) mp.push_back(m.p(c));
+    const float* pp[3] = {nullptr, nullptr, nullptr};
+    if (pair)
+        for (int c = 0; c < 3; ++c) pp[c] = pair->p(c);
     const int mcode = mode == "spatial" ? 1 : mode == "temporal" ? 2 : 0;
     int area_n = 0, a[4] = {0, 0, 0, 0};
     if (area) {
@@ -157,7 +166,7 @@ PyObj build_profile(const std::vector<Frame>& frames, int f, bool full_range, co
     int st;
     {
         CancelScope cs(&cancel);
-        st = nvc_build_profile_v5(planes, pl.H, pl.W, pl.Hc, pl.Wc, more.empty() ? nullptr : mp.data(),
+        st = nvc_build_profile_v5(planes, pl.H, pl.W, pl.Hc, pl.Wc, pair ? pp : nullptr,
                                   static_cast<int>(more.size()), mp.empty() ? nullptr : mp.data(), full_range ? 1 : 0,
                                   matrix_code(matrix), mcode, 5, area_n, area ? a : nullptr, native_threads(),
                                   cs.fn(), oi, od);
@@ -446,7 +455,7 @@ void spatial_call(const Planes& tmp, const Planes& rv, const PyObj& prof, const 
 }  // namespace
 
 void temporal(const std::vector<Planes>& window_in, int ci_in, const PyObj& prof, const PyObj& P, Flows* flows,
-              Planes* out, Planes* rv) {
+              Planes* out, Planes* rv, const double* shift) {
     const int R = static_cast<int>(P.get("radius").as_int());
     const int lo = std::max(0, ci_in - R), hi = std::min(static_cast<int>(window_in.size()), ci_in + R + 1);
     const double tn = P.has("t_noise") ? P.get("t_noise").as_double() : 1.0;
@@ -512,9 +521,14 @@ void temporal(const std::vector<Planes>& window_in, int ci_in, const PyObj& prof
     float* rp[3] = {rv->Y.data(), rv->Cb.data(), rv->Cr.data()};
     if (offs.empty()) offs.push_back(0);   // nv_native passes [0] for no given flows (nin = 0)
     const int nin = static_cast<int>(fin.size() / 2);
-    if (nvc_temporal(nf, ci, H, W, Hc, Wc, planes.data(), b.pi, b.pd, b.qi, b.qd, nin, offs.data(),
-                     fin.empty() ? nullptr : fin.data(), fop.data(), nw.data(), op, rp) != 0)
+    if (shift) {   // INT-3 fields: the half-line offsets of the window frames lo .. hi - 1 (nvc_temporal_shift)
+        if (nvc_temporal_shift(nf, ci, H, W, Hc, Wc, planes.data(), b.pi, b.pd, b.qi, b.qd, nin, offs.data(),
+                               fin.empty() ? nullptr : fin.data(), fop.data(), nw.data(), op, rp, shift + 2 * lo) != 0)
+            throw std::runtime_error("nvc_temporal_shift failed");
+    } else if (nvc_temporal(nf, ci, H, W, Hc, Wc, planes.data(), b.pi, b.pd, b.qi, b.qd, nin, offs.data(),
+                            fin.empty() ? nullptr : fin.data(), fop.data(), nw.data(), op, rp) != 0) {
         throw std::runtime_error("nvc_temporal failed");
+    }
     if (flows)
         for (int k = 0; k < nf; ++k)
             if (nw[static_cast<size_t>(k)]) {
@@ -702,12 +716,17 @@ MatchScores match_scores(const Frame& frame, bool full_range, const std::string&
 std::optional<std::pair<int, int>> profile_numbers(const ProfileState& ps, const std::vector<Frame>& frames,
                                                    bool full_range, const std::string& matrix) {
     if (!ps.has_profile() || frames.empty()) return std::nullopt;
+    return profile_numbers(ps, frames[static_cast<size_t>(aft_frame(ps.base, frames.size()))], full_range, matrix);
+}
+
+std::optional<std::pair<int, int>> profile_numbers(const ProfileState& ps, const Frame& frame, bool full_range,
+                                                   const std::string& matrix) {
+    if (!ps.has_profile()) return std::nullopt;
     const PyObj& base = ps.base;
     const PyObj& a = base.get("area");
     int area4[4] = {static_cast<int>(a[0].as_int()), static_cast<int>(a[1].as_int()), static_cast<int>(a[2].as_int()),
                     static_cast<int>(a.size() == 3 ? a[2].as_int() : a[3].as_int())};
-    const int f = aft_frame(base, frames.size());
-    const Planes pl = to_planes(frames[static_cast<size_t>(f)]);
+    const Planes pl = to_planes(frame);
     const std::vector<float> rgb = to_rgb(pl, matrix, full_range, 1);
     // the curve level words: an R/G/B profile writes the levels of the bins edited by hand (1.0 elsewhere) and no
     // tune (G1 U3 / U4); a Y / Cb / Cr profile factor x tune as before

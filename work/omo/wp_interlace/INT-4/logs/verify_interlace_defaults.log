@@ -1,0 +1,36 @@
+profile two top    frame 3: 16 keys == nvfilter.build_profile_v5 on the fields, fields/field/ui_frame ['two', 'top', 3]
+profile one top    frame 3: 16 keys == nvfilter.build_profile_v5 on the fields, fields/field/ui_frame ['one', 'top', 3]
+profile one bottom frame 5: 16 keys == nvfilter.build_profile_v5 on the fields, fields/field/ui_frame ['one', 'bottom', 5]
+profile two bottom frame 11: 15 keys == nvfilter.build_profile_v5 on the fields, fields/field/ui_frame ['two', 'bottom', 11]
+profile two top    frame 4 area (37, 41, 70, 90): 16 keys == nvfilter.build_profile_v5 on the fields, fields/field/ui_frame ['two', 'top', 4]
+profile one bottom frame 2 area (90, 150, 64, 64): 16 keys == nvfilter.build_profile_v5 on the fields, fields/field/ui_frame ['one', 'bottom', 2]
+export tff_same_r4_m0.0        : 12/12 frames, 0 bytes differ from fields_ref (BIT-EXACT); interlaced: top field first, fields mode same, Temporal Radius 4 fields
+  flags h264 mkv: stream field_order tb, interlaced_frame 1 top_field_first 1 (ok)
+export bff_same_r4_m0.0        : 12/12 frames, 0 bytes differ from fields_ref (BIT-EXACT); interlaced: bottom field first, fields mode same, Temporal Radius 4 fields
+  flags h264 mkv: stream field_order bt, interlaced_frame 1 top_field_first 0 (ok)
+export tff_shift_r2_m0.0       : 12/12 frames, 0 bytes differ from fields_ref (BIT-EXACT); interlaced: top field first, fields mode shift, Temporal Radius 2 fields
+  flags h264 mkv: stream field_order tb, interlaced_frame 1 top_field_first 1 (ok)
+export bff_plain_r2_m0.25      : 12/12 frames, 0 bytes differ from fields_ref (BIT-EXACT); interlaced: bottom field first, fields mode plain, Temporal Radius 2 fields
+  flags h264 mkv: stream field_order bt, interlaced_frame 1 top_field_first 0 (ok)
+export tff_same_r2_m0.0_s3     : 4/4 frames, 0 bytes differ from fields_ref (BIT-EXACT); interlaced: top field first, fields mode same, Temporal Radius 2 fields
+  flags h264 mkv: stream field_order tb, interlaced_frame 1 top_field_first 1 (ok)
+export tff422_same_r4_m0.0     : 12/12 frames, 0 bytes differ from fields_ref (BIT-EXACT); interlaced: top field first, fields mode same, Temporal Radius 4 fields, read with scale=interl=1
+  flags h264 mkv: stream field_order tb, interlaced_frame 1 top_field_first 1 (ok)
+export tff_plain_r3_m0.0_s2    : 6/6 frames, 0 bytes differ from fields_ref (BIT-EXACT); interlaced: top field first, fields mode plain, Temporal Radius 3 fields
+  flags h264 mkv: stream field_order tb, interlaced_frame 1 top_field_first 1 (ok)
+export bff_same_r5_m0.0        : 12/12 frames, 0 bytes differ from fields_ref (BIT-EXACT); interlaced: bottom field first, fields mode same, Temporal Radius 5 fields
+  flags h264 mkv: stream field_order bt, interlaced_frame 1 top_field_first 0 (ok)
+export bff_shift_r3_m0.0_s5    : 4/4 frames, 0 bytes differ from fields_ref (BIT-EXACT); interlaced: bottom field first, fields mode shift, Temporal Radius 3 fields
+  flags h264 mkv: stream field_order bt, interlaced_frame 1 top_field_first 0 (ok)
+codec h264      .mp4 depth 8 : stream field_order bb, interlaced_frame 1 top_field_first 0 -> bottom field first flagged ok
+codec h264      .mp4 depth 8 : stream field_order tt, interlaced_frame 1 top_field_first 1 -> top field first flagged ok
+codec ffv1      .mkv depth 8 : stream field_order bt, interlaced_frame 1 top_field_first 0 -> bottom field first flagged ok
+codec prores    .mov depth 10: stream field_order tb, interlaced_frame 1 top_field_first 1 -> top field first flagged ok
+codec h264      .mov depth 10: stream field_order bb, interlaced_frame 1 top_field_first 0 -> bottom field first flagged ok
+codec hevc      .mp4 depth 8 : stream field_order bt, interlaced_frame 0 top_field_first 0 -> not flagged (expected: not flagged; warning: HEVC (x265) output is not flagged interlaced (libx265 codes progressive frames here); the fields stay interleaved - choose x264, ProRes or FFV1 to keep the field order flags) ok
+codec ffv1      .mkv depth 16: stream field_order bt, interlaced_frame 1 top_field_first 0 -> bottom field first flagged ok
+codec ffv1      .mkv depth 10: stream field_order tb, interlaced_frame 1 top_field_first 1 -> top field first flagged ok
+depth 32 (gbrpf32le, 4:2:0 source): 5 frames, 0 float words differ from fields_ref (BIT-EXACT); interlaced: top field first, fields mode same, Temporal Radius 4 fields, read with scale=interl=1
+  without interl=1 the RGB read differs in 170925 of 172800 samples of frame 0
+vf     : 4:2:2 source read with scale=interl=1 differs from the plain conversion in 92357 chroma samples (the export above read it with interl=1: its frames are the reference's)
+ALL OK

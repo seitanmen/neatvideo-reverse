@@ -1,0 +1,854 @@
+{
+ "source": {
+  "file": "media/sintel_trailer_2k_1080p24_f530-679.y4m",
+  "sha256": "9b8488ac012759c901937f66f9fd2941cb4571ec6cbd919cf843b42a11d35f27",
+  "credit": "Sintel (c) Blender Foundation | durian.blender.org, CC-BY 3.0; Xiph derf sintel_trailer_2k_1080p24.y4m frames 530..679",
+  "original_frames": {
+   "progressive": [
+    571,
+    630
+   ],
+   "interlaced": [
+    537,
+    656
+   ]
+  },
+  "media_frames": {
+   "progressive": [
+    41,
+    100
+   ],
+   "interlaced": [
+    7,
+    126
+   ]
+  },
+  "field_map_note": "fields[].top / bottom are media frame numbers"
+ },
+ "frames": 60,
+ "fps": {
+  "progressive": "24:1 (each source frame is one frame)",
+  "interlaced": "24:1 frames, 48:1 fields/s (two consecutive source frames per woven frame)",
+  "fields_files": "48:1"
+ },
+ "colour": "8-bit limited range BT.709 4:2:0, untagged (as the source); RGB = e9_common.yuv_to_rgb (nvfilter.yuv_to_rgb: chroma repetition, interlaced within the field), 0..255 float64",
+ "noise": {
+  "space": "RGB (independent per channel, before the 4:2:0 conversion)",
+  "seed": "numpy.random.default_rng([233, 3, k]).standard_normal((3, 1080, 1920)), k = clip frame; the same unit noise for every layout and level",
+  "levels": {
+   "y3": {
+    "sigma_rgb": 4.659926376201864,
+    "sigma_y_nominal": 3.0
+   },
+   "y6": {
+    "sigma_rgb": 9.319852752403728,
+    "sigma_y_nominal": 6.0
+   }
+  },
+  "pipeline": "clip(RGB_unclipped(clean) + sigma*n, 0, 255) -> YCbCr (exact inverse) -> 4:2:0 mean (interlaced: within the field) -> rint, 8-bit"
+ },
+ "tiff": "uncompressed 16-bit RGB (rgb48le), code = rint(clip(yuv_to_rgb(noisy), 0, 255)*257), numbered from 0",
+ "fields": {
+  "tff": [
+   {
+    "frame": 0,
+    "top": 7,
+    "bottom": 8,
+    "first": "top"
+   },
+   {
+    "frame": 1,
+    "top": 9,
+    "bottom": 10,
+    "first": "top"
+   },
+   {
+    "frame": 2,
+    "top": 11,
+    "bottom": 12,
+    "first": "top"
+   },
+   {
+    "frame": 3,
+    "top": 13,
+    "bottom": 14,
+    "first": "top"
+   },
+   {
+    "frame": 4,
+    "top": 15,
+    "bottom": 16,
+    "first": "top"
+   },
+   {
+    "frame": 5,
+    "top": 17,
+    "bottom": 18,
+    "first": "top"
+   },
+   {
+    "frame": 6,
+    "top": 19,
+    "bottom": 20,
+    "first": "top"
+   },
+   {
+    "frame": 7,
+    "top": 21,
+    "bottom": 22,
+    "first": "top"
+   },
+   {
+    "frame": 8,
+    "top": 23,
+    "bottom": 24,
+    "first": "top"
+   },
+   {
+    "frame": 9,
+    "top": 25,
+    "bottom": 26,
+    "first": "top"
+   },
+   {
+    "frame": 10,
+    "top": 27,
+    "bottom": 28,
+    "first": "top"
+   },
+   {
+    "frame": 11,
+    "top": 29,
+    "bottom": 30,
+    "first": "top"
+   },
+   {
+    "frame": 12,
+    "top": 31,
+    "bottom": 32,
+    "first": "top"
+   },
+   {
+    "frame": 13,
+    "top": 33,
+    "bottom": 34,
+    "first": "top"
+   },
+   {
+    "frame": 14,
+    "top": 35,
+    "bottom": 36,
+    "first": "top"
+   },
+   {
+    "frame": 15,
+    "top": 37,
+    "bottom": 38,
+    "first": "top"
+   },
+   {
+    "frame": 16,
+    "top": 39,
+    "bottom": 40,
+    "first": "top"
+   },
+   {
+    "frame": 17,
+    "top": 41,
+    "bottom": 42,
+    "first": "top"
+   },
+   {
+    "frame": 18,
+    "top": 43,
+    "bottom": 44,
+    "first": "top"
+   },
+   {
+    "frame": 19,
+    "top": 45,
+    "bottom": 46,
+    "first": "top"
+   },
+   {
+    "frame": 20,
+    "top": 47,
+    "bottom": 48,
+    "first": "top"
+   },
+   {
+    "frame": 21,
+    "top": 49,
+    "bottom": 50,
+    "first": "top"
+   },
+   {
+    "frame": 22,
+    "top": 51,
+    "bottom": 52,
+    "first": "top"
+   },
+   {
+    "frame": 23,
+    "top": 53,
+    "bottom": 54,
+    "first": "top"
+   },
+   {
+    "frame": 24,
+    "top": 55,
+    "bottom": 56,
+    "first": "top"
+   },
+   {
+    "frame": 25,
+    "top": 57,
+    "bottom": 58,
+    "first": "top"
+   },
+   {
+    "frame": 26,
+    "top": 59,
+    "bottom": 60,
+    "first": "top"
+   },
+   {
+    "frame": 27,
+    "top": 61,
+    "bottom": 62,
+    "first": "top"
+   },
+   {
+    "frame": 28,
+    "top": 63,
+    "bottom": 64,
+    "first": "top"
+   },
+   {
+    "frame": 29,
+    "top": 65,
+    "bottom": 66,
+    "first": "top"
+   },
+   {
+    "frame": 30,
+    "top": 67,
+    "bottom": 68,
+    "first": "top"
+   },
+   {
+    "frame": 31,
+    "top": 69,
+    "bottom": 70,
+    "first": "top"
+   },
+   {
+    "frame": 32,
+    "top": 71,
+    "bottom": 72,
+    "first": "top"
+   },
+   {
+    "frame": 33,
+    "top": 73,
+    "bottom": 74,
+    "first": "top"
+   },
+   {
+    "frame": 34,
+    "top": 75,
+    "bottom": 76,
+    "first": "top"
+   },
+   {
+    "frame": 35,
+    "top": 77,
+    "bottom": 78,
+    "first": "top"
+   },
+   {
+    "frame": 36,
+    "top": 79,
+    "bottom": 80,
+    "first": "top"
+   },
+   {
+    "frame": 37,
+    "top": 81,
+    "bottom": 82,
+    "first": "top"
+   },
+   {
+    "frame": 38,
+    "top": 83,
+    "bottom": 84,
+    "first": "top"
+   },
+   {
+    "frame": 39,
+    "top": 85,
+    "bottom": 86,
+    "first": "top"
+   },
+   {
+    "frame": 40,
+    "top": 87,
+    "bottom": 88,
+    "first": "top"
+   },
+   {
+    "frame": 41,
+    "top": 89,
+    "bottom": 90,
+    "first": "top"
+   },
+   {
+    "frame": 42,
+    "top": 91,
+    "bottom": 92,
+    "first": "top"
+   },
+   {
+    "frame": 43,
+    "top": 93,
+    "bottom": 94,
+    "first": "top"
+   },
+   {
+    "frame": 44,
+    "top": 95,
+    "bottom": 96,
+    "first": "top"
+   },
+   {
+    "frame": 45,
+    "top": 97,
+    "bottom": 98,
+    "first": "top"
+   },
+   {
+    "frame": 46,
+    "top": 99,
+    "bottom": 100,
+    "first": "top"
+   },
+   {
+    "frame": 47,
+    "top": 101,
+    "bottom": 102,
+    "first": "top"
+   },
+   {
+    "frame": 48,
+    "top": 103,
+    "bottom": 104,
+    "first": "top"
+   },
+   {
+    "frame": 49,
+    "top": 105,
+    "bottom": 106,
+    "first": "top"
+   },
+   {
+    "frame": 50,
+    "top": 107,
+    "bottom": 108,
+    "first": "top"
+   },
+   {
+    "frame": 51,
+    "top": 109,
+    "bottom": 110,
+    "first": "top"
+   },
+   {
+    "frame": 52,
+    "top": 111,
+    "bottom": 112,
+    "first": "top"
+   },
+   {
+    "frame": 53,
+    "top": 113,
+    "bottom": 114,
+    "first": "top"
+   },
+   {
+    "frame": 54,
+    "top": 115,
+    "bottom": 116,
+    "first": "top"
+   },
+   {
+    "frame": 55,
+    "top": 117,
+    "bottom": 118,
+    "first": "top"
+   },
+   {
+    "frame": 56,
+    "top": 119,
+    "bottom": 120,
+    "first": "top"
+   },
+   {
+    "frame": 57,
+    "top": 121,
+    "bottom": 122,
+    "first": "top"
+   },
+   {
+    "frame": 58,
+    "top": 123,
+    "bottom": 124,
+    "first": "top"
+   },
+   {
+    "frame": 59,
+    "top": 125,
+    "bottom": 126,
+    "first": "top"
+   }
+  ],
+  "bff": [
+   {
+    "frame": 0,
+    "top": 8,
+    "bottom": 7,
+    "first": "bottom"
+   },
+   {
+    "frame": 1,
+    "top": 10,
+    "bottom": 9,
+    "first": "bottom"
+   },
+   {
+    "frame": 2,
+    "top": 12,
+    "bottom": 11,
+    "first": "bottom"
+   },
+   {
+    "frame": 3,
+    "top": 14,
+    "bottom": 13,
+    "first": "bottom"
+   },
+   {
+    "frame": 4,
+    "top": 16,
+    "bottom": 15,
+    "first": "bottom"
+   },
+   {
+    "frame": 5,
+    "top": 18,
+    "bottom": 17,
+    "first": "bottom"
+   },
+   {
+    "frame": 6,
+    "top": 20,
+    "bottom": 19,
+    "first": "bottom"
+   },
+   {
+    "frame": 7,
+    "top": 22,
+    "bottom": 21,
+    "first": "bottom"
+   },
+   {
+    "frame": 8,
+    "top": 24,
+    "bottom": 23,
+    "first": "bottom"
+   },
+   {
+    "frame": 9,
+    "top": 26,
+    "bottom": 25,
+    "first": "bottom"
+   },
+   {
+    "frame": 10,
+    "top": 28,
+    "bottom": 27,
+    "first": "bottom"
+   },
+   {
+    "frame": 11,
+    "top": 30,
+    "bottom": 29,
+    "first": "bottom"
+   },
+   {
+    "frame": 12,
+    "top": 32,
+    "bottom": 31,
+    "first": "bottom"
+   },
+   {
+    "frame": 13,
+    "top": 34,
+    "bottom": 33,
+    "first": "bottom"
+   },
+   {
+    "frame": 14,
+    "top": 36,
+    "bottom": 35,
+    "first": "bottom"
+   },
+   {
+    "frame": 15,
+    "top": 38,
+    "bottom": 37,
+    "first": "bottom"
+   },
+   {
+    "frame": 16,
+    "top": 40,
+    "bottom": 39,
+    "first": "bottom"
+   },
+   {
+    "frame": 17,
+    "top": 42,
+    "bottom": 41,
+    "first": "bottom"
+   },
+   {
+    "frame": 18,
+    "top": 44,
+    "bottom": 43,
+    "first": "bottom"
+   },
+   {
+    "frame": 19,
+    "top": 46,
+    "bottom": 45,
+    "first": "bottom"
+   },
+   {
+    "frame": 20,
+    "top": 48,
+    "bottom": 47,
+    "first": "bottom"
+   },
+   {
+    "frame": 21,
+    "top": 50,
+    "bottom": 49,
+    "first": "bottom"
+   },
+   {
+    "frame": 22,
+    "top": 52,
+    "bottom": 51,
+    "first": "bottom"
+   },
+   {
+    "frame": 23,
+    "top": 54,
+    "bottom": 53,
+    "first": "bottom"
+   },
+   {
+    "frame": 24,
+    "top": 56,
+    "bottom": 55,
+    "first": "bottom"
+   },
+   {
+    "frame": 25,
+    "top": 58,
+    "bottom": 57,
+    "first": "bottom"
+   },
+   {
+    "frame": 26,
+    "top": 60,
+    "bottom": 59,
+    "first": "bottom"
+   },
+   {
+    "frame": 27,
+    "top": 62,
+    "bottom": 61,
+    "first": "bottom"
+   },
+   {
+    "frame": 28,
+    "top": 64,
+    "bottom": 63,
+    "first": "bottom"
+   },
+   {
+    "frame": 29,
+    "top": 66,
+    "bottom": 65,
+    "first": "bottom"
+   },
+   {
+    "frame": 30,
+    "top": 68,
+    "bottom": 67,
+    "first": "bottom"
+   },
+   {
+    "frame": 31,
+    "top": 70,
+    "bottom": 69,
+    "first": "bottom"
+   },
+   {
+    "frame": 32,
+    "top": 72,
+    "bottom": 71,
+    "first": "bottom"
+   },
+   {
+    "frame": 33,
+    "top": 74,
+    "bottom": 73,
+    "first": "bottom"
+   },
+   {
+    "frame": 34,
+    "top": 76,
+    "bottom": 75,
+    "first": "bottom"
+   },
+   {
+    "frame": 35,
+    "top": 78,
+    "bottom": 77,
+    "first": "bottom"
+   },
+   {
+    "frame": 36,
+    "top": 80,
+    "bottom": 79,
+    "first": "bottom"
+   },
+   {
+    "frame": 37,
+    "top": 82,
+    "bottom": 81,
+    "first": "bottom"
+   },
+   {
+    "frame": 38,
+    "top": 84,
+    "bottom": 83,
+    "first": "bottom"
+   },
+   {
+    "frame": 39,
+    "top": 86,
+    "bottom": 85,
+    "first": "bottom"
+   },
+   {
+    "frame": 40,
+    "top": 88,
+    "bottom": 87,
+    "first": "bottom"
+   },
+   {
+    "frame": 41,
+    "top": 90,
+    "bottom": 89,
+    "first": "bottom"
+   },
+   {
+    "frame": 42,
+    "top": 92,
+    "bottom": 91,
+    "first": "bottom"
+   },
+   {
+    "frame": 43,
+    "top": 94,
+    "bottom": 93,
+    "first": "bottom"
+   },
+   {
+    "frame": 44,
+    "top": 96,
+    "bottom": 95,
+    "first": "bottom"
+   },
+   {
+    "frame": 45,
+    "top": 98,
+    "bottom": 97,
+    "first": "bottom"
+   },
+   {
+    "frame": 46,
+    "top": 100,
+    "bottom": 99,
+    "first": "bottom"
+   },
+   {
+    "frame": 47,
+    "top": 102,
+    "bottom": 101,
+    "first": "bottom"
+   },
+   {
+    "frame": 48,
+    "top": 104,
+    "bottom": 103,
+    "first": "bottom"
+   },
+   {
+    "frame": 49,
+    "top": 106,
+    "bottom": 105,
+    "first": "bottom"
+   },
+   {
+    "frame": 50,
+    "top": 108,
+    "bottom": 107,
+    "first": "bottom"
+   },
+   {
+    "frame": 51,
+    "top": 110,
+    "bottom": 109,
+    "first": "bottom"
+   },
+   {
+    "frame": 52,
+    "top": 112,
+    "bottom": 111,
+    "first": "bottom"
+   },
+   {
+    "frame": 53,
+    "top": 114,
+    "bottom": 113,
+    "first": "bottom"
+   },
+   {
+    "frame": 54,
+    "top": 116,
+    "bottom": 115,
+    "first": "bottom"
+   },
+   {
+    "frame": 55,
+    "top": 118,
+    "bottom": 117,
+    "first": "bottom"
+   },
+   {
+    "frame": 56,
+    "top": 120,
+    "bottom": 119,
+    "first": "bottom"
+   },
+   {
+    "frame": 57,
+    "top": 122,
+    "bottom": 121,
+    "first": "bottom"
+   },
+   {
+    "frame": 58,
+    "top": 124,
+    "bottom": 123,
+    "first": "bottom"
+   },
+   {
+    "frame": 59,
+    "top": 126,
+    "bottom": 125,
+    "first": "bottom"
+   }
+  ]
+ },
+ "files": {
+  "clean_p.y4m": {
+   "bytes": 186624396,
+   "sha256": "2ddcf48e54ef7d25ca5bbed9dec4f64ed462a533d10a22549b4a33eb00280daf"
+  },
+  "noisy_p_y3.y4m": {
+   "bytes": 186624396,
+   "sha256": "00655a86519e73aacad4031c15d696d5b71d57ef2c9afd8aa46ab05c7f4c6e87"
+  },
+  "tiff/p_y3": {
+   "count": 60,
+   "bytes": 747027480,
+   "sha256_concat": "e931f5a0bf0807ea9e58ced73820f075f604277ba905fe56f8cd758ad937ccd5",
+   "first": "sintel_p_y3_00000.tif"
+  },
+  "noisy_p_y6.y4m": {
+   "bytes": 186624396,
+   "sha256": "1314f7d96b603755a4fd74253b3cc3f309c6c5b2c035205912da6835455679dc"
+  },
+  "tiff/p_y6": {
+   "count": 60,
+   "bytes": 747027480,
+   "sha256_concat": "ad5f95e329062b72191f7b6b1c5cd5449cb3e1b757c0e6488fcaa7dd86e9c7d6",
+   "first": "sintel_p_y6_00000.tif"
+  },
+  "clean_tff.y4m": {
+   "bytes": 186624396,
+   "sha256": "247f7fa5faff6f66793868b3b9ddbbcf5ece367ec8d3e5a87c90bb232a0ce085"
+  },
+  "clean_tff_fields.y4m": {
+   "bytes": 186624755,
+   "sha256": "2b151144653cd710e3c3a523c9743ec2273bff87b1f7d80f8e199fdd1afb467a"
+  },
+  "noisy_tff_y3.y4m": {
+   "bytes": 186624396,
+   "sha256": "b0f8700656a9a8c0a8491b23d95196b9afe47f9ca3f9cb872f204d8ff8a39531"
+  },
+  "tiff/tff_y3": {
+   "count": 60,
+   "bytes": 747027480,
+   "sha256_concat": "2b85a7ac4d01e3d7dd77f8f96c4dba45a2bdd6864d0bb2203a8e620c69042186",
+   "first": "sintel_tff_y3_00000.tif"
+  },
+  "noisy_tff_y6.y4m": {
+   "bytes": 186624396,
+   "sha256": "fbc11a0632ee6a2a4279be39dda1e65058da83c7c2dd09eba447fb17cf0a8eb1"
+  },
+  "tiff/tff_y6": {
+   "count": 60,
+   "bytes": 747027480,
+   "sha256_concat": "caa23a27b928cbf3b6c362cba3115898cf90287a8b8441dd8f94cf1096d44bf1",
+   "first": "sintel_tff_y6_00000.tif"
+  },
+  "clean_bff.y4m": {
+   "bytes": 186624396,
+   "sha256": "ecf3797616c39eeede1585a1b66d14daf0c308b1024a2eb59092a43e23f72bed"
+  },
+  "clean_bff_fields.y4m": {
+   "bytes": 186624755,
+   "sha256": "786a26e3bd81cefef125650da145c0729b16301b20e686bd6784851dc5106ef5"
+  },
+  "noisy_bff_y3.y4m": {
+   "bytes": 186624396,
+   "sha256": "ad81931f26dc12f8213569c82476fa901577e2e5705abb176d0cb9d3afed7455"
+  },
+  "tiff/bff_y3": {
+   "count": 60,
+   "bytes": 747027480,
+   "sha256_concat": "1a9d0c7106ea6c07cd1ebd57263ae2e20ff841c3a91ff43e58b1dd2f2a6af979",
+   "first": "sintel_bff_y3_00000.tif",
+   "removed": "2026-11-02, bff is y4m only for this source (lead's instruction); regenerate bit-identically with: python3 tools/make_clips.py --src sintel --tiff bff:y3"
+  },
+  "noisy_bff_y6.y4m": {
+   "bytes": 186624396,
+   "sha256": "671dd535cce77a34dcdbdaa53d89d4b96442b283b2a8719421e6d2fb02c2272a"
+  }
+ }
+}

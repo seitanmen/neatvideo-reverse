@@ -1,0 +1,19 @@
+{
+ "clip": "park_joy/tff_y6",
+ "test": "runs/ours_frame/park_joy/tff_y6/out.mp4",
+ "name": "ours_frame",
+ "static_pairs_pixels": 1378232,
+ "temporal_static": {
+  "rms_d_clean": 6.9416,
+  "rms_d_added": 8.4412,
+  "rms_d_out": 3.1132,
+  "keep_clean": 0.2422,
+  "keep_added": 0.0695
+ },
+ "cross_corr": {
+  "added_Y_Cb": -0.2532,
+  "removed_Y_Cb": -0.2495,
+  "added_Y_Cr": -0.2176,
+  "removed_Y_Cr": -0.0854
+ }
+}

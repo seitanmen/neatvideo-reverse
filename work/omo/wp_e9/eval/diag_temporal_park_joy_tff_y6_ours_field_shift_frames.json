@@ -1,0 +1,19 @@
+{
+ "clip": "park_joy/tff_y6",
+ "test": "runs/ours_field_shift_frames/park_joy/tff_y6/out.mp4",
+ "name": "ours_field_shift_frames",
+ "static_pairs_pixels": 1378232,
+ "temporal_static": {
+  "rms_d_clean": 6.9416,
+  "rms_d_added": 8.4412,
+  "rms_d_out": 3.9876,
+  "keep_clean": 0.4399,
+  "keep_added": 0.0564
+ },
+ "cross_corr": {
+  "added_Y_Cb": -0.2532,
+  "removed_Y_Cb": -0.2227,
+  "added_Y_Cr": -0.2176,
+  "removed_Y_Cr": -0.1061
+ }
+}

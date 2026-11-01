@@ -1,0 +1,19 @@
+{
+ "clip": "sintel/tff_y6",
+ "test": "runs/ours_field_plain_frames/sintel/tff_y6/out.mp4",
+ "name": "ours_field_plain_frames",
+ "static_pairs_pixels": 31619310,
+ "temporal_static": {
+  "rms_d_clean": 0.4165,
+  "rms_d_added": 5.3499,
+  "rms_d_out": 0.7001,
+  "keep_clean": 0.2696,
+  "keep_added": 0.039
+ },
+ "cross_corr": {
+  "added_Y_Cb": -0.2361,
+  "removed_Y_Cb": -0.2925,
+  "added_Y_Cr": -0.1853,
+  "removed_Y_Cr": -0.0345
+ }
+}

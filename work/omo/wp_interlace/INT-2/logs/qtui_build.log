@@ -1,0 +1,122 @@
+-- The C compiler identification is AppleClang 21.0.0.21000101
+-- The CXX compiler identification is AppleClang 21.0.0.21000101
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Performing Test HAVE_STDATOMIC
+-- Performing Test HAVE_STDATOMIC - Success
+-- Found WrapAtomic: TRUE
+-- Found OpenGL: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk/System/Library/Frameworks/OpenGL.framework
+-- Found WrapOpenGL: TRUE
+-- Configuring done (1.0s)
+-- Generating done (0.1s)
+-- Build files have been written to: /Users/seitan/Desktop/work/reverse/.claude/worktrees/int2/qtui/build_main
+[  1%] Built target nvcore_build
+[  1%] Built target nvui_autogen_timestamp_deps
+[  3%] Automatic MOC for target nvui
+[  3%] Built target nvui_autogen
+[  4%] Building CXX object CMakeFiles/nvui.dir/nvui_autogen/mocs_compilation.cpp.o
+[  6%] Building CXX object CMakeFiles/nvui.dir/src/app/look.cpp.o
+[  7%] Building CXX object CMakeFiles/nvui.dir/src/app/mainwindow.cpp.o
+[  9%] Building CXX object CMakeFiles/nvui.dir/src/app/ofx.cpp.o
+[ 10%] Building CXX object CMakeFiles/nvui.dir/src/app/ofx_session.cpp.o
+[ 12%] Building CXX object CMakeFiles/nvui.dir/src/app/viewer.cpp.o
+[ 13%] Building CXX object CMakeFiles/nvui.dir/src/app/worker.cpp.o
+[ 15%] Building CXX object CMakeFiles/nvui.dir/src/core/automatch.cpp.o
+[ 16%] Building CXX object CMakeFiles/nvui.dir/src/core/depth.cpp.o
+[ 18%] Building CXX object CMakeFiles/nvui.dir/src/core/engine.cpp.o
+[ 20%] Building CXX object CMakeFiles/nvui.dir/src/core/export.cpp.o
+[ 21%] Building CXX object CMakeFiles/nvui.dir/src/core/nvcore.cpp.o
+[ 23%] Building CXX object CMakeFiles/nvui.dir/src/core/pynum.cpp.o
+[ 24%] Building CXX object CMakeFiles/nvui.dir/src/core/pyobj.cpp.o
+[ 26%] Building CXX object CMakeFiles/nvui.dir/src/core/state.cpp.o
+[ 27%] Building CXX object CMakeFiles/nvui.dir/src/core/video.cpp.o
+[ 29%] Building CXX object CMakeFiles/nvui.dir/src/widgets/curve_editor.cpp.o
+[ 30%] Building CXX object CMakeFiles/nvui.dir/src/widgets/filter_panel.cpp.o
+[ 32%] Building CXX object CMakeFiles/nvui.dir/src/widgets/noise_graph.cpp.o
+[ 33%] Building CXX object CMakeFiles/nvui.dir/src/widgets/profile_panel.cpp.o
+[ 35%] Building CXX object CMakeFiles/nvui.dir/src/widgets/rows.cpp.o
+[ 36%] Building CXX object CMakeFiles/nvui.dir/src/widgets/timeline.cpp.o
+[ 38%] Linking CXX static library libnvui.a
+[ 38%] Built target nvui
+[ 38%] Built target MeatVideoQt_autogen_timestamp_deps
+[ 38%] Built target qtui_selftest_autogen_timestamp_deps
+[ 38%] Built target qtui_dump_autogen_timestamp_deps
+[ 38%] Built target qtui_export_autogen_timestamp_deps
+[ 38%] Built target qtui_dump_n3c_autogen_timestamp_deps
+[ 38%] Built target qtui_ofx_drv_autogen_timestamp_deps
+[ 38%] Built target qtui_emit_sizes_autogen_timestamp_deps
+[ 38%] Built target qtui_g1eq_autogen_timestamp_deps
+[ 38%] Built target qtui_ofx_session_drv_autogen_timestamp_deps
+[ 38%] Built target qtui_style_grab_autogen_timestamp_deps
+[ 40%] Automatic MOC for target MeatVideoQt
+[ 41%] Automatic MOC for target qtui_selftest
+[ 41%] Built target MeatVideoQt_autogen
+[ 43%] Automatic MOC for target qtui_dump
+[ 43%] Built target qtui_dump_autogen
+[ 44%] Automatic MOC for target qtui_export
+[ 44%] Built target qtui_export_autogen
+[ 46%] Automatic MOC for target qtui_ofx_drv
+[ 46%] Built target qtui_ofx_drv_autogen
+[ 47%] Automatic MOC for target qtui_dump_n3c
+[ 47%] Built target qtui_dump_n3c_autogen
+[ 49%] Automatic MOC for target qtui_emit_sizes
+[ 49%] Built target qtui_emit_sizes_autogen
+[ 50%] Automatic MOC for target qtui_g1eq
+[ 50%] Built target qtui_selftest_autogen
+[ 52%] Automatic MOC for target qtui_style_grab
+[ 52%] Built target qtui_g1eq_autogen
+[ 53%] Automatic MOC for target qtui_ofx_session_drv
+[ 53%] Built target qtui_style_grab_autogen
+[ 55%] Building CXX object CMakeFiles/MeatVideoQt.dir/MeatVideoQt_autogen/mocs_compilation.cpp.o
+[ 55%] Built target qtui_ofx_session_drv_autogen
+[ 56%] Building CXX object CMakeFiles/MeatVideoQt.dir/src/main.cpp.o
+[ 58%] Building CXX object CMakeFiles/qtui_selftest.dir/qtui_selftest_autogen/mocs_compilation.cpp.o
+[ 60%] Building CXX object CMakeFiles/qtui_selftest.dir/tests/selftest.cpp.o
+[ 61%] Linking CXX executable MeatVideoQt.app/Contents/MacOS/MeatVideoQt
+[ 61%] Built target MeatVideoQt
+[ 63%] Building CXX object CMakeFiles/qtui_dump.dir/qtui_dump_autogen/mocs_compilation.cpp.o
+[ 64%] Building CXX object CMakeFiles/qtui_dump.dir/tests/dump.cpp.o
+[ 66%] Linking CXX executable qtui_dump
+[ 66%] Built target qtui_dump
+[ 67%] Building CXX object CMakeFiles/qtui_export.dir/qtui_export_autogen/mocs_compilation.cpp.o
+[ 69%] Building CXX object CMakeFiles/qtui_export.dir/tests/export_cli.cpp.o
+[ 70%] Linking CXX executable qtui_export
+[ 70%] Built target qtui_export
+[ 72%] Building CXX object CMakeFiles/qtui_ofx_drv.dir/qtui_ofx_drv_autogen/mocs_compilation.cpp.o
+[ 73%] Building CXX object CMakeFiles/qtui_ofx_drv.dir/tests/ofx_drv.cpp.o
+[ 75%] Linking CXX executable qtui_selftest
+[ 75%] Built target qtui_selftest
+[ 76%] Building CXX object CMakeFiles/qtui_dump_n3c.dir/qtui_dump_n3c_autogen/mocs_compilation.cpp.o
+[ 78%] Building CXX object CMakeFiles/qtui_dump_n3c.dir/tests/dump_n3c.cpp.o
+[ 80%] Linking CXX executable qtui_ofx_drv
+[ 80%] Built target qtui_ofx_drv
+[ 81%] Building CXX object CMakeFiles/qtui_emit_sizes.dir/qtui_emit_sizes_autogen/mocs_compilation.cpp.o
+[ 83%] Building CXX object CMakeFiles/qtui_emit_sizes.dir/tests/emit_sizes.cpp.o
+[ 84%] Linking CXX executable qtui_emit_sizes
+[ 84%] Built target qtui_emit_sizes
+[ 86%] Building CXX object CMakeFiles/qtui_g1eq.dir/qtui_g1eq_autogen/mocs_compilation.cpp.o
+[ 87%] Building CXX object CMakeFiles/qtui_g1eq.dir/tests/g1_eq.cpp.o
+[ 89%] Linking CXX executable qtui_dump_n3c
+[ 89%] Built target qtui_dump_n3c
+[ 90%] Building CXX object CMakeFiles/qtui_style_grab.dir/qtui_style_grab_autogen/mocs_compilation.cpp.o
+[ 92%] Building CXX object CMakeFiles/qtui_style_grab.dir/tests/style_grab.cpp.o
+[ 93%] Linking CXX executable qtui_g1eq
+[ 93%] Built target qtui_g1eq
+[ 95%] Building CXX object CMakeFiles/qtui_ofx_session_drv.dir/qtui_ofx_session_drv_autogen/mocs_compilation.cpp.o
+[ 96%] Building CXX object CMakeFiles/qtui_ofx_session_drv.dir/tests/ofx_session_drv.cpp.o
+[ 98%] Linking CXX executable qtui_style_grab
+[ 98%] Built target qtui_style_grab
+[100%] Linking CXX executable qtui_ofx_session_drv
+[100%] Built target qtui_ofx_session_drv
+cmake --build qtui/build_main -j 2  60.23s user 5.62s system 204% cpu 32.241 total

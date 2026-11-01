@@ -1,0 +1,19 @@
+{
+ "clip": "sintel/p_y3",
+ "test": "runs/ours_frame/sintel/p_y3/out.mp4",
+ "name": "ours_frame",
+ "static_pairs_pixels": 39486779,
+ "temporal_static": {
+  "rms_d_clean": 0.5371,
+  "rms_d_added": 3.022,
+  "rms_d_out": 0.7793,
+  "keep_clean": 0.4367,
+  "keep_added": 0.0931
+ },
+ "cross_corr": {
+  "added_Y_Cb": -0.4429,
+  "removed_Y_Cb": -0.444,
+  "added_Y_Cr": -0.3694,
+  "removed_Y_Cr": -0.0801
+ }
+}

@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "depth.h"
+#include "fields.h"
 #include "state.h"
 
 namespace nvqt {
@@ -33,13 +34,16 @@ struct OfxSession {
     std::vector<double> times;         // host times of the frames (frame i of the window = times[i])
     int current = 0;
     std::string clip_params;           // the request's ClipParams
+    int field_order = -1;              // INT-4: the host's field order (0 top / 1 bottom first; -1 none / not given)
     std::vector<RestoreMap> restore;   // per frame: the non-finite samples of the raw planes
 };
 
 // ClipParams of a state: the filter preset and the noise profile as the UI saves them, and what the plug-in's render
 // needs (matrix ("auto": by the frame height), backend_params, the effective profile); frame_size null for W, H <= 0
+// INT-4: il (an interlaced clip, the window's Video Scan Type) writes version 2 with "scan": "tff" | "bff" and the
+// field processing (render.P["interlace"], fields.h); without it the text is the progressive version 1, unchanged
 std::string clip_params_text(const PyObj& params, const ProfileState& ps, const std::string& matrix, bool full_range,
-                             int W, int H);
+                             int W, int H, const std::optional<Interlace>& il = std::nullopt);
 // ... of the window's state
 std::string clip_params_json(MainWindow* win);
 

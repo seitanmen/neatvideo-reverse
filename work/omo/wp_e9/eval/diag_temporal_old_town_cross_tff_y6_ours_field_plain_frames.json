@@ -1,0 +1,19 @@
+{
+ "clip": "old_town_cross/tff_y6",
+ "test": "runs/ours_field_plain_frames/old_town_cross/tff_y6/out.mp4",
+ "name": "ours_field_plain_frames",
+ "static_pairs_pixels": 52748854,
+ "temporal_static": {
+  "rms_d_clean": 5.4314,
+  "rms_d_added": 8.4916,
+  "rms_d_out": 1.6828,
+  "keep_clean": 0.1266,
+  "keep_added": 0.0367
+ },
+ "cross_corr": {
+  "added_Y_Cb": -0.2724,
+  "removed_Y_Cb": -0.2177,
+  "added_Y_Cr": -0.217,
+  "removed_Y_Cr": -0.1126
+ }
+}

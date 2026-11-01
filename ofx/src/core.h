@@ -57,4 +57,11 @@ std::vector<float> internal_to_rgb(const Planes& p, int matrix, const Restore* r
 // clip, ci = index of t
 Planes process_frame(const std::vector<const Planes*>& window, int ci, const RenderState& s);
 
+// INT-4: the same field by field for an interlaced state (s.field_first >= 0; qtui fields.h process_fields): window =
+// the frames t - m .. t + m inside the clip (m = field_margin), every field filtered over its neighbours within
+// s.field_radius fields of the field sequence (same parity / half-line shift / plain), then joined
+Planes process_fields(const std::vector<const Planes*>& window, int ci, const RenderState& s);
+// the frames a field window needs on each side (qtui fields.h frame_margin)
+inline int field_margin(const RenderState& s) { return s.field_radius / 2 + 1; }
+
 }  // namespace mvofx

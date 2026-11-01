@@ -55,6 +55,7 @@
 #include "filter_panel.h"
 #include "noise_graph.h"
 #include "look.h"
+#include "fields.h"
 #include "mainwindow.h"
 #include "ofx.h"
 #include "profile_panel.h"
@@ -3390,6 +3391,249 @@ private slots:
         QVERIFY(wait_until([&] { return win->src == test_video() && aft_done(); }));
         QCOMPARE(win->scan_lbl->text(), QString("progressive"));
 
+    }
+
+    // ---------------- INT-3: interlaced clips (scan type, field profiles, field processing, export flags)
+    QString ffmpeg_clip(const QString& name, const QStringList& args) {
+        const QString dst = tmp.filePath(name);
+        if (QFileInfo::exists(dst)) return dst;
+        QProcess p;
+        p.start(QString::fromStdString(tool_path("ffmpeg")), QStringList{"-y", "-v", "error", "-nostdin", "-i", test_video(),
+                                                                       "-frames:v", "6"} + args + QStringList{dst});
+        if (!p.waitForFinished(120000) || p.exitCode() != 0) return QString();
+        return dst;
+    }
+    QMessageBox* scan_message() const { return qobject_cast<QMessageBox*>(win->scan_box.data()); }
+
+    void int3ScanDefaultsAndFieldProfile() {   // INT-3: an interlaced clip opens as its probed scan; the Auto Profile is
+                                               // a Two fields profile; the preview is the field pipeline
+        const QString clip = interlaced_clip("tff");
+        QVERIFY(!clip.isEmpty());
+        win->tabs->setCurrentIndex(0);
+        win->open_video(clip);
+        QVERIFY(wait_until([&] { return win->src == clip && aft_done(); }));
+        QCOMPARE(win->scan, 0);
+        QCOMPARE(win->scan_detected, 0);
+        QCOMPARE(win->scan_btn->text(), QString::fromUtf8("TFF ▾"));
+        QVERIFY(!win->fprof_box->isHidden());
+        QCOMPARE(win->fields_lbl->text(), QString::fromUtf8("Fields: TFF · same parity · radius 2 fields"));
+        const PyObj& b = win->state->profile.base;
+        QCOMPARE(profile_fields(b), std::string("two"));
+        QCOMPARE(b.get("field").as_str(), std::string("top"));
+        QVERIFY(b.get("aft_applied").truthy());
+        QVERIFY(win->profile_panel->info->text().contains("Interlaced"));
+        QVERIFY(win->profile_panel->info->text().contains("Two fields (640x180)"));
+        const PyObj P = win->proc_params();
+        // INT-4 default: the Temporal Radius in fields (R2 -> 2 fields, the genuine's reading)
+        QCOMPARE(P.get("interlace").dump(), std::string("{\"first\": 0, \"mode\": \"same\", \"radius\": 2}"));
+        QVERIFY(!win->state->backend().has("interlace"));          // the parameter dict itself is unchanged
+        // the preview = process_fields on the frames t - 3 .. t + 3, crops are cut from a field-aligned crop
+        const int t = 2;
+        const PyObj prof = *win->state->effective();
+        auto [rgb, orig] = win->engine->process(t, prof, 9001, P, std::nullopt);
+        auto [idx, w] = win->engine->window(t, frame_margin(*interlace_of(P)), std::nullopt);
+        const int ci = static_cast<int>(std::find(idx.begin(), idx.end(), t) - idx.begin());
+        const Planes ref = clip_planes(process_fields(w, ci, *interlace_of(P), prof, P));
+        QVERIFY(rgb == win->engine->to_rgb(ref));
+        auto [crgb, corig] = win->engine->process(t, prof, 9001, P, Crop{37, 50, 101, 120});
+        QCOMPARE(crgb.size(), static_cast<size_t>(101 * 120 * 3));
+        QCOMPARE(corig.size(), crgb.size());
+        // One field (bottom): the profile of the bottom field sequence
+        win->fprof_box->setCurrentIndex(2);
+        win->auto_profile(false);
+        QVERIFY(wait_until([&] { return profile_fields(win->state->profile.base) == "one" && aft_done(); }));
+        QCOMPARE(win->state->profile.base.get("field").as_str(), std::string("bottom"));
+        QVERIFY(win->profile_panel->info->text().contains("One field, bottom (640x180)"));
+        win->fprof_box->setCurrentIndex(0);
+    }
+
+    void int3ProfileJsonFields() {   // INT-3: "fields" round-trips; a profile without it (every older file) is "frame";
+                                     // a progressive profile writes no "fields"
+        QVERIFY(win->state->profile.has_profile());
+        PyObj j = win->state->profile.to_json();
+        const PyObj& ob = j.get("base");
+        PyObj nb = PyObj::dict();
+        for (const auto& k : ob.keys())
+            if (k != "fields" && k != "field") nb.set(k, ob.get(k));
+        j.set("base", nb);
+        const ProfileState po = ProfileState::from_json(j);             // an older file: a full-frame profile
+        QCOMPARE(profile_fields(po.base), std::string("frame"));
+        QCOMPARE(profile_parity(po.base), -1);
+        PyObj fb = nb;
+        fb.set("fields", PyObj::str("one"));
+        fb.set("field", PyObj::str("bottom"));
+        j.set("base", fb);
+        ProfileState pf = ProfileState::from_json(j);
+        pf = ProfileState::from_json(PyObj::parse(pf.to_json().dump(1)));   // through the file text
+        QCOMPARE(profile_fields(pf.base), std::string("one"));
+        QCOMPARE(profile_parity(pf.base), 1);
+        PyObj bad = nb;
+        bad.set("fields", PyObj::integer(2));
+        QCOMPARE(profile_fields(bad), std::string("frame"));
+        const PyObj prog = build_profile(win->frames, 0, win->full_range, win->matrix, "auto", nullptr, nullptr);
+        QVERIFY(!prog.has("fields") && !prog.has("field"));
+    }
+
+    void int3ScanChangeResetsProfile() {   // INT-3: a scan change resets the profile with the genuine's message
+        QVERIFY(win->state->profile.has_profile());
+        win->set_scan(1);
+        QCOMPARE(win->scan, 1);
+        QVERIFY(!win->state->profile.has_profile());
+        QVERIFY(scan_message());
+        QCOMPARE(scan_message()->text(),
+                 QString("The noise profile has been reset because the scan type of the clip has changed."));
+        scan_message()->accept();
+        QCOMPARE(win->scan_btn->text(), QString::fromUtf8("BFF ▾"));
+        QCOMPARE(win->proc_params().get("interlace").get("first").as_int(), 1LL);
+        win->set_scan(-1);
+        QVERIFY(!win->proc_params().has("interlace"));
+        QVERIFY(win->fprof_box->isHidden() && win->fields_lbl->isHidden());
+        QCOMPARE(win->scan_btn->text(), QString::fromUtf8("P ▾"));
+        win->set_scan(0);
+        win->auto_profile(false);
+        QVERIFY(wait_until([&] { return profile_fields(win->state->profile.base) == "two" && aft_done(); }));
+    }
+
+    void int3PrefsFieldMode() {   // INT-3: Preferences > Interlaced clips sets the field mode and how the radius counts
+        if (win->scan != 0) {
+            win->set_scan(0);
+            if (scan_message()) scan_message()->accept();
+        }
+        QDialog* dlg = win->preferences();
+        auto* fm = dlg->findChild<QComboBox*>("field_mode");
+        auto* fr = dlg->findChild<QComboBox*>("field_radius");
+        QVERIFY(fm && fr);
+        QCOMPARE(fm->currentData().toString(), QString("same"));
+        QCOMPARE(fr->currentData().toString(), QString("fields"));      // INT-4 default (the genuine's reading)
+        fm->setCurrentIndex(fm->findData("shift"));
+        fr->setCurrentIndex(fr->findData("frames"));
+        dlg->accept();
+        QCoreApplication::processEvents();
+        QCOMPARE(win->proc_params().get("interlace").dump(), std::string("{\"first\": 0, \"mode\": \"shift\", \"radius\": 4}"));
+        QCOMPARE(settings()->value("interlace/field_mode").toString(), QString("shift"));
+        QVERIFY(!settings()->contains("prefs/field_mode"));          // outside the prefs/ keys of the Python UI
+        QVERIFY(win->fields_lbl->text().contains("half-line shift"));
+        dlg = win->preferences();
+        dlg->findChild<QComboBox*>("field_mode")->setCurrentIndex(0);
+        dlg->findChild<QComboBox*>("field_radius")->setCurrentIndex(0);
+        dlg->accept();
+        QCoreApplication::processEvents();
+        QCOMPARE(win->proc_params().get("interlace").get("radius").as_int(), 2LL);
+        QCOMPARE(settings()->value("interlace/field_radius").toString(), QString("fields"));
+    }
+
+    void int3ExportKeepsFieldOrder() {   // INT-3: the export of an interlaced clip keeps its field order flags
+        for (int sc : {0, 1}) {
+            if (win->scan != sc || !win->state->profile.has_profile()) {
+                win->set_scan(sc);
+                if (scan_message()) scan_message()->accept();
+                win->auto_profile(false);
+                QVERIFY(wait_until([&] { return win->state->profile.has_profile() && aft_done(); }));
+            }
+            const QString dst = tmp.filePath(QString("int3_export_%1.mp4").arg(sc));
+            win->process_video(dst, 1, 3);
+            QVERIFY(wait_until([&] { return win->export_ == nullptr; }, 600) && win->export_ok);
+            QProcess p;
+            p.start(QString::fromStdString(tool_path("ffprobe")),
+                    QStringList{"-v", "error", "-select_streams", "v:0", "-read_intervals", "%+#1", "-show_entries",
+                                "frame=interlaced_frame,top_field_first", "-of", "csv=p=0", dst});
+            QVERIFY(p.waitForFinished(60000));
+            const QStringList fl = QString(p.readAllStandardOutput()).trimmed().split(',');   // (+ side data columns)
+            QVERIFY(fl.size() >= 2);
+            QCOMPARE(fl[0] + "," + fl[1], QString(sc == 0 ? "1,1" : "1,0"));
+            QFile uf(tmp.filePath(QString("int3_export_%1.ui_params.json").arg(sc)));
+            QVERIFY(uf.open(QIODevice::ReadOnly));
+            const PyObj up = PyObj::parse(uf.readAll().toStdString());
+            QCOMPARE(up.get("interlace").get("first").as_int(), static_cast<long long>(sc));
+        }
+    }
+
+    void int3UnknownOrderAsks() {   // INT-3: an interlaced clip without a known order asks for the scan type; a 4:2:2
+                                    // source chosen interlaced reloads with scale=interl=1
+        const QString clip = ffmpeg_clip("int3_prores_noild.mov", {"-vf", "setfield=tff", "-c:v", "prores_ks"});
+        QVERIFY(!clip.isEmpty());
+        win->open_video(clip);
+        QVERIFY(wait_until([&] { return win->src == clip && idle(); }));
+        QCOMPARE(win->scan_detected, -2);
+        QCOMPARE(win->scan, -1);
+        QVERIFY(scan_message());
+        QCOMPARE(scan_message()->text(), QString("Please specify the scan type of the current video clip."));
+        QAbstractButton* bff = nullptr;
+        for (QAbstractButton* b : scan_message()->buttons())
+            if (b->text() == "Interlaced, bottom field first") bff = b;
+        QVERIFY(bff);
+        const bool had = win->state->profile.has_profile();
+        bff->click();
+        if (had) {                    // Round 2 (L-2): the reload for the read filter shows the genuine's reset text too
+            QVERIFY(scan_message());
+            QCOMPARE(scan_message()->text(),
+                     QString("The noise profile has been reset because the scan type of the clip has changed."));
+            scan_message()->accept();
+        }
+        QVERIFY(wait_until([&] { return win->scan == 1 && win->src == clip && !win->frames.empty() && idle(); }));
+        const VideoInfo vi = probe(clip.toStdString());
+        std::vector<Frame> ref, plain;
+        read_frames(clip.toStdString(), vi.W, vi.H, 0, -1, vi.fps, [&](int, Frame&& f) {
+            ref.push_back(std::move(f));
+            return true;
+        }, "scale=interl=1");
+        read_frames(clip.toStdString(), vi.W, vi.H, 0, -1, vi.fps, [&](int, Frame&& f) {
+            plain.push_back(std::move(f));
+            return true;
+        });
+        QCOMPARE(win->frames.size(), ref.size());
+        for (size_t i = 0; i < ref.size(); ++i) QVERIFY(win->frames[i].Cb == ref[i].Cb && win->frames[i].Y == ref[i].Y);
+        QVERIFY(plain[0].Cb != ref[0].Cb);                            // the plain conversion mixes the fields' chroma
+        win->open_video(test_video());                                // back to the test video (later items, if any)
+        QVERIFY(wait_until([&] { return win->src == test_video() && aft_done(); }));
+        QCOMPARE(win->scan, -1);
+        QVERIFY(!win->proc_params().has("interlace"));
+    }
+
+    void int3UnknownOrder420AutoProfile() {   // Round 2 (L-2): a 4:2:0 clip of unknown order (stream tb, frames not
+                                              // flagged) asks; the answer runs the Auto Profile held back (no reload)
+        const QString clip = ffmpeg_clip("int3_tb_noflag.mkv", {"-c:v", "copy", "-field_order", "tb"});
+        QVERIFY(!clip.isEmpty());
+        win->state->set_profile(ProfileState(), "test");
+        win->open_video(clip);
+        QVERIFY(wait_until([&] { return win->src == clip && idle(); }));
+        QCOMPARE(win->scan_detected, -2);
+        QVERIFY(!win->state->profile.has_profile());                  // Auto Profile waits for the answer
+        QVERIFY(scan_message());
+        QAbstractButton* tff = nullptr;
+        for (QAbstractButton* b : scan_message()->buttons())
+            if (b->text() == "Interlaced, top field first") tff = b;
+        QVERIFY(tff);
+        const auto nframes = win->frames.size();
+        tff->click();
+        QCOMPARE(win->scan, 0);                                       // 4:2:0: no reload
+        QCOMPARE(win->frames.size(), nframes);
+        QVERIFY(wait_until([&] { return aft_done(); }));
+        QCOMPARE(profile_fields(win->state->profile.base), std::string("two"));
+        win->open_video(test_video());                                // back to the test video
+        QVERIFY(wait_until([&] { return win->src == test_video() && aft_done(); }));
+        QCOMPARE(win->scan, -1);
+    }
+
+    void int4ScanChangeClearsUndo() {   // INT-4 (L-3): a scan change starts a new undo history (an undo would bring
+                                        // back a profile made for the other scan)
+        if (!win->state->profile.has_profile()) {
+            win->auto_profile(false);
+            QVERIFY(wait_until([&] { return aft_done(); }));
+        }
+        win->state->set_param("amt_Y", PyObj::real(55.0));
+        QVERIFY(win->state->undo->count() > 0);
+        const int was = win->scan;
+        win->set_scan(was < 0 ? 0 : -1);
+        if (scan_message()) scan_message()->accept();
+        QCOMPARE(win->state->undo->count(), 0);
+        QVERIFY(!win->state->undo->canUndo());
+        QVERIFY(!win->state->profile.has_profile());
+        win->set_scan(was);
+        if (scan_message()) scan_message()->accept();
+        win->auto_profile(false);
+        QVERIFY(wait_until([&] { return aft_done(); }));
+        win->state->set_param("amt_Y", PyObj::real(70.0));
     }
 
     void cleanupTestCase() {

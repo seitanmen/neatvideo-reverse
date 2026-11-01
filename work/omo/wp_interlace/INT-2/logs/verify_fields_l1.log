@@ -1,0 +1,45 @@
+nv_fields_test selftest: checks 528636 failures 0
+synthetic frames (numpy fields + round trip): 96/96 cases
+ffv1_tff.mkv: 640x360, ffprobe field_order = tb, first frame interlaced_frame 1 top_field_first 1 -> first field top
+  yuv420p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  separatefields (top first): 4/4 frames, all 3 planes byte-equal to split_frame
+  yuv420p10le  4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  yuv444p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  gbrpf32le    4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+ffv1_bff.mkv: 640x360, ffprobe field_order = bt, first frame interlaced_frame 1 top_field_first 0 -> first field bottom
+  yuv420p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  separatefields (bottom first): 4/4 frames, all 3 planes byte-equal to split_frame
+  yuv420p10le  4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  yuv444p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  gbrpf32le    4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+ffv1_tff.mov: 640x360, ffprobe field_order = tb, first frame interlaced_frame 1 top_field_first 1 -> first field top
+  yuv420p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  separatefields (top first): 4/4 frames, all 3 planes byte-equal to split_frame
+  yuv420p10le  4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  yuv444p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  gbrpf32le    4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+prores_tff.mov: 640x360, ffprobe field_order = tb, first frame interlaced_frame 1 top_field_first 1 -> first field top
+  yuv420p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  separatefields: skipped (source yuv422p10le: the yuv420p conversion is not field-aware)
+  yuv420p10le  4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  yuv444p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  gbrpf32le    4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+prores_bff.mov: 640x360, ffprobe field_order = bt, first frame interlaced_frame 1 top_field_first 0 -> first field bottom
+  yuv420p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  separatefields: skipped (source yuv422p10le: the yuv420p conversion is not field-aware)
+  yuv420p10le  4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  yuv444p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  gbrpf32le    4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+mpeg2_tt.mpg: 640x360, ffprobe field_order = tt, first frame interlaced_frame 1 top_field_first 1 -> first field top
+  yuv420p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  separatefields (top first): 4/4 frames, all 3 planes byte-equal to split_frame
+  yuv420p10le  4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  yuv444p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  gbrpf32le    4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+mpeg2_bb.mpg: 640x360, ffprobe field_order = bb, first frame interlaced_frame 1 top_field_first 0 -> first field bottom
+  yuv420p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  separatefields (bottom first): 4/4 frames, all 3 planes byte-equal to split_frame
+  yuv420p10le  4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  yuv444p      4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+  gbrpf32le    4 frames: fields == numpy and join == frame: yes (checks 24 failures 0)
+ALL BYTE-EXACT

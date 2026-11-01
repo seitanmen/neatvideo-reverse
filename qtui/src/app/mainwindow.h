@@ -11,6 +11,7 @@
 #include <QDialog>
 #include <QLabel>
 #include <QMainWindow>
+#include <QPointer>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSettings>
@@ -32,6 +33,7 @@
 #include "automatch.h"
 #include "engine.h"
 #include "export.h"
+#include "fields.h"
 #include "filter_panel.h"
 #include "nvcore.h"
 #include "state.h"
@@ -81,6 +83,25 @@ public:
     std::optional<PixFmt> fmt;            // processing format of the loaded frames (none: no video / OFX host)
     int ofx_depth = 0;                    // OFX host mode: --depth 8 / 16 / 32 (0 = standalone)
     std::optional<int> quality_pct, completeness_pct;
+    // INT-3: the Video Scan Type in use (genuine "Video Scan Type"; the bottom row's scan button): -1 progressive,
+    // 0 interlaced top field first, 1 interlaced bottom field first.  scan_detected: the probe's first_field (-1
+    // progressive / unknown, -2 interlaced without a known order: the user is asked).  field_kind / field_one: the
+    // profile of an interlaced clip (Prepare page: Two fields, One field top / bottom)
+    int scan = -1, scan_detected = -1;
+    bool ofx_scan = false;            // INT-4: the OFX plug-in's window (--ofx-session): the scan button is enabled
+    std::string field_mode_pref = "same", field_radius_pref = "fields";   // Preferences > Interlaced clips
+    std::string field_kind = "two";
+    int field_one = 0;
+    QToolButton* scan_btn = nullptr;
+    QComboBox* fprof_box = nullptr;
+    QLabel* fields_lbl = nullptr;     // Adjust page: the field processing in use
+    // the scan change of the scan button (reset: the profile is reset as the genuine does, with its message)
+    void set_scan(int s, bool reset = true);
+    QWidget* ask_scan();              // "Please specify the scan type of the current video clip."
+    std::optional<Interlace> interlace() const;   // the field processing (nullopt: progressive)
+    int field_radius() const;         // the Temporal Radius in fields (Preferences: Interlaced radius)
+    PyObj proc_params() const;        // state->backend() + "interlace" for an interlaced clip (fields.h)
+    QPointer<QWidget> scan_box;       // the last box shown by set_scan / ask_scan (tests; null once closed)
     std::string prof_clean;              // the signature of the saved / loaded profile ("" = none)
 
     // widgets
@@ -248,6 +269,8 @@ private:
     static void remove_export_files(const std::vector<QString>& files);
     void run_batch(const QStringList& files, const QString& outdir, const QString& mode);
     void install_frames();
+    void update_scan_widgets();
+    std::optional<int> scan_force;    // the scan of the next open_video (a reload for the interlaced read filter)
     QString depth_text() const;
     void update_match();
     QTimer* match_timer = nullptr;
