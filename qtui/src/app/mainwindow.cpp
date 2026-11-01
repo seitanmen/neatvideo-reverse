@@ -8,6 +8,7 @@
 #include <QListWidget>
 #include <QLineEdit>
 #include <QFormLayout>
+#include <QGroupBox>
 #include <QDoubleSpinBox>
 #include <QDialogButtonBox>
 #include <QDialog>
@@ -341,6 +342,7 @@ MainWindow::MainWindow(const QString& video, QWidget* parent) : QMainWindow(pare
     connect(pp, &ProfilePanel::resetFineTune, this, [this] { reset_fine_tune(); });
     connect(pp, &ProfilePanel::profileCheck, this, [this](bool on) { set_profile_check(on); });
     connect(pp, &ProfilePanel::editDevice, this, [this](QString n) { edit_device(n); });
+    connect(pp, &ProfilePanel::savedProfiles, this, [this] { show_saved_profiles(); });
     connect(pp, &ProfilePanel::tuneEdited, this, [this](QString k, double val) { state->set_tune(k.toStdString(), val); });
     connect(pp, &ProfilePanel::editStarted, this, [this] { state->new_edit(); });
     connect(pp->curve, &CurveEditor::edited, this,
@@ -373,6 +375,10 @@ MainWindow::MainWindow(const QString& video, QWidget* parent) : QMainWindow(pare
     nlc_timer->setSingleShot(true);
     nlc_timer->setInterval(100);
     connect(nlc_timer, &QTimer::timeout, this, &MainWindow::request_nlc);
+    match_timer = new QTimer(this);          // the Match row after a frame change (thinned out)
+    match_timer->setSingleShot(true);
+    match_timer->setInterval(250);
+    connect(match_timer, &QTimer::timeout, this, &MainWindow::update_match);
     connect(cancel_btn, &QPushButton::clicked, this, [this] { cancel_export(); });
 
     const QVariant dp = settings()->value("default_preset");
@@ -452,7 +458,12 @@ QWidget* MainWindow::prepare_toolbar() {
     check_btn->setStyleSheet("QToolButton{padding:3px 8px} QToolButton:checked{background:#3d5fd0; "
                              "color:white; border:1px solid #2a3f90; border-radius:3px}");
     connect(check_btn, &QToolButton::toggled, this, [this](bool on) { set_profile_check(on); });
-    for (QToolButton* b : {auto_btn, generic_btn, load_btn}) h->addWidget(b);
+    match_btn = tool("Auto Match", "repro: Auto Match finds and loads the profile of the Profile folder (Preferences > "
+                     "Folders) that matches the current frame best (the reproduction's own score; the genuine OFX Auto "
+                     "Match is empty and hidden). Click again while it runs to cancel",
+                     false, st, QStyle::SP_FileDialogContentsView);
+    connect(match_btn, &QToolButton::clicked, this, [this] { auto_match(); });
+    for (QToolButton* b : {auto_btn, generic_btn, load_btn, match_btn}) h->addWidget(b);
     h->addStretch(1);
     h->addWidget(check_btn);
     variants_btn = tool("Variants", QString(N_A) + " (Variants: alternative filter settings)");
@@ -676,7 +687,9 @@ void MainWindow::build_menus() {
     add(m, "p_check", "Profile Check", nullptr, QKeySequence("Ctrl+K"), true,
         "Profile Check: Assist Image preview to find the optimal Noise Level (same toggle as Begin)", true,
         [this](bool on) { set_profile_check(on); });
-    add(m, "p_match", "Auto Match (n/a)", nullptr, QKeySequence("Ctrl+M"), false, "Not available in the reproduction");
+    add(m, "p_match", "Auto Match (repro)", [this] { auto_match(); }, QKeySequence("Ctrl+M"), true,
+        "repro: load the Profile folder's profile that matches the current frame best (the reproduction's own score; "
+        "the genuine OFX Auto Match is empty and hidden)");
     add(m, "p_converter", U("Profile Converter…"), nullptr, QKeySequence(), false,
         "Not available: genuine .dnp profiles are not read or written by the reproduction");
 
@@ -1106,6 +1119,7 @@ void MainWindow::on_frame(int) {
     schedule();
     request_pcheck();
     request_nlc();
+    match_timer->start();
 }
 
 void MainWindow::on_params(const QStringList& keys) {
@@ -1246,6 +1260,7 @@ void MainWindow::on_profile() {
     if (info) fi = std::make_pair(info->W, info->H);
     profile_panel->show_profile(ps, eff, fi);
     update_quality();
+    update_match();
     if (!ps.has_profile())
         profile_panel->set_name(std::nullopt, false);
     else
@@ -1634,6 +1649,11 @@ void MainWindow::profile_job(bool noisy, std::optional<Rect> area, const QString
         say("open a video first");
         return;
     }
+    // N4e: the later request wins - a running Auto Match is cancelled and its result, if already on its way, dropped
+    if (runner->busy("automatch")) {
+        ++automatch_req;
+        runner->cancel("automatch");
+    }
     const long req = ++prof_req;
     const std::vector<Frame>* fr = &frames;
     const bool frr = full_range;
@@ -1649,13 +1669,28 @@ void MainWindow::profile_job(bool noisy, std::optional<Rect> area, const QString
             const int f = noisy ? noisiest_frame(*fr, cancel) : cur;
             std::vector<int> a;
             if (area) a = {area->y0, area->x0, area->h, area->w};
-            return ::nvqt::build_profile(*fr, f, frr, mat, mode, area ? &a : nullptr, cancel);
+            PyObj base = ::nvqt::build_profile(*fr, f, frr, mat, mode, area ? &a : nullptr, cancel);
+            // N4e: the repro match model of the area (the AFT's profile model, kept in the file as "match_model")
+            std::optional<std::vector<float>> mm;
+            try {
+                mm = match_model_of(base, (*fr)[static_cast<size_t>(aft_frame(base, fr->size()))], frr, mat, cancel);
+            } catch (const Cancelled&) {
+                throw ProfileCancelled();
+            }
+            return std::make_pair(base, mm);
         },
-        [this, req, text](const std::any& tag, std::any& res) {
+        [this, req, text, frr, mat, dep = depth_used](const std::any& tag, std::any& res) {
             if (std::any_cast<long>(tag) != req || req != prof_req.load()) return;
             busy("profile", false);
             ProfileState n;
-            n.base = std::any_cast<PyObj>(res);
+            auto built = std::any_cast<std::pair<PyObj, std::optional<std::vector<float>>>>(res);
+            n.base = built.first;
+            if (built.second && !frames.empty()) {
+                const Rect r = area_rect(n.base.get("area"));
+                const int xywh[4] = {r.x0, r.y0, r.w, r.h};
+                n.match = match_model_json(*built.second, frames[0].W, frames[0].H, xywh,
+                                           static_cast<int>(n.base.get("sub").as_int()), mat, frr, dep);
+            }
             n.device = state->profile.device;
             state->set_profile(n, text);
             const int uf = static_cast<int>(n.base.get("ui_frame").as_int());
@@ -1841,6 +1876,214 @@ void MainWindow::load_profile(const QString& path_in) {
 }
 
 void MainWindow::reset_profile() { state->set_profile(ProfileState(), "Reset Profile"); }
+
+// ---------------------------------------------------------------- N4e: saved profiles, repro Auto Match, Match row
+QMenu* MainWindow::saved_profiles_menu() {
+    // genuine ProfilePopupButton (FUN_0002342c / FUN_00026954): the Profile folder, folders first, case-insensitive names
+    const std::vector<ProfileEntry> es = list_profiles(profile_dir(*settings()));
+    if (es.empty()) return nullptr;
+    auto* menu = new QMenu(this);
+    std::function<void(QMenu*, const std::vector<ProfileEntry>&)> fill = [&](QMenu* m, const std::vector<ProfileEntry>& v) {
+        for (const ProfileEntry& e : v) {
+            if (e.dir) {
+                QMenu* sm = m->addMenu(e.name);
+                if (e.children.empty()) sm->addAction("(empty)")->setEnabled(false);
+                fill(sm, e.children);
+                continue;
+            }
+            const QString path = e.path;
+            QAction* a = m->addAction(e.name);
+            a->setData(path);
+            a->setToolTip(QDir::toNativeSeparators(path));
+            connect(a, &QAction::triggered, this, [this, path] { load_profile(path); });
+        }
+    };
+    fill(menu, es);
+    return menu;
+}
+
+QWidget* MainWindow::show_saved_profiles() {
+    QMenu* m = saved_profiles_menu();
+    if (!m) return info_box("Show saved noise profiles", no_profiles_text(profile_dir(*settings())));
+    connect(m, &QMenu::aboutToHide, m, &QObject::deleteLater);
+    QToolButton* b = profile_panel->saved;
+    m->popup(b->mapToGlobal(QPoint(0, b->height())));
+    return m;
+}
+
+void MainWindow::auto_match() {
+    // the reproduction's own Auto Match (automatch.h, native/nvcore_c_match.h): not the genuine (an empty slot there)
+    if (runner->busy("automatch")) {
+        runner->cancel("automatch");
+        say(U("Auto Match (repro): cancelling…"));
+        return;
+    }
+    if (frames.empty()) {
+        say("Auto Match (repro): open a video first");
+        return;
+    }
+    const QString dir = profile_dir(*settings());
+    const int cur = std::max(0, std::min(timeline->frame(), static_cast<int>(frames.size()) - 1));
+    if (profile_files(list_profiles(dir)).empty()) {
+        AutoMatchResult r;
+        r.dir = dir;
+        r.frame = cur;
+        automatch_result = r;
+        say("Auto Match (repro): no profiles in the Profile folder " + QDir::toNativeSeparators(dir));
+        info_box("Auto Match (repro)", no_profiles_text(dir));
+        return;
+    }
+    // the later request wins: a running Auto / Build Profile is cancelled as a new profile request cancels it (its
+    // result is dropped by prof_req; the Auto Fine-Tune after it drops its own result when the profile changed)
+    if (busy_slots.count("profile")) {
+        ++prof_req;
+        runner->cancel("profile");
+        busy("profile", false);
+    }
+    const long req = ++automatch_req;
+    const Frame fr = frames[static_cast<size_t>(cur)];
+    const bool frr = full_range;
+    const std::string mat = matrix, dep = depth_used;
+    busy("automatch", true);
+    say(U("Auto Match (repro): scoring the profiles of ") + QDir::toNativeSeparators(dir) +
+        QString(" against frame %1…").arg(cur));
+    runner->submit(
+        "automatch", QString("automatch"),
+        [dir, fr, cur, frr, mat, dep](Task& task) -> std::any {
+            const CancelFn cancel = [&task] { return task.cancelled.load(); };
+            return run_auto_match(dir, fr, cur, frr, mat, dep, cancel);
+        },
+        [this, req](const std::any&, std::any& res) {
+            busy("automatch", false);
+            if (req != automatch_req) return;            // an Auto / Build Profile started after it
+            AutoMatchResult r = std::any_cast<AutoMatchResult>(res);
+            std::map<std::string, int> skipped;
+            int scored = 0;
+            for (const AutoMatchEntry& e : r.entries) {
+                if (e.status == "scored")
+                    ++scored;
+                else
+                    ++skipped[e.status];
+            }
+            QString sk;
+            for (const auto& [k, n] : skipped) sk += (sk.isEmpty() ? "" : ", ") + QString("%1 %2").arg(n).arg(Q(k));
+            sk = sk.isEmpty() ? QString() : " (skipped: " + sk + ")";
+            const QString head = U("Auto Match (repro): ");
+            if (scored == 0)
+                say(head + QString("none of the %1 profiles can be compared").arg(r.entries.size()) + sk);
+            else if (r.status == 1)
+                say(head + "the frame is too small (< 48 px) to compare");
+            else if (r.status == 4)
+                say(head + QString("every 32x32 tile of frame %1 is clipped: nothing to compare").arg(r.frame));
+            else if (r.status == 5)
+                say(head + QString("FindFlatArea found no area in frame %1 for the frame's own noise model (status %2): "
+                                   "try another frame").arg(r.frame).arg(r.ref_status));
+            else if (r.status != 0)
+                say(head + QString("scoring failed (%1)").arg(r.status));
+            else if (r.best < 0)
+                say(head + QString("no profile matches frame %1 (%2 scored, all 0%)").arg(r.frame).arg(scored) + sk);
+            if (r.status == 0 && r.best >= 0) {
+                const AutoMatchEntry& e = r.entries[static_cast<size_t>(r.best)];
+                const ProfileState ps = r.states[static_cast<size_t>(r.best)];
+                prof_clean = ps.to_json().dump(-1, true);
+                state->set_profile(ps, "Auto Match (repro)");
+                say(head + "loaded " + e.name +
+                    QString(" — match %1% (score %2; tiles > 0.5: profile %3, the frame's own model %4, of %5) against "
+                            "frame %6; %7 of %8 profiles scored")
+                        .arg(qRound(e.score * 100.0))
+                        .arg(e.score, 0, 'f', 4)
+                        .arg(e.accept)
+                        .arg(r.ref_accept)
+                        .arg(r.used)
+                        .arg(r.frame)
+                        .arg(scored)
+                        .arg(r.entries.size()) +
+                    sk);
+            }
+            automatch_result = std::move(r);
+        },
+        [this, req](const std::any&, const QString& m) {
+            busy("automatch", false);
+            if (req != automatch_req) return;
+            if (m.startsWith("Cancelled")) {
+                say("Auto Match (repro): cancelled");
+                return;
+            }
+            failed("automatch", m);
+        });
+}
+
+void MainWindow::update_match() {
+    // the Match row: the repro Auto Match score of the current profile against the current frame
+    match_timer->stop();
+    const ProfileState& ps = state->profile;
+    QString why;
+    if (!ps.has_profile() || frames.empty())
+        why = "no profile";
+    else if (ps.match.is_none())
+        why = "this profile has no match model (saved before N4e, or by the Python UI / Batch Profiler): rebuild it";
+    else if (!sub_fits(ps, frame_sub(frames[0])))
+        why = "the profile was made at another chroma format";
+    if (!why.isEmpty()) {
+        ++match_req;
+        match_key.reset();
+        match_score.reset();
+        profile_panel->set_match(std::nullopt, why);
+        return;
+    }
+    const int cur = std::max(0, std::min(timeline->frame(), static_cast<int>(frames.size()) - 1));
+    const std::string key = std::to_string(cur) + "|" + std::to_string(engine_id) + "|" + ps.match.dump();
+    if (match_key && *match_key == key) return;
+    match_key = key;
+    const long req = ++match_req;
+    const Frame fr = frames[static_cast<size_t>(cur)];
+    const std::vector<std::vector<float>> models = {match_model_words(ps.match)};
+    const bool frr = full_range;
+    const std::string mat = matrix;
+    const std::string rkey = std::to_string(cur) + "|" + std::to_string(engine_id);
+    std::optional<RefModel> cached;
+    if (ref_cache && ref_cache->first == rkey) cached = ref_cache->second;
+    runner->cancel("match");
+    runner->submit(
+        "match", req,
+        [fr, models, frr, mat, cached](Task& task) -> std::any {
+            const CancelFn cancel = [&task] { return task.cancelled.load(); };
+            const RefModel ref = cached ? *cached : reference_model(fr, frr, mat, cancel);
+            MatchScores ms;
+            ms.status = 5;
+            if (!ref.words.empty()) ms = match_scores(fr, frr, mat, ref.words, models, cancel);
+            return std::make_pair(ref, ms);
+        },
+        [this, cur, rkey](const std::any& tag, std::any& res) {
+            if (std::any_cast<long>(tag) != match_req) return;
+            const auto [ref, ms] = std::any_cast<std::pair<RefModel, MatchScores>>(res);
+            ref_cache = std::make_pair(rkey, ref);
+            if (ms.status == 0) {
+                match_score = ms.scores[0];
+                profile_panel->set_match(match_score, QString("frame %1: score %2; tiles > 0.5: profile %3, the frame's "
+                                                              "own model %4 (%5x%6 at x %7, y %8), of %9")
+                                                          .arg(cur)
+                                                          .arg(ms.scores[0], 0, 'f', 4)
+                                                          .arg(ms.accept[0])
+                                                          .arg(ms.ref_accept)
+                                                          .arg(ref.area[2])
+                                                          .arg(ref.area[3])
+                                                          .arg(ref.area[0])
+                                                          .arg(ref.area[1])
+                                                          .arg(ms.used));
+            } else {
+                match_score.reset();
+                profile_panel->set_match(std::nullopt,
+                                         ms.status == 4   ? QString("every 32x32 tile of the frame is clipped")
+                                         : ms.status == 5 ? QString("FindFlatArea found no area of the frame for its own model")
+                                                          : QString("cannot score (%1)").arg(ms.status));
+            }
+        },
+        [this](const std::any& tag, const QString& m) {
+            if (std::any_cast<long>(tag) != match_req || m.startsWith("Cancelled")) return;
+            failed("match", m);
+        });
+}
 
 void MainWindow::copy_profile() {
     if (state->profile.has_profile()) {
@@ -2087,6 +2330,29 @@ QDialog* MainWindow::preferences() {
     f->addRow(native);
     f->addRow(aft);
     f->addRow("ffmpeg (directory or binary)", ffw);
+    // N4e: Folders > Profile folder (genuine OptionsDialog: profileFolderGroupBox, "Select profile folder",
+    // resetProfileDirButton); stored as prefs/profile_dir, the default when empty
+    auto* folders = new QGroupBox("Folders: Profile folder");
+    folders->setToolTip("Folder used by Meat Video to store device noise profiles (Show saved noise profiles, Auto "
+                        "Match); prefs/profile_dir");
+    auto* pdl = new QHBoxLayout(folders);
+    auto* pdir = new QLineEdit(profile_dir(*settings()));
+    pdir->setObjectName("profile_dir");
+    pdir->setPlaceholderText(default_profile_dir());
+    auto* pd_choose = new QPushButton(U("…"));
+    pd_choose->setToolTip("Select profile folder");
+    auto* pd_reset = new QPushButton("Default");
+    pd_reset->setObjectName("profile_dir_reset");
+    pd_reset->setToolTip("Reset profile folder to default Meat Video profile folder");
+    pdl->addWidget(pdir, 1);
+    pdl->addWidget(pd_choose);
+    pdl->addWidget(pd_reset);
+    connect(pd_choose, &QPushButton::clicked, dlg, [dlg, pdir] {
+        const QString d = QFileDialog::getExistingDirectory(dlg, "Select profile folder", pdir->text());
+        if (!d.isEmpty()) pdir->setText(QDir::toNativeSeparators(d));
+    });
+    connect(pd_reset, &QPushButton::clicked, dlg, [pdir] { pdir->setText(default_profile_dir()); });
+    f->addRow(folders);
     auto* bb = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
     connect(bb, &QDialogButtonBox::accepted, dlg, &QDialog::accept);
     connect(bb, &QDialogButtonBox::rejected, dlg, &QDialog::reject);
@@ -2100,7 +2366,7 @@ QDialog* MainWindow::preferences() {
         box->open();
         return false;
     };
-    connect(dlg, &QDialog::accepted, this, [this, jobs, crf, audio, area, mem, autop, depthb, aft, ff] {
+    connect(dlg, &QDialog::accepted, this, [this, jobs, crf, audio, area, mem, autop, depthb, aft, ff, pdir] {
         const bool reload = depthb->currentData().toString() != prefs["depth"].toString();
         prefs["jobs"] = jobs->value();
         prefs["crf"] = crf->value();
@@ -2117,6 +2383,11 @@ QDialog* MainWindow::preferences() {
             st->remove("prefs/ffmpeg");
         else
             st->setValue("prefs/ffmpeg", fp);
+        const QString pd = QDir::cleanPath(QDir::fromNativeSeparators(pdir->text().trimmed()));
+        if (pdir->text().trimmed().isEmpty() || pd == default_profile_dir())
+            st->remove(PROFILE_DIR_KEY);          // the default (follows $MEATVIDEO_PATH)
+        else
+            st->setValue(PROFILE_DIR_KEY, pd);
         const std::string dir = find_ffmpeg_dir(fp.toStdString());
         if (!dir.empty()) set_ffmpeg_dir(dir);
         if (reload && !src.isEmpty() && !export_ && !ofx_depth) {
@@ -2171,18 +2442,18 @@ QDialog* MainWindow::profile_viewer() {
         settings()->setValue("prefs/profile_mode", m);
     });
     f->addRow("Profile mode (repro):", mode);
-    std::string area_s, match, ratios;
+    std::string area_s, area_st, ratios;
     if (!state->profile.has_profile()) {
         area_s = "(no profile)";
-        match = U("—").toStdString();
+        area_st = U("—").toStdString();
         ratios = U("—").toStdString();
     } else {
         const Rect r = area_rect(base.get("area"));
         area_s = std::to_string(r.w) + "x" + std::to_string(r.h) + " at (x " + std::to_string(r.x0) + ", y " +
                  std::to_string(r.y0) + ") \xc2\xb7 frame " + (base.has("ui_frame") ? pystr(base.get("ui_frame")) : "?");
         const PyObj& st = base.get("flat_status");
-        match = st.is_none() ? "manual area" : flat_name(st);
-        if (base.get("aft_applied").truthy()) match += " \xc2\xb7 AFT applied";
+        area_st = st.is_none() ? "manual area" : flat_name(st);
+        if (base.get("aft_applied").truthy()) area_st += " \xc2\xb7 AFT applied";
         const PyObj& br = base.get("band_ratio").get("Y");
         for (size_t i = 0; i < br.size(); ++i) ratios += (i ? " " : "") + pyfmt("%.2f", br[i].as_double());
     }
@@ -2192,7 +2463,8 @@ QDialog* MainWindow::profile_viewer() {
         return l;
     };
     f->addRow("Sample area:", label(area_s, "area"));
-    f->addRow("Match:", label(match, "match"));
+    // N4e: was "Match:" (the FindFlatArea status); renamed, not the genuine Match (the repro score is the panel's Match)
+    f->addRow("Area status (repro):", label(area_st, "area_status"));
     f->addRow("Band ratios (Y, repro):", label(ratios, "ratios"));
     v->addLayout(f);
     auto* g = new NoiseGraph();

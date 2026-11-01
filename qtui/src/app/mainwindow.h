@@ -29,6 +29,7 @@
 #include <string>
 #include <vector>
 
+#include "automatch.h"
 #include "engine.h"
 #include "export.h"
 #include "filter_panel.h"
@@ -186,6 +187,15 @@ public:
     std::function<void(QCloseEvent*)> close_hook;         // before the close clean-up (OFX: write the frame)
     std::function<void(QCloseEvent*)> after_close_hook;   // after it (OFX: quit the application)
 
+    // N4e: the saved-profile list of the Profile folder (genuine ProfilePopupButton) and the repro Auto Match + Match row
+    QToolButton* match_btn = nullptr;
+    void auto_match();                                  // a second call while it runs cancels it
+    QMenu* saved_profiles_menu();                       // nullptr: the Profile folder lists nothing
+    QWidget* show_saved_profiles();                     // the menu, or the box with the genuine "no profiles" text
+    std::optional<AutoMatchResult> automatch_result;    // the last finished Auto Match
+    std::optional<double> match_score;                  // the Match row's score (nullopt: n/a)
+    bool match_idle() const { return !match_timer->isActive() && !runner->busy("match"); }
+
     // numbers of the selection (display.noise_level / not_uniform), cached
     std::optional<double> nl(int f, std::optional<Rect> rect);
     const std::vector<float>& frame_rgb(int t);
@@ -239,6 +249,12 @@ private:
     void run_batch(const QStringList& files, const QString& outdir, const QString& mode);
     void install_frames();
     QString depth_text() const;
+    void update_match();
+    QTimer* match_timer = nullptr;
+    long match_req = 0;
+    long automatch_req = 0;               // the current Auto Match request (an Auto / Build Profile request bumps it)
+    std::optional<std::string> match_key;
+    std::optional<std::pair<std::string, RefModel>> ref_cache;   // the frame's own match model ("frame|engine")
 
     int page_ = 0;
     std::map<int, std::string> view_modes{{0, "YCrCb +"}, {1, "Normal"}};

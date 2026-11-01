@@ -30,6 +30,7 @@
 #include <QPushButton>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QStandardPaths>
 #include <QTest>
 #include <QToolButton>
 
@@ -47,6 +48,7 @@
 #include <functional>
 #include <sstream>
 
+#include "automatch.h"
 #include "depth.h"
 #include "export.h"
 #include "filter_panel.h"
@@ -124,7 +126,8 @@ class SelfTest : public QObject {
         static const QStringList pure = {"pyFloatRepr", "pyJsonRoundTrip", "pyIntFloatAsPython", "defaultsMapToV5",
                                          "coerceRules", "autoCompleteBins", "selectionColours", "loadAndAutoProfile",
                                          "depthConversionsRoundTrip", "ofxArgsAndNoFrames", "ofxTinyFramesAsPython",
-                                         "ffmpegSearchOrder"};
+                                         "ffmpegSearchOrder", "n4eDefaultFolderAndEnv", "n4eListOrderAndEmptyText",
+                                         "n4eMatchModelJson", "n4eBestMatchRules", "n4eMatchScoreStatuses"};
         return pure.contains(item);
     }
     void ensure_window() {
@@ -193,6 +196,85 @@ class SelfTest : public QObject {
         win->filter_panel->nl_check->button->click();
         QVERIFY(nlc_shown());
     }
+
+    // ---------------- N4e helpers (Profile folder, saved-profile list, repro Auto Match)
+    QString n4e_dir(const QString& name) {   // a fresh folder in the temporary directory
+        const QString d = tmp.filePath("n4e/" + name);
+        QDir(d).removeRecursively();
+        QDir().mkpath(d);
+        return d;
+    }
+    static void put(const QString& path, const std::string& text) {
+        QDir().mkpath(QFileInfo(path).absolutePath());
+        std::ofstream f(path.toStdString(), std::ios::binary);
+        f << text;
+    }
+    static void set_profile_dir(const QString& d) {
+        auto s = settings();
+        if (d.isEmpty())
+            s->remove(PROFILE_DIR_KEY);
+        else
+            s->setValue(PROFILE_DIR_KEY, d);
+        s->sync();
+    }
+    // n frames of flat grey + white noise of sigma (8-bit 4:2:0 W x H): a "different clip"
+    static std::vector<Frame> synth_frames(int W, int H, double sigma, unsigned seed, int n = 3) {
+        std::mt19937 rng(seed);
+        std::normal_distribution<double> g(0.0, sigma);
+        auto px = [&](double m) { return static_cast<uint8_t>(std::clamp(std::lround(m + g(rng)), 0L, 255L)); };
+        std::vector<Frame> out;
+        for (int k = 0; k < n; ++k) {
+            Frame f;
+            f.H = H;
+            f.W = W;
+            f.Hc = H / 2;
+            f.Wc = W / 2;
+            f.Y.resize(static_cast<size_t>(W) * H);
+            f.Cb.resize(static_cast<size_t>(f.Wc) * f.Hc);
+            f.Cr.resize(f.Cb.size());
+            for (auto& v : f.Y) v = px(118.0);
+            for (auto& v : f.Cb) v = px(126.0);
+            for (auto& v : f.Cr) v = px(131.0);
+            out.push_back(std::move(f));
+        }
+        return out;
+    }
+    // a profile of frames with its match model, as MainWindow::profile_job makes it
+    static ProfileState profile_of(const std::vector<Frame>& fr, int f, const std::string& mat, bool full,
+                                   const std::vector<int>* area) {
+        ProfileState ps;
+        ps.base = build_profile(fr, f, full, mat, "auto", area, CancelFn());
+        const auto mm = match_model_of(ps.base, fr[static_cast<size_t>(aft_frame(ps.base, fr.size()))], full, mat, CancelFn());
+        if (mm) {
+            const PyObj& a = ps.base.get("area");
+            const int h = static_cast<int>(a[2].as_int()), w = static_cast<int>(a.size() == 4 ? a[3].as_int() : h);
+            const int xywh[4] = {static_cast<int>(a[1].as_int()), static_cast<int>(a[0].as_int()), w, h};
+            ps.match = match_model_json(*mm, fr[0].W, fr[0].H, xywh, static_cast<int>(ps.base.get("sub").as_int()), mat,
+                                        full, "8");
+        }
+        return ps;
+    }
+    // the 96 x 96 window (16 px steps) of the frame's Y with the largest horizontal gradient sum: a textured area
+    static std::vector<int> textured_area(const Frame& f) {
+        long best = -1;
+        std::vector<int> a = {0, 0, 96, 96};
+        for (int y = 0; y + 96 <= f.H; y += 16)
+            for (int x = 0; x + 96 <= f.W; x += 16) {
+                long e = 0;
+                for (int i = 0; i < 96; ++i)
+                    for (int j = 0; j < 95; ++j) {
+                        const size_t k = static_cast<size_t>(y + i) * f.W + (x + j);
+                        e += std::abs(static_cast<int>(f.Y[k + 1]) - static_cast<int>(f.Y[k]));
+                    }
+                if (e > best) {
+                    best = e;
+                    a = {y, x, 96, 96};
+                }
+            }
+        return a;
+    }
+    // the folder of n4eAutoMatchPicksSameClip (made once; the later items reuse its files)
+    QString n4e_pick;
 
 private slots:
     void init() {
@@ -390,8 +472,9 @@ private slots:
         for (QToolButton* b : win->tb_stack->widget(0)->findChildren<QToolButton*>(Qt::FindDirectChildrenOnly)) t0 << b->text();
         for (QToolButton* b : win->tb_stack->widget(1)->findChildren<QToolButton*>(Qt::FindDirectChildrenOnly)) t1 << b->text();
         // main_window._prepare_toolbar / _adjust_toolbar: Auto, Generic, Load | Profile Check, Variants;
-        // area, Preview, Play All | Filter Settings Check, Variants
-        QCOMPARE(t0, (QStringList{"Auto Profile", "Generic Profile", "Load Profile", "Profile Check", "Variants"}));
+        // area, Preview, Play All | Filter Settings Check, Variants.  N4e: + the repro Auto Match button (the genuine
+        // creates it and hides it, wp_automatch/DECODE.md 1.2)
+        QCOMPARE(t0, (QStringList{"Auto Profile", "Generic Profile", "Load Profile", "Auto Match", "Profile Check", "Variants"}));
         QCOMPARE(t1, (QStringList{QString::fromUtf8("⛶"), "Preview", "Play All", "Filter Settings Check", "Variants"}));
     }
 
@@ -1607,7 +1690,9 @@ private slots:
         for (QLabel* l : dlg->findChildren<QLabel*>()) texts << l->text();
         QVERIFY2(texts.contains(QString::fromUtf8("%1x%2 at (x %3, y %4) · frame %5").arg(w).arg(h).arg(a[1].as_int())
                                     .arg(a[0].as_int()).arg(base.get("ui_frame").as_int())), qPrintable(texts.join("|")));
-        QVERIFY(texts.contains("Sample area:") && texts.contains("Match:") && texts.contains("Band ratios (Y, repro):"));
+        // N4e: the repro "Match:" row (FindFlatArea status) renamed, not the genuine Match
+        QVERIFY(texts.contains("Sample area:") && texts.contains("Area status (repro):") && !texts.contains("Match:") &&
+                texts.contains("Band ratios (Y, repro):"));
         const QString d = dlg->findChild<QTextEdit*>()->toPlainText();
         QVERIFY(d.startsWith("device: Unspecified device\nmode: auto"));
         QVERIFY(d.contains(QString("Overall Profile Quality: %1% (genuine measure, quality.py)").arg(*win->quality_pct)));
@@ -1910,7 +1995,8 @@ private slots:
             if (w->isEnabled() || !t.contains("n/a")) bad << QString::fromStdString(k);
         }
         QVERIFY2(bad.isEmpty(), qPrintable(bad.join(",")));
-        QVERIFY(win->actions["p_match"]->text().contains("n/a") && !win->actions["p_match"]->isEnabled());
+        // N4e: Auto Match is the repro implementation now (was "Auto Match (n/a)", disabled)
+        QVERIFY(win->actions["p_match"]->text() == "Auto Match (repro)" && win->actions["p_match"]->isEnabled());
         QVERIFY(win->profile_panel->b_manual->text().contains("n/a"));
     }
 
@@ -2723,6 +2809,452 @@ private slots:
             QCOMPARE(QString(hx), QString::fromStdString(e.get("frame_fnv1a64").as_str()));
             QVERIFY2(!(eff.get("curve") == aftp.get("curve")), name);   // the edit changed the curve
         }
+    }
+
+    // ---------------- N4e: Profile folder, saved-profile list, repro Auto Match, Match row
+    void n4eDefaultFolderAndEnv() {   // default <Documents>/Meat Video/Profiles; $MEATVIDEO_PATH (a directory)/Profiles
+        const QByteArray old = qgetenv("MEATVIDEO_PATH");
+        qunsetenv("MEATVIDEO_PATH");
+        const QString docs = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+        QCOMPARE(default_profile_dir(), QDir::cleanPath(docs + "/Meat Video/Profiles"));
+        const QString envd = n4e_dir("envroot");
+        qputenv("MEATVIDEO_PATH", envd.toLocal8Bit());
+        QCOMPARE(default_profile_dir(), QDir::cleanPath(envd + "/Profiles"));
+        qputenv("MEATVIDEO_PATH", tmp.filePath("n4e/no_such_dir").toLocal8Bit());   // not a directory: the default
+        QCOMPARE(default_profile_dir(), QDir::cleanPath(docs + "/Meat Video/Profiles"));
+        QSettings s(tmp.filePath("n4e_prefs.ini"), QSettings::IniFormat);
+        s.clear();
+        QCOMPARE(profile_dir(s), default_profile_dir());
+        s.setValue(PROFILE_DIR_KEY, envd);
+        QCOMPARE(profile_dir(s), envd);
+        s.setValue(PROFILE_DIR_KEY, "");
+        QCOMPARE(profile_dir(s), default_profile_dir());
+        if (old.isEmpty())
+            qunsetenv("MEATVIDEO_PATH");
+        else
+            qputenv("MEATVIDEO_PATH", old);
+    }
+
+    void n4eListOrderAndEmptyText() {   // recursive, folders first, case-insensitive names, non-profile files ignored
+        const QString d = n4e_dir("list");
+        for (const char* f : {"b.nvprof.json", "A.json", "Zeta.JSON", "c.txt", "p.nvpreset.json", "x.ui_params.json",
+                              "sub/z.json", "sub/a.json", "Alpha/deep/q.nvprof.json", "Alpha/readme.md"})
+            put(d + "/" + f, "{}");
+        QDir().mkpath(d + "/empty");
+        const std::vector<ProfileEntry> es = list_profiles(d);
+        QStringList top;
+        for (const ProfileEntry& e : es) top << (e.dir ? e.name + "/" : e.name);
+        QCOMPARE(top, (QStringList{"Alpha/", "empty/", "sub/", "A", "b", "Zeta"}));
+        QCOMPARE(es[0].children.size(), size_t(1));
+        QCOMPARE(es[0].children[0].name, QString("deep"));
+        QCOMPARE(es[0].children[0].children[0].name, QString("q"));
+        QVERIFY(es[1].children.empty());
+        QCOMPARE(es[2].children[0].name, QString("a"));
+        QCOMPARE(es[2].children[1].name, QString("z"));
+        QStringList files;
+        for (const QString& p : profile_files(es)) files << QDir(d).relativeFilePath(p);
+        QCOMPARE(files, (QStringList{"Alpha/deep/q.nvprof.json", "sub/a.json", "sub/z.json", "A.json", "b.nvprof.json",
+                                     "Zeta.JSON"}));
+        QVERIFY(list_profiles(d + "/empty").empty());
+        QVERIFY(list_profiles(d + "/missing").empty());
+        // symbolic links (Round 2 L3): a loop to the root, a link to itself, a second link to a walked folder
+        const QString lp = n4e_dir("loop");
+        put(lp + "/a.json", "{}");
+        put(lp + "/x/b.json", "{}");
+        QVERIFY(QFile::link(lp, lp + "/x/back"));
+        QVERIFY(QFile::link(lp + "/x", lp + "/x/me"));
+        QVERIFY(QFile::link(lp + "/x", lp + "/y"));
+        const std::vector<ProfileEntry> le = list_profiles(lp);
+        QStringList lt;
+        for (const ProfileEntry& e : le) lt << (e.dir ? e.name + "/" : e.name);
+        QCOMPARE(lt, (QStringList{"x/", "a"}));
+        QCOMPARE(le[0].children.size(), size_t(1));
+        QCOMPARE(le[0].children[0].name, QString("b"));
+        QStringList lf;
+        for (const QString& p : profile_files(le)) lf << QDir(lp).relativeFilePath(p);
+        QCOMPARE(lf, (QStringList{"x/b.json", "a.json"}));
+        QVERIFY(list_profiles(QString()).empty());
+        QCOMPARE(no_profiles_text("/tmp/x y"),
+                 QString("Meat Video could not find any profiles in the assigned Profile folder:\n /tmp/x y\n\nPlease either "
+                         "put some profiles to that folder or adjust its location using the Preferences dialog:\n  menu "
+                         "Tools > Preferences > Folders > Profile folder"));
+    }
+
+    void n4eMatchModelJson() {   // match_model round trip (hex words exact), malformed models rejected, old files: none
+        std::vector<float> w(MATCH_WORDS);
+        std::mt19937 rng(4);
+        for (auto& x : w) {
+            const uint32_t u = rng();
+            std::memcpy(&x, &u, 4);          // any bit pattern (NaN / inf / -0 included)
+        }
+        const int xywh[4] = {10, 20, 128, 96};
+        const PyObj m = match_model_json(w, 640, 360, xywh, 2, "bt709", false, "8");
+        check_match_model(m);
+        const std::vector<float> back = match_model_words(m);
+        QVERIFY(std::memcmp(back.data(), w.data(), 4 * w.size()) == 0);
+        const PyObj fixture = PyObj::parse(text_of(QString(NV_SOURCE_ROOT) + "/qtui/tests/fixtures/py_profile.nvprof.json").toStdString());
+        ProfileState ps = ProfileState::from_json(fixture);          // a Python UI file: no match model
+        QVERIFY(ps.match.is_none());
+        QVERIFY(!ps.to_json().has("match_model"));
+        QCOMPARE(ps.to_json().dump(), ProfileState::from_json(fixture).to_json().dump());
+        ps.match = m;
+        const PyObj j = ps.to_json();
+        QVERIFY(j.has("match_model") && j.keys().back() == "match_model");
+        QVERIFY(ProfileState::from_json(PyObj::parse(j.dump(1))).match == m);
+        auto rejected = [&](const std::function<void(PyObj&)>& edit) {
+            PyObj d = j;
+            edit(d.at("match_model"));
+            try {
+                ProfileState::from_json(d);
+            } catch (const std::runtime_error& e) {
+                return QString(e.what()).startsWith("profile match_model");
+            }
+            return false;
+        };
+        QVERIFY(rejected([](PyObj& mm) { mm.set("version", PyObj::integer(2)); }));
+        QVERIFY(rejected([](PyObj& mm) { mm.set("format", PyObj::str("x")); }));
+        QVERIFY(rejected([](PyObj& mm) { mm.at("faces")[1] = PyObj::str("00"); }));
+        QVERIFY(rejected([](PyObj& mm) {
+            std::string t = mm.get("stats")[0].as_str();
+            t[3] = 'G';
+            mm.at("stats")[0] = PyObj::str(t);
+        }));
+        QVERIFY(rejected([](PyObj& mm) { mm.set("sub", PyObj::integer(3)); }));
+        QVERIFY(rejected([](PyObj& mm) { mm = PyObj::list(); }));
+    }
+
+    void n4eBestMatchRules() {   // highest score; equal scores: the first in menu order; only "scored" with score > 0
+        ProfileState ps;                                          // sub_fits (Round 2 L4): match_model and base "sub"
+        ps.base = PyObj::dict();
+        ps.match = PyObj::dict();
+        ps.match.set("sub", PyObj::integer(2));
+        int have = 0;
+        QVERIFY(sub_fits(ps, 2, &have) && have == 2);             // no base "sub": the match model's
+        ps.base.set("sub", PyObj::integer(1));
+        QVERIFY(!sub_fits(ps, 2, &have) && have == 1);
+        QVERIFY(!sub_fits(ps, 1));
+        ps.match.set("sub", PyObj::integer(1));
+        QVERIFY(sub_fits(ps, 1));
+        auto e = [](const char* st, double sc) {
+            AutoMatchEntry x;
+            x.status = st;
+            x.score = sc;
+            return x;
+        };
+        QCOMPARE(best_match({}), -1);
+        QCOMPARE(best_match({e("scored", 0.0), e("scored", 0.0)}), -1);
+        QCOMPARE(best_match({e("unreadable", 0.9), e("scored", 0.2), e("scored", 0.5), e("no match model", 0.9)}), 2);
+        QCOMPARE(best_match({e("scored", 0.5), e("scored", 0.7), e("scored", 0.7)}), 1);
+        QCOMPARE(best_match({e("scored", std::nan("")), e("scored", 0.1)}), 1);
+        QCOMPARE(best_match({e("chroma format differs", 1.0)}), -1);
+    }
+
+    void n4eMatchScoreStatuses() {   // reference model; nvc_match_score through match_scores: self = 1, statuses, cancel
+        const std::vector<Frame> big = synth_frames(160, 128, 3.0, 7, 1);
+        const RefModel ref = reference_model(big[0], false, "bt709", CancelFn());
+        QCOMPARE(static_cast<int>(ref.words.size()), MATCH_WORDS);
+        QVERIFY(ref.status == 0 || ref.status == 2);
+        QVERIFY(ref.area[2] == ref.area[3] && ref.area[2] >= 32);
+        const ProfileState ps = profile_of(synth_frames(160, 128, 3.0, 8), 0, "bt709", false, nullptr);
+        QVERIFY(!ps.match.is_none());
+        const std::vector<std::vector<float>> models = {match_model_words(ps.match), ref.words};
+        MatchScores ms = match_scores(big[0], false, "bt709", ref.words, models, CancelFn());
+        QCOMPARE(ms.status, 0);
+        QCOMPARE(ms.tiles, 20);
+        QCOMPARE(ms.used, 20);
+        QVERIFY(ms.ref_accept > 0);
+        QCOMPARE(ms.scores[1], 1.0);                                   // the frame's own model: exactly 1
+        QVERIFY2(ms.scores[0] > 0.5 && ms.scores[0] <= 1.0, qPrintable(QString::number(ms.scores[0])));   // same noise
+        QCOMPARE(match_scores(synth_frames(46, 128, 3.0, 9, 1)[0], false, "bt709", ref.words, models, CancelFn()).status, 1);
+        std::vector<Frame> white = synth_frames(96, 96, 0.0, 1, 1);
+        for (auto& v : white[0].Y) v = 255;
+        for (auto& v : white[0].Cb) v = 128;
+        for (auto& v : white[0].Cr) v = 128;
+        ms = match_scores(white[0], true, "bt709", ref.words, models, CancelFn());
+        QCOMPARE(ms.status, 4);
+        QCOMPARE(ms.used, 0);
+        int q = 0;
+        bool thrown = false;
+        try {
+            match_scores(big[0], false, "bt709", ref.words, models, [&q] { return ++q >= 3; });
+        } catch (const Cancelled&) {
+            thrown = true;
+        }
+        QVERIFY(thrown);
+        ms = match_scores(big[0], false, "bt709", ref.words, {}, CancelFn());
+        QCOMPARE(ms.status, 0);
+        QVERIFY(ms.scores.empty() && ms.used == 20);
+        thrown = false;
+        try {
+            match_scores(big[0], false, "bt709", {}, models, CancelFn());   // no reference
+        } catch (const std::runtime_error&) {
+            thrown = true;
+        }
+        QVERIFY(thrown);
+        // a noisier clip (sigma 12) with its own reference does not match the sigma 3 profile
+        const std::vector<Frame> noisy = synth_frames(160, 128, 12.0, 10, 1);
+        const RefModel rn = reference_model(noisy[0], false, "bt709", CancelFn());
+        QVERIFY(!rn.words.empty());
+        QVERIFY(match_scores(noisy[0], false, "bt709", rn.words, models, CancelFn()).scores[0] < 0.05);
+        QVERIFY(reference_model(synth_frames(200, 60, 3.0, 11, 1)[0], false, "bt709", CancelFn()).words.empty());   // < 64 px
+        thrown = false;                                                // run_auto_match asks the cancel query too
+        const QString d = n4e_dir("cancel");
+        put(d + "/a.json", ps.to_json().dump(1));
+        try {
+            run_auto_match(d, big[0], 0, false, "bt709", "8", [] { return true; });
+        } catch (const Cancelled&) {
+            thrown = true;
+        }
+        QVERIFY(thrown);
+        const AutoMatchResult r = run_auto_match(d, big[0], 0, false, "bt709", "8", CancelFn());
+        QCOMPARE(r.status, 0);
+        QCOMPARE(r.best, 0);
+        QCOMPARE(r.entries[0].score, match_scores(big[0], false, "bt709", ref.words, {models[0]}, CancelFn()).scores[0]);
+        QCOMPARE(r.ref_area[2], ref.area[2]);
+    }
+
+    void n4eProfileFolderPreferences() {   // Preferences > Folders > Profile folder: shown, stored, reset to the default
+        set_profile_dir(QString());
+        QDialog* dlg = win->preferences();
+        QLineEdit* pd = dlg->findChild<QLineEdit*>("profile_dir");
+        QVERIFY(pd);
+        QCOMPARE(pd->text(), default_profile_dir());
+        const QString d = n4e_dir("prefs");
+        pd->setText(QDir::toNativeSeparators(d));
+        dlg->accept();
+        QCOMPARE(settings()->value(PROFILE_DIR_KEY).toString(), QDir::cleanPath(d));
+        QCOMPARE(profile_dir(*settings()), QDir::cleanPath(d));
+        dlg = win->preferences();
+        pd = dlg->findChild<QLineEdit*>("profile_dir");
+        QCOMPARE(pd->text(), QDir::cleanPath(d));
+        dlg->findChild<QPushButton*>("profile_dir_reset")->click();
+        QCOMPARE(pd->text(), default_profile_dir());
+        dlg->accept();
+        QVERIFY(!settings()->contains(PROFILE_DIR_KEY));         // the default is not stored (follows $MEATVIDEO_PATH)
+        QCOMPARE(profile_dir(*settings()), default_profile_dir());
+        dlg = win->preferences();
+        dlg->findChild<QLineEdit*>("profile_dir")->setText(d);
+        dlg->reject();                                           // Cancel keeps the setting
+        QVERIFY(!settings()->contains(PROFILE_DIR_KEY));
+    }
+
+    void n4eSavedProfilesMenu() {   // the ▼ menu: folder order, submenus, (empty); a choice loads with undo; empty text
+        QVERIFY(wait_until([&] { return aft_done(); }));
+        const QString d = n4e_dir("menu");
+        const std::string text = win->state->profile.to_json().dump(1);
+        for (const char* f : {"b.nvprof.json", "A.json", "sub/inner.json", "note.txt"}) put(d + "/" + f, text);
+        QDir().mkpath(d + "/Empty");
+        set_profile_dir(d);
+        QMenu* m = win->saved_profiles_menu();
+        QVERIFY(m);
+        QStringList t;
+        for (QAction* a : m->actions()) t << (a->menu() ? a->text() + "/" : a->text());
+        QCOMPARE(t, (QStringList{"Empty/", "sub/", "A", "b"}));
+        QCOMPARE(m->actions()[0]->menu()->actions()[0]->text(), QString("(empty)"));
+        QVERIFY(!m->actions()[0]->menu()->actions()[0]->isEnabled());
+        QCOMPARE(m->actions()[1]->menu()->actions()[0]->text(), QString("inner"));
+        const ProfileState before = win->state->profile;
+        win->reset_profile();
+        QVERIFY(!win->state->profile.has_profile());
+        m->actions()[2]->trigger();                               // "A": the existing load path
+        QVERIFY(win->state->profile.has_profile());
+        QCOMPARE(win->state->undo->undoText(), QString("Load Profile"));
+        QCOMPARE(win->state->profile.to_json().dump(), before.to_json().dump());
+        QVERIFY(!win->state->profile.match.is_none());
+        win->state->undo->undo();
+        QVERIFY(!win->state->profile.has_profile());
+        win->state->undo->redo();
+        QVERIFY(win->state->profile.has_profile());
+        delete m;
+        QWidget* shown = win->show_saved_profiles();             // a non-empty folder pops the menu
+        QVERIFY(qobject_cast<QMenu*>(shown));
+        qobject_cast<QMenu*>(shown)->hide();
+        const QString e = n4e_dir("menu_empty");
+        put(e + "/x.txt", "x");
+        set_profile_dir(e);
+        QVERIFY(!win->saved_profiles_menu());
+        auto* box = qobject_cast<QMessageBox*>(win->show_saved_profiles());
+        QVERIFY(box);
+        QCOMPARE(box->text(), no_profiles_text(e));
+        box->close();
+        set_profile_dir(QString());
+    }
+
+    void n4eAutoMatchPicksSameClip() {   // the folder mixes the clip's own profile with other clips / settings / old files
+        QVERIFY(wait_until([&] { return aft_done(); }));
+        win->tabs->setCurrentIndex(0);
+        const int cur = win->timeline->frame();
+        win->reset_profile();
+        win->auto_profile(false);                                // the UI path: profile_job writes the match model
+        QVERIFY(wait_until([&] { return aft_done() && !win->state->profile.match.is_none(); }));
+        QCOMPARE(static_cast<int>(win->state->profile.base.get("ui_frame").as_int()), cur);
+        // the match model is BuildNoiseModel of the area on the profile frame, bit for bit
+        const auto mm = match_model_of(win->state->profile.base, win->frames[static_cast<size_t>(cur)], win->full_range,
+                                       win->matrix, CancelFn());
+        QVERIFY(mm);
+        const std::vector<float> got = match_model_words(win->state->profile.match);
+        QVERIFY(std::memcmp(got.data(), mm->data(), 4 * got.size()) == 0);
+        QCOMPARE(win->state->profile.match.get("sub").as_int(), win->state->profile.base.get("sub").as_int());
+        const QString d = n4e_pick = n4e_dir("pick");
+        win->save_profile(d + "/m_same.nvprof.json");
+        const ProfileState same = win->state->profile;
+        const PyObj sj = same.to_json();
+        QVERIFY(text_of(d + "/m_same.nvprof.json").contains("\"match_model\""));
+        // other clips: white noise of sigma 1 and 8; the same clip from a textured area (another setting)
+        put(d + "/a_white1.nvprof.json", profile_of(synth_frames(640, 360, 1.0, 21), 1, win->matrix, win->full_range, nullptr).to_json().dump(1));
+        put(d + "/z_white8.nvprof.json", profile_of(synth_frames(640, 360, 8.0, 22), 1, win->matrix, win->full_range, nullptr).to_json().dump(1));
+        const std::vector<int> ta = textured_area(win->frames[static_cast<size_t>(cur)]);
+        put(d + "/B_textured.nvprof.json", profile_of(win->frames, cur, win->matrix, win->full_range, &ta).to_json().dump(1));
+        put(d + "/broken.json", "{\"format\": \"nv_repro_profile\"");   // unreadable
+        PyObj old = sj;                                           // the right profile, but saved without a match model
+        old.pop("match_model");
+        put(d + "/older/same_old.nvprof.json", old.dump(1));
+        PyObj s444 = sj;                                          // the right profile at another chroma format
+        s444.at("base").set("sub", PyObj::integer(1));
+        s444.at("match_model").set("sub", PyObj::integer(1));
+        put(d + "/older/same444.nvprof.json", s444.dump(1));
+        put(d + "/notes.txt", "x");
+        put(d + "/p.nvpreset.json", "{}");
+        set_profile_dir(d);
+        win->reset_profile();
+        win->automatch_result.reset();
+        win->auto_match();
+        QVERIFY(wait_until([&] { return idle() && win->automatch_result.has_value(); }));
+        const AutoMatchResult& r = *win->automatch_result;
+        QStringList names, st;
+        for (const AutoMatchEntry& e : r.entries) {
+            names << e.name;
+            st << QString::fromStdString(e.status);
+        }
+        QCOMPARE(names, (QStringList{"same444.nvprof.json", "same_old.nvprof.json", "a_white1.nvprof.json",
+                                     "B_textured.nvprof.json", "broken.json", "m_same.nvprof.json", "z_white8.nvprof.json"}));
+        QCOMPARE(st, (QStringList{"chroma format differs", "no match model", "scored", "scored", "unreadable", "scored",
+                                  "scored"}));
+        QString scores;
+        for (const AutoMatchEntry& e : r.entries) scores += e.name + QString("=%1/%2 ").arg(e.score, 0, 'f', 4).arg(e.accept);
+        qInfo("N4e Auto Match scores (frame %d, %d of %d tiles used): %s", cur, r.used, r.tiles, qPrintable(scores));
+        QCOMPARE(r.status, 0);
+        QCOMPARE(r.frame, cur);
+        QCOMPARE(r.best, 5);
+        for (int i : {2, 3, 6}) QVERIFY2(r.entries[5].score > r.entries[static_cast<size_t>(i)].score, qPrintable(scores));
+        QVERIFY(r.entries[5].score > 0.3);
+        QCOMPARE(win->state->profile.to_json().dump(), sj.dump());
+        QCOMPARE(win->state->undo->undoText(), QString("Auto Match (repro)"));
+        QVERIFY(win->msg->text().startsWith("Auto Match (repro): loaded m_same.nvprof.json"));
+        QVERIFY2(win->msg->text().endsWith("4 of 7 profiles scored (skipped: 1 chroma format differs, 1 no match model, "
+                                           "1 unreadable)"), qPrintable(win->msg->text()));
+        // the Match row: the same score for the loaded profile and frame
+        QVERIFY(wait_until([&] { return win->match_idle() && idle() && win->match_score.has_value(); }));
+        QCOMPARE(*win->match_score, r.entries[5].score);
+        QCOMPARE(win->profile_panel->match->text(), QString("%1%").arg(qRound(r.entries[5].score * 100.0)));
+        QVERIFY(win->profile_panel->match->toolTip().startsWith("Match (repro, not the genuine Match"));
+        win->state->undo->undo();                                 // undo as for any load
+        QVERIFY(!win->state->profile.has_profile());
+        QCOMPARE(win->profile_panel->match->text(), QString("n/a"));
+        win->state->undo->redo();
+        // without the frame's own profile: a profile of another frame of the same clip still wins
+        const QString d2 = n4e_dir("pick2");
+        for (const char* f : {"a_white1.nvprof.json", "z_white8.nvprof.json", "B_textured.nvprof.json"})
+            QVERIFY(QFile::copy(d + "/" + f, d2 + "/" + f));
+        const int other = cur > 40 ? cur - 40 : cur + 40;
+        put(d2 + "/k_frame_other.nvprof.json", profile_of(win->frames, other, win->matrix, win->full_range, nullptr).to_json().dump(1));
+        set_profile_dir(d2);
+        win->automatch_result.reset();
+        win->auto_match();
+        QVERIFY(wait_until([&] { return idle() && win->automatch_result.has_value(); }));
+        const AutoMatchResult& r2 = *win->automatch_result;
+        scores.clear();
+        for (const AutoMatchEntry& e : r2.entries) scores += e.name + QString("=%1/%2 ").arg(e.score, 0, 'f', 4).arg(e.accept);
+        qInfo("N4e Auto Match scores without the frame's profile (frame %d, profile of frame %d): %s", cur, other,
+              qPrintable(scores));
+        QCOMPARE(r2.entries.size(), size_t(4));
+        QCOMPARE(r2.entries[2].name, QString("k_frame_other.nvprof.json"));
+        QCOMPARE(r2.best, 2);
+        set_profile_dir(QString());
+    }
+
+    void n4eAutoMatchEdgeCases() {   // no profiles; nothing comparable; ties; Match row n/a; the UI strings say repro
+        QVERIFY(wait_until([&] { return idle() && win->state->profile.has_profile(); }));
+        QVERIFY(win->match_btn->toolTip().startsWith("repro: "));
+        QVERIFY(win->actions["p_match"]->toolTip().startsWith("repro: "));
+        QCOMPARE(win->actions["p_match"]->shortcut(), QKeySequence("Ctrl+M"));
+        const ProfileState keep = win->state->profile;
+        // no profiles: the genuine text, nothing loaded
+        const QString e = n4e_dir("am_empty");
+        set_profile_dir(e);
+        win->automatch_result.reset();
+        win->auto_match();
+        QVERIFY(win->automatch_result && win->automatch_result->entries.empty());
+        QCOMPARE(win->msg->text(), "Auto Match (repro): no profiles in the Profile folder " + QDir::toNativeSeparators(e));
+        QMessageBox* box = nullptr;                               // (macOS message boxes have no title)
+        for (QMessageBox* b : win->findChildren<QMessageBox*>())
+            if (b->isVisible() && b->text() == no_profiles_text(e)) box = b;
+        QVERIFY(box);
+        box->close();
+        // only files that cannot be compared: nothing loaded
+        const QString o = n4e_dir("am_old");
+        PyObj old = keep.to_json();
+        old.pop("match_model");
+        put(o + "/old.json", old.dump(1));
+        put(o + "/zz.json", "not json");
+        set_profile_dir(o);
+        win->automatch_result.reset();
+        win->auto_match();
+        QVERIFY(wait_until([&] { return idle() && win->automatch_result.has_value(); }));
+        QCOMPARE(win->msg->text(), QString("Auto Match (repro): none of the 2 profiles can be compared (skipped: 1 no match "
+                                           "model, 1 unreadable)"));
+        QCOMPARE(win->state->profile.to_json().dump(), keep.to_json().dump());
+        // ties: two equal profiles -> the first in menu order
+        const QString t = n4e_dir("am_tie");
+        ProfileState same = keep;
+        if (same.match.is_none()) same = profile_of(win->frames, win->timeline->frame(), win->matrix, win->full_range, nullptr);
+        put(t + "/x1.json", same.to_json().dump(1));
+        put(t + "/X2.json", same.to_json().dump(1));
+        set_profile_dir(t);
+        win->auto_match();
+        QVERIFY(wait_until([&] { return idle() && win->automatch_result && win->automatch_result->dir == t; }));
+        const AutoMatchResult& r = *win->automatch_result;
+        QCOMPARE(r.entries.size(), size_t(2));
+        QCOMPARE(r.entries[0].score, r.entries[1].score);
+        QCOMPARE(r.best, 0);
+        QVERIFY(win->msg->text().startsWith("Auto Match (repro): loaded x1.json"));
+        // a second call while it runs cancels (or it finished first); either way the UI is not left busy
+        win->auto_match();
+        win->auto_match();
+        QVERIFY(wait_until([&] { return idle(); }));
+        QVERIFY(win->msg->text() == "Auto Match (repro): cancelled" || win->msg->text().startsWith("Auto Match (repro): loaded"));
+        QVERIFY(win->auto_btn->isEnabled());
+        // Auto Match vs Auto / Build Profile (Round 2 L5): the later request wins
+        win->auto_profile(false);
+        win->auto_match();                                        // cancels the profile build (its result is dropped)
+        QVERIFY(wait_until([&] { return idle(); }));
+        QCOMPARE(win->state->undo->undoText(), QString("Auto Match (repro)"));
+        QVERIFY(win->msg->text().startsWith("Auto Match (repro): loaded x1.json"));
+        QVERIFY(win->auto_btn->isEnabled());
+        win->auto_match();
+        win->auto_profile(false);                                 // cancels the Auto Match (its result is dropped)
+        QVERIFY(wait_until([&] { return idle() && win->state->profile.base.get("aft_applied").truthy(); }));
+        QVERIFY(wait_until([&] { return idle(); }));
+        QVERIFY2(win->state->undo->undoText() == "Auto Fine-Tune", qPrintable(win->state->undo->undoText()));
+        QVERIFY(!win->msg->text().startsWith("Auto Match (repro)"));
+        QVERIFY(win->auto_btn->isEnabled());
+        // the Match row with another chroma format in base "sub" only (Round 2 L4): n/a
+        ProfileState bs = win->state->profile;
+        QVERIFY(!bs.match.is_none());
+        bs.base.set("sub", PyObj::integer(frame_sub(win->frames[0]) == 1 ? 2 : 1));
+        win->state->set_profile(bs, "test");
+        QCOMPARE(win->profile_panel->match->text(), QString("n/a"));
+        QVERIFY(win->profile_panel->match->toolTip().contains("another chroma format"));
+        QVERIFY(win->profile_panel->match->toolTip().contains("sum min(p, r) / sum max(p, r)"));
+        // the Match row without a match model: n/a, with the reason
+        ProfileState nm = keep;
+        nm.match = PyObj::none();
+        win->state->set_profile(nm, "test");
+        QVERIFY(!win->match_score.has_value());
+        QCOMPARE(win->profile_panel->match->text(), QString("n/a"));
+        QVERIFY(win->profile_panel->match->toolTip().contains("no match model"));
+        win->state->set_profile(keep, "test");
+        set_profile_dir(QString());
     }
 
     void cleanupTestCase() {

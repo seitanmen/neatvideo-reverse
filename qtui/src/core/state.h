@@ -63,6 +63,9 @@ struct ProfileState {
     PyObj tune = PyObj::dict();                    // "all", "Y", "Cb", "Cr" (missing = 1.0)
     // "RGB": factors = the R / G / B bin levels (G1); "YCbCr": Y / Cb / Cr factors (files made before G1)
     std::string channels = "RGB";
+    // N4e: the repro Auto Match model of the profile's area (nvqt::match_model_json, the file's "match_model";
+    // none() = none: files saved before N4e or by the Python UI / Batch Profiler)
+    PyObj match;
 
     bool has_profile() const { return !base.is_none(); }
     double tune_value(const std::string& k) const;

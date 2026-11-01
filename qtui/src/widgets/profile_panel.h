@@ -52,15 +52,17 @@ public:
     void set_levels(std::optional<double> main, std::optional<double> sel);
     void set_quality(std::optional<int> pct);
     void set_completeness(std::optional<int> pct);
+    void set_match(std::optional<double> score, const QString& note);   // N4e: the repro Match row
 
     QScrollArea* scroll;
     IconBar* icons;
     QComboBox* name;
+    QToolButton* saved;                           // N4e: "Show saved noise profiles" (the Profile folder)
     QToolButton* device_menu;
     QLineEdit* device;
     QLabel* info;
     QWidget* stats;
-    QLabel *quality, *completeness, *levels_title, *l_main, *main_val, *l_sel, *sel_val;
+    QLabel *quality, *completeness, *match, *levels_title, *l_main, *main_val, *l_sel, *sel_val;
     QFrame* levels_line;
     std::map<std::string, BandBar*> bars;
     std::map<std::string, QLabel*> band_samples;
@@ -79,6 +81,7 @@ signals:
     void resetFineTune();
     void profileCheck(bool on);                   // Begin / Finish of Profile Check (Assist Image mode)
     void editDevice(QString name);
+    void savedProfiles();                         // the saved-profile button
     void tuneEdited(QString key, double value);   // "all" / "Y" / "Cb" / "Cr", multiplier
     void editStarted();
 

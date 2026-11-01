@@ -8,6 +8,7 @@
 #include <functional>
 #include <stdexcept>
 
+#include "automatch.h"
 #include "nvcore_c_prof5.h"
 #include "nvcore_c_ui.h"
 #include "nvcore_c_rgb.h"
@@ -265,6 +266,7 @@ PyObj ProfileState::to_json() const {
     for (const auto& s : pinned) p.append(PyObj::ints(std::vector<int>(s.begin(), s.end())));
     d.set("pinned", p);
     d.set("tune", tune);
+    if (!match.is_none()) d.set("match_model", match);
     return d;
 }
 
@@ -369,6 +371,10 @@ ProfileState ProfileState::from_json(const PyObj& d) {
     }
     if (d.has("device") && d.get("device").type() == PyObj::STR) ps.device = d.get("device").as_str();
     ps.tune = t2;
+    if (d.has("match_model")) {
+        check_match_model(d.get("match_model"));
+        ps.match = d.get("match_model");
+    }
     return ps;
 }
 

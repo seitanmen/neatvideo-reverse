@@ -15,6 +15,7 @@
 
 #include "nvcore_c.h"
 #include "nvcore_c_rgb.h"
+#include "nvcore_c_match.h"
 #include "nvcore_c_prof5.h"
 #include "nvcore_c_ui.h"
 #include "state.h"
@@ -606,6 +607,96 @@ void not_uniform(const std::vector<float>& crop, int h, int w, std::vector<std::
         if (b3[i]) bad->push_back(YN[i]);
         if (c3[i]) clip->push_back(RN[i]);
     }
+}
+
+namespace {
+
+// the match model words of the area (x, y, w, h) of rgb (clip 1), as run_aft builds the AFT's profile (no LZMA part)
+std::optional<std::vector<float>> model_words(const std::vector<float>& rgb, int W, int H, int x, int y, int w, int h,
+                                              const CancelFn& cancel) {
+    std::vector<uint8_t> raw(NVC_PROF_BYTES, 0);
+    int pst;
+    {
+        CancelScope cs(&cancel);
+        pst = nvc_profile_build_cancel(rgb.data(), W, H, 1, x, y, w, h, reference_floor().data(), 0, native_threads(),
+                                       cs.fn(), raw.data());
+    }
+    if (pst == 3) throw Cancelled();
+    if (pst != 0) return std::nullopt;
+    std::vector<float> wd(3 * NVC_MATCH_FACE + 3 * NVC_MATCH_STATS);
+    nvc_match_model(raw.data(), wd.data(), wd.data() + 3 * NVC_MATCH_FACE);
+    return wd;
+}
+
+}  // namespace
+
+std::optional<std::vector<float>> match_model_of(const PyObj& base, const Frame& frame, bool full_range,
+                                                 const std::string& matrix, const CancelFn& cancel) {
+    const Planes pl = to_planes(frame);
+    const PyObj& a = base.get("area");
+    const int ay = static_cast<int>(a[0].as_int()), ax = static_cast<int>(a[1].as_int()),
+              ah = static_cast<int>(a[2].as_int());
+    const int aw = a.size() == 4 ? static_cast<int>(a[3].as_int()) : ah;
+    return model_words(to_rgb(pl, matrix, full_range, 1), pl.W, pl.H, ax, ay, aw, ah, cancel);
+}
+
+RefModel reference_model(const Frame& frame, bool full_range, const std::string& matrix, const CancelFn& cancel) {
+    RefModel r;
+    const Planes pl = to_planes(frame);
+    const int H = pl.H, W = pl.W;
+    if (std::min(H, W) < 64) return r;                      // build_profile_v5 does not search below 64 px
+    int out5[5] = {0, 0, 0, 0, -2};
+    {
+        const std::vector<float> rgbf = to_rgb(pl, matrix, full_range, 2);
+        CancelScope cs(&cancel);
+        nvc_flat_area(rgbf.data(), W, H, 1, native_threads(), cs.fn(), out5);
+    }
+    r.status = out5[4];
+    if (out5[4] == 5) throw Cancelled();
+    if (out5[4] < 0 || out5[4] == 1 || std::min(out5[2], out5[3]) < 8) return r;
+    // nv_prof5 build_profile_v5 (auto area): the square of side min(w, h), clamped into the frame
+    const int Sz = std::min(std::min(std::max(std::min(out5[2], out5[3]), 8), H), W);
+    const int y = std::min(std::max(out5[1], 0), H - Sz), x = std::min(std::max(out5[0], 0), W - Sz);
+    auto wd = model_words(to_rgb(pl, matrix, full_range, 1), W, H, x, y, Sz, Sz, cancel);
+    if (!wd) return r;
+    r.words = std::move(*wd);
+    r.area[0] = x;
+    r.area[1] = y;
+    r.area[2] = r.area[3] = Sz;
+    return r;
+}
+
+MatchScores match_scores(const Frame& frame, bool full_range, const std::string& matrix, const std::vector<float>& ref,
+                         const std::vector<std::vector<float>>& models, const CancelFn& cancel) {
+    if (ref.size() != static_cast<size_t>(3 * NVC_MATCH_FACE + 3 * NVC_MATCH_STATS))
+        throw std::runtime_error("match_scores: no reference model");
+    const Planes pl = to_planes(frame);
+    const std::vector<float> rgb = to_rgb(pl, matrix, full_range, 1);
+    const int n = static_cast<int>(models.size());
+    std::vector<float> faces(static_cast<size_t>(std::max(n, 1)) * 3 * NVC_MATCH_FACE),
+        stats(static_cast<size_t>(std::max(n, 1)) * 3 * NVC_MATCH_STATS);
+    for (int k = 0; k < n; ++k) {
+        const std::vector<float>& m = models[static_cast<size_t>(k)];
+        std::copy(m.begin(), m.begin() + 3 * NVC_MATCH_FACE, faces.begin() + static_cast<long>(k) * 3 * NVC_MATCH_FACE);
+        std::copy(m.begin() + 3 * NVC_MATCH_FACE, m.end(), stats.begin() + static_cast<long>(k) * 3 * NVC_MATCH_STATS);
+    }
+    MatchScores r;
+    r.scores.assign(static_cast<size_t>(std::max(n, 1)), 0.0);
+    r.accept.assign(static_cast<size_t>(std::max(n, 1)), 0);
+    int info[3] = {0, 0, 0};
+    {
+        CancelScope cs(&cancel);
+        r.status = nvc_match_score(rgb.data(), pl.W, pl.H, ref.data(), ref.data() + 3 * NVC_MATCH_FACE, n, faces.data(),
+                                   stats.data(), native_threads(), cs.fn(), r.scores.data(), r.accept.data(), info);
+    }
+    if (r.status == 2) throw Cancelled();
+    if (r.status < 0) throw std::runtime_error("nvc_match_score: bad arguments");
+    r.scores.resize(static_cast<size_t>(n));
+    r.accept.resize(static_cast<size_t>(n));
+    r.tiles = info[0];
+    r.used = info[1];
+    r.ref_accept = info[2];
+    return r;
 }
 
 std::optional<std::pair<int, int>> profile_numbers(const ProfileState& ps, const std::vector<Frame>& frames,

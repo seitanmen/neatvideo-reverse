@@ -26,6 +26,8 @@ extern "C" {
 #endif
 
 #define NVC_ABI_VERSION 3       /* 2 (G7/G8): nvc_profile_build_cancel; repro/nv_native.py calls nvc_build_profile_v5. 3 (G1): nvc_rgb_* (nvcore_c_rgb.h) */
+/* N4e: nvc_match_model / nvc_match_score (nvcore_c_match.h) are additions only and keep version 3: no existing function,
+ * argument or block changed meaning, and their only caller (qtui) links the same build of libnvcore. */
 #define NVC_PROF_I 4
 #define NVC_PROF_D 82
 #define NVC_PAR_I 4

@@ -77,6 +77,33 @@ int aft_frame(const PyObj& base, size_t nframes);
 PyObj run_aft(const PyObj& base, const Frame& frame, bool full_range, const std::string& matrix,
               const CancelFn& cancel);
 
+// N4e (repro Auto Match, native/nvcore_c_match.h): the match model words (faces R, G, B x 492, stats R, G, B x 51)
+// of base's area on frame (nvc_profile_build_cancel, colour mode 1, as run_aft builds the AFT's profile; no LZMA part);
+// nullopt where the native BuildNoiseModel does not take the area (a side < 32).  Throws Cancelled.
+std::optional<std::vector<float>> match_model_of(const PyObj& base, const Frame& frame, bool full_range,
+                                                 const std::string& matrix, const CancelFn& cancel);
+// the frame's own match model, the reference of the score: FindFlatArea of the frame (nvc_flat_area, colour mode 1, on
+// the CLIP_FINITE RGB) and its square as build_profile_v5's auto area makes it, then match_model_of that square.
+// words empty when there is none (a side < 64 px, FindFlatArea status 1 "not found", or a square the native
+// BuildNoiseModel does not take); status = the FindFlatArea status (-1: not searched).  Throws Cancelled.
+struct RefModel {
+    std::vector<float> words;
+    int area[4] = {0, 0, 0, 0};       // x, y, w, h
+    int status = -1;
+};
+RefModel reference_model(const Frame& frame, bool full_range, const std::string& matrix, const CancelFn& cancel);
+// nvc_match_score of models (each MATCH_WORDS floats) against frame's RGB (to_rgb clip 1, as the AFT) with the
+// reference ref (MATCH_WORDS floats): status (0 ok, 1 too small, 2 cancelled -> throws Cancelled, 3 model error,
+// 4 every tile clipped), scores, accept counts, tile counts
+struct MatchScores {
+    int status = 0;
+    std::vector<double> scores;
+    std::vector<int> accept;
+    int tiles = 0, used = 0, ref_accept = 0;
+};
+MatchScores match_scores(const Frame& frame, bool full_range, const std::string& matrix, const std::vector<float>& ref,
+                         const std::vector<std::vector<float>>& models, const CancelFn& cancel);
+
 // nvfilter._wn_band_std(levels)
 std::vector<double> wn_band_std(int levels);
 

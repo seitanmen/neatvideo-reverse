@@ -157,3 +157,140 @@ worktree: /Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx (変更は
    - パラメータを変えると結果が変わる。
    - 最初のフレームはプロファイルを作るので、数秒かかる。
 6. 任意: インターレースの素材では、エラーのメッセージが出ることを確かめる。
+
+---
+
+# N4e 第 2 段 — Profile フォルダ・保存済みプロファイルの一覧 (本家どおり) と独自の Auto Match (repro) (2026-11-01、作業者 n4e-worker)
+
+- worktree: `.claude/worktrees/n4e` (branch `n4e-automatch`、origin/main 922dc8b から。**未コミット**)。
+- 作業者の報告全文 (Round 1 の 3 通と Round 2): `work/omo/wp_n4e/REPORT_DRAFT.md`。
+  - サブエージェントは報告ファイルを書けないため、統括が SendMessage の本文を無改変で転記した。
+- 独立検証の全文: `work/omo/wp_n4e/verifier/VERDICT_round1.md`・`VERDICT_round2.md`。
+- 変更前の控え: `work/omo/wp_n4e/backup/` (SHA256SUMS.txt 付き)。ログ: `work/omo/wp_n4e/logs/` (Round 2 は `logs/r2/`)。
+
+## 作業者の報告 (要約。全文は上記)
+
+### 変更したファイル
+- **新規**
+  - `native/nvcore_c_match.{h,cpp}`: C ABI `nvc_match_model` (0xc300 プロファイルから AFT が読む語を取り出す) と `nvc_match_score` を追加。
+  - `native/match_ref.py`・`native/verify_match.py`: Python の参照実装と、C++ とのビット一致照合。`make -C native verify` の最後に実行される。
+  - `qtui/src/core/automatch.{h,cpp}`: フォルダ・一覧・match_model の JSON・best_match・run_auto_match。
+- **変更**
+  - `native/Makefile`、`native/nvcore_c.h` (コメントのみ)。
+  - `qtui/src/core/nvcore.{h,cpp}`・`state.{h,cpp}`、`qtui/src/app/mainwindow.{h,cpp}`、`qtui/src/widgets/profile_panel.{h,cpp}`、`qtui/tests/selftest.cpp`。
+- **触っていないもの**
+  - 処理コアの Python (`nvfilter.py`・`nv_aft_v5.py`・`nv_depth.py`)。`reference/python/out/` にも書いていない。
+  - 本家は実行も dlopen もしていない。Resolve と `/Library/OFX/Plugins/` にも触れていない。
+
+### 本家どおりの部分
+- **Profile フォルダ**
+  - 既定は `<書類>/Meat Video/Profiles`。本家の `<書類>/Neat Video v6 OpenFX/Profiles` の製品名だけを置き換えた。
+  - 環境変数 `MEATVIDEO_PATH` がディレクトリなら `$MEATVIDEO_PATH/Profiles` を使う。本家の `NV6OFX_PATH` と同じ型。
+  - 設定キーは `prefs/profile_dir`。
+  - Preferences > Folders に、編集欄・"…" (Select profile folder)・"Default" (Reset profile folder to default …) がある。
+  - フォルダは自動では作らない。
+- **▼ 保存済みプロファイルの一覧**
+  - 列挙と並べ替えは本家と同じ QDir のフラグ (再帰、フォルダ先頭、大小無視)。
+  - 対象は `*.json` で、`*.nvpreset.json` と `*.ui_params.json` は除く。
+  - 空のときは、本家の文言の製品名だけを置き換えて表示する。
+  - シンボリックリンクのループでは止まらない (canonical パスで各フォルダを 1 回だけ辿る)。
+- **OFX ヘルパー**: 同じ設定ファイルと同じコードを通るので、同じフォルダを使う (コードの経路からの判断。Resolve 上は未確認)。
+
+### 独自の Auto Match (repro。本家の Auto Match は空関数)
+- 部品はすべて照合済みの移植: `model_full` (FUN_00995250)、`is_clip_genuine` (FUN_009c6f88)、`similarity` (FUN_009b6338)、`penalty` (FUN_009d49b4)。
+- **新規プロファイルの JSON の追加キー**
+  - Auto / Build Profile で作ったプロファイルの JSON の最上位に `"match_model"` を書く。各面 492 語と 51 語の 16 進で、約 13 KB。
+  - 処理に使う base は変えない。match_model のない古い JSON も読める。不正な match_model は拒否する。
+- **スコアの式**
+  - 参照 r: 現在のフレームの FindFlatArea の正方形から作ったモデル。
+  - 各 32×32 タイル (IsClip が R・G・B とも ≤ 0.33) で q_c = similarity × penalty(F₅/m₅) × penalty(F₆/m₆) を作り、p = q_G·q_R·q_B とする (NaN は 0)。
+  - penalty の 2 項は、再現側が足した「逆向きのレベル検査」。
+  - score = Σmin(p, r) / Σmax(p, r) (ファジー Jaccard 指数)。
+  - 最大のプロファイルを読み込む。同点なら一覧の順で先のもの。最大が 0 以下なら読み込まない。
+- **表示**
+  - Prepare のツールバーに Auto Match ボタン。Profile メニューの "Auto Match (repro)" (Ctrl+M)。
+  - パネルに "Match (repro)" 欄。Profile Viewer の "Match:" は "Area status (repro):" に改名。
+  - ツールチップとメッセージには "repro" を明記した。
+- **実行**: ワーカーで実行し、取り消せる。Auto Match と Auto/Build Profile は後から来た要求が勝つ。
+- **C ABI**: 追加のみなので NVC_ABI_VERSION は 3 のまま。理由は `nvcore_c.h` に記載。
+
+### 作業者の試験結果
+| 試験 | 結果 |
+|---|---|
+| C++ と Python のビット一致 (34 フレーム、スレッド 1/4) | 1394 スコア、ALL MATCH |
+| qtui クリーンビルド | warning 0 |
+| qtui 自己試験 | 126/126 (117 + 新規 9 項目) |
+| `make -C native verify` | exit 0 |
+| `verify_bridge` | ALL MATCH |
+| OFX クリーンビルド | warning 0 |
+| `verify_ofx --quick` | 0/67,028,480 語不一致 |
+| `verify_modal` | ALL OK |
+| ini | 変化なし |
+
+- **既知の正解の選択** (自己試験の項目 8)
+  - 現在フレームの Auto Profile が **1.0000** で選ばれた。
+  - 他の候補: 同じクリップのテクスチャ領域 0.0324、白色 σ8 の別クリップ 0.0739、白色 σ1 の別クリップ 0。
+  - 除外されたもの: sub 違い、match_model なし、壊れた JSON。
+  - 正解を除くと、40 フレーム離れた同じクリップのプロファイルが 0.6859 で選ばれた。
+- **Round 2** (Round 1 の指摘への対応後): 自己試験 126/126、`make -C native verify` exit 0 (`verify_match` 1107 スコア ALL MATCH)、OFX と `verify_ofx --quick` 合格、ini 変化なし。
+
+## 統括の再実行 (観測)
+- **Round 1**
+  - `make -C native lib` は warning 0。
+  - scratch での qtui クリーンビルド (Qt 6.12.0) は warning 0。自己試験は 126/126。
+  - `verify_match` (seed 777、24 フレーム) は 744 スコア × 2 で ALL MATCH。
+  - OFX の再ビルドは warning 0。`verify_ofx --quick` は 81 比較で不一致 0。
+  - ini は変化なし。`~/Documents/Meat Video` は作られていない。`repro/`・`reference/` と `*.py` は変更なし。
+  - **不手際 (修正済み)**: 統括が実行した `make -C native clean` で、追跡中のバイナリ `native/nv_quality_test` が消えた。検証者の指摘 L1 で気づき、`git checkout` で戻した。
+- **Round 2** (`make clean` は使わなかった)
+  - 修正箇所は報告どおりだった (目視)。`native/*.py` は追跡対象だった。
+  - `make -C native lib` と qtui のクリーンビルドは warning 0。自己試験は 126/126。
+  - `native/verify_match.py` (seed 31337、23 フレーム) は 713 スコア × 2 で ALL MATCH。
+  - OFX の再ビルドは warning 0。`verify_ofx --quick` は不一致 0。
+  - ini は変化なし。追跡ファイルの削除はなし。
+
+## 独立検証 Round 1 (verify-n4e): **REQUEST_CHANGES** (M 2・L 6)
+- **回帰と照合はすべて合格**
+  - クリーンビルド、自己試験 126/126、`verify_match` (seed 4242) 868 スコア、実写の全画面での照合 100 スコア (スレッド 1/3/8)。
+  - `make -C native verify`、`verify_bridge` (669 秒)、`verify_ofx --quick`、ini 変化なし。
+- **感度試験**: Python 参照を 10 通りに変え、8 通りを検出した。
+  - 検出されなかったのは加算順の逆転と、クリップの閾値の 0.33 → 0.34 で、どちらも入力上の理由で差が出ない (想定内)。
+- **本家の文字列との照合**: 本家バンドルのファイルを読むだけで照合し (実行していない)、空の文言・フォルダ名・環境変数・ボタン文言が製品名以外一致した。
+- **指摘**
+  - **M1 (blocker)**: Match 欄のツールチップが、試作段階の「平均」の式を説明していた。
+  - **M2**: 照合スクリプトが `work/` (git の除外対象) にあり、マージ後に根拠を再現できない。
+  - **L1**: `native/nv_quality_test` の削除 (統括の `make clean` が原因)。
+  - **L2**: ABI 版数を据え置いたことの記録がない。
+  - **L3**: シンボリックリンクのループで UI が止まる。
+  - **L4**: 色差形式の判定が 2 か所で違う。
+  - **L5**: Auto Match と Auto/Build Profile を同時に動かすと、プロファイルを取り違える余地がある。
+  - **L6**: ボタンの表示文字列は "Auto Match" で、"repro" はツールチップにある (観測事項)。
+
+## 独立検証 Round 2 (verify-n4e): **APPROVE** (blocker 0、新しい Low 3)
+- **Round 1 の指摘**: M1・M2・L1〜L5 はすべて VERIFIED。
+  - M2 は、work/ を含まない追跡対象だけの複製から `python3 -I verify_match.py` が動き、713 スコアが ALL MATCH だった。
+  - L3 は、本物のリンク (根へのループ・自己ループ・2 本目) を使った試験を確認した。
+  - L5 は、prof_req と automatch_req、busy の表示、AFT との関係を `worker.cpp` まで読んで確認した。
+- **回帰**
+  - クリーンビルドは warning 0。自己試験は 126/126。
+  - `make -C native verify` は 12 本 (`verify_match` を含む) すべて合格。
+  - OFX のビルドと `verify_ofx --quick` も合格。ini は変化なし。
+- **verify_bridge の省略は妥当**: Round 1 との差は `nvcore_c.h` と `nvcore_c_match.h` のコメントだけで、`nvcore_c_match.cpp`・`nvcore.cpp` は同一だった。
+- **新しい Low (記録して後回し)**
+  - **R2-L1**: Auto Profile で Auto Match を取り消した直後、古いタスクが終わる前に Auto Match を再び押すと、二重押しの扱いになって新しい Auto Match が始まらない。窓は短い。
+  - **R2-L2**: Load Profile・▼・Paste・Generic・Reset は、実行中の Auto Match を取り消さない。後から届く Auto Match の結果がそれを上書きする。対策案は `set_profile` の入口で `automatch_req` を進めること。
+  - **R2-L3**: 取り消された古い profile のタスクが `busy("profile", false)` を呼ぶので、ビジー表示が早く消え得る。変更前からある挙動。
+- **L3 の限界は許容と判断**: 並び順で先に来るリンクが一覧に出て、実フォルダの方は出ない。中身は必ず 1 か所に出て、二重に採点されることはない。
+
+## 残る点
+- **Resolve の実機確認 (未実施。N4d の保留項目に追加)**
+  - ClipParams は match_model の分 (約 13 KB) 大きくなり、26 KB 前後になる。文字列パラメータとして問題ないか。
+  - OFX のヘルパーが同じ Profile フォルダを使うか。
+  - 実画面での Ctrl+M。
+- **作業者が挙げたリスク**
+  - Batch Profiler は match_model を書かないので、そのプロファイルは Auto Match の対象外になる。
+  - Python UI との比較ツール (`compare_ui.py`・`compare_n3c.py`) は、新しいキーとボタンの分だけ差が出るはず (未実行)。
+  - Auto/Build Profile のたびに BuildNoiseModel をもう 1 回走らせる (128² で約 1 秒、320² で約 4 秒)。
+  - スコアの識別力を確かめたのは test.mp4 と合成ノイズだけ (推定の範囲)。
+  - 二重押しの UI 試験は「取り消し」か「完了」のどちらでも合格にしている。
+- **任意の後始末**: R2-L1〜L3。

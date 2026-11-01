@@ -145,7 +145,16 @@ ProfilePanel::ProfilePanel(QWidget* parent) : QWidget(parent) {
     icons = new IconBar("noise profile");
     v->addWidget(icons);
     name = new QComboBox();
-    v->addWidget(name);
+    saved = new QToolButton();                    // genuine ProfilePopupButton next to the profile name
+    saved->setText(QString::fromUtf8("▼"));
+    saved->setAutoRaise(true);
+    saved->setToolTip("Show saved noise profiles (the Profile folder: Tools > Preferences > Folders)");
+    connect(saved, &QToolButton::clicked, this, [this] { emit savedProfiles(); });
+    auto* nh = new QHBoxLayout();
+    nh->setSpacing(2);
+    nh->addWidget(name, 1);
+    nh->addWidget(saved);
+    v->addLayout(nh);
     auto* dh = new QHBoxLayout();
     dh->addWidget(new QLabel("Device Name and Mode:"));
     dh->addStretch(1);
@@ -190,6 +199,17 @@ ProfilePanel::ProfilePanel(QWidget* parent) : QWidget(parent) {
     completeness->setStyleSheet(QString("QLabel{") + DARK_BOX + "}");
     completeness->setToolTip("Completeness: the luminance-curve term g x 100 (genuine measure, decoded 2026-10-26)");
     left->addWidget(completeness, 1, 1, Qt::AlignRight);
+    // N4e: the genuine hides its Match row (DECODE.md 2); this one shows the reproduction's own Auto Match score
+    auto* match_lbl = new QLabel("Match (repro)");
+    match_lbl->setToolTip("repro, not the genuine Match: the reproduction's Auto Match score of this profile against "
+                          "the current frame");
+    left->addWidget(match_lbl, 2, 0);
+    match = new QLabel("n/a");
+    match->setAlignment(Qt::AlignCenter);
+    match->setFixedWidth(52);
+    match->setStyleSheet(QString("QLabel{") + DARK_BOX + "}");
+    left->addWidget(match, 2, 1, Qt::AlignRight);
+    set_match(std::nullopt, "no profile");
     auto* lt = new QHBoxLayout();
     levels_title = new QLabel("<b>Noise Levels</b>");
     lt->addWidget(levels_title);
@@ -197,7 +217,7 @@ ProfilePanel::ProfilePanel(QWidget* parent) : QWidget(parent) {
     levels_line->setFrameShape(QFrame::HLine);
     levels_line->setFrameShadow(QFrame::Sunken);
     lt->addWidget(levels_line, 1);
-    left->addLayout(lt, 2, 0, 1, 2);
+    left->addLayout(lt, 3, 0, 1, 2);
     l_main = new QLabel("Main Sample");
     main_val = new QLabel("-");
     l_sel = new QLabel("Selection");
@@ -207,11 +227,11 @@ ProfilePanel::ProfilePanel(QWidget* parent) : QWidget(parent) {
         w->setToolTip("Noise Level (genuine measure FUN_009b01d4): sqrt of the sum over five levels and "
                       "R, G, B of the squared mean local RMS of the area (Main Sample = the profile's area)");
     }
-    left->addWidget(l_main, 3, 0);
-    left->addWidget(main_val, 3, 1);
-    left->addWidget(l_sel, 4, 0);
-    left->addWidget(sel_val, 4, 1);
-    left->setRowStretch(5, 1);
+    left->addWidget(l_main, 4, 0);
+    left->addWidget(main_val, 4, 1);
+    left->addWidget(l_sel, 5, 0);
+    left->addWidget(sel_val, 5, 1);
+    left->setRowStretch(6, 1);
     sh->addLayout(left, 1);
     auto* sep = new QFrame();
     sep->setFrameShape(QFrame::VLine);
@@ -405,6 +425,15 @@ void ProfilePanel::set_levels(std::optional<double> main, std::optional<double> 
 
 void ProfilePanel::set_quality(std::optional<int> pct) {
     quality->setText(pct ? QString("%1%").arg(*pct) : QString("n/a"));
+}
+
+void ProfilePanel::set_match(std::optional<double> score, const QString& note) {
+    match->setText(score ? QString("%1%").arg(qRound(*score * 100.0)) : QString("n/a"));
+    match->setToolTip("Match (repro, not the genuine Match; the genuine OFX hides it): the score Auto Match ranks by. "
+                      "Over the current frame's unclipped 32x32 tiles, p = the AFT similarity (FUN_009b6338) x the "
+                      "reverse level test of the tile models against this profile's match model, r = the same against "
+                      "the frame's own model (BuildNoiseModel of its FindFlatArea square); Match = sum min(p, r) / "
+                      "sum max(p, r) (100% = the tiles the frame's own model accepts).\n" + note);
 }
 
 void ProfilePanel::set_completeness(std::optional<int> pct) {
