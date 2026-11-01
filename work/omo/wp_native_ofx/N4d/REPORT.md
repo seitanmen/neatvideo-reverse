@@ -573,3 +573,14 @@ N4d 修正報告「応答なし」(3/3): 本家の静的確認・残るリスク
   4. MEATVIDEO_OFX_TRACE=1 で起動したときのトレース ("host event loop" か "blocking" か)
   5. 従来の項目: 既定、保存と開き直し、L2
 - 実機で確認できているのは、修正前のバンドルで「Apply で閉じた後は普通に使えた」ことだけ。
+
+## 独立検証 Round 4: REQUEST_CHANGES (verify-n4d、詳細は verifier/VERDICT.md の Round 4 節)
+- R4-1 (High、観測): 待ちの間、ホストの主スレッドが空回りする。待ち中の 4 秒で CPU 4.010 秒 (対照 0.000 秒)。sample で mach_msg2_trap での待ちは 0。推定原因は、独自モードにソースがないため CFRunLoopRunInMode がすぐ戻ること。
+- R4-2 (High、観測): Cocoa ホストでウィンドウが開くまでが遅い。1080p×11 で対照 0.67 秒に対し 10.5 秒。
+- R4-3 (Medium、推定): 入力を捨てることで、mouseUp や修飾キーの状態が残り得る。
+- R4-4 (Low、推定): AppKitDefined の sendEvent: からの再入で DestroyInstance が呼ばれる可能性。経路は見つかっていない。
+- 回帰はすべて合格。
+
+### 統括の再実行
+- verifier/round4/scripts/timing.py: 対照 0.68 秒 / 0.68 秒、修正版 10.32 秒 / 10.70 秒 (R4-2 を再現)。
+- CPU 時間 (cocoahost、"sleep 8000;close"、1080p×11、起動から 4 s → 8 s の ps time): 対照 0:00.29 → 0:00.29、修正版 0:03.48 → 0:07.47。4 秒で約 4 秒 = 1 コアを使い切る (R4-1 を再現)。

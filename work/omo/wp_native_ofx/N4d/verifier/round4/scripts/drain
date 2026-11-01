@@ -1,0 +1,4 @@
+#!/bin/sh
+if [ "$1" = "--ofx-default" ]; then printf 'DEFAULTS 0 none none\n'; exit 0; fi
+cat > /dev/null
+printf 'CANCEL\n'

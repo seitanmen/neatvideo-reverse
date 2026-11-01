@@ -216,3 +216,92 @@ fd の漏れはなく、L3 の挙動 (CLOEXEC、長さ区切りの読み) も保
 ## N4d としての結論
 Round 1 の M1・L1〜L6、Round 2 の R2-1 と軽微 4 件はすべて解消した。
 残るのは情報レベルの R3-1 と、仕様どおりの L2 (空の ClipParams = 新規)。Resolve 上での確認項目 (ウィンドウの前面表示、UI の停止、アクションの呼び出し順、L2) はユーザーが REPORT の手順で行う。
+
+---
+
+# Round 4 (2026-11-01、「ウィンドウ表示中に Resolve が応答なし」の修正 = ModalWait)
+
+## 総合判定: **REQUEST_CHANGES**
+主スレッドがイベントを取り出し続けること、入力が待ちの後に溜まって配られないこと、既存の照合と回帰はすべて確認できた。
+しかし ModalWait の待ちは実際には待っておらず、**ホストの主スレッドを CPU 100% で回し続ける** (R4-1、High)。
+そのうえ、Cocoa ホストではウィンドウが開くまでの時間が 1080p × 11 フレームで約 16 倍 (0.67 → 10.5 秒) になる (R4-2、High)。
+どちらも、作業者の試験 (verify_modal.py) は「待ち中の sample の大半が pump の中」を合格の条件にしており、空回りと区別できないため見逃している。
+
+## 指摘
+
+### R4-1 (High、観測): 待ちの間、ホストの主スレッドが空回りして CPU を 100% 使う
+- 観測 1 (CPU 時間): cocoahost で、ウィンドウを開いたまま 8 秒待つ C++ UI ドライバ ("sleep 8000;close"、640×360×8) を使い、待ちの途中の 4 秒間に `ps -o time` を 2 回取った。
+  - ModalWait (ON): **4 秒で 4.010 秒の CPU** (1 コアを使い切る)
+  - 対照 (`-DMV_MODAL_WAIT=OFF` でビルドしたものに差し替え): **0.000 秒**
+- 観測 2 (`sample`、round4/logs/sample_modal.txt):
+  - 主スレッドの 767 サンプルのうち 757 が `ModalWait::pump → nextEventMatchingMask → _DPSNextEvent → RunCurrentEventLoopInMode → _CFRunLoopRunSpecificWithOptions` の中にあった。
+  - その先端は `__CFRunLoopCopyMode → CFSetGetValue / CFEqual / __CFStringEqual` などで、CPU の上で動いている。
+  - 主スレッドには `mach_msg2_trap` (カーネルでの待ち) が 1 つもない。
+- 推定 (機構): 独自のモード "MeatVideoOFXModal" にはランループのソースもタイマーも登録されていない。空のモードでの CFRunLoopRunInMode はすぐに戻る (kCFRunLoopRunFinished) ので、`untilDate:` の 20 ms は効かない。結果として `poll(fd, 0)` → `nextEventMatchingMask` の往復が休みなく回る。
+  - それでもイベントは取り出せている (待ち中に送った入力が後で配られなかった)。_DPSNextEvent はブロックする前にイベントキューを直接見るためとみられる。
+- 影響: ウィンドウを開いている間ずっと、ホストの主スレッドが 1 コアを占有する (電池・発熱)。ヘルパーの UI や Auto Profile と CPU を取り合う。
+- 作業者の判定条件の問題: 「pump のサンプル > 80%、read での停止 0」は、ブロックして待っている状態と空回りしている状態を区別しない。
+  CPU 時間か、主スレッドの先端が mach_msg で待っている割合を条件に加えるべき。
+
+### R4-2 (High、観測): Cocoa ホストでウィンドウが開くまでが遅い (1080p で約 16 倍)
+- 観測 (round4/scripts/timing.py。cocoahost、C++ UI ドライバ、script "close"、1920×1080×11 フレーム、Prepare@5。待ち = press の wall の区間):
+  - 対照 (OFF): 0.67 秒 / 0.67 秒 (2 回)
+  - ModalWait (ON): **10.53 秒 / 10.50 秒**
+  - minihost (NSApp なし、blocking) は 0.69〜0.71 秒、cocoahost (ON) は 9.22〜11.12 秒
+  - 640×360×8 では minihost 0.39 秒に対し cocoahost (ON) 1.43〜1.55 秒
+  - すぐに読み捨てる偽ヘルパー (drain) でも、1080p×11 で 0.13 秒 → 2.86 秒
+- 推定: フレーム (1080p×11 = 約 274 MB) を非ブロッキングのパイプに書く際、パイプが一杯になるたびに poll(0) + nextEventMatchingMask を 1 往復してから書き直す。1 往復が重い (ms 単位) ので、書き込みの速さがそれに律速される (約 26 MB/s)。
+  4K なら 4 倍のデータで 40 秒前後になるとみられる。
+- 影響: Resolve でボタンを押してからウィンドウが出るまで、1080p で約 10 秒待たされる (Resolve は応答するが、画面は止まったまま)。
+- 提案 (R4-1 と一緒に):
+  - fd で待ち、イベントは待たずに取る: `poll(fd, events, 5〜10 ms)` で fd を待ち、その後 `untilDate:[NSDate distantPast]` で取れるだけイベントを取る。
+  - または、独自モードにパイプの CFFileDescriptor (か mach port のソース) を登録して、モードを空にしない (fd が準備でき次第起きる)。
+  - 送信は従来どおり大きな塊で書き、パイプが一杯のときだけ上の待ちに入る。
+  - 判定には CPU 時間 (待ち中に < 5% など) と、ウィンドウが開くまでの時間の対照比 (1080p×11 で OFF の 1.5 倍以内など) を加える。
+
+### R4-3 (Medium、推定・Resolve で要確認): 入力を捨てることの副作用
+- マウスの押下と離しの片方だけを捨てる場合: ホストのボタンが押下 (mouseDown) で InstanceChanged を出す作りなら、対になる mouseUp は待ちの間に捨てられる。ホストの Qt は押されたままだと思い、閉じた後のマウス移動がドラッグになるおそれがある (Resolve の作りは未確認)。
+  Qt の QPushButton は離しで clicked を出すので、通常は起きないとみられる。
+- 修飾キー: 待ちの間に捨てた flagsChanged・keyUp のために、閉じた後にホストが修飾キーやキーが押されたままと認識するおそれがある (推定)。
+- 本家は同じプロセス内で、Qt のモーダル (beginModalSessionForWindow / runModalSession) を使っているとみられる (作業者の静的な観測)。AppKit のモーダルセッションは、ほかのウィンドウ宛ての入力を自分で処理する。
+- Resolve で、ボタン → ウィンドウ → 閉じる の後に、クリックや修飾キーの取り違えがないかを確認項目に加えるとよい。
+
+### R4-4 (Low、推定): 待ち中の再入
+- AppKitDefined の sendEvent: から、ホストのアクティブ化やウィンドウのハンドラが同期で走る。そこからホストがこのインスタンスの DestroyInstance を呼ぶと、待ちの後に解放済みの `Instance*` を使う。
+  通常は入力が捨てられホストのタイマーも動かないので、経路は見つかっていない。
+  - 2 つ目のウィンドウは g_window_open で防がれる (作業者の観測)。
+  - g_window_open は RAII のデストラクタで、例外を含むすべての出口で戻る (コードで確認)。
+
+## 確認できた点 (コードレビューと観測)
+- objc_msgSend の型 (コードで確認): `nextEventMatchingMask:untilDate:inMode:dequeue:` (unsigned long long, id, id, BOOL)、`type` (NSUInteger)、`subtype` (short = NSEventSubtype)、`activateWithOptions:` (NSUInteger → BOOL)、`runningApplicationWithProcessIdentifier:` (pid_t)、`dateWithTimeIntervalSinceNow:` (double) は正しい。
+  `yieldActivationToApplication:` は macOS 14 以降のセレクタで、バンドルの最低 OS は 26.0 (otool の minos、Info.plist) なので問題ない。
+  autorelease pool は pump ごとに push/pop していて、front() もその中。
+- wait_fd: POLLHUP / POLLERR / POLLNVAL では poll が r > 0 を返して抜け、続く read / write の失敗でループが終わる (コードで確認)。空回りの原因は R4-1 で、fd 側ではない。
+- 非 active の経路は従来と同じ (コードで確認): wait_fd はすぐ戻り、EAGAIN の扱いは active のときだけ、fd はブロッキング、wait_child は EINTR ループの waitpid。
+  minihost と MV_MODAL_WAIT=OFF の対照は 0.67〜0.71 秒・CPU 0 で、Round 3 と同じ振る舞い。
+- wait_child: WNOHANG で 0 → pump、ECHILD → status 0 (従来どおり)。ゾンビなし (作業者の helper-dies / no-reply-eof の場面と同じ結果)。
+- 作業者の verify_modal.py を自分の対照バンドル (OFF に差し替えて再署名) で実行: ALL OK。
+  - apply-10s: 待ち中の入力は待ちの後も配られず、対照では read で 100% 停止して入力が後で配られた。
+  - 別スレッドからの押下は "already open" で拒否。minihost は blocking。
+  - ただし sample の「pump 815/846」などは、R4-1 の空回りのサンプルを含む数え方。
+- 「応答あり」の判定基準: 「主スレッドがイベントを取り出し、送ったイベントが溜まらない」は、WindowServer の判定 (キューのイベントが一定時間取り出されない) の代わりとして妥当とみる (推定)。
+  CGSEventIsAppUnresponsive が SIGSTOP でも 0 のままなのは作業者の観測どおりで、合成イベントでは立たないとみられる。
+  ホストを前面にして実際の入力を使う確認は、ユーザーのフォーカスとカーソルを奪うので行っていない。
+  前面化 (front) の動作は、試験のヘルパーが本物の app でないため観測していない。
+
+## 回帰 (今回のソースで新規にビルド)
+| 確認 | 結果 | 出力 |
+|---|---|---|
+| クリーンビルド (build_ofx.sh、新規ディレクトリ。cocoahost を含む) | pass | 警告・エラー 0。MeatVideo.ofx・minihost・cocoahost・fsguard は worktree のものと sha256 一致。依存は libnvcore・libobjc・libc++・libSystem |
+| qtui 全ターゲット | pass | 警告 0 |
+| verify_ofx.py --pure --mutate | pass | 163 比較 0/170,596,864 語不一致、ALL MATCH。fd を閉じた起動 8 通りすべて ok、dlopen_noload 0 |
+| 自作の場面 (my_scen.py --pure) | pass | ALL MATCH |
+| qtui_selftest | pass | 117/117 |
+| 既存の --ofx モード (HEAD vs 今回) | pass | 29 件 ALL SAME |
+| verify_modal.py --control (自分の対照) | pass (判定条件は不十分、R4-1) | ALL OK |
+| ~/.config/NeatRepro/nv_ui_qt.ini | pass | 45d4258c…fcc6 (前後で同一) |
+
+## APPROVE の条件
+1. R4-1: 待ち中のホストの CPU がほぼ 0 になる (例: 上の 4 秒の測定で < 0.2 秒)。
+2. R4-2: Cocoa ホストでウィンドウが開くまでの時間が対照並みになる (1080p×11 で 1 秒前後)。
+3. その上で、応答性の観測 (sample で主スレッドが mach_msg で待っていること、入力が溜まらないこと) が保たれる。
