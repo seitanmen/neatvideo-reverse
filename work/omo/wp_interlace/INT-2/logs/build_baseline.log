@@ -1,0 +1,12 @@
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra  -o nv_band_test nv_band_main.cpp nv_band.cpp nv_portable.cpp
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra  -o nv_curve_test nv_curve_main.cpp nv_curve.cpp nv_linekernel.cpp nv_portable.cpp -lpthread
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra -D_7ZIP_ST -o nv_lzma_test nv_lzma_main.cpp nv_lzma.cpp lzma/obj/LzmaLib.o lzma/obj/LzmaEnc.o lzma/obj/LzmaDec.o lzma/obj/LzFind.o lzma/obj/Alloc.o
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra  -o nv_flat_test nv_flat_main.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp nv_linekernel.cpp nv_portable.cpp -lpthread
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra  -o nv_model_test nv_model_main.cpp nv_model.cpp nv_band.cpp nv_linekernel.cpp nv_portable.cpp
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra -o nv_v5_test nv_v5_main.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp -lpthread
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra  -D_7ZIP_ST -dynamiclib -install_name @rpath/libnvcore.dylib \
+	    -o libnvcore.dylib nvcore_c.cpp nv_aft.cpp nv_profile.cpp nv_model.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp nv_linekernel.cpp nv_portable.cpp nv_lzma.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp nv_ui.cpp nvcore_c_ui.cpp nv_quality.cpp nv_prof5.cpp nv_lstsq.cpp nvcore_c_prof5.cpp nv_depth.cpp nvcore_c_depth.cpp nvcore_c_rgb.cpp nv_fields.cpp nvcore_c_match.cpp lzma/obj/LzmaLib.o lzma/obj/LzmaEnc.o lzma/obj/LzmaDec.o lzma/obj/LzFind.o lzma/obj/Alloc.o -lpthread
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra -D_7ZIP_ST -o nv_profile_test nv_profile_main.cpp nv_profile.cpp nv_model.cpp nv_flat.cpp nv_band.cpp nv_curve.cpp nv_linekernel.cpp nv_portable.cpp nv_lzma.cpp lzma/obj/LzmaLib.o lzma/obj/LzmaEnc.o lzma/obj/LzmaDec.o lzma/obj/LzFind.o lzma/obj/Alloc.o -lpthread
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra  -o nv_aft_test nv_aft_main.cpp nv_aft.cpp nv_band.cpp nv_curve.cpp nv_model.cpp nv_ndimage.cpp nv_linekernel.cpp nv_portable.cpp -lpthread
+c++ -std=c++17 -O2 -ffp-contract=off -fno-fast-math -Wall -Wextra  -o nv_fields_test nv_fields_main.cpp nv_fields.cpp
+make -C native all -j 2  28.99s user 2.17s system 198% cpu 15.716 total

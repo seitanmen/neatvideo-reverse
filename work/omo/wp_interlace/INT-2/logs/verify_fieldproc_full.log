@@ -1,0 +1,19 @@
+copy  : fields_ref.temporal_shift (no / zero shifts) == nvfilter.temporal_v5: 24/24 cases, 631604 words
+kind 30 zero shifts == kind 2 (C++ temporal_v5): 12/12 cases, 98152 words
+tshift : 48/48 cases bit-exact, 630486/630486 words
+tshift0: 12/12 cases bit-exact, 98152/98152 words
+fields : 96/96 cases bit-exact, 759048/759048 words
+real   : 18/18 cases bit-exact, 6220800/6220800 words
+time: Python 2.2 s (2 procs), C++ 0.5 s
+bridge: nvc_temporal_shift (NULL == nvc_temporal, shifts == fields_ref) 24/24 cases, 712208 words (/Users/seitan/Desktop/work/reverse/.claude/worktrees/int2/native/libnvcore.dylib)
+negative controls (each mutant must differ):
+  SIGN              20/144 cases differ -> DETECTED
+  CHROMA_HALF       20/144 cases differ -> DETECTED
+  SAME_OFF          18/144 cases differ -> DETECTED
+  RADIUS            18/144 cases differ -> DETECTED
+  ORDER             48/144 cases differ -> DETECTED
+  NO_PRESHIFT       54/144 cases differ -> DETECTED
+  CHROMA420_BEFORE  34/144 cases differ -> DETECTED
+  LUMA_SHIFT_OFF    55/144 cases differ -> DETECTED
+ALL BIT-EXACT
+python3 native/verify_fieldproc.py --sensitivity --jobs 2  26.86s user 7.25s system 123% cpu 27.512 total

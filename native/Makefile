@@ -14,6 +14,8 @@
 #   make -C native && python3 native/verify_profile.py   (N1f)
 #   make -C native && python3 native/verify_aft.py       (N1i)
 #   make -C native && python3 native/verify_fields.py    (INT-1: field split / join; --video for interlaced clips)
+#   make -C native && python3 native/verify_fieldproc.py (INT-2: the field pipeline nv_fieldproc / nvc_temporal_shift
+#                                                         against native/fields_ref.py; --sensitivity for mutants)
 #   make -C native verify                                 (all of the above)
 #   make -C native portable x86 && native/verify_x86.sh  (F4: portable build, x86_64 vs arm64 bytes)
 #   make -C native lib && python3 native/verify_bridge.py   (N2a: libnvcore.dylib via ctypes vs the Python path)
@@ -81,8 +83,9 @@ nv_model_test$(SUF): nv_model_main.cpp nv_model.cpp nv_model.h nv_band.cpp nv_ba
 
 # N1g / N1h: v5 temporal and spatial kernels (repro/nvfilter.py temporal_v5 / spatial_v5 /
 # process_frame_v5); nv_ndimage reproduces the scipy 1.15.3 / numpy 2.1.3 primitives they use
-V5_SRC = nv_v5_main.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp
-V5_HDR = nv_ndimage.h nv_spatial.h nv_temporal.h
+# (+ INT-2: the field pipeline nv_fieldproc over nv_fields, kinds 30 / 31 of native/verify_fieldproc.py)
+V5_SRC = nv_v5_main.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp nv_fieldproc.cpp nv_fields.cpp
+V5_HDR = nv_ndimage.h nv_spatial.h nv_temporal.h nv_fieldproc.h nv_fields.h
 
 nv_v5_test: $(V5_SRC) $(V5_HDR)
 	$(CXX) $(CXXFLAGS) -o $@ $(V5_SRC) -lpthread
@@ -156,6 +159,7 @@ verify: all
 	python3 verify_aft.py $(VJ)
 	python3 verify_match.py $(VJ)
 	python3 verify_fields.py $(VJ)
+	python3 verify_fieldproc.py $(VJ)
 
 # N2a: the ctypes bridge against the Python path (needs the test videos, ffmpeg and PySide6: nv_ui_qt.state)
 verify_bridge: lib

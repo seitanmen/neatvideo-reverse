@@ -5,7 +5,8 @@
 //   one line of JSON (UTF-8, ended by "\n"):
 //     {"protocol": "meatvideo-ofx-session", "version": 1, "page": "prepare" | "adjust",
 //      "width": W, "height": H, "fps": F, "matrix": "bt709" | "bt601", "format": "gbrpf32le",
-//      "times": [t0, t1, ..], "current": k, "clip_params": "<the current ClipParams, may be empty>"}
+//      "times": [t0, t1, ..], "current": k, "clip_params": "<the current ClipParams, may be empty>"
+//      [, "field_order": "tff" | "bff"]}   (INT-4: the Source clip's field order, only when the host reports one)
 //   then len(times) frames, each the raw gbrpf32le frame (G, B, R planes of W x H float32 LE, top-down rows) of the
 //   host's RGBA image at that time (the same mapping as the render, core.h).
 // The helper answers on its stdout (and nothing else goes there) with exactly one of
@@ -33,6 +34,7 @@ struct SessionRequest {
     std::vector<double> times;
     int current = 0;                        // index into times
     std::string clip_params;
+    int field_order = -1;                   // INT-4: the host's first field in time (0 top, 1 bottom; -1 none)
     std::vector<std::vector<float>> frames; // raw gbrpf32le frames (3 x W x H floats each), as times
 };
 

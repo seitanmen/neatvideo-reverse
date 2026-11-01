@@ -1,0 +1,28 @@
+== old_town_cross/tff_y6
+genuine: genuine/interlaced/Event_バージョン 1_0001_0001 (found by file name)
+genuine_noeffect: genuine_noeffect/interlaced/Event__0001_0001 (found by file name)
+old_town_cross/tff_y6 input: Y 32.564 dB, RGB 30.46 dB (interior Y 32.564), alignment best +0,+0 (12.8 s)
+old_town_cross/tff_y6 ours_frame: Y 33.99 dB, RGB 30.638 dB (interior Y 33.981), alignment best +0,+0 (12.5 s)
+old_town_cross/tff_y6 genuine: Y 32.565 dB, RGB 30.46 dB (interior Y 32.565), alignment best +0,+0 (17.0 s)
+old_town_cross/tff_y6 pair ours_frame~genuine: Y 30.745 dB, RGB 27.888 dB
+wrote eval/old_town_cross_tff_y6.json
+noeffect {'samples': 373248000, 'differing': 0, 'max_abs_diff_16bit': 0, 'mean_diff_16bit_RGB': [0.0, 0.0, 0.0]} {'rgb.RGB': {'psnr': inf, 'rms': 0.0, 'n': 373248000}} {'yuv.Cb': {'psnr': 73.066, 'rms': 0.0567, 'n': 31104000}, 'yuv.Cr': {'psnr': 81.144, 'rms': 0.0224, 'n': 31104000}, 'yuv.Y': {'psnr': 80.413, 'rms': 0.0243, 'n': 124416000}} {'-2': 20.704, '-1': 22.57, '+0': inf, '+1': 22.272, '+2': 20.802}
+== park_joy/tff_y6
+genuine: genuine/interlaced/Event_バージョン 1_0001_0002 (found by file name)
+genuine_noeffect: genuine_noeffect/interlaced/Event__0001_0002 (found by file name)
+park_joy/tff_y6 input: Y 32.636 dB, RGB 30.593 dB (interior Y 32.636), alignment best +0,+0 (11.0 s)
+park_joy/tff_y6 ours_frame: Y 23.8 dB, RGB 22.065 dB (interior Y 23.784), alignment best +0,+0 (10.7 s)
+park_joy/tff_y6 genuine: Y 11.381 dB, RGB 10.911 dB (interior Y 11.359), alignment best -2,-1 (13.9 s)
+park_joy/tff_y6 pair ours_frame~genuine: Y 11.931 dB, RGB 11.531 dB
+wrote eval/park_joy_tff_y6.json
+noeffect {'samples': 373248000, 'differing': 0, 'max_abs_diff_16bit': 0, 'mean_diff_16bit_RGB': [0.0, 0.0, 0.0]} {'rgb.RGB': {'psnr': inf, 'rms': 0.0, 'n': 373248000}} {'yuv.Cb': {'psnr': 53.588, 'rms': 0.5335, 'n': 31104000}, 'yuv.Cr': {'psnr': 67.906, 'rms': 0.1026, 'n': 31104000}, 'yuv.Y': {'psnr': 64.144, 'rms': 0.1582, 'n': 124416000}} {'-2': 13.843, '-1': 14.833, '+0': inf, '+1': 14.757, '+2': 13.902}
+== sintel/tff_y3
+genuine: genuine/interlaced/Event_バージョン 1_0001_0003 (found by file name)
+genuine_noeffect: genuine_noeffect/interlaced/Event__0001_0003 (found by file name)
+sintel/tff_y3 input: Y 39.006 dB, RGB 36.959 dB (interior Y 39.005), alignment best +0,+0 (10.6 s)
+sintel/tff_y3 ours_frame: Y 33.142 dB, RGB 30.888 dB (interior Y 33.309), alignment best +0,+0 (9.8 s)
+sintel/tff_y3 genuine: Y 9.197 dB, RGB 8.005 dB (interior Y 9.186), alignment best +2,-1 (12.4 s)
+sintel/tff_y3 pair ours_frame~genuine: Y 9.309 dB, RGB 8.12 dB
+wrote eval/sintel_tff_y3.json
+noeffect {'samples': 373248000, 'differing': 0, 'max_abs_diff_16bit': 0, 'mean_diff_16bit_RGB': [0.0, 0.0, 0.0]} {'rgb.RGB': {'psnr': inf, 'rms': 0.0, 'n': 373248000}} {'yuv.Cb': {'psnr': 63.636, 'rms': 0.1678, 'n': 31104000}, 'yuv.Cr': {'psnr': 66.014, 'rms': 0.1276, 'n': 31104000}, 'yuv.Y': {'psnr': 66.894, 'rms': 0.1153, 'n': 124416000}} {'-2': 19.773, '-1': 21.083, '+0': inf, '+1': 23.331, '+2': 20.507}
+rc 0

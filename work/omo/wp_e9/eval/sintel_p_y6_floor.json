@@ -1,0 +1,51 @@
+{
+ "clip": "sintel/p_y6",
+ "floor": {
+  "noeffect": {
+   "test": "genuine_noeffect/progressive/Event__0001_0006",
+   "input_tiff": "clips/sintel/tiff/p_y6",
+   "frames": 60,
+   "codes": {
+    "samples": 373248000,
+    "differing": 0,
+    "max_abs_diff_16bit": 0,
+    "mean_diff_16bit_RGB": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "rgb_vs_input": {
+    "rgb.RGB": {
+     "psnr": Infinity,
+     "rms": 0.0,
+     "n": 373248000
+    }
+   },
+   "yuv_vs_noisy_420": {
+    "yuv.Cb": {
+     "psnr": 61.35,
+     "rms": 0.2183,
+     "n": 31104000
+    },
+    "yuv.Cr": {
+     "psnr": 59.885,
+     "rms": 0.2584,
+     "n": 31104000
+    },
+    "yuv.Y": {
+     "psnr": 61.197,
+     "rms": 0.2222,
+     "n": 124416000
+    }
+   },
+   "alignment_G_psnr_by_offset": {
+    "-2": 21.462,
+    "-1": 22.656,
+    "+0": Infinity,
+    "+1": 22.759,
+    "+2": 21.58
+   }
+  }
+ }
+}

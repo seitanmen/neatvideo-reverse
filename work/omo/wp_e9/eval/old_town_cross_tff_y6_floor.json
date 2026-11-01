@@ -1,0 +1,51 @@
+{
+ "clip": "old_town_cross/tff_y6",
+ "floor": {
+  "noeffect": {
+   "test": "genuine_noeffect/interlaced/Event__0001_0001",
+   "input_tiff": "clips/old_town_cross/tiff/tff_y6",
+   "frames": 60,
+   "codes": {
+    "samples": 373248000,
+    "differing": 0,
+    "max_abs_diff_16bit": 0,
+    "mean_diff_16bit_RGB": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "rgb_vs_input": {
+    "rgb.RGB": {
+     "psnr": Infinity,
+     "rms": 0.0,
+     "n": 373248000
+    }
+   },
+   "yuv_vs_noisy_420": {
+    "yuv.Cb": {
+     "psnr": 73.066,
+     "rms": 0.0567,
+     "n": 31104000
+    },
+    "yuv.Cr": {
+     "psnr": 81.144,
+     "rms": 0.0224,
+     "n": 31104000
+    },
+    "yuv.Y": {
+     "psnr": 80.413,
+     "rms": 0.0243,
+     "n": 124416000
+    }
+   },
+   "alignment_G_psnr_by_offset": {
+    "-2": 20.704,
+    "-1": 22.57,
+    "+0": Infinity,
+    "+1": 22.272,
+    "+2": 20.802
+   }
+  }
+ }
+}

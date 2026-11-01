@@ -1,0 +1,103 @@
+{
+ "clip": "park_joy/tff_y3",
+ "test": "runs/ours_frame/park_joy/tff_y3/out.mp4",
+ "frames": 60,
+ "result": {
+  "Y": {
+   "rho": 0.1454,
+   "beta": 0.8106,
+   "noise_share": 0.0211,
+   "rms_added": 3.016,
+   "rms_removed": 16.8148,
+   "rms_other": 16.6361
+  },
+  "Y.static": {
+   "rho": 0.5486,
+   "beta": 0.9236,
+   "noise_share": 0.301,
+   "rms_added": 3.0087,
+   "rms_removed": 5.0653,
+   "rms_other": 4.2351
+  },
+  "Y.small": {
+   "rho": 0.3904,
+   "beta": 0.9176,
+   "noise_share": 0.1524,
+   "rms_added": 3.0133,
+   "rms_removed": 7.0815,
+   "rms_other": 6.5195
+  },
+  "Y.large": {
+   "rho": 0.1304,
+   "beta": 0.7879,
+   "noise_share": 0.017,
+   "rms_added": 3.0166,
+   "rms_removed": 18.2308,
+   "rms_other": 18.0752
+  },
+  "Y.band1": {
+   "rho": 0.1545,
+   "beta": 0.8286,
+   "noise_share": 0.0239,
+   "rms_added": 2.6844,
+   "rms_removed": 14.3971,
+   "rms_other": 14.2242
+  },
+  "Y.band2": {
+   "rho": 0.1288,
+   "beta": 0.7196,
+   "noise_share": 0.0166,
+   "rms_added": 0.6065,
+   "rms_removed": 3.3894,
+   "rms_other": 3.3612
+  },
+  "Y.band3": {
+   "rho": 0.0952,
+   "beta": 0.6828,
+   "noise_share": 0.0091,
+   "rms_added": 0.2593,
+   "rms_removed": 1.8605,
+   "rms_other": 1.852
+  },
+  "Y.band4": {
+   "rho": 0.0681,
+   "beta": 0.6436,
+   "noise_share": 0.0046,
+   "rms_added": 0.1258,
+   "rms_removed": 1.1891,
+   "rms_other": 1.1864
+  },
+  "Y.band5": {
+   "rho": 0.0366,
+   "beta": 0.5341,
+   "noise_share": 0.0013,
+   "rms_added": 0.0632,
+   "rms_removed": 0.9222,
+   "rms_other": 0.9216
+  },
+  "Y.residual": {
+   "rho": 0.1673,
+   "beta": 7.8701,
+   "noise_share": 0.028,
+   "rms_added": 0.0655,
+   "rms_removed": 3.0782,
+   "rms_other": 3.0348
+  },
+  "Cb": {
+   "rho": -0.0509,
+   "beta": -0.2323,
+   "noise_share": 0.0026,
+   "rms_added": 1.6447,
+   "rms_removed": 7.5059,
+   "rms_other": 7.4961
+  },
+  "Cr": {
+   "rho": 0.311,
+   "beta": 0.9708,
+   "noise_share": 0.0967,
+   "rms_added": 1.4199,
+   "rms_removed": 4.4324,
+   "rms_other": 4.2126
+  }
+ }
+}

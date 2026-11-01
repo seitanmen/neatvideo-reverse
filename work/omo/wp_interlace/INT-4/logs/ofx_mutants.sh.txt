@@ -1,0 +1,31 @@
+#!/bin/bash
+# INT-4 negative controls of the plug-in: ofx/ copied with one change, the plug-in binary rebuilt and put into a copy of
+# the bundle, verify_ofx.py --quick --only I- run from the copy (ROOT = the copy; the rest symlinked)
+WT=/Users/seitan/Desktop/work/reverse/.claude/worktrees/int2
+SP=$1
+for m in ${MUTS:-PARITY_BOTTOMUP SHIFT_SIGN MARGIN ONLY_ROWS NO_SCAN_DEFAULT}; do
+  d=$SP/omut_$m; rm -rf $d; mkdir -p $d $d/qtui
+  cp -R $WT/ofx $d/ofx; rm -rf $d/ofx/build
+  for x in native reference data test.mp4 test_v02.mp4; do ln -s $WT/$x $d/$x; done
+  ln -s $WT/qtui/src $d/qtui/src; mkdir -p $d/qtui/build; ln -s $WT/qtui/build/qtui_ofx_session_drv $d/qtui/build/qtui_ofx_session_drv
+  p=$d/ofx/src/plugin.cpp; c=$d/ofx/src/core.cpp
+  case $m in
+    PARITY_BOTTOMUP) python3 $SP/sub.py "$p" 'return (H - 1 - up) & 1;' 'return up;' ;;
+    SHIFT_SIGN) python3 $SP/sub.py "$c" 'const double d = 0.5 * (q - parity[static_cast<size_t>(k)]);' 'const double d = 0.5 * (parity[static_cast<size_t>(k)] - q);' ;;
+    MARGIN) python3 $SP/sub.py "$d/ofx/src/core.h" 'return s.field_radius / 2 + 1;' 'return s.field_radius / 2;' ;;
+    ONLY_ROWS) python3 $SP/sub.py "$p" 'if (only >= 0 && (i & 1) != only) return;' '' ;;
+    P_ODD_PAD) python3 $SP/sub.py "$c" 'if (r >= p.H) r = p.H >= 2 ? p.H - 2 : 0;' 'if (r >= p.H) r = p.H - 1;' ;;
+    V2_ACCEPT_V1_IL) python3 $SP/sub.py "$d/ofx/src/params.cpp" 'if (il.is_none() != (ver == 1)) throw' 'if (false) throw' ;;
+    NO_SCAN_DEFAULT) python3 $SP/sub.py "$p" 'rq.field_order = clip_first_field(in, rq.H);' '' ;;
+  esac
+  cmake -S $d/ofx -B $d/ofx/build -DCMAKE_BUILD_TYPE=Release > /dev/null && cmake --build $d/ofx/build -j 2 > $d/build.log 2>&1 || { echo "$m: build failed"; continue; }
+  cp -R $WT/ofx/build/MeatVideo.ofx.bundle $d/ofx/build/
+  B=$d/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx
+  cp $d/ofx/build/MeatVideo.ofx $B
+  for rp in $(otool -l "$B" | awk '/cmd LC_RPATH/{f=1} f && /path /{print $2; f=0}'); do
+    [ "$rp" = "@loader_path/../Frameworks" ] || install_name_tool -delete_rpath "$rp" "$B"
+  done
+  codesign --force --sign - "$B" 2>/dev/null; codesign --force --sign - $d/ofx/build/MeatVideo.ofx.bundle 2>/dev/null
+  python3 $d/ofx/tools/verify_ofx.py --quick --only '^I-' --work $d/work > $d/vo.log 2>&1
+  echo "$m: $(tail -1 $d/vo.log | head -c 80) | $(grep -cE 'DIFF |FAIL' $d/vo.log) failing lines"
+done

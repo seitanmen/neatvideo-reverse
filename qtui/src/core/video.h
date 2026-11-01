@@ -65,9 +65,17 @@ std::string scan_text(const std::string& field_order, int frame_interlaced, int 
 
 
 // denoise_video_v5.read_frames(path, W, H, lo, hi, fps) (yuv420p uint8, constant-rate timeline when fps is
-// given): calls on_frame(index, frame) until it returns false or the stream ends.
+// given): calls on_frame(index, frame) until it returns false or the stream ends.  vf (INT-3): an extra filter after
+// the selection ("" = none: the command of the Python reader), e.g. interlaced_vf's scale=interl=1
 void read_frames(const std::string& path, int W, int H, int lo, int hi, const std::string& fps,
-                 const std::function<bool(int, Frame&&)>& on_frame);
+                 const std::function<bool(int, Frame&&)>& on_frame, const std::string& vf = "");
+
+// INT-3: the read filter of an interlaced clip: vf (the progressive one: "" or nv_depth.read_filter's
+// scale=in_color_matrix=..:in_range=..) with swscale's interlaced mode (interl=1) when the conversion changes the
+// vertical chroma sampling (a 4:2:0 source to 4:2:2 / 4:4:4 / RGB processing, or another source to 4:2:0), so that
+// the fields' chroma rows are not mixed: an existing scale gets ":interl=1", else "scale=interl=1" is added.
+// out_chroma: the processing format's chroma ("420" / "422" / "444"; RGB formats "444").
+std::string interlaced_vf(const std::string& vf, const std::string& src_pix_fmt, const std::string& out_chroma);
 
 // nvfilter.matrix_from_tags(tags, height)
 std::string matrix_from_tags(const std::map<std::string, std::string>& tags, int height);

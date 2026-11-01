@@ -1,0 +1,67 @@
+== apply-10s: rc 0; press status 0, clip_params changed, wait 10.06 s, message ""
+   host CPU in the wait (ps, another process): 0.030 s in 3.96 s
+   main thread 3.0 s into the session (sample): 811/839 asleep in the kernel (0 of them in read / write / wait4), 27 in the event drain
+   main thread 6.5 s into the session (sample): 815/836 asleep in the kernel (0 of them in read / write / wait4), 20 in the event drain
+   input: 5 dispatched before the wait, 48 posted during it, dispatched during it [] (NSEvent types), 0 in the 1 s after it; CGSEventIsAppUnresponsive 0/27
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   poke press from background thread wall=1793558964.422..1793558964.422 status=0 message="OfxMessageWarning: Meat Video: a Meat Video window is already open; close it first."
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']
+   -> ok
+== apply-10s (control: MV_MODAL_WAIT=OFF, the blocking wait): rc 0; press status 0, clip_params changed, wait 10.04 s, message ""
+   host CPU in the wait (ps, another process): 0.010 s in 4.02 s
+   main thread 3.0 s into the session (sample): 859/859 asleep in the kernel (859 of them in read / write / wait4), 0 in the event drain
+   main thread 6.5 s into the session (sample): 861/861 asleep in the kernel (861 of them in read / write / wait4), 0 in the event drain
+   input: 5 dispatched before the wait, 48 posted during it, dispatched during it [] (NSEvent types), 35 in the 1 s after it; CGSEventIsAppUnresponsive 0/28
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   poke press from background thread wall=1793558975.794..1793558975.794 status=0 message="OfxMessageWarning: Meat Video: a Meat Video window is already open; close it first."
+   plug-in trace: ['meatvideo-ofx: helper wait: blocking', 'meatvideo-ofx: helper wait: blocking']
+   -> control as expected (the main thread blocked in read, input left queued)
+== helper-dies: rc 0; press status 1, clip_params unchanged, wait 7.04 s, message "OfxMessageError: Meat Video: the window helper was terminated by signal 9; the settings were not changed"
+   host CPU in the wait (ps, another process): 0.030 s in 4.02 s
+   main thread 2.0 s into the session (sample): 819/837 asleep in the kernel (0 of them in read / write / wait4), 17 in the event drain
+   input: 5 dispatched before the wait, 37 posted during it, dispatched during it [] (NSEvent types), 0 in the 1 s after it; CGSEventIsAppUnresponsive 0/22
+   default-mode timer: 0 ticks during the wait (12 in all); main-queue block ran +0.00 s after the wait
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']
+   -> ok
+== no-reply-eof: rc 0; press status 1, clip_params unchanged, wait 9.03 s, message "OfxMessageError: Meat Video: the window returned an unexpected reply (0 bytes); the settings were not changed"
+   host CPU in the wait (ps, another process): 0.030 s in 4.00 s
+   main thread 3.0 s into the session (sample): 802/833 asleep in the kernel (0 of them in read / write / wait4), 31 in the event drain
+   main thread 6.5 s into the session (sample): 823/843 asleep in the kernel (0 of them in read / write / wait4), 20 in the event drain
+   input: 5 dispatched before the wait, 42 posted during it, dispatched during it [] (NSEvent types), 0 in the 1 s after it; CGSEventIsAppUnresponsive 0/24
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']
+   -> ok
+== window-closed: rc 0; press status 0, clip_params unchanged, wait 9.85 s, message ""
+   host CPU in the wait (ps, another process): 0.030 s in 4.02 s
+   main thread 3.0 s into the session (sample): 827/834 asleep in the kernel (0 of them in read / write / wait4), 7 in the event drain
+   main thread 6.5 s into the session (sample): 822/842 asleep in the kernel (0 of them in read / write / wait4), 20 in the event drain
+   input: 5 dispatched before the wait, 48 posted during it, dispatched during it [] (NSEvent types), 0 in the 1 s after it; CGSEventIsAppUnresponsive 0/27
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']
+   -> ok
+== held (left button and 's' pressed before the wait, released during it): rc 0; press status 0, clip_params changed, wait 8.05 s, message ""
+   host CPU in the wait (ps, another process): 0.030 s in 3.99 s
+   main thread 3.0 s into the session (sample): 831/845 asleep in the kernel (0 of them in read / write / wait4), 14 in the event drain
+   main thread 6.5 s into the session (sample): 830/857 asleep in the kernel (0 of them in read / write / wait4), 27 in the event drain
+   input: 2 dispatched before the wait, 9 posted during it, dispatched during it [2, 11, 12, 12] (NSEvent types), 0 in the 1 s after it; CGSEventIsAppUnresponsive 0/20
+   default-mode timer: 0 ticks during the wait (12 in all); main-queue block ran +0.00 s after the wait
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']
+   dispatched during the wait: [2, 11, 12, 12] (want one LeftMouseUp 2, one KeyUp 11, two FlagsChanged 12; no LeftMouseDown 1 / MouseMoved 5 / KeyDown 10)
+   -> ok
+== destroy (DestroyInstance from a thread 3 s into the wait): rc 0; press status 0, clip_params unchanged, wait 8.05 s, message ""
+   host CPU in the wait (ps, another process): 0.030 s in 4.01 s
+   main thread 3.0 s into the session (sample): 808/834 asleep in the kernel (0 of them in read / write / wait4), 26 in the event drain
+   main thread 6.5 s into the session (sample): 828/845 asleep in the kernel (0 of them in read / write / wait4), 17 in the event drain
+   input: 5 dispatched before the wait, 34 posted during it, dispatched during it [] (NSEvent types), 3 in the 1 s after it; CGSEventIsAppUnresponsive 0/20
+   default-mode timer: 0 ticks during the wait (12 in all); main-queue block ran +0.00 s after the wait
+   poke destroy from background thread wall=1793559026.451..1793559026.451 status=0 message=""
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']
+   -> ok
+== open time, 1080p x 11 frames (C++ UI driver, script close): control [0.6410000324249268, 0.6449999809265137] s, modal [0.6140000820159912, 0.6110000610351562] s (worst / best ratio 0.96)
+   -> ok
+== open time, 1080p x 11 frames (drain stub): control [0.10300016403198242, 0.10300016403198242] s, modal [0.10599994659423828, 0.10500001907348633] s (worst / best ratio 1.03)
+   -> ok
+== minihost (headless, no NSApp): plug-in trace ['meatvideo-ofx: helper wait: blocking', 'meatvideo-ofx: helper wait: blocking']; press prepare t=3 status=0 fetched=[3 4 5 6 7 2 1 0] no_image=[] images=8 released=8 sets=
+   -> ok
+ALL OK
+rc=0

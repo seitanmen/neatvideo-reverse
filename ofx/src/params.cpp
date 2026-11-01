@@ -141,8 +141,14 @@ RenderState parse_clip_params(const std::string& s) {
     const PyObj d = parse_c_locale(s);
     if (!d.is_dict() || d.get("format").type() != PyObj::STR || d.get("format").as_str() != "meatvideo_ofx_clip_params")
         throw Error("ClipParams: not a Meat Video ClipParams (format meatvideo_ofx_clip_params)");
-    if (d.get("version").type() != PyObj::INT || d.get("version").as_int() != 1)
-        throw Error("ClipParams: version " + d.get("version").dump() + " is not supported (1)");
+    // version 1: progressive; 2 (INT-4): interlaced, "scan" tff / bff and render.P["interlace"]
+    const int64_t ver = d.get("version").type() == PyObj::INT ? d.get("version").as_int() : -1;
+    if (ver != 1 && ver != 2)
+        throw Error("ClipParams: version " + d.get("version").dump() + " is not supported (1, 2)");
+    const PyObj& scan = d.get("scan");
+    if (ver == 1 && !scan.is_none()) throw Error("ClipParams: version 1 has no \"scan\" (interlaced settings are version 2)");
+    if (ver == 2 && !(scan.type() == PyObj::STR && (scan.as_str() == "tff" || scan.as_str() == "bff")))
+        throw Error("ClipParams: version 2 needs \"scan\": \"tff\" or \"bff\"");
     const PyObj& fs = d.get("frame_size");
     // (informative only: read when it is a pair of ints of a frame size)
     if (fs.is_list() && fs.size() == 2 && fs[0].type() == PyObj::INT && fs[1].type() == PyObj::INT &&
@@ -175,6 +181,19 @@ RenderState parse_clip_params(const std::string& s) {
     else
         for (int c = 0; c < 3; ++c) rs.spatial_ch[c] = v5_blocks(prof, channel_params(P, c));
     rs.mix = ranged(P, "mix", "P", 0, 1);
+    // INT-4: the field processing of an interlaced clip (version 2 only, its first field = "scan")
+    const PyObj& il = P.get("interlace");
+    if (il.is_none() != (ver == 1)) throw Error("ClipParams: render.P[\"interlace\"] goes with version 2 only");
+    if (!il.is_none()) {
+        if (!il.is_dict()) throw Error("ClipParams: P[\"interlace\"] is not a dict");
+        rs.field_first = integer(il, "first", "P interlace", 0, 1);
+        const std::string m = need(il, "mode", "P interlace").type() == PyObj::STR ? il.get("mode").as_str() : "";
+        rs.field_mode = m == "plain" ? 0 : m == "shift" ? 1 : m == "same" ? 2 : -1;
+        if (rs.field_mode < 0) throw Error("ClipParams: unknown field mode \"" + m + "\" (same, shift, plain)");
+        rs.field_radius = integer(il, "radius", "P interlace", 0, 32);
+        if (rs.field_first != (scan.as_str() == "tff" ? 0 : 1))
+            throw Error("ClipParams: render.P[\"interlace\"][\"first\"] disagrees with \"scan\"");
+    }
     rs.has_profile = true;
     return rs;
 }

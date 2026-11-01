@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstdio>
 
+#include "fields.h"
 #include "nvcore_c_prof5.h"
 
 namespace nvqt {
@@ -408,11 +409,19 @@ void ProfilePanel::show_profile(const ProfileState& ps, const PyObj*, std::optio
     }
     QString rows;
     if (ps.has_profile()) {
-        const std::pair<QString, QString> rs[5] = {{"Frame size:", QString("%1x%2 p").arg(W, H)},
-                                                   {"Scan type:", "Progressive"},
+        // INT-3: a field profile (fields.h) shows the genuine's interlaced rows ("Scan type: Interlaced", "Profiled
+        // with: Two fields / One field"); a frame profile the progressive rows as before
+        const std::string kind = profile_fields(ps.base);
+        const QString FH = frame_info ? QString::number((frame_info->second + 1) / 2) : QString::fromUtf8("—");
+        const QString with = kind == "frame" ? QString("Full frame (%1x%2)").arg(W, H)
+                             : kind == "two" ? QString("Two fields (%1x%2)").arg(W, FH)
+                                             : QString("One field, %1 (%2x%3)")
+                                                   .arg(profile_parity(ps.base) == 1 ? "bottom" : "top", W, FH);
+        const std::pair<QString, QString> rs[5] = {{"Frame size:", QString("%1x%2 %3").arg(W, H, kind == "frame" ? "p" : "i")},
+                                                   {"Scan type:", kind == "frame" ? "Progressive" : "Interlaced"},
                                                    {"Gamma:", "Gamma corrected"},
                                                    {"Gain:", "x1.0"},
-                                                   {"Profiled with:", QString("Full frame (%1x%2)").arg(W, H)}};
+                                                   {"Profiled with:", with}};
         for (const auto& [a, b] : rs) rows += QString("<tr><td>%1&nbsp;&nbsp;</td><td>%2</td></tr>").arg(a, b);
     }
     info->setText("<table cellspacing=0 cellpadding=0>" + rows + "</table>");

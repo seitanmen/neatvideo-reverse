@@ -1,0 +1,51 @@
+{
+ "clip": "park_joy/tff_y6",
+ "floor": {
+  "noeffect": {
+   "test": "genuine_noeffect/interlaced/Event__0001_0002",
+   "input_tiff": "clips/park_joy/tiff/tff_y6",
+   "frames": 60,
+   "codes": {
+    "samples": 373248000,
+    "differing": 0,
+    "max_abs_diff_16bit": 0,
+    "mean_diff_16bit_RGB": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   "rgb_vs_input": {
+    "rgb.RGB": {
+     "psnr": Infinity,
+     "rms": 0.0,
+     "n": 373248000
+    }
+   },
+   "yuv_vs_noisy_420": {
+    "yuv.Cb": {
+     "psnr": 53.588,
+     "rms": 0.5335,
+     "n": 31104000
+    },
+    "yuv.Cr": {
+     "psnr": 67.906,
+     "rms": 0.1026,
+     "n": 31104000
+    },
+    "yuv.Y": {
+     "psnr": 64.144,
+     "rms": 0.1582,
+     "n": 124416000
+    }
+   },
+   "alignment_G_psnr_by_offset": {
+    "-2": 13.843,
+    "-1": 14.833,
+    "+0": Infinity,
+    "+1": 14.757,
+    "+2": 13.902
+   }
+  }
+ }
+}

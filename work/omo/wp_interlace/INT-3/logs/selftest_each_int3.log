@@ -1,0 +1,10 @@
+PASS preferencesDialogRows                       1.0 s  exit 0
+PASS preferencesAcceptWritesKeys                 1.0 s  exit 0
+PASS fieldOrderShownOnOpen                       2.2 s  exit 0
+PASS int3ScanDefaultsAndFieldProfile             1.9 s  exit 0
+FAIL int3ProfileJsonFields                       1.0 s  exit 1 | FAIL!  : SelfTest::int3ProfileJsonFields() Compared values are not the same / Loc: [/Users/seitan/Desktop/work/reverse/.claude/worktrees/int2/qtui/tests/selftest.cpp(3452)]
+PASS int3ScanChangeResetsProfile                 1.3 s  exit 0
+PASS int3PrefsFieldMode                          1.0 s  exit 0
+PASS int3ExportKeepsFieldOrder                   2.3 s  exit 0
+PASS int3UnknownOrderAsks                        2.6 s  exit 0
+8/9 items pass on their own; failing: int3ProfileJsonFields

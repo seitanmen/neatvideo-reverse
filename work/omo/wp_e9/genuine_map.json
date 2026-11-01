@@ -1,0 +1,19 @@
+{
+ "_note": "Resolve's export folders (lead, 2026-11-02): project 25 fps progressive, Event__0001_000N, N = 1..6 = old_town_cross p_y3, p_y6, park_joy p_y3, p_y6, sintel p_y3, p_y6. The file names (<src>_<clip>_NNNNN.tif) are checked by eval_all.py's search as well.",
+ "genuine": {
+  "old_town_cross/p_y3": "genuine/progressive/Event__0001_0001",
+  "old_town_cross/p_y6": "genuine/progressive/Event__0001_0002",
+  "park_joy/p_y3": "genuine/progressive/Event__0001_0003",
+  "park_joy/p_y6": "genuine/progressive/Event__0001_0004",
+  "sintel/p_y3": "genuine/progressive/Event__0001_0005",
+  "sintel/p_y6": "genuine/progressive/Event__0001_0006"
+ },
+ "genuine_noeffect": {
+  "old_town_cross/p_y3": "genuine_noeffect/progressive/Event__0001_0001",
+  "old_town_cross/p_y6": "genuine_noeffect/progressive/Event__0001_0002",
+  "park_joy/p_y3": "genuine_noeffect/progressive/Event__0001_0003",
+  "park_joy/p_y6": "genuine_noeffect/progressive/Event__0001_0004",
+  "sintel/p_y3": "genuine_noeffect/progressive/Event__0001_0005",
+  "sintel/p_y6": "genuine_noeffect/progressive/Event__0001_0006"
+ }
+}

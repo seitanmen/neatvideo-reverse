@@ -1,0 +1,19 @@
+{
+ "clip": "park_joy/p_y6",
+ "test": "genuine/progressive/Event_バージョン 1_0001_0004",
+ "name": "genuine",
+ "static_pairs_pixels": 2245865,
+ "temporal_static": {
+  "rms_d_clean": 5.2382,
+  "rms_d_added": 8.3261,
+  "rms_d_out": 4.4601,
+  "keep_clean": 0.607,
+  "keep_added": 0.1712
+ },
+ "cross_corr": {
+  "added_Y_Cb": -0.5394,
+  "removed_Y_Cb": -0.469,
+  "added_Y_Cr": -0.4349,
+  "removed_Y_Cr": -0.3932
+ }
+}

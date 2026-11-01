@@ -22,6 +22,8 @@
 //        19 np.exp, 20 to_grid (ints: H, W), 21 dense_flow (vy, vx; ints: H, W, bs),
 //        22 warp_plane (img, FY, FX), 23 _search block sum (d; ints nby, nbx, blk),
 //        24 _refine (cur, ref, vy, vx; ints blk -> vy, vx, cost[9])
+//        INT-2 (native/verify_fieldproc.py): 30 temporal_v5 with shifts (as 2; dbls: shift[2 * nframes]),
+//        31 nvfp::process_frame_fields (ints: ci, nframes, first, mode; planes: nframes*3 -> out 3)
 #include <atomic>
 #include <chrono>
 #include <cstdio>
@@ -32,6 +34,7 @@
 #include <thread>
 #include <vector>
 
+#include "nv_fieldproc.h"
 #include "nv_ndimage.h"
 #include "nv_spatial.h"
 #include "nv_temporal.h"
@@ -97,7 +100,7 @@ Case read_case(Reader& r) {
     return c;
 }
 
-void run_window(Case& c, bool frame) {
+void run_window(Case& c, bool frame, const double* shift = nullptr) {
     const int ci = c.ints[0], nf = c.ints[1], nfl = c.ints[2];
     std::vector<nvt::Frame> win(nf);
     size_t k = 0;
@@ -114,7 +117,7 @@ void run_window(Case& c, bool frame) {
         c.out = nvt::process_frame_v5(win, ci, c.prof, c.P, &flows);
     } else {
         std::vector<Plane> o, rv;
-        nvt::temporal_v5(win, ci, c.prof, c.P, &flows, o, rv);
+        nvt::temporal_v5(win, ci, c.prof, c.P, &flows, o, rv, shift);
         c.out = o;
         for (auto& p : rv) c.out.push_back(p);
     }
@@ -137,6 +140,15 @@ void run_case(Case& c) {
         }
         case 2: run_window(c, false); break;
         case 3: run_window(c, true); break;
+        case 30: run_window(c, false, c.dbls.data()); break;
+        case 31: {
+            const int ci = c.ints[0], nf = c.ints[1];
+            std::vector<nvt::Frame> win(nf);
+            for (int f = 0; f < nf; ++f)
+                for (int q = 0; q < 3; ++q) win[f].p[q] = pl[3 * f + q];
+            c.out = nvfp::process_frame_fields(win, ci, c.ints[2], c.ints[3], c.prof, c.P);
+            break;
+        }
         case 10: c.out.push_back(nvn::gauss1(pl[0])); break;
         case 11: c.out.push_back(nvn::uniform(pl[0], c.ints[0], (nvn::Mode)c.ints[1])); break;
         case 12: c.out.push_back(nvn::map_coords1(pl[0], pl[1], pl[2])); break;

@@ -1,0 +1,19 @@
+{
+ "clip": "park_joy/p_y6",
+ "test": "runs/ours_frame/park_joy/p_y6/out.mp4",
+ "name": "ours_frame",
+ "static_pairs_pixels": 2245865,
+ "temporal_static": {
+  "rms_d_clean": 5.2382,
+  "rms_d_added": 8.3261,
+  "rms_d_out": 2.527,
+  "keep_clean": 0.3161,
+  "keep_added": 0.0704
+ },
+ "cross_corr": {
+  "added_Y_Cb": -0.5394,
+  "removed_Y_Cb": -0.3939,
+  "added_Y_Cr": -0.4349,
+  "removed_Y_Cr": -0.2355
+ }
+}

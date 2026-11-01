@@ -121,10 +121,10 @@ int fail(const std::string& why) {
 }  // namespace
 
 std::string clip_params_text(const PyObj& params, const ProfileState& ps, const std::string& matrix, bool full_range,
-                             int W, int H) {
+                             int W, int H, const std::optional<Interlace>& il) {
     PyObj d = PyObj::dict();
     d.set("format", PyObj::str("meatvideo_ofx_clip_params"));
-    d.set("version", PyObj::integer(1));
+    d.set("version", PyObj::integer(il ? 2 : 1));    // INT-4: version 2 = interlaced (an older plug-in refuses it)
     if (W > 0 && H > 0) {
         PyObj fs = PyObj::list();
         fs.append(PyObj::integer(W));
@@ -140,18 +140,21 @@ std::string clip_params_text(const PyObj& params, const ProfileState& ps, const 
         PyObj r = PyObj::dict();
         r.set("matrix", PyObj::str(matrix));
         r.set("full_range", PyObj::boolean(full_range));
-        r.set("P", backend_params(params));
+        PyObj P = backend_params(params);
+        if (il) P.set("interlace", interlace_json(*il));   // the render's field processing (fields.h)
+        r.set("P", P);
         r.set("profile", ps.effective());
         d.set("render", r);
     } else {
         d.set("render", PyObj::none());
     }
+    if (il) d.set("scan", PyObj::str(il->first == 0 ? "tff" : "bff"));   // the window's Video Scan Type
     return d.dump();
 }
 
 std::string clip_params_json(MainWindow* win) {
     return clip_params_text(win->state->params, win->state->profile, win->matrix, win->full_range,
-                            win->info ? win->info->W : 0, win->info ? win->info->H : 0);
+                            win->info ? win->info->W : 0, win->info ? win->info->H : 0, win->interlace());
 }
 
 Defaults read_defaults() {
@@ -214,11 +217,26 @@ void apply_clip_params(MainWindow* win, const std::string& text) {
     const PyObj d = parse_c(text);
     if (!d.is_dict() || d.get("format").type() != PyObj::STR || d.get("format").as_str() != "meatvideo_ofx_clip_params")
         throw std::runtime_error("not a Meat Video ClipParams (format meatvideo_ofx_clip_params)");
-    if (d.get("version").type() != PyObj::INT || d.get("version").as_int() != 1)
-        throw std::runtime_error("ClipParams version " + d.get("version").dump() + " is not supported (1)");
+    const int64_t ver = d.get("version").type() == PyObj::INT ? d.get("version").as_int() : -1;
+    if (ver != 1 && ver != 2)
+        throw std::runtime_error("ClipParams version " + d.get("version").dump() + " is not supported (1, 2)");
     const PyObj P = params_from_json(d.get("preset"));
     std::optional<ProfileState> ps;
     if (!d.get("profile").is_none()) ps = ProfileState::from_json(d.get("profile"));
+    // INT-4: the Video Scan Type the instance was applied with, before the profile it belongs to: version 2 = interlaced
+    // ("scan" tff / bff); version 1 = progressive - except the ClipParams a new instance got from the Default Profile /
+    // Preset (frame_size null: no frames seen yet), which keeps the scan the window started with (the host's order)
+    const PyObj& sc = d.get("scan");
+    if (ver == 2) {
+        const std::string scan = sc.type() == PyObj::STR ? sc.as_str() : std::string();
+        if (scan != "tff" && scan != "bff")
+            throw std::runtime_error("ClipParams version 2 needs \"scan\": \"tff\" or \"bff\"");
+        win->set_scan(scan == "tff" ? 0 : 1, false);
+    } else if (!sc.is_none()) {
+        throw std::runtime_error("ClipParams version 1 has no \"scan\" (interlaced settings are version 2)");
+    } else if (!d.get("frame_size").is_none()) {
+        win->set_scan(-1, false);
+    }
     win->state->set_all_params(P, "OFX settings");
     if (ps) {
         win->prof_clean = ps->to_json().dump(-1, true);
@@ -249,6 +267,9 @@ int ofx_session_main(const QStringList& /*rest*/, const std::function<void(MainW
     s->page = str("page");
     s->matrix = str("matrix");
     s->clip_params = str("clip_params");
+    // INT-4: the host's field order (kOfxImageClipPropFieldOrder of the Source clip, sent only when fielded)
+    const std::string fo = str("field_order");
+    s->field_order = fo == "tff" ? 0 : fo == "bff" ? 1 : -1;
     const PyObj& times = h.get("times");
     if ((s->page != "prepare" && s->page != "adjust") || (s->matrix != "bt709" && s->matrix != "bt601" && s->matrix != "bt2020") ||
         str("format") != "gbrpf32le" || h.get("width").type() != PyObj::INT || h.get("height").type() != PyObj::INT ||
@@ -283,6 +304,11 @@ int ofx_session_main(const QStringList& /*rest*/, const std::function<void(MainW
     auto* win = new MainWindow();          // no video path
     win->set_ofx_frames(std::move(frames), s->W, s->H, s->fps, 32, s->matrix, true);
     win->timeline->set_frame(s->current, true);
+    // INT-4: the window's Video Scan Type is the user's (the genuine's own menu): the button works here; a new
+    // instance (or ClipParams without "scan") starts from the host's field order
+    win->ofx_scan = true;
+    win->scan_detected = s->field_order;
+    win->set_scan(s->field_order, false);
     if (!s->clip_params.empty()) {
         try {
             apply_clip_params(win, s->clip_params);

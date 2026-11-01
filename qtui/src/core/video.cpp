@@ -214,12 +214,13 @@ std::string scan_text(const std::string& fo, int fi, int tff) {
 }
 
 void read_frames(const std::string& path, int W, int H, int lo, int hi, const std::string& fps,
-                 const std::function<bool(int, Frame&&)>& on_frame) {
+                 const std::function<bool(int, Frame&&)>& on_frame, const std::string& vf) {
     if (hi >= 0 && hi <= lo) return;
     QStringList chain;
     if (!fps.empty()) chain << "setpts=PTS-STARTPTS" << QString::fromStdString("fps=" + fps);
     if (lo > 0 || hi >= 0)
         chain << (hi >= 0 ? QString("select=between(n\\,%1\\,%2)").arg(lo).arg(hi - 1) : QString("select=gte(n\\,%1)").arg(lo));
+    if (!vf.empty()) chain << QString::fromStdString(vf);
     QStringList args{"-v", "error", "-nostdin", "-noautorotate", "-i", QString::fromStdString(path)};
     if (!chain.isEmpty()) args << "-vf" << chain.join(",");
     if (hi >= 0) args << "-frames:v" << QString::number(hi - lo);
@@ -332,6 +333,18 @@ std::string describe_source(const std::string& name) {
     std::string kind = std::to_string(s.bits) + "-bit" + (s.is_float ? " float" : "");
     std::string ch = s.family == "rgb" ? "RGB" : std::string(1, s.chroma[0]) + ":" + s.chroma[1] + ":" + s.chroma[2];
     return (name.empty() ? "unknown" : name) + " (" + kind + " " + ch + ")";
+}
+
+}  // namespace nvqt
+
+namespace nvqt {
+
+std::string interlaced_vf(const std::string& vf, const std::string& src_pix_fmt, const std::string& out_chroma) {
+    const bool src420 = src_pix_fmt.empty() || source_format(src_pix_fmt).chroma == "420";
+    if (src420 == (out_chroma == "420")) return vf;           // the same vertical chroma sampling: no resampling
+    if (vf.empty()) return "scale=interl=1";
+    if (vf.rfind("scale=", 0) == 0 && vf.find(',') == std::string::npos) return vf + ":interl=1";
+    return vf + ",scale=interl=1";
 }
 
 }  // namespace nvqt

@@ -13,6 +13,7 @@ std::string temporal_sig(const PyObj& P) {
     PyObj t = PyObj::list();
     for (const char* k : KEYS) t.append(std::string(k) == "t_noise" && !P.has(k) ? PyObj::real(1.0) : P.get(k));
     t.append(P.get("channel_noise").get("Y"));
+    if (P.has("interlace")) t.append(P.get("interlace"));   // INT-3: only interlaced parameter sets carry it
     return t.dump();
 }
 
@@ -26,6 +27,43 @@ Planes clip_planes(const Planes& p) {
         }
     return o;
 }
+
+namespace {
+
+// INT-3: a crop widened to whole field rows (y0 and y1 multiples of a = 2, or 4 with 4:2:0 chroma, inside the frame),
+// and the rows of the requested crop inside the widened one (crop_planes' clamping)
+struct FieldCrop {
+    Crop wide;
+    int dy = 0, h = 0, dyc = 0, hc = 0;
+};
+FieldCrop field_crop(const Crop& c, const Frame& f) {
+    const int s = (f.Hc != f.H || f.Wc != f.W) ? 2 : 1, a = 2 * s;
+    const int y0 = std::clamp(c.y0, 0, f.H), y1 = std::clamp(c.y0 + c.h, 0, f.H);
+    const int wy0 = y0 - y0 % a, wy1 = std::min(f.H, (y1 + a - 1) / a * a);
+    FieldCrop r;
+    r.wide = Crop{wy0, c.x0, wy1 - wy0, c.w};
+    r.dy = y0 - wy0;
+    r.h = std::max(0, y1 - y0);
+    const int cy0 = std::clamp(c.y0 / s, 0, f.Hc), cy1 = std::clamp((c.y0 + c.h) / s, 0, f.Hc);
+    r.dyc = cy0 - wy0 / s;
+    r.hc = std::max(0, cy1 - cy0);
+    return r;
+}
+
+Planes cut_rows(const Planes& p, const FieldCrop& fc) {
+    Planes o = p;
+    o.H = fc.h;
+    o.Hc = fc.hc;
+    o.Y.assign(p.Y.begin() + static_cast<std::ptrdiff_t>(fc.dy) * p.W, p.Y.begin() + static_cast<std::ptrdiff_t>(fc.dy + fc.h) * p.W);
+    for (int c = 1; c < 3; ++c) {
+        const auto& src = c == 1 ? p.Cb : p.Cr;
+        o.v(c).assign(src.begin() + static_cast<std::ptrdiff_t>(fc.dyc) * p.Wc,
+                      src.begin() + static_cast<std::ptrdiff_t>(fc.dyc + fc.hc) * p.Wc);
+    }
+    return o;
+}
+
+}  // namespace
 
 Planes PreviewEngine::crop_planes(const Frame& f, const std::optional<Crop>& crop) const {
     if (!crop) return to_planes(f);
@@ -74,7 +112,8 @@ std::pair<std::vector<int>, std::vector<Planes>> PreviewEngine::window(int t, in
 PreviewEngine::Stage PreviewEngine::temporal_stage(int t, const PyObj& prof, long token, const PyObj& P,
                                                    const std::optional<Crop>& crop) {
     Stage st;
-    const int R = static_cast<int>(P.get("radius").as_int());
+    const std::optional<Interlace> il = interlace_of(P);
+    const int R = il ? frame_margin(*il) : static_cast<int>(P.get("radius").as_int());
     auto [idx, win] = window(t, R, crop);
     st.idx = std::move(idx);
     st.win = std::move(win);
@@ -92,6 +131,7 @@ PreviewEngine::Stage PreviewEngine::temporal_stage(int t, const PyObj& prof, lon
             if (it->key == tkey) {
                 st.tmp = it->tmp;
                 st.rv = it->rv;
+                st.fields = it->fields;
                 hit = true;
                 temporal_.splice(temporal_.end(), temporal_, it);
                 break;
@@ -107,13 +147,20 @@ PreviewEngine::Stage PreviewEngine::temporal_stage(int t, const PyObj& prof, lon
         flows = fit->flows;
         while (flows_.size() > 16) flows_.pop_front();
     }
-    if (!hit) {
+    if (!hit && il) {           // the fields keep no flows cache (the block vectors are per field and per shift)
+        st.fields = field_temporal(st.win, st.ci, *il, prof, P);
+        st.tmp = join_planes(st.fields->tmp[0], st.fields->tmp[1], st.fields->H, st.fields->Hc);
+        st.rv = join_planes(st.fields->rv[0], st.fields->rv[1], st.fields->H, st.fields->Hc);
+        std::lock_guard<std::mutex> lk(mu_);
+        temporal_.push_back({tkey, st.tmp, st.rv, st.fields});
+        while (temporal_.size() > 6) temporal_.pop_front();
+    } else if (!hit) {
         temporal(st.win, st.ci, prof, P, &flows, &st.tmp, &st.rv);
         std::lock_guard<std::mutex> lk(mu_);
         auto fit = std::find_if(flows_.begin(), flows_.end(), [&](const FlowEntry& e) { return e.key == fkey; });
         if (fit != flows_.end())
             for (auto& kv : flows) fit->flows.insert(kv);
-        temporal_.push_back({tkey, st.tmp, st.rv});
+        temporal_.push_back({tkey, st.tmp, st.rv, std::nullopt});
         while (temporal_.size() > 6) temporal_.pop_front();
     }
     return st;
@@ -121,6 +168,15 @@ PreviewEngine::Stage PreviewEngine::temporal_stage(int t, const PyObj& prof, lon
 
 std::pair<std::vector<float>, std::vector<float>> PreviewEngine::process(int t, const PyObj& prof, long token,
                                                                          const PyObj& P, const std::optional<Crop>& crop) {
+    if (interlace_of(P)) {
+        const Frame& f = (*frames_)[static_cast<size_t>(t)];
+        std::optional<FieldCrop> fc;
+        if (crop) fc = field_crop(*crop, f);
+        const Stage st = temporal_stage(t, prof, token, P, fc ? std::optional<Crop>(fc->wide) : std::nullopt);
+        Planes out = field_finish(*st.fields, prof, P);
+        if (fc) out = cut_rows(out, *fc);
+        return {to_rgb(clip_planes(out)), to_rgb(crop_planes(f, crop))};
+    }
     const Stage st = temporal_stage(t, prof, token, P, crop);
     const Planes out = finish(st.win[static_cast<size_t>(st.ci)], st.tmp, st.rv, prof, P);
     return {to_rgb(clip_planes(out)), to_rgb(st.win[static_cast<size_t>(st.ci)])};
@@ -129,13 +185,16 @@ std::pair<std::vector<float>, std::vector<float>> PreviewEngine::process(int t, 
 std::vector<float> PreviewEngine::mask(int t, const PyObj& prof, long token, const PyObj& P) {
     const Stage st = temporal_stage(t, prof, token, P, std::nullopt);
     std::vector<float> m(st.rv.Y.size());
-    nvc_temporal_mask(st.rv.Y.data(), st.rv.H, st.rv.W, static_cast<int>(st.win.size()), P.get("temporal").as_double(),
+    // interlaced: the fields the first field in time averaged (the window holds frames, not the fields used)
+    const int n = st.fields ? st.fields->n[interlace_of(P)->first] : static_cast<int>(st.win.size());
+    nvc_temporal_mask(st.rv.Y.data(), st.rv.H, st.rv.W, n, P.get("temporal").as_double(),
                       m.data());
     return m;
 }
 
 std::vector<float> PreviewEngine::assist(int t, const PyObj& prof, const PyObj& P) {
     const Planes planes = crop_planes((*frames_)[static_cast<size_t>(t)], std::nullopt);
+    if (interlace_of(P)) return to_rgb(clip_planes(assist_fields(planes, prof, P)));
     Planes ones = planes;
     for (int c = 0; c < 3; ++c) std::fill(ones.v(c).begin(), ones.v(c).end(), 1.0f);
     const Planes out = finish(planes, planes, ones, prof, P);

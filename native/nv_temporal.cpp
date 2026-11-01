@@ -272,7 +272,8 @@ Plane pyramid_weight(const Plane& d, const Plane& s1, const double* ratios, doub
 
 // ------------------------------------------------------------------------------- temporal_v5
 void temporal_v5(const std::vector<Frame>& window, int ci, const V5Profile& prof, const V5Params& P,
-                 std::map<int, Flow>* flows, std::vector<Plane>& out, std::vector<Plane>& rv) {
+                 std::map<int, Flow>* flows, std::vector<Plane>& out, std::vector<Plane>& rv,
+                 const double* shift) {
     const Frame& curf = window[ci];
     const Plane& Y = curf.p[0];
     const double a = P.temporal;
@@ -293,17 +294,31 @@ void temporal_v5(const std::vector<Frame>& window, int ci, const V5Profile& prof
     for (int k = 0; k < (int)window.size(); ++k) {
         if (k == ci || a <= 0) continue;
         const Frame& nb = window[k];
+        const double dyl = shift ? shift[2 * k] : 0.0, dyc = shift ? shift[2 * k + 1] : 0.0;
         Flow fl;
         auto it = flows ? flows->find(k - ci) : std::map<int, Flow>::iterator();
         if (flows && it != flows->end()) {
             fl = it->second;
         } else {
-            fl = estimate_flow_v5(nb.p[0], Y, P.bs, P.search);
+            if (dyl != 0.0) {   // the motion left after the known offset
+                const Plane ref = warp_plane(nb.p[0], Plane(Y.H, Y.W, f32(dyl)), Plane(Y.H, Y.W, ZERO));
+                fl = estimate_flow_v5(ref, Y, P.bs, P.search);
+            } else {
+                fl = estimate_flow_v5(nb.p[0], Y, P.bs, P.search);
+            }
             if (flows) (*flows)[k - ci] = fl;
         }
         Plane FY, FX;
         dense_flow(fl, Y.H, Y.W, P.bs, FY, FX);
-        Plane wy = warp_plane(nb.p[0], FY, FX);
+        Plane wy;
+        if (dyl != 0.0) {
+            Plane fyl(Y.H, Y.W);
+            const float o = f32(dyl);
+            for (size_t i = 0; i < fyl.size(); ++i) fyl.d[i] = A(FY.d[i], o);
+            wy = warp_plane(nb.p[0], fyl, FX);
+        } else {
+            wy = warp_plane(nb.p[0], FY, FX);
+        }
         Plane w(Y.H, Y.W);
         if (P.similarity == 1) {
             const float trd = f32(py_max(prof.tot_ratio[0], 1e-6));
@@ -333,10 +348,21 @@ void temporal_v5(const std::vector<Frame>& window, int ci, const V5Profile& prof
             if (c == 0) {
                 wp = wy;
             } else if (p.same_shape(Y)) {
-                wp = warp_plane(p, FY, FX);
+                if (dyc != 0.0) {
+                    Plane fyc(Y.H, Y.W);
+                    const float o = f32(dyc);
+                    for (size_t i = 0; i < fyc.size(); ++i) fyc.d[i] = A(FY.d[i], o);
+                    wp = warp_plane(p, fyc, FX);
+                } else {
+                    wp = warp_plane(p, FY, FX);
+                }
             } else {
                 Plane fyc = to_grid(FY, p.H, p.W), fxc = to_grid(FX, p.H, p.W);
                 for (size_t i = 0; i < fyc.size(); ++i) { fyc.d[i] = D(fyc.d[i], TWO); fxc.d[i] = D(fxc.d[i], TWO); }
+                if (dyc != 0.0) {
+                    const float o = f32(dyc);
+                    for (size_t i = 0; i < fyc.size(); ++i) fyc.d[i] = A(fyc.d[i], o);
+                }
                 wp = warp_plane(p, fyc, fxc);
                 wcs = to_grid(w, p.H, p.W);
                 wc = &wcs;

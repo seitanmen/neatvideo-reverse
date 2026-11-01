@@ -5,6 +5,8 @@
 //   wait | apply | cancel | close | auto (Auto Profile, Current Frame) | aft (Auto Fine-Tune) | frame N | tab N |
 //   resetprofile (Profile > Reset Profile) | resetfilter (Filter > Reset Filter Settings) | sleep MS |
 //   set KEY VALUE (a float parameter) | setb KEY 0|1 | tune KEY VALUE (profile Noise Level) |
+//   scan -1|0|1 (INT-4: the Video Scan Type: progressive / top / bottom field first; the scan button's action) |
+//   fprof two|one0|one1 (INT-4: the field profile of the Prepare page) |
 //   state PATH (clip_params_json of the current state) |
 //   process PATH (the C++ UI's processing of the current frame with the current state - the window of the frames it
 //                 holds, temporal + finish as ofx.cpp ofx_process - as the raw gbrpf32le frame of nv_depth.from_internal
@@ -41,17 +43,24 @@ void write_file(const QString& path, const void* data, size_t n) {
 
 void process(MainWindow* win, const OfxSession& s, const QString& path) {
     const int t = win->timeline->frame();
-    const PyObj P = win->state->backend();
+    const PyObj P = win->proc_params();       // + "interlace" for an interlaced scan (INT-4; else state->backend())
     const PyObj* eff = win->state->effective();
     if (!eff) {
         std::fprintf(stderr, "process: no profile\n");
         return;
     }
-    auto [idx, planes] = win->engine->window(t, static_cast<int>(P.get("radius").as_int()), std::nullopt);
+    const std::optional<Interlace> il = interlace_of(P);
+    auto [idx, planes] = win->engine->window(t, il ? frame_margin(*il) : static_cast<int>(P.get("radius").as_int()),
+                                             std::nullopt);
     const int ci = static_cast<int>(std::find(idx.begin(), idx.end(), t) - idx.begin());
-    Planes tmp, rv;
-    temporal(planes, ci, *eff, P, nullptr, &tmp, &rv);
-    const Planes out = finish(planes[static_cast<size_t>(ci)], tmp, rv, *eff, P);
+    Planes out;
+    if (il) {
+        out = process_fields(planes, ci, *il, *eff, P);
+    } else {
+        Planes tmp, rv;
+        temporal(planes, ci, *eff, P, nullptr, &tmp, &rv);
+        out = finish(planes[static_cast<size_t>(ci)], tmp, rv, *eff, P);
+    }
     const RestoreMap& rs = s.restore[static_cast<size_t>(t)];
     const std::vector<uint8_t> bytes = from_internal(out, pixfmt("gbrpf32le"), win->matrix, rs.empty() ? nullptr : &rs);
     write_file(path, bytes.data(), bytes.size());
@@ -95,6 +104,10 @@ void run_steps(MainWindow* win, std::shared_ptr<QStringList> steps, std::shared_
                 win->state->set_param(w[1].toStdString(), PyObj::boolean(w[2].toInt() != 0));
             else if (c == "tune" && w.size() > 2)
                 win->state->set_tune(w[1].toStdString(), w[2].toDouble());
+            else if (c == "scan" && w.size() > 1)
+                win->set_scan(w[1].toInt());
+            else if (c == "fprof" && w.size() > 1)
+                win->fprof_box->setCurrentIndex(std::max(win->fprof_box->findData(w[1]), 0));
             else if (c == "state" && w.size() > 1) {
                 const std::string cp = clip_params_json(win);
                 write_file(w[1], cp.data(), cp.size());

@@ -1,0 +1,19 @@
+{
+ "clip": "old_town_cross/p_y6",
+ "test": "runs/ours_frame/old_town_cross/p_y6/out.mp4",
+ "name": "ours_frame",
+ "static_pairs_pixels": 54780077,
+ "temporal_static": {
+  "rms_d_clean": 5.2754,
+  "rms_d_added": 8.4893,
+  "rms_d_out": 1.6417,
+  "keep_clean": 0.1219,
+  "keep_added": 0.0604
+ },
+ "cross_corr": {
+  "added_Y_Cb": -0.5453,
+  "removed_Y_Cb": -0.3872,
+  "added_Y_Cr": -0.4343,
+  "removed_Y_Cr": -0.2544
+ }
+}

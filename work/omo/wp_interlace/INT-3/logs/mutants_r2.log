@@ -1,0 +1,10 @@
+PARITY: FAILURES (2 failing lines)
+SHIFT_SIGN: FAILURES (2 failing lines)
+PAIR_TWO: FAILURES (2 failing lines)
+NO_INTERL: FAILURES (1 failing lines)
+SETFIELD_SWAP: FAILURES (16 failing lines)
+D32_NO_INTERL: FAILURES (1 failing lines)
+AREA_NOHALF: FAILURES (2 failing lines)
+X264_NO_BFF: FAILURES (2 failing lines)
+MARGIN: FAILURES (2 failing lines)
+rc=0

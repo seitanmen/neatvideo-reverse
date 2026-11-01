@@ -106,8 +106,8 @@ $(B)/nv_model_test: nv_model_main.cpp nv_model.cpp nv_model.h nv_band.cpp nv_ban
 	@mkdir -p $(B)
 	$(CXX) $(AFLAGS) -o $@ nv_model_main.cpp nv_model.cpp nv_band.cpp nv_linekernel.cpp nv_portable.cpp $(ALT)
 
-V5_SRC = nv_v5_main.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp
-V5_HDR = nv_ndimage.h nv_spatial.h nv_temporal.h
+V5_SRC = nv_v5_main.cpp nv_ndimage.cpp nv_spatial.cpp nv_temporal.cpp nv_fieldproc.cpp nv_fields.cpp
+V5_HDR = nv_ndimage.h nv_spatial.h nv_temporal.h nv_fieldproc.h nv_fields.h
 
 $(B)/nv_v5_test: $(V5_SRC) $(V5_HDR) $(LH)
 	@mkdir -p $(B)

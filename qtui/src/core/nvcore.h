@@ -66,6 +66,12 @@ int native_threads();                            // nv_native.THREADS (NV_NATIVE
 PyObj build_profile(const std::vector<Frame>& frames, int f, bool full_range, const std::string& matrix,
                     const std::string& mode, const std::vector<int>* area, const CancelFn& cancel);
 
+// build_profile of planes pl with the static-pixel pair (may be null) and the frames whose single-frame curves are
+// median-combined (more; build_profile passes frames f + 1, f + 2 and pair = &more[0]); "ui_frame" = f
+PyObj build_profile_planes(const Planes& pl, const Planes* pair, const std::vector<Planes>& more, int f,
+                           bool full_range, const std::string& matrix, const std::string& mode,
+                           const std::vector<int>* area, const CancelFn& cancel);
+
 // backend.noisiest_frame(frames, cancel=cancel)
 int noisiest_frame(const std::vector<Frame>& frames, const CancelFn& cancel);
 
@@ -115,9 +121,10 @@ struct Flow {
 };
 using Flows = std::map<int, Flow>;
 
-// backend.temporal(window, ci, prof, P, flows): out (3 planes) and rv (3 planes)
+// backend.temporal(window, ci, prof, P, flows): out (3 planes) and rv (3 planes).  shift (INT-3, the fields of
+// fields.h): nullptr = nvc_temporal; else 2 offsets (luma, chroma rows) per window frame, through nvc_temporal_shift
 void temporal(const std::vector<Planes>& window, int ci, const PyObj& prof, const PyObj& P, Flows* flows,
-              Planes* out, Planes* rv);
+              Planes* out, Planes* rv, const double* shift = nullptr);
 // backend.finish(window, ci, tmp, rv, prof, P): spatial_ui + mix
 Planes finish(const Planes& src, const Planes& tmp, const Planes& rv, const PyObj& prof, const PyObj& P);
 
@@ -146,5 +153,8 @@ void not_uniform(const std::vector<float>& crop, int h, int w, std::vector<std::
 struct ProfileState;
 std::optional<std::pair<int, int>> profile_numbers(const ProfileState& ps, const std::vector<Frame>& frames,
                                                    bool full_range, const std::string& matrix);
+// the same on the profile frame itself (INT-3: the field image of a field profile, fields.h profile_image)
+std::optional<std::pair<int, int>> profile_numbers(const ProfileState& ps, const Frame& frame, bool full_range,
+                                                   const std::string& matrix);
 
 }  // namespace nvqt

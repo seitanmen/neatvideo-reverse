@@ -72,6 +72,46 @@ bool bad_profile(const nvs::V5Profile& p) {
     return false;
 }
 
+// nvc_temporal / nvc_temporal_shift
+int temporal_call(int nf, int ci, int H, int W, int Hc, int Wc, const float* const* planes, const int* prof_i,
+                  const double* prof_d, const int* par_i, const double* par_d, int nin, const int* off_in,
+                  const float* const* flow_in, float* const* flow_out, uint8_t* new_flow, float* const* out,
+                  float* const* rv, const double* shift) {
+    try {
+        const nvs::V5Profile prof = unpack_profile(prof_i, prof_d);
+        const nvs::V5Params P = unpack_params(par_i, par_d);
+        if (bad_profile(prof) || nf < 1 || ci < 0 || ci >= nf || P.bs < 1) return 2;
+        std::vector<nvt::Frame> win(nf);
+        for (int f = 0; f < nf; ++f)
+            for (int c = 0; c < 3; ++c)
+                win[f].p[c] = c ? to_plane(planes[3 * f + c], Hc, Wc) : to_plane(planes[3 * f], H, W);
+        const int nby = H / P.bs, nbx = W / P.bs;
+        std::map<int, nvt::Flow> flows;
+        for (int i = 0; i < nin; ++i)
+            flows[off_in[i]] = nvt::Flow{to_plane(flow_in[2 * i], nby, nbx), to_plane(flow_in[2 * i + 1], nby, nbx)};
+        std::vector<Plane> o, r;
+        nvt::temporal_v5(win, ci, prof, P, &flows, o, r, shift);
+        for (int c = 0; c < 3; ++c) {
+            from_plane(o[c], out[c]);
+            from_plane(r[c], rv[c]);
+        }
+        for (int k = 0; k < nf; ++k) {
+            new_flow[k] = 0;
+            if (k == ci) continue;
+            bool given = false;
+            for (int i = 0; i < nin; ++i) given = given || off_in[i] == k - ci;
+            auto it = flows.find(k - ci);
+            if (given || it == flows.end()) continue;
+            from_plane(it->second.vy, flow_out[2 * k]);
+            from_plane(it->second.vx, flow_out[2 * k + 1]);
+            new_flow[k] = 1;
+        }
+        return 0;
+    } catch (...) {
+        return -1;
+    }
+}
+
 }  // namespace
 
 extern "C" {
@@ -163,39 +203,16 @@ int nvc_temporal(int nf, int ci, int H, int W, int Hc, int Wc, const float* cons
                  const double* prof_d, const int* par_i, const double* par_d, int nin, const int* off_in,
                  const float* const* flow_in, float* const* flow_out, uint8_t* new_flow, float* const* out,
                  float* const* rv) {
-    try {
-        const nvs::V5Profile prof = unpack_profile(prof_i, prof_d);
-        const nvs::V5Params P = unpack_params(par_i, par_d);
-        if (bad_profile(prof) || nf < 1 || ci < 0 || ci >= nf || P.bs < 1) return 2;
-        std::vector<nvt::Frame> win(nf);
-        for (int f = 0; f < nf; ++f)
-            for (int c = 0; c < 3; ++c)
-                win[f].p[c] = c ? to_plane(planes[3 * f + c], Hc, Wc) : to_plane(planes[3 * f], H, W);
-        const int nby = H / P.bs, nbx = W / P.bs;
-        std::map<int, nvt::Flow> flows;
-        for (int i = 0; i < nin; ++i)
-            flows[off_in[i]] = nvt::Flow{to_plane(flow_in[2 * i], nby, nbx), to_plane(flow_in[2 * i + 1], nby, nbx)};
-        std::vector<Plane> o, r;
-        nvt::temporal_v5(win, ci, prof, P, &flows, o, r);
-        for (int c = 0; c < 3; ++c) {
-            from_plane(o[c], out[c]);
-            from_plane(r[c], rv[c]);
-        }
-        for (int k = 0; k < nf; ++k) {
-            new_flow[k] = 0;
-            if (k == ci) continue;
-            bool given = false;
-            for (int i = 0; i < nin; ++i) given = given || off_in[i] == k - ci;
-            auto it = flows.find(k - ci);
-            if (given || it == flows.end()) continue;
-            from_plane(it->second.vy, flow_out[2 * k]);
-            from_plane(it->second.vx, flow_out[2 * k + 1]);
-            new_flow[k] = 1;
-        }
-        return 0;
-    } catch (...) {
-        return -1;
-    }
+    return temporal_call(nf, ci, H, W, Hc, Wc, planes, prof_i, prof_d, par_i, par_d, nin, off_in, flow_in, flow_out,
+                         new_flow, out, rv, nullptr);
+}
+
+int nvc_temporal_shift(int nf, int ci, int H, int W, int Hc, int Wc, const float* const* planes, const int* prof_i,
+                       const double* prof_d, const int* par_i, const double* par_d, int nin, const int* off_in,
+                       const float* const* flow_in, float* const* flow_out, uint8_t* new_flow, float* const* out,
+                       float* const* rv, const double* shift) {
+    return temporal_call(nf, ci, H, W, Hc, Wc, planes, prof_i, prof_d, par_i, par_d, nin, off_in, flow_in, flow_out,
+                         new_flow, out, rv, shift);
 }
 
 int nvc_spatial(int H, int W, int Hc, int Wc, const float* const* planes, const float* const* rv,

@@ -1,0 +1,19 @@
+{
+ "clip": "sintel/p_y6",
+ "test": "genuine/progressive/Event_バージョン 1_0001_0006",
+ "name": "genuine",
+ "static_pairs_pixels": 39486779,
+ "temporal_static": {
+  "rms_d_clean": 0.5371,
+  "rms_d_added": 5.958,
+  "rms_d_out": 1.4029,
+  "keep_clean": 0.5387,
+  "keep_added": 0.1332
+ },
+ "cross_corr": {
+  "added_Y_Cb": -0.4658,
+  "removed_Y_Cb": -0.53,
+  "added_Y_Cr": -0.3799,
+  "removed_Y_Cr": -0.4216
+ }
+}

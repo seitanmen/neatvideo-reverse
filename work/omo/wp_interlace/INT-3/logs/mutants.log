@@ -1,0 +1,6 @@
+PARITY: FAILURES (1 failing lines)
+SHIFT_SIGN: FAILURES (1 failing lines)
+PAIR_TWO: FAILURES (1 failing lines)
+NO_INTERL: FAILURES (1 failing lines)
+SETFIELD_SWAP: FAILURES (12 failing lines)
+rc=0

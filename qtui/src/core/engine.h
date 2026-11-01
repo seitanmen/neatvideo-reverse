@@ -10,6 +10,7 @@
 #include <tuple>
 #include <vector>
 
+#include "fields.h"
 #include "nvcore.h"
 #include "pyobj.h"
 
@@ -43,12 +44,16 @@ public:
     // mask(t, prof, token, P): the Noise Level Check mask (H x W float32 0..1, coded orientation) of the whole
     // frame t from the luma residual variance of the cached temporal stage (backend.temporal_mask)
     std::vector<float> mask(int t, const PyObj& prof, long token, const PyObj& P);
-    // _temporal_stage(t, prof, prof_token, P, crop): (window, ci, tmp, rv), the temporal result cached per temporal_sig
+    // _temporal_stage(t, prof, prof_token, P, crop): (window, ci, tmp, rv), the temporal result cached per temporal_sig.
+    // Interlaced (P["interlace"], fields.h): the window holds the frames t - m .. t + m (m = frame_margin), `fields`
+    // the temporal stage of the two fields and tmp / rv their joined frames; a crop is widened to whole field rows
+    // (rows a multiple of 2, of 4 with 4:2:0 chroma) before and cut back after the processing (process / mask).
     struct Stage {
         std::vector<int> idx;
         std::vector<Planes> win;
         int ci = 0;
         Planes tmp, rv;
+        std::optional<FieldStage> fields;
     };
     Stage temporal_stage(int t, const PyObj& prof, long token, const PyObj& P, const std::optional<Crop>& crop);
     // to_rgb(planes) = np.clip(yuv_to_rgb(clip(planes, 0, 255)?...)): the planes as given
@@ -58,6 +63,7 @@ private:
     struct TempEntry {
         std::string key;
         Planes tmp, rv;
+        std::optional<FieldStage> fields;
     };
     struct FlowEntry {
         std::string key;

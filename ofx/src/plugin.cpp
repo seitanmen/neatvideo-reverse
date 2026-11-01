@@ -4,8 +4,11 @@
 //
 // What it tells the host (Describe / DescribeInContext): contexts Filter and General, clips Source and Output in RGBA
 // float32 only, no tiles, no multi-resolution, temporal clip access, one render at a time per instance, fielded
-// imagery fetched as full frames and refused at render (interlaced material is not supported,
-// docs/INTERLACE_PROGRESSIVE.md).  The parameters are the genuine's (params.h): the buttons Prepare Noise Profile /
+// imagery fetched as full frames (both fields interleaved, kOfxImageClipPropFieldExtraction Both).  INT-4: the scan
+// is the window's Video Scan Type (as the genuine's own menu; ClipParams "scan" / render.P["interlace"]): an interlaced
+// state is rendered field by field inside the plug-in (core.h process_fields), whatever the host says about fields;
+// the host's field order (kOfxImageClipPropFieldOrder) is only the window's default.  A render of one field
+// (kOfxImageEffectPropFieldToRender Lower / Upper) computes the frame and writes that field's rows only.  The parameters are the genuine's (params.h): the buttons Prepare Noise Profile /
 // Adjust Filter Settings open the window (a separate process, session.h) on frames fetched from the host around the
 // current time, and its Apply stores the settings and the noise profile in the secret ClipParams; the render reads
 // ClipParams only (no profile is built while rendering) and passes the source through while it holds no profile.
@@ -114,9 +117,9 @@ OfxStatus describe(OfxImageEffectHandle fx) {
     g_prop->propSetString(p, kOfxPropPluginDescription, 0,
                           "Meat Video noise reduction (temporal + spatial, v5 core). Prepare Noise Profile and Adjust "
                           "Filter Settings open the Meat Video window on the frames around the current one; its Apply "
-                          "stores the noise profile and the settings in this instance. Takes progressive RGBA float32 "
-                          "frames of at least 64 x 64 pixels only (interlaced material, field rendering and other "
-                          "depths are refused).");
+                          "stores the noise profile and the settings in this instance. Takes RGBA float32 frames of at "
+                          "least 64 x 64 pixels (other depths are refused); interlaced clips are processed field by "
+                          "field when the window's Video Scan Type is Interlaced.");
     g_prop->propSetString(p, kOfxImageEffectPropSupportedContexts, 0, kOfxImageEffectContextFilter);
     g_prop->propSetString(p, kOfxImageEffectPropSupportedContexts, 1, kOfxImageEffectContextGeneral);
     g_prop->propSetString(p, kOfxImageEffectPropSupportedPixelDepths, 0, kOfxBitDepthFloat);
@@ -390,6 +393,24 @@ bool fielded(const char* f) {
     return f && (std::strcmp(f, kOfxImageFieldLower) == 0 || std::strcmp(f, kOfxImageFieldUpper) == 0);
 }
 
+// INT-4: the parity (top-down rows of the planes: 0 = rows 0, 2, .. from the top) of an OFX field of a frame H rows
+// high.  OFX counts image rows bottom-up: kOfxImageFieldLower = rows 0, 2, 4 .. from the bottom, Upper = 1, 3, 5 ..
+// (ofxImageEffect.h); bottom-up row r is top-down row H - 1 - r.  -1 for no field.
+int field_parity(const char* f, int H) {
+    if (!fielded(f)) return -1;
+    const int up = std::strcmp(f, kOfxImageFieldUpper) == 0 ? 1 : 0;
+    return (H - 1 - up) & 1;
+}
+
+// the Source clip's field order as the first field in time (top-down parity, field_parity), -1 unfielded / not given
+int clip_first_field(Instance* in, int H) {
+    OfxPropertySetHandle cp;
+    check(g_fx->clipGetPropertySet(in->src, &cp), "clipGetPropertySet");
+    char* order = nullptr;
+    if (g_prop->propGetString(cp, kOfxImageClipPropFieldOrder, 0, &order) != kOfxStatOK) return -1;
+    return field_parity(order, H);
+}
+
 // One fetched image (released on destruction)
 struct Image {
     OfxPropertySetHandle h = nullptr;
@@ -420,9 +441,12 @@ std::unique_ptr<Image> fetch(OfxImageClipHandle clip, double t, bool required, c
     if (!depth || std::strcmp(depth, kOfxBitDepthFloat) != 0 || !comps || std::strcmp(comps, kOfxImageComponentRGBA) != 0)
         throw Failure(kOfxStatFailed, std::string("unsupported image format (") + (comps ? comps : "?") + ", " +
                                           (depth ? depth : "?") + "): RGBA float32 only");
+    // the plug-in asks for both fields in one image (FieldExtraction Both); a host that still hands over a single
+    // field (half height or doubled lines) is refused
     char* field = nullptr;
     if (g_prop->propGetString(im->h, kOfxImagePropField, 0, &field) == kOfxStatOK && fielded(field))
-        throw Failure(kOfxStatFailed, "interlaced (fielded) images are not supported: progressive only");
+        throw Failure(kOfxStatFailed, "single-field images (" + std::string(field) +
+                                          ") are not supported: the plug-in takes both fields of a frame in one image");
     void* data = nullptr;
     check(g_prop->propGetPointer(im->h, kOfxImagePropData, 0, &data), "kOfxImagePropData");
     check(g_prop->propGetIntN(im->h, kOfxImagePropBounds, 4, im->bounds), "kOfxImagePropBounds");
@@ -497,6 +521,7 @@ void open_window(Instance* in, const char* page, double t) {
     got.clear();
     if (std::min(rq.W, rq.H) < 64) throw Failure(kOfxStatFailed, "frames below 64 x 64 pixels are not supported");
     rq.matrix = auto_matrix(rq.H);
+    rq.field_order = clip_first_field(in, rq.H);    // INT-4: the window's default Video Scan Type
     OfxPropertySetHandle cp;
     check(g_fx->clipGetPropertySet(in->src, &cp), "clipGetPropertySet");
     if (g_prop->propGetDouble(cp, kOfxImageEffectPropFrameRate, 0, &rq.fps) != kOfxStatOK || !(rq.fps > 0)) rq.fps = 24.0;
@@ -598,7 +623,8 @@ OfxStatus frames_needed(OfxImageEffectHandle fx, OfxPropertySetHandle in_args, O
     double t = 0;
     check(g_prop->propGetDouble(in_args, kOfxPropTime, 0, &t), "kOfxPropTime");
     const std::shared_ptr<const RenderState> s = clip_state(in, t);
-    const int R = s->has_profile ? s->radius : 0;
+    // INT-4: an interlaced state needs the frames the field window reaches
+    const int R = !s->has_profile ? 0 : s->field_first >= 0 ? field_margin(*s) : s->radius;
     const Range cr = clip_range(in);
     double v[2] = {std::fmax(t - R, cr.first), std::fmin(t + R, cr.last)};
     if (v[1] < v[0]) v[0] = v[1] = t;
@@ -630,15 +656,11 @@ OfxStatus render(OfxImageEffectHandle fx, OfxPropertySetHandle in_args) {
     Instance* in = instance_of(fx);
     double t = 0;
     check(g_prop->propGetDouble(in_args, kOfxPropTime, 0, &t), "kOfxPropTime");
+    // INT-4: a render of one field (the host renders fields separately) writes that field's rows only
     char* field = nullptr;
+    std::string to_render;
     if (g_prop->propGetString(in_args, kOfxImageEffectPropFieldToRender, 0, &field) == kOfxStatOK && fielded(field))
-        throw Failure(kOfxStatFailed, "field rendering is not supported: progressive material only");
-    OfxPropertySetHandle cp;
-    check(g_fx->clipGetPropertySet(in->src, &cp), "clipGetPropertySet");
-    char* order = nullptr;
-    if (g_prop->propGetString(cp, kOfxImageClipPropFieldOrder, 0, &order) == kOfxStatOK && fielded(order))
-        throw Failure(kOfxStatFailed, "interlaced source clip (field order " + std::string(order) +
-                                          ") is not supported: progressive material only");
+        to_render = field;
     int win[4] = {0, 0, 0, 0};
     check(g_prop->propGetIntN(in_args, kOfxImageEffectPropRenderWindow, 4, win), "kOfxImageEffectPropRenderWindow");
 
@@ -656,6 +678,7 @@ OfxStatus render(OfxImageEffectHandle fx, OfxPropertySetHandle in_args) {
     }
     const int W = src->W(), H = src->H();
     if (std::min(W, H) < 64) throw Failure(kOfxStatFailed, "frames below 64 x 64 pixels are not supported");
+    const int only = to_render.empty() ? -1 : field_parity(to_render.c_str(), H);   // top-down parity, -1 both
     const int matrix = s->matrix < 0 ? (H >= 720 ? 0 : 1) : s->matrix;   // "auto": auto_matrix(H)
     Restore rs;
     Planes cur;
@@ -669,7 +692,8 @@ OfxStatus render(OfxImageEffectHandle fx, OfxPropertySetHandle in_args) {
         std::optional<Planes> p = fetch_planes(in, tk, matrix, W, H);
         return p ? &got.emplace(tk, std::move(*p)).first->second : nullptr;
     };
-    const int R = s->radius;
+    const bool fields = s->field_first >= 0;
+    const int R = fields ? field_margin(*s) : s->radius;
     std::vector<const Planes*> left, right;
     for (int k = 1; k <= R && t - k >= cr.first; ++k) {
         const Planes* p = planes_at(t - k);
@@ -687,7 +711,7 @@ OfxStatus render(OfxImageEffectHandle fx, OfxPropertySetHandle in_args) {
     const int ci = static_cast<int>(window.size());
     window.push_back(&cur);
     window.insert(window.end(), right.begin(), right.end());
-    const Planes out = process_frame(window, ci, *s);
+    const Planes out = fields ? process_fields(window, ci, *s) : process_frame(window, ci, *s);
     window.clear();
     got.clear();
     const std::vector<float> rgb = internal_to_rgb(out, matrix, &rs);
@@ -695,13 +719,18 @@ OfxStatus render(OfxImageEffectHandle fx, OfxPropertySetHandle in_args) {
     // the render window: rows of the source frame (OFX y = bounds.y1 + bottom-up row), alpha from the source
     const RgbaView sv = src->view();
     write_window(*dst, *src, win, [&](int i, int j, float* d) {
+        if (only >= 0 && (i & 1) != only) return;              // the other field's rows are not this render's
         const float* p = rgb.data() + 3 * (static_cast<size_t>(i) * W + j);
         d[0] = p[0];
         d[1] = p[1];
         d[2] = p[2];
         d[3] = sv.px(i, j)[3];
     });
-    const std::string note = note_of(in);
+    std::string note = note_of(in);
+    // the host says the clip is interlaced but the window's Video Scan Type is Progressive (the user's choice is kept)
+    if (!fields && clip_first_field(in, H) >= 0)
+        note += std::string(note.empty() ? "" : " ") + "Meat Video: the host reports interlaced material; the Video "
+                "Scan Type of the Meat Video window is Progressive, so the frames are processed as full frames.";
     if (note.empty())
         clear_persistent(fx);
     else

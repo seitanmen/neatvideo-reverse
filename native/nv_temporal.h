@@ -35,8 +35,15 @@ Plane pyramid_weight(const Plane& d, const Plane& s1, const double* ratios, doub
 // temporal_v5(window, ci, prof, P, flows): `flows` maps frame offset (k - ci) to block vectors; a
 // missing entry is estimated and stored (as the Python dict cache does).  Returns out (3 planes)
 // and rv (3 planes).
+// shift (INT-2, the field pipeline nv_fieldproc.h; native/fields_ref.py temporal_shift): nullptr is temporal_v5.
+// Else shift[2k], shift[2k + 1] = the known vertical offset of window frame k against the centre, in rows of the
+// luma plane and of the chroma planes (a field of the other parity: +-0.5 on both grids).  For a frame with a
+// non-zero luma offset dy the flow is estimated against warp_plane(neighbour Y, dy, 0) and the luma is warped by
+// FY + dy; a non-zero chroma offset dc is added to the chroma flow (FY, or to_grid(FY) / 2 for 4:2:0) after the
+// motion.  Frames with both offsets 0 take exactly the temporal_v5 operations.
 void temporal_v5(const std::vector<Frame>& window, int ci, const V5Profile& prof, const V5Params& P,
-                 std::map<int, Flow>* flows, std::vector<Plane>& out, std::vector<Plane>& rv);
+                 std::map<int, Flow>* flows, std::vector<Plane>& out, std::vector<Plane>& rv,
+                 const double* shift = nullptr);
 
 // process_frame_v5(window, ci, prof, P, flows)
 std::vector<Plane> process_frame_v5(const std::vector<Frame>& window, int ci, const V5Profile& prof,

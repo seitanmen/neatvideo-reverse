@@ -40,6 +40,12 @@ C++ UI's processing of the current frame (driver step "process") == the plug-in'
     --quick   no 1080p / B clips
     --pure    also the reference with NV_NATIVE=0 (the Python functions; slow)
     --mutate  the comparisons and checks must fail on changed inputs (sensitivity)
+INT-4 (interlaced clips, scenarios I-*): the window's Video Scan Type is stored in ClipParams ("scan", render.P
+["interlace"]) and the render filters field by field; the reference then is the C++ UI's field pipeline (qtui fields.cpp
+process_fields) in Python: native/fields_ref.py's field sequence and temporal_shift (the half-line offsets) with the
+Python UI's backend.finish, on the frames t - m .. t + m (m = radius // 2 + 1); a render of one field (FieldToRender
+lower / upper) is compared on that field's rows, the others staying the host's zeros.  The host's field order
+(kOfxImageClipPropFieldOrder) is the window's default scan only.
 Needs ofx/build (ofx/build_ofx.sh), qtui/build/qtui_ofx_session_drv, ffmpeg, numpy, PySide6 and the test videos.
 """
 import argparse
@@ -123,6 +129,8 @@ def make_clips(work, quick):
     rng = np.random.default_rng(11)
     for name, (n, h, w) in {"R96": (6, 80, 96), "R63": (2, 63, 80)}.items():
         put(name, rng.random((n, h, w, 4), dtype=np.float32))
+    # INT-4: an odd height (the bottom field's pad row; OFX's lower field = top-down rows 0, 2, .. when H is odd)
+    put("O", np.ascontiguousarray(rgba(a)[:, :359, :352]))
     if not quick:
         put("B", rgba(decode("test_v02.mp4", 304, 7, crop=(512, 288, 704, 0))))
         put("D", rgba(decode("test_v02.mp4", 312, 3)))
@@ -144,7 +152,9 @@ def py():
         import nv_depth
         import nvfilter as nv
         from nv_ui_qt import backend, state
-        _PY.update(nv_depth=nv_depth, nv=nv, backend=backend, state=state)
+        sys.path.insert(0, os.path.join(ROOT, "native"))
+        import fields_ref
+        _PY.update(nv_depth=nv_depth, nv=nv, backend=backend, state=state, fr=fields_ref)
     return _PY
 
 
@@ -174,9 +184,15 @@ def synth_cp(clip, spec):
     mat = spec.get("matrix") or nv.matrix_from_tags(None, H)
     at = spec.get("at", 0)
     fl = [p for p, _ in internal_frames(frames[at:at + 3], mat)]
+    il = spec.get("interlace")
+    if il:                      # INT-4: a One field profile of the field `parity` (the window's field profiles)
+        q = spec.get("parity", il["first"])
+        fl = [tuple(m["fr"].split_plane(pl, q) for pl in f) for f in fl]
     prof = backend.build_profile(fl, 0, True, mat, spec.get("mode", "auto"))
     if spec.get("aft", True):
         prof = backend._run_aft(prof, fl[0], True, mat)
+    if il:
+        prof["fields"], prof["field"] = "one", ("top", "bottom")[q]
     ui = state.default_params()
     for k, v in spec.get("ui", {}).items():
         ui[k] = state.coerce(k, v)
@@ -186,7 +202,34 @@ def synth_cp(clip, spec):
     cp = {"format": "meatvideo_ofx_clip_params", "version": 1, "frame_size": [clip["W"], H],
           "preset": state.preset_json(ui), "profile": ps.to_json(),
           "render": {"matrix": mat, "full_range": True, "P": state.backend_params(ui), "profile": eff}}
+    if il:                      # INT-4: version 2 (an older plug-in refuses it)
+        cp["version"] = 2
+        cp["render"]["P"]["interlace"] = dict(il)
+        cp["scan"] = ("tff", "bff")[il["first"]]
     return json.dumps(jsonable(cp))
+
+
+def process_fields_ui(window, ci, il, prof, P):
+    """qtui fields.cpp process_fields in Python: the field sequence of the window, every field's neighbours within
+    il["radius"] fields (same parity / half-line shift / plain), temporal (fields_ref.temporal_shift with backend.temporal's
+    t_noise) and backend.finish on the field, the two fields joined"""
+    m = py()
+    fr, backend = m["fr"], m["backend"]
+    first, mode, R = il["first"], fr.MODES[il["mode"]], int(il["radius"])
+    fields, parity = fr.field_sequence(window, first)
+    tn = float(P.get("t_noise", 1.0))
+    Qt = P if tn == 1.0 else dict(P, noise_level=P["noise_level"] * tn)
+    out = {}
+    for j in (0, 1):
+        s = 2 * ci + j
+        q = parity[s]
+        lo, hi = max(0, s - R), min(len(fields), s + R + 1)
+        idx = [k for k in range(lo, hi) if mode != fr.SAME or parity[k] == q]
+        shift = [(0.5 * (q - parity[k]),) * 2 for k in idx] if mode == fr.SHIFT else None
+        tmp, rv = fr.temporal_shift([fields[k] for k in idx], idx.index(s), prof, Qt, {}, shift)
+        out[q] = backend.finish(fields, s, tmp, rv, prof, P)
+    H = np.asarray(window[ci][0]).shape[0]
+    return [fr.join_plane(t, b, H) for t, b in zip(out[0], out[1])]
 
 
 # ---------------------------------------------------------------- the plug-in run
@@ -195,6 +238,8 @@ def minihost_args(sc, clip, out, cp_prefix, texts):
          "--first", str(sc["first"]), "--origin", *map(str, sc["origin"]), "--layout", sc["layout"]]
     if sc.get("field_order"):
         a += ["--field-order", sc["field_order"]]
+    if sc.get("field_to_render"):
+        a += ["--field-to-render", sc["field_to_render"]]
     if sc.get("missing"):
         a += ["--missing", ",".join(str(t) for t in sc["missing"])]
     if sc.get("depth"):
@@ -286,7 +331,8 @@ def reference(spec_path, out_path):
             if mat not in internal:
                 internal[mat] = internal_frames(frames, mat)
             fl = internal[mat]
-            R = int(P["radius"])
+            il = P.get("interlace")          # INT-4: the frames the field window reaches
+            R = int(il["radius"]) // 2 + 1 if il else int(P["radius"])
             left = []
             for d in range(1, R + 1):
                 if not available(t - d):
@@ -298,18 +344,27 @@ def reference(spec_path, out_path):
                     break
                 right.append(t + d)
             idx = [int(tt - first) for tt in left[::-1] + [t] + right]
-            out = backend.process_frame([fl[i][0] for i in idx], len(left), prof, P)
+            if il:
+                out = process_fields_ui([fl[i][0] for i in idx], len(left), il, prof, P)
+            else:
+                out = backend.process_frame([fl[i][0] for i in idx], len(left), prof, P)
             g, b, rr = np.frombuffer(nv_depth.from_internal(out, fmt, mat, fl[k][1]), "<f4").reshape(3, H, W)
-            outs.append(np.stack([rr, g, b, frames[k, :, :, 3]], -1).astype("<f4"))
+            o = np.stack([rr, g, b, frames[k, :, :, 3]], -1).astype("<f4")
+            ftr = spec.get("field_to_render")
+            if ftr in ("lower", "upper"):   # only that field's rows (OFX rows bottom-up: lower = 0, 2, .. from the bottom)
+                par = (H - 1 - (ftr == "upper")) & 1
+                o[np.arange(H) % 2 != par] = 0
+            outs.append(o)
             info.append({"t": t, "passthrough": False, "area": prof.get("area"), "native": backend.native_enabled(),
-                         "matrix": mat, "window": [i + first for i in idx], "uniform": backend._uniform(P)})
+                         "matrix": mat, "window": [i + first for i in idx], "uniform": backend._uniform(P),
+                         "fields": il})
     np.concatenate([o[None] for o in outs]).tofile(out_path)
     json.dump(info, open(out_path + ".json", "w"))
 
 
 def run_reference(work, name, sc, clip, steps, native, tag, mutate_input=False):
     spec = {"clip": clip, "first": sc["first"], "steps": steps, "mutate_input": mutate_input,
-            "missing": sc.get("missing", [])}
+            "missing": sc.get("missing", []), "field_to_render": sc.get("field_to_render")}
     sp = os.path.join(work, f"spec_{name}_{tag}.json")
     json.dump(spec, open(sp, "w"))
     out = os.path.join(work, f"ref_{name}_{tag}.f32")
@@ -331,8 +386,13 @@ def check_cp(cp_text, clip, first, press_t, fetched, check_build):
     if r is None:
         return bad if cp.get("profile") is None else ["render null with a profile"]
     P = state.backend_params(state.params_from_json(cp["preset"]))
-    if jsonable(P) != r["P"]:
+    rP = dict(r["P"])
+    il = rP.pop("interlace", None)       # INT-4: the field processing of an interlaced scan, with "scan"
+    if jsonable(P) != rP:
         bad.append("render.P != state.backend_params(params_from_json(preset))")
+    if (il is None) != ("scan" not in cp) or (il is not None and (("tff", "bff")[il["first"]] != cp["scan"] or
+                                                                 il["mode"] not in ("same", "shift", "plain"))):
+        bad.append(f"scan {cp.get('scan')} / render.P interlace {il} disagree")
     base, eff = cp["profile"]["base"], r["profile"]
     for k in base:
         if k not in ("curve", "sigma") and eff.get(k) != base[k]:
@@ -341,7 +401,23 @@ def check_cp(cp_text, clip, first, press_t, fetched, check_build):
         frames = load_clip(clip)
         times = sorted(fetched)
         fl = [p for p, _ in internal_frames(frames[[int(t - first) for t in times]], r["matrix"])]
-        prof = jsonable(backend.build_profile(fl, times.index(press_t), True, r["matrix"], "auto"))
+        f = times.index(press_t)
+        kind = base.get("fields", "frame")
+        if kind == "frame":
+            prof = jsonable(backend.build_profile(fl, f, True, r["matrix"], "auto"))
+        else:                           # INT-4: qtui fields.h build_profile_fields
+            fr = m["fr"]
+            q = 1 if base.get("field") == "bottom" else 0
+            sp = lambda k, qq: tuple(fr.split_plane(pl, qq) for pl in fl[k])
+            if kind == "one":
+                more = [sp(k, q) for k in range(f + 1, min(f + 3, len(fl)))]
+                pair = more[0] if more else None
+            else:
+                more = [sp(f, 1 - q)] + ([sp(f + 1, q)] if f + 1 < len(fl) else [])
+                pair = more[1] if len(more) > 1 else None
+            prof = m["nv"].build_profile_v5(sp(f, q), True, None, pair=pair, mode="auto", more=tuple(more),
+                                            matrix=r["matrix"])
+            prof = jsonable(dict(prof, ui_frame=f, fields=kind, field=("top", "bottom")[q]))
         pre = base.get("ui_pre_aft", {})
         for k, v in prof.items():
             got = pre[k] if k in pre else base.get(k)
@@ -510,6 +586,58 @@ def scenarios(quick, work):
         {"name": "S-reenter", "clip": "A", "first": 0, "origin": [0, 0], "layout": "pad", "reenter": True,
          "init": {"at": 0}, "steps": [("render", [0, 4, 7])]},
     ]
+    # INT-4: interlaced clips.  The window's Video Scan Type (ClipParams "scan" / render.P["interlace"]) decides; the
+    # host's field order is the window's default only.  A (640x360): OfxFieldUpper = top field first, Lower = bottom.
+    il = lambda first, mode, R: {"first": first, "mode": mode, "radius": R}
+    S += [
+        # synthetic interlaced states: same R4 / shift R3 / plain R2 + Mix, then a progressive state on the fielded
+        # clip (processed as full frames, with the warning)
+        {"name": "I-synth", "clip": "A", "first": 0, "origin": [0, 0], "layout": "pad", "field_order": "OfxFieldUpper",
+         "init": {"at": 0, "interlace": il(0, "same", 4)},
+         "steps": [("render", [0, 3, 7]),
+                   ("clip", {"at": 2, "aft": False, "interlace": il(1, "shift", 3), "parity": 1}), ("render", [4]),
+                   ("clip", {"at": 1, "interlace": il(0, "plain", 2), "ui": {"mix_enable": True, "mix": 30,
+                                                                            "amt_Cb": 60}}), ("render", [2, 6]),
+                   ("clip", {"at": 0}), ("render", [5])]},
+        # the host gives no field order: the state still says interlaced (the user's choice)
+        {"name": "I-synth-none", "clip": "A", "first": 100, "origin": [10, 20], "layout": "neg",
+         "init": {"at": 3, "interlace": il(1, "same", 2), "ui": {"t_noise": 60}}, "steps": [("render", [101, 106])]},
+        # the host renders one field: that field's rows only
+        {"name": "I-field-lower", "clip": "A", "first": 0, "origin": [0, 0], "layout": "pad",
+         "field_order": "OfxFieldUpper", "field_to_render": "lower", "init": {"at": 0, "interlace": il(0, "same", 4)},
+         "steps": [("render", [3, 0])]},
+        {"name": "I-field-upper", "clip": "A", "first": 0, "origin": [0, 0], "layout": "pad",
+         "field_order": "OfxFieldUpper", "field_to_render": "upper", "init": {"at": 0, "interlace": il(0, "same", 4)},
+         "steps": [("render", [3])]},
+        # odd height (359 rows): the field rows and the bottom field's pad row; FieldToRender upper / lower / both
+        {"name": "I-odd-upper", "clip": "O", "first": 0, "origin": [0, 0], "layout": "pad", "field_order": "OfxFieldUpper",
+         "field_to_render": "upper", "init": {"at": 0, "interlace": il(1, "same", 2)}, "steps": [("render", [3, 7])]},
+        {"name": "I-odd-lower", "clip": "O", "first": 0, "origin": [0, 0], "layout": "neg", "field_order": "OfxFieldLower",
+         "field_to_render": "lower", "init": {"at": 1, "interlace": il(0, "shift", 3)}, "steps": [("render", [2])]},
+        {"name": "I-odd-both", "clip": "O", "first": 0, "origin": [0, 0], "layout": "pad", "field_order": "OfxFieldLower",
+         "init": {"at": 0, "interlace": il(0, "plain", 2)}, "steps": [("render", [4, 0])]},
+        # Round 2 (M-1): a new instance with the Default Profile / Preset on a fielded clip: the window keeps the host's
+        # order (the defaults' ClipParams, frame_size null, say nothing about the scan)
+        {"name": "I-default-host", "clip": "A", "first": 0, "origin": [0, 0], "layout": "pad", "ini": "set",
+         "field_order": "OfxFieldLower",
+         "steps": [("render", [3]),
+                   ("press", "prepare", 4, f"process {P}i4.f32;apply",
+                    E(process=f"{P}i4.f32", scan="bff", fields=None)),
+                   ("render", [4])]},
+        # the window on a fielded clip: its scan starts from the host's order (Lower: bottom first), Two fields profile
+        {"name": "I-press-host", "clip": "A", "first": 0, "origin": [0, 0], "layout": "pad", "field_order": "OfxFieldLower",
+         "steps": [("press", "prepare", 4, f"auto;process {P}i1.f32;apply",
+                    E(build=True, process=f"{P}i1.f32", scan="bff", fields="two")),
+                   ("render", [4, 1])]},
+        # the user sets the scan in the window (no field order from the host): top first, One field (bottom); then a
+        # change back to Progressive in the window resets the profile (Cancel: the instance keeps its state)
+        {"name": "I-press-user", "clip": "A", "first": 0, "origin": [0, 0], "layout": "pad",
+         "steps": [("press", "prepare", 3, f"scan 0;fprof one1;auto;process {P}i2.f32;apply",
+                    E(build=True, process=f"{P}i2.f32", scan="tff", fields="one")),
+                   ("render", [3]),
+                   ("press", "adjust", 3, f"process {P}i3.f32;scan -1;cancel", E(changed=False, process=f"{P}i3.f32")),
+                   ("render", [3, 5])]},
+    ]
     # the Default Profile / Preset (settings files make_defaults wrote)
     S += [
         # set: a new instance renders with the defaults at once (not stored yet), they are stored at SyncPrivateData;
@@ -607,6 +735,9 @@ def run_scenario(a, work, sc, clips, texts, fails, totals, keep=None):
     rl = renders(log)
     if not (all(" status=0 " in ln and " declared=1 " in ln for ln in rl) and len(rl) == len(times)):
         fails.append(f"{sc['name']}: render status / undeclared frames")
+    if sc["name"] == "I-synth" and not (rl and "the host reports interlaced material" in rl[-1] and
+                                        all("host reports" not in ln for ln in rl[:-1])):
+        fails.append(f"{sc['name']}: the progressive state on the fielded clip lacks the warning (or others have it)")
     # Adjust Filter Settings enabled iff ClipParams holds a profile: at CreateInstance (a saved project's value) and
     # after the host sets ClipParams (presses are checked below)
     has = lambda text: bool(text) and json.loads(text).get("render") is not None
@@ -708,6 +839,12 @@ def run_scenario(a, work, sc, clips, texts, fails, totals, keep=None):
                     print(f"    ... holds the defaults of {exp['defaults']}: {'yes' if not bad2 else bad2}")
                     if bad2:
                         fails.append(f"{sc['name']} press {st[1]}@{st[2]}: {bad2}")
+                if exp.get("scan") is not None:   # INT-4: the window's Video Scan Type and field profile
+                    c = json.loads(cp)
+                    got = (c.get("scan"), c["profile"]["base"].get("fields") if c.get("profile") else None)
+                    print(f"    ... scan / profile fields: {got} (expected {(exp['scan'], exp.get('fields'))})")
+                    if got != (exp["scan"], exp.get("fields")):
+                        bad = bad + [f"scan / fields {got}"]
                 if bad:
                     fails.append(f"{sc['name']} press {st[1]}@{st[2]}: {bad}")
             prev = cp
@@ -842,8 +979,6 @@ def refusal_checks(a, clips, texts, fails):
     open(path, "w").write(val)
     texts[id(spec)] = path
     cases = [
-        ("interlaced", {"clip": "R96", "field_order": "OfxFieldUpper"}, "interlaced"),
-        ("interlaced lower", {"clip": "R96", "field_order": "OfxFieldLower"}, "interlaced"),
         ("below 64", {"clip": "R63"}, "below 64"),
         ("8-bit image", {"clip": "R96", "depth": "byte"}, "unsupported image format"),
         ("16-bit image", {"clip": "R96", "depth": "short"}, "unsupported image format"),
@@ -859,17 +994,40 @@ def refusal_checks(a, clips, texts, fails):
         if not ok:
             fails.append(f"refusal {label}")
     # a ClipParams the render cannot read: refused with a message, the source not written
-    bad = {"raw": "{\"format\": \"meatvideo_ofx_clip_params\", \"version\": 2}"}
+    bad = {"raw": "{\"format\": \"meatvideo_ofx_clip_params\", \"version\": 3}"}
     path = os.path.join(a.work, "cp_badversion.json")
     open(path, "w").write(bad["raw"])
     texts[id(bad)] = path
     sc = dict(sc0, clip="R96", init=bad, steps=[("render", [1])])
     log, _, _, _ = run_plugin(a.work, sc, clips["R96"], os.path.join(a.work, "plugin_refuse.f32"), texts)
     rl = renders(log)
-    ok = len(rl) == 1 and " status=1 " in rl[0] and "version 2 is not supported" in rl[0]
+    ok = len(rl) == 1 and " status=1 " in rl[0] and "version 3 is not supported (1, 2)" in rl[0]
     print(f"== refusal: unreadable ClipParams: {'ok' if ok else 'FAIL'}  {rl}")
     if not ok:
         fails.append("refusal unreadable ClipParams")
+    # INT-4: version 1 / 2 and the interlaced keys go together (a version-1 text with "scan" or render.P["interlace"],
+    # a version-2 text without them, "first" against "scan")
+    base1 = json.loads(val)
+    v2 = json.loads(synth_cp(clips["R96"], {"at": 0, "aft": False, "interlace": {"first": 0, "mode": "same", "radius": 2}}))
+    cases = []
+    d = copy.deepcopy(base1); d["scan"] = "tff"; cases.append(("version 1 with scan", d, "version 1 has no \"scan\""))
+    d = copy.deepcopy(base1); d["render"]["P"]["interlace"] = {"first": 0, "mode": "same", "radius": 2}
+    cases.append(("version 1 with interlace", d, "goes with version 2 only"))
+    d = copy.deepcopy(v2); del d["scan"]; cases.append(("version 2 without scan", d, "version 2 needs \"scan\""))
+    d = copy.deepcopy(v2); del d["render"]["P"]["interlace"]; cases.append(("version 2 without interlace", d, "goes with version 2 only"))
+    d = copy.deepcopy(v2); d["scan"] = "bff"; cases.append(("version 2 first != scan", d, "disagrees with \"scan\""))
+    for label, d, needle in cases:
+        spec = {"raw": json.dumps(d)}
+        path = os.path.join(a.work, "cp_v2case.json")
+        open(path, "w").write(spec["raw"])
+        texts[id(spec)] = path
+        sc = dict(sc0, clip="R96", init=spec, steps=[("render", [1])])
+        log, _, _, _ = run_plugin(a.work, sc, clips["R96"], os.path.join(a.work, "plugin_refuse_v2.f32"), texts)
+        rl = renders(log)
+        ok = len(rl) == 1 and " status=1 " in rl[0] and needle in rl[0]
+        print(f"== refusal: {label}: {'ok' if ok else 'FAIL'}  {rl}")
+        if not ok:
+            fails.append(f"refusal {label}")
     # ClipParams the render must refuse with a message (on a 512 KB thread, the host may call from a worker): not
     # JSON (L5: no libstdc++ look-up recorded), nested too deep (M1: no stack overflow), values outside what the UI
     # writes (L6).  At CreateInstance (a saved project) and set by the host before a render.

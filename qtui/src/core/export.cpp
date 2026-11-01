@@ -4,6 +4,7 @@
 // argument lists are the Python ones word for word (NV_EXPORT_TRACE=<file> appends every spawned command
 // as a JSON list, qtui/tools/compare_export.py compares them with the Python side).
 #include "export.h"
+#include "fields.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -398,9 +399,11 @@ Plan audio_plan(const std::string& src, const std::string& dst, const ProbeInfo&
 }
 
 // denoise_video_v5.encoder: the ffmpeg command (plan may be emptied when the range holds no audio)
+// field_first (INT-3): -1 progressive (the Python command); 0 / 1 = interlaced, top / bottom field first: setfield on
+// the encoder's input and the codec's interlaced coding flags (fields_flags)
 std::vector<std::string> encoder_args(const std::string& dst, const ProbeInfo& info, int crf, Plan& plan, const std::string& src,
                                       double start, std::optional<double> dur, const PixFmt& fmt, const std::string& codec,
-                                      const std::function<void(const std::string&)>& print) {
+                                      const std::function<void(const std::string&)>& print, int field_first) {
     const bool legacy = fmt.legacy() && codec == "x264";
     std::vector<std::pair<std::string, std::string>> keys = {{"color_space", "-colorspace"},
                                                              {"color_primaries", "-color_primaries"},
@@ -427,6 +430,24 @@ std::vector<std::string> encoder_args(const std::string& dst, const ProbeInfo& i
     } else if (mp4ish && fmt.chroma == "422" && info.v.W % 2) {
         crop = {"-vf", "crop=trunc(iw/2)*2:ih"};
         print("note: odd frame width - the last column is dropped on encode");
+    }
+    // INT-3: the field order of the output (the frames are written as they came in: fields interleaved)
+    std::vector<std::string> ilflags;
+    if (field_first >= 0) {
+        const std::string sf = std::string("setfield=") + (field_first == 0 ? "tff" : "bff");
+        if (crop.empty())
+            crop = {"-vf", sf};
+        else
+            crop[1] += "," + sf;
+        if (codec == "x264")          // interlaced coding; bff needs the x264 flag itself (setfield alone stays tt)
+            ilflags = {"-flags", "+ilme+ildct", "-x264-params", field_first == 0 ? "tff=1" : "bff=1"};
+        else if (codec == "prores")   // prores_ks marks the frames interlaced only with interlaced DCT
+            ilflags = {"-flags", "+ildct"};
+        else if (codec == "x265")
+            print("warning: HEVC (x265) output is not flagged interlaced (libx265 codes progressive frames here); "
+                  "the fields stay interleaved - choose x264, ProRes or FFV1 to keep the field order flags");
+        else if (codec == "exr")
+            print("warning: an EXR sequence carries no field order; the fields stay interleaved in the frames");
     }
     std::vector<std::string> a_in, a_out;
     if (!plan.empty()) {
@@ -465,7 +486,9 @@ std::vector<std::string> encoder_args(const std::string& dst, const ProbeInfo& i
         cmd.insert(cmd.end(), {"-i", "-"});
         cmd.insert(cmd.end(), a_in.begin(), a_in.end());
         cmd.insert(cmd.end(), crop.begin(), crop.end());
-        cmd.insert(cmd.end(), {"-map", "0:v:0", "-c:v", "libx264", "-crf", std::to_string(crf), "-pix_fmt", "yuv420p"});
+        cmd.insert(cmd.end(), {"-map", "0:v:0", "-c:v", "libx264", "-crf", std::to_string(crf)});
+        cmd.insert(cmd.end(), ilflags.begin(), ilflags.end());
+        cmd.insert(cmd.end(), {"-pix_fmt", "yuv420p"});
         cmd.insert(cmd.end(), tags.begin(), tags.end());
         cmd.insert(cmd.end(), a_out.begin(), a_out.end());
         cmd.insert(cmd.end(), {"-movflags", "+faststart", dst});
@@ -480,6 +503,7 @@ std::vector<std::string> encoder_args(const std::string& dst, const ProbeInfo& i
     cmd.insert(cmd.end(), crop.begin(), crop.end());
     cmd.insert(cmd.end(), {"-map", "0:v:0", "-c:v"});
     cmd.insert(cmd.end(), vc.begin(), vc.end());
+    cmd.insert(cmd.end(), ilflags.begin(), ilflags.end());
     cmd.insert(cmd.end(), {"-pix_fmt", fmt.name});
     cmd.insert(cmd.end(), tags.begin(), tags.end());
     cmd.insert(cmd.end(), a_out.begin(), a_out.end());
@@ -804,12 +828,15 @@ int run_export(const ExportOptions& o, const std::function<void(const std::strin
         }
         const std::string matrix = matrix_from_tags(info.v.tags, H);
         const bool full_range = full_range_internal(info.v.full_range, fmt);
-        const std::string vf = fmt.legacy() ? "" : read_filter(info, fmt, matrix);
+        std::string vf = fmt.legacy() ? "" : read_filter(info, fmt, matrix);
+        const std::optional<Interlace> il = interlace_of(o.params);   // INT-3 (absent: progressive, as before)
+        if (il) vf = interlaced_vf(vf, info.v.pix_fmt, fmt.chroma);
         const std::string pix = fmt.legacy() ? "yuv420p" : fmt.name;
         const long long fs = fmt.legacy() ? static_cast<long long>(W) * H + 2LL * ((W + 1) / 2) * ((H + 1) / 2)
                                           : fmt.frame_bytes(W, H);
         const PyObj P = v5_params(o.params);
-        const int R = static_cast<int>(P.get("radius").as_int());
+        // the frame window: radius frames, or for fields the frames the field window needs (fields.h frame_margin)
+        const int R = il ? frame_margin(*il) : static_cast<int>(P.get("radius").as_int());
         const int lo = std::max(0, o.start.value_or(0));
         const int hi = o.frames ? lo + *o.frames : -1;
         const int total = o.frames ? *o.frames : std::max(N - lo, 0);
@@ -826,6 +853,17 @@ int run_export(const ExportOptions& o, const std::function<void(const std::strin
                   (hi >= 0 ? std::to_string(hi) : "end") + ") tags=" + tg);
         }
         print("source " + describe_source(info.v.pix_fmt) + " -> processing " + describe(fmt) + ", codec " + codec);
+        if (il) {
+            print(std::string("interlaced: ") + (il->first == 0 ? "top" : "bottom") + " field first, fields mode " +
+                  field_mode_name(il->mode) + ", Temporal Radius " + std::to_string(il->radius) + " fields" +
+                  (vf.find("interl=1") != std::string::npos ? ", read with scale=interl=1" : ""));
+            if (profile_fields(prof) == "frame")
+                print("warning: the profile was made on full frames; an interlaced clip is profiled on fields "
+                      "(Two fields / One field)");
+        } else if (profile_fields(prof) != "frame") {
+            print("warning: the profile was made on fields (" + profile_fields(prof) + ") but the clip is processed as "
+                  "progressive frames");
+        }
 
         // the profile frames (read as the Python script does, for the same error paths)
         int pf = hi >= 0 ? (lo + hi) / 2 : N / 3;
@@ -885,7 +923,8 @@ int run_export(const ExportOptions& o, const std::function<void(const std::strin
         Plan plan = audio_plan(o.src, o.dst, info, codec == "exr" ? "none" : o.audio, print);
         const double fr_s = fps_of(info.v.fps);
         const std::optional<double> dur = hi >= 0 ? std::optional<double>((hi - lo) / fr_s) : std::nullopt;
-        const std::vector<std::string> enc_args = encoder_args(o.dst, info, o.crf, plan, o.src, lo / fr_s, dur, fmt, codec, print);
+        const std::vector<std::string> enc_args =
+            encoder_args(o.dst, info, o.crf, plan, o.src, lo / fr_s, dur, fmt, codec, print, il ? il->first : -1);
         if (cancelled()) return 1;
         Child enc = spawn(enc_args, true, false, false);
         if (!plan.empty()) {
@@ -938,14 +977,19 @@ int run_export(const ExportOptions& o, const std::function<void(const std::strin
             const int ci = static_cast<int>(std::find(idx.begin(), idx.end(), c) - idx.begin());
             const PyObj* profp = &prof;
             const PyObj* Pp = &P;
-            pending.push_back(pool.submit([c, win, ci, profp, Pp] {
+            const std::optional<Interlace> ilc = il;
+            pending.push_back(pool.submit([c, win, ci, profp, Pp, ilc] {
                 std::vector<Planes> w;
                 w.reserve(win.size());
                 for (const auto& p : win) w.push_back(*p);        // _work: astype(np.float32) copies
-                Planes tmp, rv;
-                temporal(w, ci, *profp, *Pp, nullptr, &tmp, &rv);
                 Result r;
                 r.idx = c;
+                if (ilc) {
+                    r.out = process_fields(w, ci, *ilc, *profp, *Pp);
+                    return r;
+                }
+                Planes tmp, rv;
+                temporal(w, ci, *profp, *Pp, nullptr, &tmp, &rv);
                 r.out = finish(w[static_cast<size_t>(ci)], tmp, rv, *profp, *Pp);
                 return r;
             }));
@@ -1045,6 +1089,7 @@ int run_export(const ExportOptions& o, const std::function<void(const std::strin
         meta.set("codec", PyObj::str(codec));
         meta.set("params", P);
         meta.set("profile", prof);
+        if (il) meta.set("interlace", interlace_json(*il));
         {
             std::ofstream f(sidecar_stem(o.dst) + ".json", std::ios::binary);
             f << meta.dump(1);

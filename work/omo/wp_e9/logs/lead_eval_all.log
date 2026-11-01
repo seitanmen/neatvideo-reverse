@@ -1,0 +1,103 @@
+== old_town_cross/bff_y3
+old_town_cross/bff_y3 input: Y 38.549 dB, RGB 36.396 dB (interior Y 38.549), alignment best +0,+0 (13.4 s)
+old_town_cross/bff_y3 ours_frame: Y 34.921 dB, RGB 31.311 dB (interior Y 34.897), alignment best +0,+0 (13.1 s)
+wrote eval/old_town_cross_bff_y3.json
+== old_town_cross/bff_y6
+old_town_cross/bff_y6 input: Y 32.564 dB, RGB 30.46 dB (interior Y 32.564), alignment best +0,+0 (13.4 s)
+old_town_cross/bff_y6 ours_frame: Y 34.023 dB, RGB 30.67 dB (interior Y 34.013), alignment best +0,+0 (13.1 s)
+wrote eval/old_town_cross_bff_y6.json
+== old_town_cross/p_y3
+genuine: genuine/progressive/Event_バージョン 1_0001_0001 (found by file name)
+genuine_noeffect: genuine_noeffect/progressive/Event__0001_0001 (genuine_map.json)
+old_town_cross/p_y3 input: Y 38.549 dB, RGB 36.396 dB (interior Y 38.549), alignment best +0,+0 (10.5 s)
+old_town_cross/p_y3 ours_frame: Y 36.748 dB, RGB 32.351 dB (interior Y 36.742), alignment best +0,+0 (10.8 s)
+old_town_cross/p_y3 genuine: Y 37.422 dB, RGB 33.601 dB (interior Y 37.413), alignment best +0,+0 (14.0 s)
+old_town_cross/p_y3 pair ours_frame~genuine: Y 43.425 dB, RGB 38.626 dB
+wrote eval/old_town_cross_p_y3.json
+noeffect {'samples': 373248000, 'differing': 0, 'max_abs_diff_16bit': 0, 'mean_diff_16bit_RGB': [0.0, 0.0, 0.0]} {'rgb.RGB': {'psnr': inf, 'rms': 0.0, 'n': 373248000}} {'yuv.Cb': {'psnr': 83.891, 'rms': 0.0163, 'n': 31104000}, 'yuv.Cr': {'psnr': 88.826, 'rms': 0.0092, 'n': 31104000}, 'yuv.Y': {'psnr': 89.673, 'rms': 0.0084, 'n': 124416000}} {'-2': 23.108, '-1': 25.872, '+0': inf, '+1': 25.425, '+2': 22.74}
+== old_town_cross/p_y6
+genuine: genuine/progressive/Event_バージョン 1_0001_0002 (found by file name)
+genuine_noeffect: genuine_noeffect/progressive/Event__0001_0002 (genuine_map.json)
+old_town_cross/p_y6 input: Y 32.564 dB, RGB 30.458 dB (interior Y 32.564), alignment best +0,+0 (10.7 s)
+old_town_cross/p_y6 ours_frame: Y 35.939 dB, RGB 31.797 dB (interior Y 35.95), alignment best +0,+0 (10.7 s)
+old_town_cross/p_y6 genuine: Y 36.364 dB, RGB 32.924 dB (interior Y 36.371), alignment best +0,+0 (14.1 s)
+old_town_cross/p_y6 pair ours_frame~genuine: Y 41.194 dB, RGB 37.118 dB
+wrote eval/old_town_cross_p_y6.json
+noeffect {'samples': 373248000, 'differing': 0, 'max_abs_diff_16bit': 0, 'mean_diff_16bit_RGB': [0.0, 0.0, 0.0]} {'rgb.RGB': {'psnr': inf, 'rms': 0.0, 'n': 373248000}} {'yuv.Cb': {'psnr': 77.198, 'rms': 0.0352, 'n': 31104000}, 'yuv.Cr': {'psnr': 83.35, 'rms': 0.0173, 'n': 31104000}, 'yuv.Y': {'psnr': 82.901, 'rms': 0.0183, 'n': 124416000}} {'-2': 22.056, '-1': 24.062, '+0': inf, '+1': 23.759, '+2': 21.764}
+== old_town_cross/tff_y3
+old_town_cross/tff_y3 input: Y 38.549 dB, RGB 36.396 dB (interior Y 38.549), alignment best +0,+0 (12.9 s)
+old_town_cross/tff_y3 ours_frame: Y 34.896 dB, RGB 31.285 dB (interior Y 34.873), alignment best +0,+0 (13.0 s)
+wrote eval/old_town_cross_tff_y3.json
+== old_town_cross/tff_y6
+old_town_cross/tff_y6 input: Y 32.564 dB, RGB 30.46 dB (interior Y 32.564), alignment best +0,+0 (13.0 s)
+old_town_cross/tff_y6 ours_frame: Y 33.99 dB, RGB 30.638 dB (interior Y 33.981), alignment best +0,+0 (13.1 s)
+wrote eval/old_town_cross_tff_y6.json
+== park_joy/bff_y3
+park_joy/bff_y3 input: Y 38.542 dB, RGB 36.29 dB (interior Y 38.542), alignment best +0,+0 (11.3 s)
+park_joy/bff_y3 ours_frame: Y 23.424 dB, RGB 21.787 dB (interior Y 23.417), alignment best +0,+0 (11.9 s)
+wrote eval/park_joy_bff_y3.json
+== park_joy/bff_y6
+park_joy/bff_y6 input: Y 32.636 dB, RGB 30.593 dB (interior Y 32.636), alignment best +0,+0 (11.4 s)
+park_joy/bff_y6 ours_frame: Y 23.658 dB, RGB 21.956 dB (interior Y 23.645), alignment best +0,+0 (12.1 s)
+wrote eval/park_joy_bff_y6.json
+== park_joy/p_y3
+genuine: genuine/progressive/Event_バージョン 1_0001_0003 (found by file name)
+genuine_noeffect: genuine_noeffect/progressive/Event__0001_0003 (genuine_map.json)
+park_joy/p_y3 input: Y 38.571 dB, RGB 36.457 dB (interior Y 38.572), alignment best +0,+0 (10.2 s)
+park_joy/p_y3 ours_frame: Y 32.149 dB, RGB 28.478 dB (interior Y 32.189), alignment best +0,+0 (9.7 s)
+park_joy/p_y3 genuine: Y 40.279 dB, RGB 37.085 dB (interior Y 40.296), alignment best +0,+0 (11.7 s)
+park_joy/p_y3 pair ours_frame~genuine: Y 32.582 dB, RGB 29.076 dB
+wrote eval/park_joy_p_y3.json
+noeffect {'samples': 373248000, 'differing': 0, 'max_abs_diff_16bit': 0, 'mean_diff_16bit_RGB': [0.0, 0.0, 0.0]} {'rgb.RGB': {'psnr': inf, 'rms': 0.0, 'n': 373248000}} {'yuv.Cb': {'psnr': 59.097, 'rms': 0.2829, 'n': 31104000}, 'yuv.Cr': {'psnr': 74.075, 'rms': 0.0504, 'n': 31104000}, 'yuv.Y': {'psnr': 69.836, 'rms': 0.0822, 'n': 124416000}} {'-2': 14.897, '-1': 16.604, '+0': inf, '+1': 16.248, '+2': 14.849}
+== park_joy/p_y6
+genuine: genuine/progressive/Event_バージョン 1_0001_0004 (found by file name)
+genuine_noeffect: genuine_noeffect/progressive/Event__0001_0004 (genuine_map.json)
+park_joy/p_y6 input: Y 32.706 dB, RGB 30.722 dB (interior Y 32.711), alignment best +0,+0 (10.2 s)
+park_joy/p_y6 ours_frame: Y 31.471 dB, RGB 28.042 dB (interior Y 31.515), alignment best +0,+0 (9.7 s)
+park_joy/p_y6 genuine: Y 36.459 dB, RGB 33.551 dB (interior Y 36.5), alignment best +0,+0 (11.7 s)
+park_joy/p_y6 pair ours_frame~genuine: Y 32.458 dB, RGB 29.259 dB
+wrote eval/park_joy_p_y6.json
+noeffect {'samples': 373248000, 'differing': 0, 'max_abs_diff_16bit': 0, 'mean_diff_16bit_RGB': [0.0, 0.0, 0.0]} {'rgb.RGB': {'psnr': inf, 'rms': 0.0, 'n': 373248000}} {'yuv.Cb': {'psnr': 56.546, 'rms': 0.3795, 'n': 31104000}, 'yuv.Cr': {'psnr': 68.892, 'rms': 0.0916, 'n': 31104000}, 'yuv.Y': {'psnr': 65.631, 'rms': 0.1333, 'n': 124416000}} {'-2': 14.75, '-1': 16.374, '+0': inf, '+1': 16.037, '+2': 14.703}
+== park_joy/tff_y3
+park_joy/tff_y3 input: Y 38.542 dB, RGB 36.291 dB (interior Y 38.542), alignment best +0,+0 (11.6 s)
+park_joy/tff_y3 ours_frame: Y 23.705 dB, RGB 22.011 dB (interior Y 23.691), alignment best +0,+0 (13.0 s)
+wrote eval/park_joy_tff_y3.json
+== park_joy/tff_y6
+park_joy/tff_y6 input: Y 32.636 dB, RGB 30.593 dB (interior Y 32.636), alignment best +0,+0 (11.9 s)
+park_joy/tff_y6 ours_frame: Y 23.8 dB, RGB 22.065 dB (interior Y 23.784), alignment best +0,+0 (13.4 s)
+wrote eval/park_joy_tff_y6.json
+== sintel/bff_y3
+sintel/bff_y3 input: Y 39.006 dB, RGB 36.959 dB (interior Y 39.005), alignment best +0,+0 (12.7 s)
+sintel/bff_y3 ours_frame: Y 33.102 dB, RGB 30.85 dB (interior Y 33.279), alignment best +0,+0 (12.3 s)
+wrote eval/sintel_bff_y3.json
+== sintel/bff_y6
+sintel/bff_y6 input: Y 33.077 dB, RGB 31.103 dB (interior Y 33.07), alignment best +0,+0 (12.9 s)
+sintel/bff_y6 ours_frame: Y 32.246 dB, RGB 30.019 dB (interior Y 32.371), alignment best +0,+0 (12.4 s)
+wrote eval/sintel_bff_y6.json
+== sintel/p_y3
+genuine: genuine/progressive/Event_バージョン 1_0001_0005 (found by file name)
+genuine_noeffect: genuine_noeffect/progressive/Event__0001_0005 (genuine_map.json)
+sintel/p_y3 input: Y 39.028 dB, RGB 36.991 dB (interior Y 39.024), alignment best +0,+0 (9.1 s)
+sintel/p_y3 ours_frame: Y 43.585 dB, RGB 39.0 dB (interior Y 43.581), alignment best +0,+0 (9.0 s)
+sintel/p_y3 genuine: Y 45.477 dB, RGB 43.342 dB (interior Y 45.48), alignment best +0,+0 (19.8 s)
+sintel/p_y3 pair ours_frame~genuine: Y 46.05 dB, RGB 40.353 dB
+wrote eval/sintel_p_y3.json
+noeffect {'samples': 373248000, 'differing': 0, 'max_abs_diff_16bit': 0, 'mean_diff_16bit_RGB': [0.0, 0.0, 0.0]} {'rgb.RGB': {'psnr': inf, 'rms': 0.0, 'n': 373248000}} {'yuv.Cb': {'psnr': 64.379, 'rms': 0.154, 'n': 31104000}, 'yuv.Cr': {'psnr': 65.888, 'rms': 0.1295, 'n': 31104000}, 'yuv.Y': {'psnr': 66.829, 'rms': 0.1162, 'n': 124416000}} {'-2': 22.161, '-1': 23.618, '+0': inf, '+1': 23.741, '+2': 22.302}
+== sintel/p_y6
+genuine: genuine/progressive/Event_バージョン 1_0001_0006 (found by file name)
+genuine_noeffect: genuine_noeffect/progressive/Event__0001_0006 (genuine_map.json)
+sintel/p_y6 input: Y 33.087 dB, RGB 31.125 dB (interior Y 33.082), alignment best +0,+0 (9.0 s)
+sintel/p_y6 ours_frame: Y 39.275 dB, RGB 35.722 dB (interior Y 39.292), alignment best +0,+0 (9.5 s)
+sintel/p_y6 genuine: Y 40.41 dB, RGB 38.496 dB (interior Y 40.429), alignment best +0,+0 (23.3 s)
+sintel/p_y6 pair ours_frame~genuine: Y 41.975 dB, RGB 37.465 dB
+wrote eval/sintel_p_y6.json
+noeffect {'samples': 373248000, 'differing': 0, 'max_abs_diff_16bit': 0, 'mean_diff_16bit_RGB': [0.0, 0.0, 0.0]} {'rgb.RGB': {'psnr': inf, 'rms': 0.0, 'n': 373248000}} {'yuv.Cb': {'psnr': 61.35, 'rms': 0.2183, 'n': 31104000}, 'yuv.Cr': {'psnr': 59.885, 'rms': 0.2584, 'n': 31104000}, 'yuv.Y': {'psnr': 61.197, 'rms': 0.2222, 'n': 124416000}} {'-2': 21.462, '-1': 22.656, '+0': inf, '+1': 22.759, '+2': 21.58}
+== sintel/tff_y3
+sintel/tff_y3 input: Y 39.006 dB, RGB 36.959 dB (interior Y 39.005), alignment best +0,+0 (32.0 s)
+sintel/tff_y3 ours_frame: Y 33.142 dB, RGB 30.888 dB (interior Y 33.309), alignment best +0,+0 (38.1 s)
+wrote eval/sintel_tff_y3.json
+== sintel/tff_y6
+sintel/tff_y6 input: Y 33.077 dB, RGB 31.103 dB (interior Y 33.071), alignment best +0,+0 (31.8 s)
+sintel/tff_y6 ours_frame: Y 32.552 dB, RGB 30.208 dB (interior Y 32.641), alignment best +0,+0 (37.2 s)
+wrote eval/sintel_tff_y6.json
+rc 0
