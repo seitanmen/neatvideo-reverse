@@ -716,5 +716,17 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   時間/動き/プロファイル・再結合・OFX のフィールド属性は未対応 (docs に実装順を記録)。
 - インターレース素材を現状に通すと、動き推定と時間平均が正しく働かない。
 - N4 (OFX) はまずプログレッシブのみで開始し、フィールド属性は
-  「インターレース非対応」と正直に報告する段階から。
+  「インターレース非対応」と正直に報告する段階から。N4 はマージ済み (PR #7)。
+- **E9 実施 + 本家解析の完全化計画 (2026-10-31、docs/GENUINE_ANALYSIS_PLAN.md)**:
+  別素材 (Xiph derf SVT 1080p50・Sintel 予告編 + ガウス雑音 σ3/σ6) での比較の結果、
+  本家に及ばない素材がある (park_joy σ3 で −8 dB など)。原因は較正 (test_v02 1 本のみ)
+  に加えて未解読部分 (U1 空間の方向経路・U2 適応経路・U4 AFT 実行時係数・
+  U5 動きの未照合部・U6 GPU カーネル) が構造的に効いている可能性。
+  Phase A (.dnp 観測 — agent-desktop で Resolve を自動操作) →
+  Phase B (U1/U2/U3 の静的解読 — 統括) → Phase C (AFT 照合) →
+  Phase D (U5 動き) → Phase E (v6 組み立てと最終比較)。
+  agent-desktop 1.0.2 導入済み (`TMPDIR=/Users/seitan/.adt-tmp` で呼ぶ。
+  Accessibility/画面収録権限済み。Resolve は高負荷時に snapshot TIMEOUT するのでリトライ)。
+- **次**: N4e マージ済み。N4c (実用化)、Resolve 実機確認 (agent-desktop で自動化可)、
+  Phase A、INT-2 以降 (L-1 修正後)、GPU-1 以降 (GPU-0 の監査表待ち)。
 
