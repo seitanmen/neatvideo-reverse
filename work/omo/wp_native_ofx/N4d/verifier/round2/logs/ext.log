@@ -1,0 +1,50 @@
+== defaults: profile from the window (4887 bytes, area [88, 216, 48]), preset 1950 bytes; settings files set, broken, badprof, badpre
+== E-min: clip E 400x256x12, first 0, origin [0, 0], layout pad  (plug-in 1.7 s)
+    create instance: adjust_enabled=0 clip_params_bytes=0 message=""
+    press prepare t=6 status=0 fetched=[6 7 8 9 10 11 5 4 3 2 1] no_image=[] images=11 released=11 sets=[ClipParams=<10861 bytes> ParamsHash1=1719142341 ParamsHash2=639156620 ParamsHash3=10861] edit_blocks=1 clip_params=changed bytes=10861 hash=1719142341,639156620,10861 adjust_enabled=1 message=""
+    render t=6 status=0 rod=0,0,400,256 (0) frames_needed=[6 6] (0) fetched=[6] no_image=[] declared=1 images=2 released=2 message=""
+    render t=0 status=0 rod=0,0,400,256 (0) frames_needed=[0 0] (0) fetched=[0] no_image=[] declared=1 images=2 released=2 message=""
+    render t=11 status=0 rod=0,0,400,256 (0) frames_needed=[11 11] (0) fetched=[11] no_image=[] declared=1 images=2 released=2 message=""
+    defaults of none: DEFAULTS 0 none none
+    ClipParams of press prepare@6 (10861 bytes): checks ok
+    fsguard: 3 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)']
+    t=6    qtui   MATCH 0/307200 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=6    native MATCH 0/409600 words differ  (window [6], bt601, area [0, 280, 48], uniform True)
+    t=0    native MATCH 0/409600 words differ  (window [0], bt601, area [0, 280, 48], uniform True)
+    t=11   native MATCH 0/409600 words differ  (window [11], bt601, area [0, 280, 48], uniform True)
+    reference native: 0.4 s
+    t=6    pure   MATCH 0/409600 words differ  (window [6], bt601, area [0, 280, 48], uniform True)
+    t=0    pure   MATCH 0/409600 words differ  (window [0], bt601, area [0, 280, 48], uniform True)
+    t=11   pure   MATCH 0/409600 words differ  (window [11], bt601, area [0, 280, 48], uniform True)
+    reference pure: 0.4 s
+== E-max: clip E 400x256x12, first 0, origin [0, 0], layout neg  (plug-in 4.0 s)
+    create instance: adjust_enabled=0 clip_params_bytes=0 message=""
+    press prepare t=6 status=0 fetched=[6 7 8 9 10 11 5 4 3 2 1] no_image=[] images=11 released=11 sets=[ClipParams=<10889 bytes> ParamsHash1=1304551662 ParamsHash2=1675069911 ParamsHash3=10889] edit_blocks=1 clip_params=changed bytes=10889 hash=1304551662,1675069911,10889 adjust_enabled=1 message=""
+    render t=6 status=0 rod=0,0,400,256 (0) frames_needed=[1 11] (0) fetched=[6 5 4 3 2 1 7 8 9 10 11] no_image=[] declared=1 images=12 released=12 message=""
+    render t=0 status=0 rod=0,0,400,256 (0) frames_needed=[0 5] (0) fetched=[0 1 2 3 4 5] no_image=[] declared=1 images=7 released=7 message=""
+    render t=11 status=0 rod=0,0,400,256 (0) frames_needed=[6 11] (0) fetched=[11 10 9 8 7 6] no_image=[] declared=1 images=7 released=7 message=""
+    render t=1 status=0 rod=0,0,400,256 (0) frames_needed=[0 6] (0) fetched=[1 0 2 3 4 5 6] no_image=[] declared=1 images=8 released=8 message=""
+    press adjust t=3 status=0 fetched=[3 4 5 6 7 8 2 1 0] no_image=[] images=9 released=9 sets=[ClipParams=<10890 bytes> ParamsHash1=982089674 ParamsHash2=1902603186 ParamsHash3=10890] edit_blocks=1 clip_params=changed bytes=10890 hash=982089674,1902603186,10890 adjust_enabled=1 message=""
+    render t=3 status=0 rod=0,0,400,256 (0) frames_needed=[0 8] (0) fetched=[3 2 1 0 4 5 6 7 8] no_image=[] declared=1 images=10 released=10 message=""
+    defaults of none: DEFAULTS 0 none none
+    ClipParams of press prepare@6 (10889 bytes): checks ok
+    ClipParams of press adjust@3 (10890 bytes): checks ok
+    fsguard: 4 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)']
+    t=6    qtui   MATCH 0/307200 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=3    qtui   MATCH 0/307200 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=6    native MATCH 0/409600 words differ  (window [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], bt601, area [0, 280, 48], uniform True)
+    t=0    native MATCH 0/409600 words differ  (window [0, 1, 2, 3, 4, 5], bt601, area [0, 280, 48], uniform True)
+    t=11   native MATCH 0/409600 words differ  (window [6, 7, 8, 9, 10, 11], bt601, area [0, 280, 48], uniform True)
+    t=1    native MATCH 0/409600 words differ  (window [0, 1, 2, 3, 4, 5, 6], bt601, area [0, 280, 48], uniform True)
+    t=3    native MATCH 0/409600 words differ  (window [0, 1, 2, 3, 4, 5, 6, 7, 8], bt601, area [0, 280, 48], uniform True)
+    reference native: 0.6 s
+    t=6    pure   MATCH 0/409600 words differ  (window [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], bt601, area [0, 280, 48], uniform True)
+    t=0    pure   MATCH 0/409600 words differ  (window [0, 1, 2, 3, 4, 5], bt601, area [0, 280, 48], uniform True)
+    t=11   pure   MATCH 0/409600 words differ  (window [6, 7, 8, 9, 10, 11], bt601, area [0, 280, 48], uniform True)
+    t=1    pure   MATCH 0/409600 words differ  (window [0, 1, 2, 3, 4, 5, 6], bt601, area [0, 280, 48], uniform True)
+    t=3    pure   MATCH 0/409600 words differ  (window [0, 1, 2, 3, 4, 5, 6, 7, 8], bt601, area [0, 280, 48], uniform True)
+    reference pure: 1.1 s
+user ini unchanged
+19 comparisons, 0/7475200 words differ
+ALL MATCH
+caffeinate -i python3 $S/r2/ext_scen.py $S/r2/ext --pure  16.10s user 11.02s system 264% cpu 10.243 total

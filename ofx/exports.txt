@@ -1,0 +1,3 @@
+_OfxGetPlugin
+_OfxGetNumberOfPlugins
+_FoundryOfxAllowPluginUnload

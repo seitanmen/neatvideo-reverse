@@ -1,0 +1,463 @@
+== structure check: CHECK OK; libnvcore loaded: ['/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/Frameworks/libnvcore.dylib']
+== fsguard positive control: exit 0, 5 calls recorded ['fopen(/dev/null)', 'fopen(/dev/null)', 'open(/dev/null)', 'stat(/dev/null)', 'dlopen(/usr/lib/libSystem.B.dylib)']
+== defaults: profile from the window (5095 bytes, area [0, 288, 48]), preset 1950 bytes; settings files set, broken, badprof, badpre
+== W-prepare-adjust: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 8.1 s)
+    create instance: adjust_enabled=0 clip_params_bytes=0 message=""
+    render t=3 status=0 rod=0,0,640,360 (0) frames_needed=[3 3] (0) fetched=[3] no_image=[] declared=1 images=2 released=2 message="OfxMessageWarning: Meat Video: no noise profile yet; the source is passed through. Press Prepare Noise Profile to make one."
+    press prepare t=4 status=0 fetched=[4 5 6 7 3 2 1 0] no_image=[] images=8 released=8 sets=[ClipParams=<12676 bytes> ParamsHash1=769318045 ParamsHash2=2027821264 ParamsHash3=12676] edit_blocks=1 clip_params=changed bytes=12676 hash=769318045,2027821264,12676 adjust_enabled=1 wall=1793513456.915..1793513457.658 message=""
+    render t=0 status=0 rod=0,0,640,360 (0) frames_needed=[0 2] (0) fetched=[0 1 2] no_image=[] declared=1 images=4 released=4 message=""
+    render t=4 status=0 rod=0,0,640,360 (0) frames_needed=[2 6] (0) fetched=[4 3 2 5 6] no_image=[] declared=1 images=6 released=6 message=""
+    render t=7 status=0 rod=0,0,640,360 (0) frames_needed=[5 7] (0) fetched=[7 6 5] no_image=[] declared=1 images=4 released=4 message=""
+    press adjust t=6 status=0 fetched=[6 7 5 4 3 2 1] no_image=[] images=7 released=7 sets=[ClipParams=<13313 bytes> ParamsHash1=1216689296 ParamsHash2=1491872745 ParamsHash3=13313] edit_blocks=1 clip_params=changed bytes=13313 hash=1216689296,1491872745,13313 adjust_enabled=1 wall=1793513457.852..1793513462.676 message=""
+    render t=6 status=0 rod=0,0,640,360 (0) frames_needed=[4 7] (0) fetched=[6 5 4 7] no_image=[] declared=1 images=5 released=5 message=""
+    render t=1 status=0 rod=0,0,640,360 (0) frames_needed=[0 3] (0) fetched=[1 0 2 3] no_image=[] declared=1 images=5 released=5 message=""
+    render t=5 status=0 rod=0,0,640,360 (0) frames_needed=[3 7] (0) fetched=[5 4 3 6 7] no_image=[] declared=1 images=6 released=6 message=""
+    press prepare t=2 status=0 fetched=[2 3 4 5 6 7 1 0] no_image=[] images=8 released=8 sets=[] edit_blocks=0 clip_params=unchanged bytes=13313 hash=1216689296,1491872745,13313 adjust_enabled=1 wall=1793513462.896..1793513463.569 message=""
+    press adjust t=2 status=0 fetched=[2 3 4 5 6 7 1 0] no_image=[] images=8 released=8 sets=[] edit_blocks=0 clip_params=unchanged bytes=13313 hash=1216689296,1491872745,13313 adjust_enabled=1 wall=1793513463.570..1793513464.750 message=""
+    render t=6 status=0 rod=0,0,640,360 (0) frames_needed=[4 7] (0) fetched=[6 5 4 7] no_image=[] declared=1 images=5 released=5 message=""
+    render t=2 status=0 rod=0,0,640,360 (0) frames_needed=[0 4] (0) fetched=[2 1 0 3 4] no_image=[] declared=1 images=6 released=6 message=""
+    defaults of none: DEFAULTS 0 none none
+    ClipParams of press prepare@4 (12676 bytes): checks ok (incl. profile build)
+    ClipParams of press adjust@6 (13313 bytes): checks ok
+    fsguard: 6 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)']
+    t=4    qtui   MATCH 0/691200 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=6    qtui   MATCH 0/691200 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=3    native MATCH 0/921600 words differ  (passthrough)
+    t=0    native MATCH 0/921600 words differ  (window [0, 1, 2], bt601, area [0, 288, 48], uniform True)
+    t=4    native MATCH 0/921600 words differ  (window [2, 3, 4, 5, 6], bt601, area [0, 288, 48], uniform True)
+    t=7    native MATCH 0/921600 words differ  (window [5, 6, 7], bt601, area [0, 288, 48], uniform True)
+    t=6    native MATCH 0/921600 words differ  (window [4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=1    native MATCH 0/921600 words differ  (window [0, 1, 2, 3], bt601, area [0, 288, 48], uniform False)
+    t=5    native MATCH 0/921600 words differ  (window [3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=6    native MATCH 0/921600 words differ  (window [4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=2    native MATCH 0/921600 words differ  (window [0, 1, 2, 3, 4], bt601, area [0, 288, 48], uniform False)
+    reference native: 1.0 s
+    t=3    pure   MATCH 0/921600 words differ  (passthrough)
+    t=0    pure   MATCH 0/921600 words differ  (window [0, 1, 2], bt601, area [0, 288, 48], uniform True)
+    t=4    pure   MATCH 0/921600 words differ  (window [2, 3, 4, 5, 6], bt601, area [0, 288, 48], uniform True)
+    t=7    pure   MATCH 0/921600 words differ  (window [5, 6, 7], bt601, area [0, 288, 48], uniform True)
+    t=6    pure   MATCH 0/921600 words differ  (window [4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=1    pure   MATCH 0/921600 words differ  (window [0, 1, 2, 3], bt601, area [0, 288, 48], uniform False)
+    t=5    pure   MATCH 0/921600 words differ  (window [3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=6    pure   MATCH 0/921600 words differ  (window [4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=2    pure   MATCH 0/921600 words differ  (window [0, 1, 2, 3, 4], bt601, area [0, 288, 48], uniform False)
+    reference pure: 2.4 s
+== W-offset: clip A 640x360x8, first 100, origin [10, 20], layout neg  (plug-in 1.1 s)
+    create instance: adjust_enabled=0 clip_params_bytes=0 message=""
+    press prepare t=103 status=0 fetched=[103 104 105 106 107 102 101 100] no_image=[] images=8 released=8 sets=[ClipParams=<12696 bytes> ParamsHash1=1250109509 ParamsHash2=910118495 ParamsHash3=12696] edit_blocks=1 clip_params=changed bytes=12696 hash=1250109509,910118495,12696 adjust_enabled=1 wall=1793513468.492..1793513469.301 message=""
+    render t=103 status=0 rod=10,20,650,380 (0) frames_needed=[100 107] (0) fetched=[103 102 101 100 104 105 106 107] no_image=[] declared=1 images=9 released=9 message=""
+    render t=100 status=0 rod=10,20,650,380 (0) frames_needed=[100 104] (0) fetched=[100 101 102 103 104] no_image=[] declared=1 images=6 released=6 message=""
+    render t=107 status=0 rod=10,20,650,380 (0) frames_needed=[103 107] (0) fetched=[107 106 105 104 103] no_image=[] declared=1 images=6 released=6 message=""
+    defaults of none: DEFAULTS 0 none none
+    ClipParams of press prepare@103 (12696 bytes): checks ok (incl. profile build)
+    fsguard: 3 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)']
+    t=103  qtui   MATCH 0/691200 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=103  native MATCH 0/921600 words differ  (window [100, 101, 102, 103, 104, 105, 106, 107], bt601, area [288, 384, 48], uniform True)
+    t=100  native MATCH 0/921600 words differ  (window [100, 101, 102, 103, 104], bt601, area [288, 384, 48], uniform True)
+    t=107  native MATCH 0/921600 words differ  (window [103, 104, 105, 106, 107], bt601, area [288, 384, 48], uniform True)
+    reference native: 0.6 s
+    t=103  pure   MATCH 0/921600 words differ  (window [100, 101, 102, 103, 104, 105, 106, 107], bt601, area [288, 384, 48], uniform True)
+    t=100  pure   MATCH 0/921600 words differ  (window [100, 101, 102, 103, 104], bt601, area [288, 384, 48], uniform True)
+    t=107  pure   MATCH 0/921600 words differ  (window [103, 104, 105, 106, 107], bt601, area [288, 384, 48], uniform True)
+    reference pure: 1.3 s
+== W-noprofile: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 1.1 s)
+    create instance: adjust_enabled=0 clip_params_bytes=0 message=""
+    press prepare t=1 status=0 fetched=[1 2 3 4 5 6 0] no_image=[] images=7 released=7 sets=[ClipParams=<2075 bytes> ParamsHash1=755220195 ParamsHash2=638082359 ParamsHash3=2075] edit_blocks=1 clip_params=changed bytes=2075 hash=755220195,638082359,2075 adjust_enabled=0 wall=1793513471.653..1793513472.063 message=""
+    render t=1 status=0 rod=0,0,640,360 (0) frames_needed=[1 1] (0) fetched=[1] no_image=[] declared=1 images=2 released=2 message="OfxMessageWarning: Meat Video: no noise profile yet; the source is passed through. Press Prepare Noise Profile to make one."
+    render t=2 status=0 rod=0,0,640,360 (0) frames_needed=[2 2] (0) fetched=[2] no_image=[] declared=1 images=2 released=2 message="OfxMessageWarning: Meat Video: no noise profile yet; the source is passed through. Press Prepare Noise Profile to make one."
+    press adjust t=1 status=0 fetched=[] no_image=[] images=0 released=0 sets=[] edit_blocks=0 clip_params=unchanged bytes=2075 hash=755220195,638082359,2075 adjust_enabled=0 wall=1793513472.065..1793513472.065 message="OfxMessageWarning: Meat Video: no noise profile yet; the source is passed through. Press Prepare Noise Profile to make one."
+    press prepare t=1 status=0 fetched=[1 2 3 4 5 6 0] no_image=[] images=7 released=7 sets=[ClipParams=<12679 bytes> ParamsHash1=1910027555 ParamsHash2=552575907 ParamsHash3=12679] edit_blocks=1 clip_params=changed bytes=12679 hash=1910027555,552575907,12679 adjust_enabled=1 wall=1793513472.065..1793513472.701 message=""
+    clip_params set by the host (0 bytes) -> InstanceChanged 0 adjust_enabled=0
+    render t=3 status=0 rod=0,0,640,360 (0) frames_needed=[3 3] (0) fetched=[3] no_image=[] declared=1 images=2 released=2 message="OfxMessageWarning: Meat Video: no noise profile yet; the source is passed through. Press Prepare Noise Profile to make one."
+    defaults of none: DEFAULTS 0 none none
+    ClipParams of press prepare@1 (2075 bytes): checks ok
+    ClipParams of press prepare@1 (12679 bytes): checks ok
+    fsguard: 4 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)']
+    t=1    native MATCH 0/921600 words differ  (passthrough)
+    t=2    native MATCH 0/921600 words differ  (passthrough)
+    t=3    native MATCH 0/921600 words differ  (passthrough)
+    reference native: 0.4 s
+    t=1    pure   MATCH 0/921600 words differ  (passthrough)
+    t=2    pure   MATCH 0/921600 words differ  (passthrough)
+    t=3    pure   MATCH 0/921600 words differ  (passthrough)
+    reference pure: 0.4 s
+== W-missing: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 1.0 s)
+    create instance: adjust_enabled=0 clip_params_bytes=0 message=""
+    press prepare t=3 status=0 fetched=[3 4 5 2] no_image=[6 1] images=4 released=4 sets=[ClipParams=<12694 bytes> ParamsHash1=2140285583 ParamsHash2=1518127066 ParamsHash3=12694] edit_blocks=1 clip_params=changed bytes=12694 hash=2140285583,1518127066,12694 adjust_enabled=1 wall=1793513473.556..1793513474.276 message=""
+    render t=3 status=0 rod=0,0,640,360 (0) frames_needed=[1 5] (0) fetched=[3 2 4 5] no_image=[1] declared=1 images=5 released=5 message=""
+    render t=4 status=0 rod=0,0,640,360 (0) frames_needed=[2 6] (0) fetched=[4 3 2 5] no_image=[6] declared=1 images=5 released=5 message=""
+    render t=0 status=0 rod=0,0,640,360 (0) frames_needed=[0 2] (0) fetched=[0] no_image=[1] declared=1 images=2 released=2 message=""
+    render t=7 status=0 rod=0,0,640,360 (0) frames_needed=[5 7] (0) fetched=[7] no_image=[6] declared=1 images=2 released=2 message=""
+    defaults of none: DEFAULTS 0 none none
+    ClipParams of press prepare@3 (12694 bytes): checks ok (incl. profile build)
+    fsguard: 3 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)']
+    t=3    qtui   MATCH 0/691200 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=3    native MATCH 0/921600 words differ  (window [2, 3, 4, 5], bt601, area [288, 384, 48], uniform True)
+    t=4    native MATCH 0/921600 words differ  (window [2, 3, 4, 5], bt601, area [288, 384, 48], uniform True)
+    t=0    native MATCH 0/921600 words differ  (window [0], bt601, area [288, 384, 48], uniform True)
+    t=7    native MATCH 0/921600 words differ  (window [7], bt601, area [288, 384, 48], uniform True)
+    reference native: 0.6 s
+    t=3    pure   MATCH 0/921600 words differ  (window [2, 3, 4, 5], bt601, area [288, 384, 48], uniform True)
+    t=4    pure   MATCH 0/921600 words differ  (window [2, 3, 4, 5], bt601, area [288, 384, 48], uniform True)
+    t=0    pure   MATCH 0/921600 words differ  (window [0], bt601, area [288, 384, 48], uniform True)
+    t=7    pure   MATCH 0/921600 words differ  (window [7], bt601, area [288, 384, 48], uniform True)
+    reference pure: 1.0 s
+== W-hdr-nan: clip C 320x184x5, first 0, origin [0, 0], layout pad  (plug-in 0.6 s)
+    create instance: adjust_enabled=0 clip_params_bytes=0 message=""
+    press prepare t=2 status=0 fetched=[2 3 4 1 0] no_image=[] images=5 released=5 sets=[ClipParams=<10737 bytes> ParamsHash1=574928358 ParamsHash2=712667148 ParamsHash3=10737] edit_blocks=1 clip_params=changed bytes=10737 hash=574928358,712667148,10737 adjust_enabled=1 wall=1793513476.164..1793513476.720 message=""
+    render t=2 status=0 rod=0,0,320,184 (0) frames_needed=[0 4] (0) fetched=[2 1 0 3 4] no_image=[] declared=1 images=6 released=6 message=""
+    render t=0 status=0 rod=0,0,320,184 (0) frames_needed=[0 2] (0) fetched=[0 1 2] no_image=[] declared=1 images=4 released=4 message=""
+    render t=4 status=0 rod=0,0,320,184 (0) frames_needed=[2 4] (0) fetched=[4 3 2] no_image=[] declared=1 images=4 released=4 message=""
+    defaults of none: DEFAULTS 0 none none
+    ClipParams of press prepare@2 (10737 bytes): checks ok (incl. profile build)
+    fsguard: 3 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)']
+    t=2    qtui   MATCH 0/176640 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=2    native MATCH 0/235520 words differ  (window [0, 1, 2, 3, 4], bt601, area [112, 8, 48], uniform True)
+    t=0    native MATCH 0/235520 words differ  (window [0, 1, 2], bt601, area [112, 8, 48], uniform True)
+    t=4    native MATCH 0/235520 words differ  (window [2, 3, 4], bt601, area [112, 8, 48], uniform True)
+    reference native: 0.4 s
+    t=2    pure   MATCH 0/235520 words differ  (window [0, 1, 2, 3, 4], bt601, area [112, 8, 48], uniform True)
+    t=0    pure   MATCH 0/235520 words differ  (window [0, 1, 2], bt601, area [112, 8, 48], uniform True)
+    t=4    pure   MATCH 0/235520 words differ  (window [2, 3, 4], bt601, area [112, 8, 48], uniform True)
+    reference pure: 0.5 s
+== S-params: clip A 640x360x8, first 100, origin [10, 20], layout neg  (plug-in 0.7 s)
+    create instance: adjust_enabled=1 clip_params_bytes=10708 message=""
+    render t=100 status=0 rod=10,20,650,380 (0) frames_needed=[100 101] (0) fetched=[100 101] no_image=[] declared=1 images=3 released=3 message=""
+    render t=103 status=0 rod=10,20,650,380 (0) frames_needed=[102 104] (0) fetched=[103 102 104] no_image=[] declared=1 images=4 released=4 message=""
+    clip_params set by the host (6747 bytes) -> InstanceChanged 0 adjust_enabled=1
+    render t=107 status=0 rod=10,20,650,380 (0) frames_needed=[104 107] (0) fetched=[107 106 105 104] no_image=[] declared=1 images=5 released=5 message=""
+    render t=102 status=0 rod=10,20,650,380 (0) frames_needed=[100 105] (0) fetched=[102 101 100 103 104 105] no_image=[] declared=1 images=7 released=7 message=""
+    clip_params set by the host (10439 bytes) -> InstanceChanged 0 adjust_enabled=1
+    render t=101 status=0 rod=10,20,650,380 (0) frames_needed=[100 103] (0) fetched=[101 100 102 103] no_image=[] declared=1 images=5 released=5 message=""
+    render t=105 status=0 rod=10,20,650,380 (0) frames_needed=[103 107] (0) fetched=[105 104 103 106 107] no_image=[] declared=1 images=6 released=6 message=""
+    clip_params set by the host (10700 bytes) -> InstanceChanged 0 adjust_enabled=1
+    render t=104 status=0 rod=10,20,650,380 (0) frames_needed=[102 106] (0) fetched=[104 103 102 105 106] no_image=[] declared=1 images=6 released=6 message=""
+    clip_params set by the host (10949 bytes) -> InstanceChanged 0 adjust_enabled=1
+    render t=106 status=0 rod=10,20,650,380 (0) frames_needed=[104 107] (0) fetched=[106 105 104 107] no_image=[] declared=1 images=5 released=5 message=""
+    render t=107 status=0 rod=10,20,650,380 (0) frames_needed=[105 107] (0) fetched=[107 106 105] no_image=[] declared=1 images=4 released=4 message=""
+    clip_params set by the host (10712 bytes) -> InstanceChanged 0 adjust_enabled=1
+    render t=100 status=0 rod=10,20,650,380 (0) frames_needed=[100 105] (0) fetched=[100 101 102 103 104 105] no_image=[] declared=1 images=7 released=7 message=""
+    fsguard: 1 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+    t=100  native MATCH 0/921600 words differ  (window [100, 101], bt601, area [288, 416, 48], uniform True)
+    t=103  native MATCH 0/921600 words differ  (window [102, 103, 104], bt601, area [288, 416, 48], uniform True)
+    t=107  native MATCH 0/921600 words differ  (window [104, 105, 106, 107], bt601, area [0, 288, 48], uniform True)
+    t=102  native MATCH 0/921600 words differ  (window [100, 101, 102, 103, 104, 105], bt601, area [0, 288, 48], uniform True)
+    t=101  native MATCH 0/921600 words differ  (window [100, 101, 102, 103], bt2020, area [208, 152, 48], uniform False)
+    t=105  native MATCH 0/921600 words differ  (window [103, 104, 105, 106, 107], bt2020, area [208, 152, 48], uniform False)
+    t=104  native MATCH 0/921600 words differ  (window [102, 103, 104, 105, 106], bt709, area [264, 128, 48], uniform True)
+    t=106  native MATCH 0/921600 words differ  (window [104, 105, 106, 107], bt601, area [0, 312, 48], uniform True)
+    t=107  native MATCH 0/921600 words differ  (window [105, 106, 107], bt601, area [0, 312, 48], uniform True)
+    t=100  native MATCH 0/921600 words differ  (window [100, 101, 102, 103, 104, 105], bt601, area [288, 416, 48], uniform True)
+    reference native: 1.1 s
+    t=100  pure   MATCH 0/921600 words differ  (window [100, 101], bt601, area [288, 416, 48], uniform True)
+    t=103  pure   MATCH 0/921600 words differ  (window [102, 103, 104], bt601, area [288, 416, 48], uniform True)
+    t=107  pure   MATCH 0/921600 words differ  (window [104, 105, 106, 107], bt601, area [0, 288, 48], uniform True)
+    t=102  pure   MATCH 0/921600 words differ  (window [100, 101, 102, 103, 104, 105], bt601, area [0, 288, 48], uniform True)
+    t=101  pure   MATCH 0/921600 words differ  (window [100, 101, 102, 103], bt2020, area [208, 152, 48], uniform False)
+    t=105  pure   MATCH 0/921600 words differ  (window [103, 104, 105, 106, 107], bt2020, area [208, 152, 48], uniform False)
+    t=104  pure   MATCH 0/921600 words differ  (window [102, 103, 104, 105, 106], bt709, area [264, 128, 48], uniform True)
+    t=106  pure   MATCH 0/921600 words differ  (window [104, 105, 106, 107], bt601, area [0, 312, 48], uniform True)
+    t=107  pure   MATCH 0/921600 words differ  (window [105, 106, 107], bt601, area [0, 312, 48], uniform True)
+    t=100  pure   MATCH 0/921600 words differ  (window [100, 101, 102, 103, 104, 105], bt601, area [288, 416, 48], uniform True)
+    reference pure: 2.4 s
+== S-hdr-nan: clip C 320x184x5, first 0, origin [0, 0], layout pad  (plug-in 0.1 s)
+    create instance: adjust_enabled=1 clip_params_bytes=10050 message=""
+    render t=0 status=0 rod=0,0,320,184 (0) frames_needed=[0 2] (0) fetched=[0 1 2] no_image=[] declared=1 images=4 released=4 message=""
+    render t=2 status=0 rod=0,0,320,184 (0) frames_needed=[0 4] (0) fetched=[2 1 0 3 4] no_image=[] declared=1 images=6 released=6 message=""
+    render t=4 status=0 rod=0,0,320,184 (0) frames_needed=[2 4] (0) fetched=[4 3 2] no_image=[] declared=1 images=4 released=4 message=""
+    clip_params set by the host (9916 bytes) -> InstanceChanged 0 adjust_enabled=1
+    render t=2 status=0 rod=0,0,320,184 (0) frames_needed=[0 4] (0) fetched=[2 1 0 3 4] no_image=[] declared=1 images=6 released=6 message=""
+    fsguard: 1 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+    t=0    native MATCH 0/235520 words differ  (window [0, 1, 2], bt601, area [120, 16, 48], uniform True)
+    t=2    native MATCH 0/235520 words differ  (window [0, 1, 2, 3, 4], bt601, area [120, 16, 48], uniform True)
+    t=4    native MATCH 0/235520 words differ  (window [2, 3, 4], bt601, area [120, 16, 48], uniform True)
+    t=2    native MATCH 0/235520 words differ  (window [0, 1, 2, 3, 4], bt601, area [112, 0, 64], uniform True)
+    reference native: 0.5 s
+    t=0    pure   MATCH 0/235520 words differ  (window [0, 1, 2], bt601, area [120, 16, 48], uniform True)
+    t=2    pure   MATCH 0/235520 words differ  (window [0, 1, 2, 3, 4], bt601, area [120, 16, 48], uniform True)
+    t=4    pure   MATCH 0/235520 words differ  (window [2, 3, 4], bt601, area [120, 16, 48], uniform True)
+    t=2    pure   MATCH 0/235520 words differ  (window [0, 1, 2, 3, 4], bt601, area [112, 0, 64], uniform True)
+    reference pure: 0.6 s
+== S-missing: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 0.3 s)
+    create instance: adjust_enabled=1 clip_params_bytes=10712 message=""
+    render t=3 status=0 rod=0,0,640,360 (0) frames_needed=[1 5] (0) fetched=[3 4] no_image=[2 5] declared=1 images=3 released=3 message=""
+    render t=4 status=0 rod=0,0,640,360 (0) frames_needed=[2 6] (0) fetched=[4 3] no_image=[2 5] declared=1 images=3 released=3 message=""
+    render t=6 status=0 rod=0,0,640,360 (0) frames_needed=[4 7] (0) fetched=[6 7] no_image=[5] declared=1 images=3 released=3 message=""
+    clip_params set by the host (10712 bytes) -> InstanceChanged 0 adjust_enabled=1
+    render t=1 status=0 rod=0,0,640,360 (0) frames_needed=[0 4] (0) fetched=[1 0] no_image=[2] declared=1 images=3 released=3 message=""
+    render t=7 status=0 rod=0,0,640,360 (0) frames_needed=[4 7] (0) fetched=[7 6] no_image=[5] declared=1 images=3 released=3 message=""
+    render t=1 status=0 rod=0,0,640,360 (0) frames_needed=[1 4] (0) fetched=[1] no_image=[2] declared=1 images=2 released=2 message=""
+    render t=6 status=0 rod=0,0,640,360 (0) frames_needed=[3 6] (0) fetched=[6] no_image=[5] declared=1 images=2 released=2 message=""
+    fsguard: 1 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+    t=3    native MATCH 0/921600 words differ  (window [3, 4], bt601, area [288, 416, 48], uniform True)
+    t=4    native MATCH 0/921600 words differ  (window [3, 4], bt601, area [288, 416, 48], uniform True)
+    t=6    native MATCH 0/921600 words differ  (window [6, 7], bt601, area [288, 416, 48], uniform True)
+    t=1    native MATCH 0/921600 words differ  (window [0, 1], bt601, area [288, 416, 48], uniform True)
+    t=7    native MATCH 0/921600 words differ  (window [6, 7], bt601, area [288, 416, 48], uniform True)
+    t=1    native MATCH 0/921600 words differ  (window [1], bt601, area [288, 416, 48], uniform True)
+    t=6    native MATCH 0/921600 words differ  (window [6], bt601, area [288, 416, 48], uniform True)
+    reference native: 0.7 s
+    t=3    pure   MATCH 0/921600 words differ  (window [3, 4], bt601, area [288, 416, 48], uniform True)
+    t=4    pure   MATCH 0/921600 words differ  (window [3, 4], bt601, area [288, 416, 48], uniform True)
+    t=6    pure   MATCH 0/921600 words differ  (window [6, 7], bt601, area [288, 416, 48], uniform True)
+    t=1    pure   MATCH 0/921600 words differ  (window [0, 1], bt601, area [288, 416, 48], uniform True)
+    t=7    pure   MATCH 0/921600 words differ  (window [6, 7], bt601, area [288, 416, 48], uniform True)
+    t=1    pure   MATCH 0/921600 words differ  (window [1], bt601, area [288, 416, 48], uniform True)
+    t=6    pure   MATCH 0/921600 words differ  (window [6], bt601, area [288, 416, 48], uniform True)
+    reference pure: 1.0 s
+== S-reenter: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 0.2 s)
+    create instance: adjust_enabled=1 clip_params_bytes=10712 message=""
+    render t=0 status=0 rod=0,0,640,360 (0) frames_needed=[0 2] (0) fetched=[0 1 2] no_image=[] declared=1 images=4 released=4 message=""
+    render t=4 status=0 rod=0,0,640,360 (0) frames_needed=[2 6] (0) fetched=[4 3 2 5 6] no_image=[] declared=1 images=6 released=6 message=""
+    render t=7 status=0 rod=0,0,640,360 (0) frames_needed=[5 7] (0) fetched=[7 6 5] no_image=[] declared=1 images=4 released=4 message=""
+    fsguard: 1 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+    t=0    native MATCH 0/921600 words differ  (window [0, 1, 2], bt601, area [288, 416, 48], uniform True)
+    t=4    native MATCH 0/921600 words differ  (window [2, 3, 4, 5, 6], bt601, area [288, 416, 48], uniform True)
+    t=7    native MATCH 0/921600 words differ  (window [5, 6, 7], bt601, area [288, 416, 48], uniform True)
+    reference native: 0.6 s
+    t=0    pure   MATCH 0/921600 words differ  (window [0, 1, 2], bt601, area [288, 416, 48], uniform True)
+    t=4    pure   MATCH 0/921600 words differ  (window [2, 3, 4, 5, 6], bt601, area [288, 416, 48], uniform True)
+    t=7    pure   MATCH 0/921600 words differ  (window [5, 6, 7], bt601, area [288, 416, 48], uniform True)
+    reference pure: 1.0 s
+== D-set: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 1.4 s)
+    create instance: adjust_enabled=1 clip_params_bytes=0 message=""
+    render t=3 status=0 rod=0,0,640,360 (0) frames_needed=[0 6] (0) fetched=[3 2 1 0 4 5 6] no_image=[] declared=1 images=8 released=8 message=""
+    render t=0 status=0 rod=0,0,640,360 (0) frames_needed=[0 3] (0) fetched=[0 1 2 3] no_image=[] declared=1 images=5 released=5 message=""
+    render t=7 status=0 rod=0,0,640,360 (0) frames_needed=[4 7] (0) fetched=[7 6 5 4] no_image=[] declared=1 images=5 released=5 message=""
+    press adjust t=5 status=0 fetched=[5 6 7 4 3 2 1 0] no_image=[] images=8 released=8 sets=[] edit_blocks=0 clip_params=unchanged bytes=12670 hash=709426823,952808609,12670 adjust_enabled=1 wall=1793513487.275..1793513488.236 message=""
+    render t=5 status=0 rod=0,0,640,360 (0) frames_needed=[2 7] (0) fetched=[5 4 3 2 6 7] no_image=[] declared=1 images=7 released=7 message=""
+    defaults of set: DEFAULTS 12670 ok ok
+    sync: ClipParams = the defaults asked for at CreateInstance (12670 bytes): ok
+    sync: ClipParams unchanged (12670 bytes): ok
+    fsguard: 3 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)']
+    t=5    qtui   MATCH 0/691200 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=3    native MATCH 0/921600 words differ  (window [0, 1, 2, 3, 4, 5, 6], bt601, area [0, 288, 48], uniform False)
+    t=0    native MATCH 0/921600 words differ  (window [0, 1, 2, 3], bt601, area [0, 288, 48], uniform False)
+    t=7    native MATCH 0/921600 words differ  (window [4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=5    native MATCH 0/921600 words differ  (window [2, 3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    reference native: 0.8 s
+    t=3    pure   MATCH 0/921600 words differ  (window [0, 1, 2, 3, 4, 5, 6], bt601, area [0, 288, 48], uniform False)
+    t=0    pure   MATCH 0/921600 words differ  (window [0, 1, 2, 3], bt601, area [0, 288, 48], uniform False)
+    t=7    pure   MATCH 0/921600 words differ  (window [4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=5    pure   MATCH 0/921600 words differ  (window [2, 3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    reference pure: 1.7 s
+== D-none: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 0.0 s)
+    create instance: adjust_enabled=0 clip_params_bytes=0 message=""
+    render t=3 status=0 rod=0,0,640,360 (0) frames_needed=[3 3] (0) fetched=[3] no_image=[] declared=1 images=2 released=2 message="OfxMessageWarning: Meat Video: no noise profile yet; the source is passed through. Press Prepare Noise Profile to make one."
+    render t=4 status=0 rod=0,0,640,360 (0) frames_needed=[4 4] (0) fetched=[4] no_image=[] declared=1 images=2 released=2 message="OfxMessageWarning: Meat Video: no noise profile yet; the source is passed through. Press Prepare Noise Profile to make one."
+    defaults of none: DEFAULTS 0 none none
+    sync: ClipParams unchanged (0 bytes): ok
+    fsguard: 2 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)']
+    t=3    native MATCH 0/921600 words differ  (passthrough)
+    t=4    native MATCH 0/921600 words differ  (passthrough)
+    reference native: 0.4 s
+    t=3    pure   MATCH 0/921600 words differ  (passthrough)
+    t=4    pure   MATCH 0/921600 words differ  (passthrough)
+    reference pure: 0.4 s
+== D-broken: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 0.0 s)
+    create instance: adjust_enabled=0 clip_params_bytes=0 message="OfxMessageWarning: Selected default profile cannot be loaded. Selected default preset cannot be loaded."
+    render t=3 status=0 rod=0,0,640,360 (0) frames_needed=[3 3] (0) fetched=[3] no_image=[] declared=1 images=2 released=2 message="OfxMessageWarning: Selected default profile cannot be loaded. Selected default preset cannot be loaded. Meat Video: no noise profile yet; the source is passed through. Press Prepare Noise Profile to make one."
+    render t=4 status=0 rod=0,0,640,360 (0) frames_needed=[4 4] (0) fetched=[4] no_image=[] declared=1 images=2 released=2 message="OfxMessageWarning: Selected default profile cannot be loaded. Selected default preset cannot be loaded. Meat Video: no noise profile yet; the source is passed through. Press Prepare Noise Profile to make one."
+    defaults of broken: DEFAULTS 0 error error
+    sync: ClipParams unchanged (0 bytes): ok
+    fsguard: 2 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)']
+    t=3    native MATCH 0/921600 words differ  (passthrough)
+    t=4    native MATCH 0/921600 words differ  (passthrough)
+    reference native: 0.4 s
+    t=3    pure   MATCH 0/921600 words differ  (passthrough)
+    t=4    pure   MATCH 0/921600 words differ  (passthrough)
+    reference pure: 0.4 s
+== D-badprof: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 0.0 s)
+    create instance: adjust_enabled=0 clip_params_bytes=0 message="OfxMessageWarning: Selected default profile cannot be loaded."
+    render t=3 status=0 rod=0,0,640,360 (0) frames_needed=[3 3] (0) fetched=[3] no_image=[] declared=1 images=2 released=2 message="OfxMessageWarning: Selected default profile cannot be loaded. Meat Video: no noise profile yet; the source is passed through. Press Prepare Noise Profile to make one."
+    defaults of badprof: DEFAULTS 2068 error ok
+    sync: ClipParams = the defaults asked for at CreateInstance (2068 bytes): ok
+    fsguard: 2 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)']
+    t=3    native MATCH 0/921600 words differ  (passthrough)
+    reference native: 0.4 s
+    t=3    pure   MATCH 0/921600 words differ  (passthrough)
+    reference pure: 0.4 s
+== D-badpre: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 0.2 s)
+    create instance: adjust_enabled=1 clip_params_bytes=0 message="OfxMessageWarning: Selected default preset cannot be loaded."
+    render t=3 status=0 rod=0,0,640,360 (0) frames_needed=[1 5] (0) fetched=[3 2 1 4 5] no_image=[] declared=1 images=6 released=6 message="OfxMessageWarning: Selected default preset cannot be loaded."
+    render t=2 status=0 rod=0,0,640,360 (0) frames_needed=[0 4] (0) fetched=[2 1 0 3 4] no_image=[] declared=1 images=6 released=6 message="OfxMessageWarning: Selected default preset cannot be loaded."
+    defaults of badpre: DEFAULTS 12669 ok error
+    sync: ClipParams = the defaults asked for at CreateInstance (12669 bytes): ok
+    fsguard: 2 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)']
+    t=3    native MATCH 0/921600 words differ  (window [1, 2, 3, 4, 5], bt601, area [0, 288, 48], uniform True)
+    t=2    native MATCH 0/921600 words differ  (window [0, 1, 2, 3, 4], bt601, area [0, 288, 48], uniform True)
+    reference native: 0.6 s
+    t=3    pure   MATCH 0/921600 words differ  (window [1, 2, 3, 4, 5], bt601, area [0, 288, 48], uniform True)
+    t=2    pure   MATCH 0/921600 words differ  (window [0, 1, 2, 3, 4], bt601, area [0, 288, 48], uniform True)
+    reference pure: 1.0 s
+== D-window: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 5.4 s)
+    create instance: adjust_enabled=0 clip_params_bytes=0 message=""
+    render t=4 status=0 rod=0,0,640,360 (0) frames_needed=[4 4] (0) fetched=[4] no_image=[] declared=1 images=2 released=2 message="OfxMessageWarning: Meat Video: no noise profile yet; the source is passed through. Press Prepare Noise Profile to make one."
+    press prepare t=4 status=0 fetched=[4 5 6 7 3 2 1 0] no_image=[] images=8 released=8 sets=[ClipParams=<12677 bytes> ParamsHash1=251001071 ParamsHash2=1305360681 ParamsHash3=12677] edit_blocks=1 clip_params=changed bytes=12677 hash=251001071,1305360681,12677 adjust_enabled=1 wall=1793513495.246..1793513495.762 message=""
+    render t=4 status=0 rod=0,0,640,360 (0) frames_needed=[1 7] (0) fetched=[4 3 2 1 5 6 7] no_image=[] declared=1 images=8 released=8 message=""
+    press adjust t=4 status=0 fetched=[4 5 6 7 3 2 1 0] no_image=[] images=8 released=8 sets=[ClipParams=<12677 bytes> ParamsHash1=251001071 ParamsHash2=1305360681 ParamsHash3=12677] edit_blocks=1 clip_params=unchanged bytes=12677 hash=251001071,1305360681,12677 adjust_enabled=1 wall=1793513495.877..1793513498.902 message=""
+    render t=4 status=0 rod=0,0,640,360 (0) frames_needed=[1 7] (0) fetched=[4 3 2 1 5 6 7] no_image=[] declared=1 images=8 released=8 message=""
+    render t=6 status=0 rod=0,0,640,360 (0) frames_needed=[3 7] (0) fetched=[6 5 4 3 7] no_image=[] declared=1 images=6 released=6 message=""
+    press adjust t=6 status=0 fetched=[6 7 5 4 3 2 1] no_image=[] images=7 released=7 sets=[] edit_blocks=0 clip_params=unchanged bytes=12677 hash=251001071,1305360681,12677 adjust_enabled=1 wall=1793513499.097..1793513500.016 message=""
+    render t=6 status=0 rod=0,0,640,360 (0) frames_needed=[3 7] (0) fetched=[6 5 4 3 7] no_image=[] declared=1 images=6 released=6 message=""
+    press prepare t=2 status=0 fetched=[2 3 4 5 6 7 1 0] no_image=[] images=8 released=8 sets=[ClipParams=<2075 bytes> ParamsHash1=1098642775 ParamsHash2=303709007 ParamsHash3=2075] edit_blocks=1 clip_params=changed bytes=2075 hash=1098642775,303709007,2075 adjust_enabled=0 wall=1793513500.103..1793513500.544 message=""
+    render t=2 status=0 rod=0,0,640,360 (0) frames_needed=[2 2] (0) fetched=[2] no_image=[] declared=1 images=2 released=2 message="OfxMessageWarning: Meat Video: no noise profile yet; the source is passed through. Press Prepare Noise Profile to make one."
+    defaults of none: DEFAULTS 0 none none
+    ClipParams of press prepare@4 (12677 bytes): checks ok
+    ... holds the defaults of set: yes
+    ClipParams of press adjust@4 (12677 bytes): checks ok
+    ... holds the defaults of set: yes
+    sync: ClipParams unchanged (12677 bytes): ok
+    ClipParams of press prepare@2 (2075 bytes): checks ok
+    ... holds the defaults of broken: yes
+    fsguard: 6 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)']
+    t=4    qtui   MATCH 0/691200 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=4    qtui   MATCH 0/691200 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=6    qtui   MATCH 0/691200 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=4    native MATCH 0/921600 words differ  (passthrough)
+    t=4    native MATCH 0/921600 words differ  (window [1, 2, 3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=4    native MATCH 0/921600 words differ  (window [1, 2, 3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=6    native MATCH 0/921600 words differ  (window [3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=6    native MATCH 0/921600 words differ  (window [3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=2    native MATCH 0/921600 words differ  (passthrough)
+    reference native: 0.8 s
+    t=4    pure   MATCH 0/921600 words differ  (passthrough)
+    t=4    pure   MATCH 0/921600 words differ  (window [1, 2, 3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=4    pure   MATCH 0/921600 words differ  (window [1, 2, 3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=6    pure   MATCH 0/921600 words differ  (window [3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=6    pure   MATCH 0/921600 words differ  (window [3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=2    pure   MATCH 0/921600 words differ  (passthrough)
+    reference pure: 1.9 s
+== D-failset: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 0.4 s)
+    create instance: adjust_enabled=1 clip_params_bytes=0 message=""
+    render t=3 status=0 rod=0,0,640,360 (0) frames_needed=[0 6] (0) fetched=[3 2 1 0 4 5 6] no_image=[] declared=1 images=8 released=8 message=""
+    render t=4 status=0 rod=0,0,640,360 (0) frames_needed=[1 7] (0) fetched=[4 3 2 1 5 6 7] no_image=[] declared=1 images=8 released=8 message=""
+    render t=5 status=0 rod=0,0,640,360 (0) frames_needed=[2 7] (0) fetched=[5 4 3 2 6 7] no_image=[] declared=1 images=7 released=7 message=""
+    defaults of set: DEFAULTS 12670 ok ok
+    sync with the store refused: ok (kept pending)
+    sync: ClipParams = the defaults asked for at CreateInstance (12670 bytes): ok
+    fsguard: 2 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)']
+    t=3    native MATCH 0/921600 words differ  (window [0, 1, 2, 3, 4, 5, 6], bt601, area [0, 288, 48], uniform False)
+    t=4    native MATCH 0/921600 words differ  (window [1, 2, 3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=5    native MATCH 0/921600 words differ  (window [2, 3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    reference native: 0.7 s
+    t=3    pure   MATCH 0/921600 words differ  (window [0, 1, 2, 3, 4, 5, 6], bt601, area [0, 288, 48], uniform False)
+    t=4    pure   MATCH 0/921600 words differ  (window [1, 2, 3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=5    pure   MATCH 0/921600 words differ  (window [2, 3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    reference pure: 1.6 s
+== D-stack512: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 1.7 s)
+    create instance: adjust_enabled=1 clip_params_bytes=0 message=""
+    render t=3 status=0 rod=0,0,640,360 (0) frames_needed=[0 6] (0) fetched=[3 2 1 0 4 5 6] no_image=[] declared=1 images=8 released=8 message=""
+    press adjust t=4 status=0 fetched=[4 5 6 7 3 2 1 0] no_image=[] images=8 released=8 sets=[ClipParams=<12677 bytes> ParamsHash1=1890506522 ParamsHash2=530457695 ParamsHash3=12677] edit_blocks=1 clip_params=changed bytes=12677 hash=1890506522,530457695,12677 adjust_enabled=1 wall=1793513506.234..1793513507.587 message=""
+    render t=4 status=0 rod=0,0,640,360 (0) frames_needed=[1 7] (0) fetched=[4 3 2 1 5 6 7] no_image=[] declared=1 images=8 released=8 message=""
+    render t=0 status=0 rod=0,0,640,360 (0) frames_needed=[0 3] (0) fetched=[0 1 2 3] no_image=[] declared=1 images=5 released=5 message=""
+    defaults of set: DEFAULTS 12670 ok ok
+    sync: ClipParams = the defaults asked for at CreateInstance (12670 bytes): ok
+    ClipParams of press adjust@4 (12677 bytes): checks ok
+    fsguard: 3 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)']
+    t=4    qtui   MATCH 0/691200 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=3    native MATCH 0/921600 words differ  (window [0, 1, 2, 3, 4, 5, 6], bt601, area [0, 288, 48], uniform False)
+    t=4    native MATCH 0/921600 words differ  (window [1, 2, 3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=0    native MATCH 0/921600 words differ  (window [0, 1, 2, 3], bt601, area [0, 288, 48], uniform False)
+    reference native: 0.7 s
+    t=3    pure   MATCH 0/921600 words differ  (window [0, 1, 2, 3, 4, 5, 6], bt601, area [0, 288, 48], uniform False)
+    t=4    pure   MATCH 0/921600 words differ  (window [1, 2, 3, 4, 5, 6, 7], bt601, area [0, 288, 48], uniform False)
+    t=0    pure   MATCH 0/921600 words differ  (window [0, 1, 2, 3], bt601, area [0, 288, 48], uniform False)
+    reference pure: 1.5 s
+== D-existing: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 0.2 s)
+    create instance: adjust_enabled=1 clip_params_bytes=10722 message=""
+    render t=3 status=0 rod=0,0,640,360 (0) frames_needed=[1 5] (0) fetched=[3 2 1 4 5] no_image=[] declared=1 images=6 released=6 message=""
+    render t=5 status=0 rod=0,0,640,360 (0) frames_needed=[3 7] (0) fetched=[5 4 3 6 7] no_image=[] declared=1 images=6 released=6 message=""
+    sync: ClipParams unchanged (10722 bytes): ok
+    fsguard: 1 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+    t=3    native MATCH 0/921600 words differ  (window [1, 2, 3, 4, 5], bt601, area [264, 128, 48], uniform True)
+    t=5    native MATCH 0/921600 words differ  (window [3, 4, 5, 6, 7], bt601, area [264, 128, 48], uniform True)
+    reference native: 0.5 s
+    t=3    pure   MATCH 0/921600 words differ  (window [1, 2, 3, 4, 5], bt601, area [264, 128, 48], uniform True)
+    t=5    pure   MATCH 0/921600 words differ  (window [3, 4, 5, 6, 7], bt601, area [264, 128, 48], uniform True)
+    reference pure: 1.0 s
+== S-B-r5: clip B 512x288x7, first 0, origin [0, 0], layout pad  (plug-in 0.2 s)
+    create instance: adjust_enabled=1 clip_params_bytes=10616 message=""
+    render t=0 status=0 rod=0,0,512,288 (0) frames_needed=[0 5] (0) fetched=[0 1 2 3 4 5] no_image=[] declared=1 images=7 released=7 message=""
+    render t=3 status=0 rod=0,0,512,288 (0) frames_needed=[0 6] (0) fetched=[3 2 1 0 4 5 6] no_image=[] declared=1 images=8 released=8 message=""
+    render t=6 status=0 rod=0,0,512,288 (0) frames_needed=[1 6] (0) fetched=[6 5 4 3 2 1] no_image=[] declared=1 images=7 released=7 message=""
+    fsguard: 1 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+    t=0    native MATCH 0/589824 words differ  (window [0, 1, 2, 3, 4, 5], bt709, area [0, 120, 128], uniform True)
+    t=3    native MATCH 0/589824 words differ  (window [0, 1, 2, 3, 4, 5, 6], bt709, area [0, 120, 128], uniform True)
+    t=6    native MATCH 0/589824 words differ  (window [1, 2, 3, 4, 5, 6], bt709, area [0, 120, 128], uniform True)
+    reference native: 0.6 s
+    t=0    pure   MATCH 0/589824 words differ  (window [0, 1, 2, 3, 4, 5], bt709, area [0, 120, 128], uniform True)
+    t=3    pure   MATCH 0/589824 words differ  (window [0, 1, 2, 3, 4, 5, 6], bt709, area [0, 120, 128], uniform True)
+    t=6    pure   MATCH 0/589824 words differ  (window [1, 2, 3, 4, 5, 6], bt709, area [0, 120, 128], uniform True)
+    reference pure: 1.1 s
+== W-D-1080p: clip D 1920x1080x3, first 0, origin [0, 0], layout neg  (plug-in 3.3 s)
+    create instance: adjust_enabled=0 clip_params_bytes=0 message=""
+    press prepare t=0 status=0 fetched=[0 1 2] no_image=[] images=3 released=3 sets=[ClipParams=<12602 bytes> ParamsHash1=412659518 ParamsHash2=325123822 ParamsHash3=12602] edit_blocks=1 clip_params=changed bytes=12602 hash=412659518,325123822,12602 adjust_enabled=1 wall=1793513513.613..1793513515.870 message=""
+    render t=0 status=0 rod=0,0,1920,1080 (0) frames_needed=[0 2] (0) fetched=[0 1 2] no_image=[] declared=1 images=4 released=4 message=""
+    render t=1 status=0 rod=0,0,1920,1080 (0) frames_needed=[0 2] (0) fetched=[1 0 2] no_image=[] declared=1 images=4 released=4 message=""
+    defaults of none: DEFAULTS 0 none none
+    ClipParams of press prepare@0 (12602 bytes): checks ok (incl. profile build)
+    fsguard: 3 call(s) while armed: ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-default)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/qtui_ofx_session_drv --ofx-session)']
+    t=0    qtui   MATCH 0/6220800 words differ (the C++ UI's processing in the window vs the plug-in's render)
+    t=0    native MATCH 0/8294400 words differ  (window [0, 1, 2], bt709, area [0, 832, 128], uniform True)
+    t=1    native MATCH 0/8294400 words differ  (window [0, 1, 2], bt709, area [0, 832, 128], uniform True)
+    reference native: 1.5 s
+    t=0    pure   MATCH 0/8294400 words differ  (window [0, 1, 2], bt709, area [0, 832, 128], uniform True)
+    t=1    pure   MATCH 0/8294400 words differ  (window [0, 1, 2], bt709, area [0, 832, 128], uniform True)
+    reference pure: 3.2 s
+== refusal: interlaced: ok  ['render t=1 status=1 rod=0,0,96,80 (0) frames_needed=[0 3] (0) fetched=[] no_image=[] declared=1 images=0 released=0 message="OfxMessageError: Meat Video: interlaced source clip (field order OfxFieldUpper) is not supported: progressive material only"']
+== refusal: interlaced lower: ok  ['render t=1 status=1 rod=0,0,96,80 (0) frames_needed=[0 3] (0) fetched=[] no_image=[] declared=1 images=0 released=0 message="OfxMessageError: Meat Video: interlaced source clip (field order OfxFieldLower) is not supported: progressive material only"']
+== refusal: below 64: ok  ['render t=1 status=1 rod=0,0,80,63 (0) frames_needed=[0 1] (0) fetched=[1] no_image=[] declared=1 images=2 released=2 message="OfxMessageError: Meat Video: frames below 64 x 64 pixels are not supported"']
+== refusal: 8-bit image: ok  ['render t=1 status=1 rod=0,0,96,80 (0) frames_needed=[0 3] (0) fetched=[] no_image=[] declared=1 images=1 released=1 message="OfxMessageError: Meat Video: unsupported image format (OfxImageComponentRGBA, OfxBitDepthByte): RGBA float32 only"']
+== refusal: 16-bit image: ok  ['render t=1 status=1 rod=0,0,96,80 (0) frames_needed=[0 3] (0) fetched=[] no_image=[] declared=1 images=1 released=1 message="OfxMessageError: Meat Video: unsupported image format (OfxImageComponentRGBA, OfxBitDepthShort): RGBA float32 only"']
+== refusal: current frame missing: ok  ['render t=1 status=1 rod=0,0,96,80 (0) frames_needed=[0 3] (0) fetched=[] no_image=[1] declared=1 images=1 released=1 message="OfxMessageError: Meat Video: the host gave no image at frame 1"']
+== refusal: unreadable ClipParams: ok  ['render t=1 status=1 rod=0,0,96,80 (0) frames_needed=[] (1) fetched=[] no_image=[] declared=1 images=0 released=0 message="OfxMessageError: Meat Video: ClipParams: version 2 is not supported (1)"']
+== refusal (512 KB thread): not JSON (9 bytes): ok  message="OfxMessageError: Meat Video: ClipParams is not valid JSON (JSON: expected string at 1)"  fsguard ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+== refusal (512 KB thread): nested 256 + 1 levels (567 bytes): ok  message="OfxMessageError: Meat Video: ClipParams is not valid JSON (JSON: nesting deeper than 256 levels at 309)"  fsguard ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+== refusal (512 KB thread): nested 100000 levels (200055 bytes): ok  message="OfxMessageError: Meat Video: ClipParams is not valid JSON (JSON: nesting deeper than 256 levels at 309)"  fsguard ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+== refusal (512 KB thread): 300000 open brackets (300000 bytes): ok  message="OfxMessageError: Meat Video: ClipParams is not valid JSON (JSON: nesting deeper than 256 levels at 256)"  fsguard ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+== refusal (512 KB thread): objects nested 100000 levels (600001 bytes): ok  message="OfxMessageError: Meat Video: ClipParams is not valid JSON (JSON: nesting deeper than 256 levels at 1280)"  fsguard ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+== refusal (512 KB thread): bs as a string (10678 bytes): ok  message="OfxMessageError: Meat Video: ClipParams: P["bs"] must be an integer in [4, 256]"  fsguard ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+== refusal (512 KB thread): search -50 (10677 bytes): ok  message="OfxMessageError: Meat Video: ClipParams: P["search"] must be an integer in [0, 256]"  fsguard ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+== refusal (512 KB thread): radius 2.5 (10678 bytes): ok  message="OfxMessageError: Meat Video: ClipParams: P["radius"] must be an integer in [0, 16]"  fsguard ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+== refusal (512 KB thread): threshold NaN (10676 bytes): ok  message="OfxMessageError: Meat Video: ClipParams: P["threshold"] is not a finite number"  fsguard ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+== refusal (512 KB thread): mix 1.5 (10676 bytes): ok  message="OfxMessageError: Meat Video: ClipParams: P["mix"] = 1.5 is outside [0.0, 1.0]"  fsguard ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+== refusal (512 KB thread): mix 1.0000001 (10682 bytes): ok  message="OfxMessageError: Meat Video: ClipParams: P["mix"] = 1.0000001 is outside [0.0, 1.0]"  fsguard ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+== refusal (512 KB thread): frame_size 1e300 (informative; accepted) (10685 bytes): ok  message=""  fsguard ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+== nesting of exactly 256 levels on a 128 KB thread: ok (read, passed through)
+== the window on an unreadable (deep) ClipParams: ok (started from the defaults, Apply stored)
+== helper keeps a child holding the reply pipe: ok: the press returned after 0.1 s
+== helper failure: missing helper: ok  ['press prepare t=2 status=1 fetched=[2 3 4 5 6 7 1 0] no_image=[] images=8 released=8 sets=[] edit_blocks=0 clip_params=unchanged bytes=0 hash=0,0,0 adjust_enabled=0 wall=1793513523.881..1793513523.885 message="OfxMessageError: Meat Video: cannot start the window helper /Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/verify/fake_helpers/does-not-exist: No such file or directory; the settings were not changed"']
+== helper failure: unexpected reply: ok  ['press prepare t=2 status=1 fetched=[2 3 4 5 6 7 1 0] no_image=[] images=8 released=8 sets=[] edit_blocks=0 clip_params=unchanged bytes=0 hash=0,0,0 adjust_enabled=0 wall=1793513523.923..1793513523.936 message="OfxMessageError: Meat Video: the window returned an unexpected reply (6 bytes); the settings were not changed"']
+== helper failure: unusable settings: ok  ['press prepare t=2 status=1 fetched=[2 3 4 5 6 7 1 0] no_image=[] images=8 released=8 sets=[] edit_blocks=0 clip_params=unchanged bytes=0 hash=0,0,0 adjust_enabled=0 wall=1793513523.974..1793513523.988 message="OfxMessageError: Meat Video: the window returned settings the render cannot use (ClipParams is not valid JSON (JSON: unexpected character at 0)); the settings were not changed"']
+== helper failure: exit status 3: ok  ['press prepare t=2 status=1 fetched=[2 3 4 5 6 7 1 0] no_image=[] images=8 released=8 sets=[] edit_blocks=0 clip_params=unchanged bytes=0 hash=0,0,0 adjust_enabled=0 wall=1793513524.023..1793513524.036 message="OfxMessageError: Meat Video: the window helper exited with status 3; the settings were not changed"']
+== helper failure: exits before reading: ok  ['press prepare t=2 status=1 fetched=[2 3 4 5 6 7 1 0] no_image=[] images=8 released=8 sets=[] edit_blocks=0 clip_params=unchanged bytes=0 hash=0,0,0 adjust_enabled=0 wall=1793513524.070..1793513524.077 message="OfxMessageError: Meat Video: the window returned an unexpected reply (0 bytes); the settings were not changed"']
+== helper failure: truncated reply: ok  ['press prepare t=2 status=1 fetched=[2 3 4 5 6 7 1 0] no_image=[] images=8 released=8 sets=[] edit_blocks=0 clip_params=unchanged bytes=0 hash=0,0,0 adjust_enabled=0 wall=1793513524.144..1793513524.158 message="OfxMessageError: Meat Video: the window returned an unexpected reply (12 bytes); the settings were not changed"']
+== bundled helper: ok: window shown by pid 7235, ended with SIGTERM; ['press prepare t=3 status=1 fetched=[3 4 5 6 7 2 1 0] no_image=[] images=8 released=8 sets=[ClipParams=<12670 bytes> ParamsHash1=709426823 ParamsHash2=952808609 ParamsHash3=12670] edit_blocks=1 clip_params=changed bytes=12670 hash=709426823,952808609,12670 adjust_enabled=1 wall=1793513524.202..1793513524.795 message="OfxMessageError: Meat Video: the window helper was terminated by signal 15; the settings were not changed"']; fsguard ['dlopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/Helpers/MeatVideoQt.app/Contents/MacOS/MeatVideoQt --ofx-default)', 'posix_spawn(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/Helpers/MeatVideoQt.app/Contents/MacOS/MeatVideoQt --ofx-session)']
+== bundled helper: files naming /Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx: []; '/Users/' strings in MeatVideoQt: []
+== bundled helper data: ok: ref_floor opened ['fsguard:   access(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/verify/helper_copy.app/Contents/MacOS/../Resources/data/ref_floor.npy)', 'fsguard:   fopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/verify/helper_copy.app/Contents/MacOS/../Resources/data/ref_floor.npy)']; checkout data opened []; profile identical to the development driver's (it reads the checkout's file)
+== host started with all open: ok (rc 0; defaults at CreateInstance: yes; presses ['0/changed', '0/changed']; renders ['0', '0', '0', '0']; output and ClipParams identical to the all-open run)
+== host started with fd 0 closed: ok (rc 0; defaults at CreateInstance: yes; presses ['0/changed', '0/changed']; renders ['0', '0', '0', '0']; output and ClipParams identical to the all-open run)
+== host started with fd 1 closed: ok (rc 0; defaults at CreateInstance: yes; presses ['0/changed', '0/changed']; renders ['0', '0', '0', '0']; output and ClipParams identical to the all-open run)
+== host started with fd 2 closed: ok (rc 0; defaults at CreateInstance: yes; presses ['0/changed', '0/changed']; renders ['0', '0', '0', '0']; output and ClipParams identical to the all-open run)
+== host started with fd 0,1 closed: ok (rc 0; defaults at CreateInstance: yes; presses ['0/changed', '0/changed']; renders ['0', '0', '0', '0']; output and ClipParams identical to the all-open run)
+== host started with fd 0,2 closed: ok (rc 0; defaults at CreateInstance: yes; presses ['0/changed', '0/changed']; renders ['0', '0', '0', '0']; output and ClipParams identical to the all-open run)
+== host started with fd 1,2 closed: ok (rc 0; defaults at CreateInstance: yes; presses ['0/changed', '0/changed']; renders ['0', '0', '0', '0']; output and ClipParams identical to the all-open run)
+== host started with fd 0,1,2 closed: ok (rc 0; defaults at CreateInstance: yes; presses ['0/changed', '0/changed']; renders ['0', '0', '0', '0']; output and ClipParams identical to the all-open run)
+== mutation 0 (unchanged ClipParams): 0/5 renders differ
+== mutation 1 (plug-in ClipParams render.P threshold 4.0001): 5/5 renders differ, 1034870 words
+== mutation 2 (plug-in ClipParams profile curve Y[3] + 1 float32 ulp): 5/5 renders differ, 194111 words
+== mutation 3 (plug-in ClipParams Cr high band 0.99 (per-channel path)): 5/5 renders differ, 2294656 words
+== mutation 4 (reference input: one word of frame 0 changed by 1 ulp): 1/5 renders differ, 5 words
+== mutation 9 (the defaults of 'set' checked as those of 'badpre', i.e. the factory settings): check fails ["preset != the factory settings (['t_radius', 'amt_Y', 'bamt_Cb_high', 'mix', 'mix_enable'])"]
+== mutation 10 (the defaults with the profile tune changed): check fails ['profile tune != the Default Profile']
+== mutation 11 (the defaults' render matrix auto -> bt709 (the plug-in) vs auto (the reference)): 5/5 renders differ, 3455907 words
+== mutation 12 (the data check on the development driver): checkout data opened ['fsguard:   access(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/../data/ref_floor.npy)', 'fsguard:   access(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/../Resources/data/ref_floor.npy)', 'fsguard:   access(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/build/data/ref_floor.npy)', 'fsguard:   fopen(/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/qtui/../data/ref_floor.npy)']
+== mutation 5 (window ClipParams: preset amt_Y 69 with render.P unchanged): check fails ['render.P != state.backend_params(params_from_json(preset))']
+== mutation 6 (profile build check against Python's profile of frame 5 instead of 4): check fails ['profile area: window [0, 288, 48] != Python build_profile [0, 312, 48]']
+== mutation 7 (window ClipParams: effective profile area changed): check fails ['effective profile key area != base']
+== mutation 8 (the C++ UI's frame 4 against the render of frame 0): 691200 words differ
+== /Users/seitan/.config/NeatRepro/nv_ui_qt.ini: sha256 before 45d4258c53337ee4aa60017a4a4cce72b9f4bf3dc71303406cfb5c1c7d80fcc6, after 45d4258c53337ee4aa60017a4a4cce72b9f4bf3dc71303406cfb5c1c7d80fcc6: unchanged
+
+163 comparisons, 0/170596864 words differ
+ALL MATCH

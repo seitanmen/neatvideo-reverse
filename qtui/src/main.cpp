@@ -1,15 +1,26 @@
 // MeatVideoQt - the C++ Qt UI of the reproduction (N3a..N3c).  Usage: MeatVideoQt [video]
 //                                                               MeatVideoQt --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]
+//                                                               MeatVideoQt --ofx-session  (the OFX plug-in's window)
+//                                                               MeatVideoQt --ofx-default  (its defaults, no window)
 // ffmpeg / ffprobe are found as the N2b launcher finds them (packaging/main.py): $NV_FFMPEG, the setting
 // prefs/ffmpeg, /opt/homebrew/bin, /usr/local/bin, /opt/local/bin, PATH.
 #include <QApplication>
 #include <QMessageBox>
 
+#include <string>
+
 #include "look.h"
 #include "mainwindow.h"
 #include "ofx.h"
+#include "ofx_session.h"
 
 int main(int argc, char** argv) {
+    // the OFX plug-in's question for a new instance (N4d): the defaults' ClipParams on stdout, no window (no GUI app)
+    if (argc >= 2 && std::string(argv[1]) == "--ofx-default") {
+        QCoreApplication app(argc, argv);
+        QCoreApplication::setApplicationName("nv_ui_qt");
+        return nvqt::ofx_default_main();
+    }
     QApplication app(argc, argv);
     QApplication::setApplicationName("nv_ui_qt");
     nvqt::apply_look(app);                 // Fusion + the genuine grey palette (look.h), also on macOS
@@ -19,6 +30,8 @@ int main(int argc, char** argv) {
     nvqt::set_ffmpeg_dir(dir);
     // OFX host mode (N3c): frames on stdin, the current frame on stdout (ofx.h); no ffmpeg needed
     if (!args.isEmpty() && args[0] == "--ofx") return nvqt::ofx_main(args.mid(1));
+    // the OFX plug-in's window (N4d): request on stdin, the new ClipParams on stdout (ofx_session.h); no ffmpeg needed
+    if (!args.isEmpty() && args[0] == "--ofx-session") return nvqt::ofx_session_main(args.mid(1));
     if (dir.empty()) {
         QMessageBox::critical(
             nullptr, "ffmpeg not found",

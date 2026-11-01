@@ -1,0 +1,90 @@
+# simple panel (FUN_000dec00, x24 = this+0xd678)
+00000000000dec1c	add	x0, sp, #0x10
+00000000000dec20	bl	0xa2dfc4
+00000000000dec24	add	x1, sp, #0x10
+00000000000dec28	add	x2, sp, #0xf
+00000000000df5f0	stp	x20, x19, [sp, #-0x20]!         ; Latency: 6
+00000000000df5f4	stp	x29, x30, [sp, #0x10]           ; Latency: 6
+00000000000df5f8	add	x29, sp, #0x10
+00000000000df5fc	mov	x19, x0                         ; Latency: 2
+00000000000df600	add	x0, x0, #0x30
+00000000000df604	bl	0x66978
+00000000000df608	mov	x0, x19                         ; Latency: 2
+00000000000df60c	ldp	x29, x30, [sp, #0x10]           ; Latency: 4
+00000000000df610	ldp	x20, x19, [sp], #0x20           ; Latency: 4
+00000000000df614	b	0x7d50b4
+00000000000df618	stp	x20, x19, [sp, #-0x20]!         ; Latency: 6
+00000000000df61c	stp	x29, x30, [sp, #0x10]           ; Latency: 6
+00000000000df620	add	x29, sp, #0x10
+00000000000df624	mov	x19, x0                         ; Latency: 2
+00000000000df628	add	x0, x0, #0x30
+00000000000df62c	bl	0x66978
+00000000000df630	mov	x0, x19                         ; Latency: 2
+# advanced panel (FUN_000e0b18)
+00000000000e1154	bl	0x37ef78
+00000000000e1158	str	x0, [sp, #0xb8]                 ; Latency: 4
+00000000000e115c	adrp	x0, 5050 ; 0x149b000
+00000000000e1160	add	x0, x0, #0xd5e ; literal pool for: "Example of high-frequency noise / fine grain"
+00000000000e1164	mov	w1, #0x2c
+00000000000e1168	bl	0x37ef78
+00000000000e116c	str	x0, [sp, #0xb0]                 ; Latency: 4
+00000000000e1170	adrp	x0, 5051 ; 0x149c000
+00000000000e1174	add	x0, x0, #0xc8d ; literal pool for: "Adjust estimation of noise level in high-frequency component (relative to noise profile)\n- positive values  -> more image elements are considered noise\n- negative values -> fewer image elements are considered noise"
+00000000000e1178	mov	w1, #0xd6
+00000000000e117c	bl	0x37ef78
+00000000000e1180	str	x0, [sp, #0xa8]                 ; Latency: 4
+00000000000e1184	adrp	x0, 5252 ; 0x1565000
+00000000000e1188	add	x0, x0, #0xc98
+00000000000e118c	adrp	x1, 5051 ; 0x149c000
+00000000000e1190	add	x1, x1, #0xd64 ; literal pool for: "High Freq Noise Level"
+00000000000e1194	add	x8, sp, #0xa0
+00000000000e1198	mov	x2, #0x0
+00000000000e119c	mov	w3, #-0x1
+00000000000e11a0	bl	0x44b558
+00000000000e11a4	adrp	x0, 5051 ; 0x149c000
+00000000000e11a8	add	x0, x0, #0xd7a ; literal pool for: "Estimation of noise level in high-frequency component (relative to noise profile)\n- positive values  -> more image elements are considered noise\n- negative values -> fewer image elements are considered noise"
+00000000000e11ac	mov	w1, #0xcf
+00000000000e11b0	bl	0x37ef78
+00000000000e11b4	add	x4, x19, #0x160
+00000000000e11b8	mov	w8, #0xd7b0
+00000000000e11bc	add	x7, x20, x8                     ; Latency: 2
+00000000000e11c0	str	x0, [sp, #0x98]                 ; Latency: 4
+00000000000e11c4	str	wzr, [sp, #0x40]                ; Latency: 4
+00000000000e11c8	mov	w8, #0x5a
+00000000000e11cc	add	x9, sp, #0x98
+00000000000e11d0	stp	x9, x8, [sp, #0x30]             ; Latency: 6
+00000000000e11d4	add	x8, sp, #0xa0
+00000000000e11d8	add	x9, x25, #0x8
+# style function (only other reader of this+0xd698)
+00000000000db83c	mov	w2, #0x8
+00000000000db840	bl	0x317354
+00000000000db844	ldr	x0, [sp, #0x8]                  ; Latency: 4
+00000000000db848	ldr	w8, [x0]                        ; Latency: 4
+00000000000db84c	cmn	w8, #0x1
+00000000000db850	b.eq	0xdb878
+00000000000db854	cbz	w8, 0xdb86c
+00000000000db858	mov	w8, #-0x1
+00000000000db85c	.long	0xb8e80008
+00000000000db860	cmp	w8, #0x1
+00000000000db864	b.ne	0xdb878
+00000000000db868	ldr	x0, [sp, #0x8]                  ; Latency: 4
+00000000000db86c	mov	w1, #0x2
+00000000000db870	mov	w2, #0x8
+00000000000db874	bl	0x317354
+00000000000db878	add	x0, sp, #0x10
+00000000000db87c	bl	0xa2e07c
+00000000000db880	ldur	x8, [x29, #-0x28]               ; Latency: 4
+00000000000db884	adrp	x9, 5241 ; 0x1554000
+00000000000db888	ldr	x9, [x9, #0x320] ; literal pool symbol address: ___stack_chk_guard ; Latency: 4
+00000000000db88c	ldr	x9, [x9]                        ; Latency: 4
+00000000000db890	cmp	x9, x8                          ; Latency: 2
+00000000000db894	b.ne	0xdb8b0
+00000000000db898	add	sp, sp, #0xd, lsl #12
+00000000000db89c	add	sp, sp, #0x540
+00000000000db8a0	ldp	x29, x30, [sp, #0x20]           ; Latency: 4
+00000000000db8a4	ldp	x20, x19, [sp, #0x10]           ; Latency: 4
+00000000000db8a8	ldp	x22, x21, [sp], #0x30           ; Latency: 4
+00000000000db8ac	ret
+00000000000db8b0	bl	0xe26ac4 ; symbol stub for: ___stack_chk_fail
+00000000000db8b4	mov	x19, x0                         ; Latency: 2
+00000000000db8b8	ldr	w8, [x20]                       ; Latency: 4

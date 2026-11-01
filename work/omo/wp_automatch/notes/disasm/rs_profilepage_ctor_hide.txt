@@ -1,0 +1,11 @@
+00000000000ea368	add	x0, x0, #0x80
+00000000000ea36c	mov	x1, x19                         ; Latency: 2
+00000000000ea370	bl	0xea844
+00000000000ea374	str	xzr, [x19, #0xe0]               ; Latency: 4
+00000000000ea378	ldr	x0, [x19, #0xa0]                ; Latency: 4
+00000000000ea37c	ldr	x8, [x0]                        ; Latency: 4
+00000000000ea380	ldr	x8, [x8, #0x68]                 ; Latency: 4
+00000000000ea384	mov	w1, #0x0
+00000000000ea388	blr	x8
+00000000000ea38c	ldr	x0, [x19, #0xc8]                ; Latency: 4
+00000000000ea390	mov	w1, #0x75

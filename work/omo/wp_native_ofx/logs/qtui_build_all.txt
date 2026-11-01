@@ -1,0 +1,64 @@
+[  1%] Built target nvcore_build
+[  1%] Built target nvui_autogen_timestamp_deps
+[  3%] Built target nvui_autogen
+[ 38%] Built target nvui
+[ 38%] Built target MeatVideoQt_autogen_timestamp_deps
+[ 38%] Built target qtui_selftest_autogen_timestamp_deps
+[ 38%] Built target qtui_export_autogen_timestamp_deps
+[ 38%] Built target qtui_dump_autogen_timestamp_deps
+[ 38%] Built target qtui_dump_n3c_autogen_timestamp_deps
+[ 38%] Built target qtui_ofx_drv_autogen_timestamp_deps
+[ 38%] Built target qtui_emit_sizes_autogen_timestamp_deps
+[ 38%] Built target qtui_g1eq_autogen_timestamp_deps
+[ 40%] Automatic MOC for target MeatVideoQt
+[ 40%] Built target qtui_style_grab_autogen_timestamp_deps
+[ 40%] Built target MeatVideoQt_autogen
+[ 42%] Built target qtui_selftest_autogen
+[ 44%] Automatic MOC for target qtui_dump
+[ 45%] Automatic MOC for target qtui_export
+[ 45%] Built target qtui_dump_autogen
+[ 45%] Built target qtui_export_autogen
+[ 47%] Automatic MOC for target qtui_ofx_drv
+[ 49%] Automatic MOC for target qtui_dump_n3c
+[ 49%] Built target qtui_ofx_drv_autogen
+[ 49%] Built target qtui_dump_n3c_autogen
+[ 50%] Automatic MOC for target qtui_emit_sizes
+[ 52%] Automatic MOC for target qtui_g1eq
+[ 52%] Built target qtui_emit_sizes_autogen
+[ 52%] Built target qtui_g1eq_autogen
+[ 54%] Automatic MOC for target qtui_style_grab
+[ 55%] Building CXX object CMakeFiles/MeatVideoQt.dir/MeatVideoQt_autogen/mocs_compilation.cpp.o
+[ 57%] Building CXX object CMakeFiles/MeatVideoQt.dir/src/main.cpp.o
+[ 57%] Built target qtui_style_grab_autogen
+[ 62%] Built target qtui_selftest
+[ 64%] Building CXX object CMakeFiles/qtui_dump.dir/qtui_dump_autogen/mocs_compilation.cpp.o
+[ 66%] Building CXX object CMakeFiles/qtui_dump.dir/tests/dump.cpp.o
+[ 67%] Linking CXX executable MeatVideoQt.app/Contents/MacOS/MeatVideoQt
+[ 67%] Built target MeatVideoQt
+[ 69%] Building CXX object CMakeFiles/qtui_export.dir/qtui_export_autogen/mocs_compilation.cpp.o
+[ 71%] Building CXX object CMakeFiles/qtui_export.dir/tests/export_cli.cpp.o
+[ 72%] Linking CXX executable qtui_dump
+[ 72%] Built target qtui_dump
+[ 74%] Building CXX object CMakeFiles/qtui_ofx_drv.dir/qtui_ofx_drv_autogen/mocs_compilation.cpp.o
+[ 76%] Building CXX object CMakeFiles/qtui_ofx_drv.dir/tests/ofx_drv.cpp.o
+[ 77%] Linking CXX executable qtui_export
+[ 77%] Built target qtui_export
+[ 79%] Building CXX object CMakeFiles/qtui_dump_n3c.dir/qtui_dump_n3c_autogen/mocs_compilation.cpp.o
+[ 81%] Building CXX object CMakeFiles/qtui_dump_n3c.dir/tests/dump_n3c.cpp.o
+[ 83%] Linking CXX executable qtui_ofx_drv
+[ 83%] Built target qtui_ofx_drv
+[ 84%] Building CXX object CMakeFiles/qtui_emit_sizes.dir/qtui_emit_sizes_autogen/mocs_compilation.cpp.o
+[ 86%] Building CXX object CMakeFiles/qtui_emit_sizes.dir/tests/emit_sizes.cpp.o
+[ 88%] Linking CXX executable qtui_dump_n3c
+[ 89%] Linking CXX executable qtui_emit_sizes
+[ 89%] Built target qtui_dump_n3c
+[ 91%] Building CXX object CMakeFiles/qtui_g1eq.dir/qtui_g1eq_autogen/mocs_compilation.cpp.o
+[ 93%] Building CXX object CMakeFiles/qtui_g1eq.dir/tests/g1_eq.cpp.o
+[ 93%] Built target qtui_emit_sizes
+[ 94%] Building CXX object CMakeFiles/qtui_style_grab.dir/qtui_style_grab_autogen/mocs_compilation.cpp.o
+[ 96%] Building CXX object CMakeFiles/qtui_style_grab.dir/tests/style_grab.cpp.o
+[ 98%] Linking CXX executable qtui_g1eq
+[ 98%] Built target qtui_g1eq
+[100%] Linking CXX executable qtui_style_grab
+[100%] Built target qtui_style_grab
+cmake --build qtui/build_main -j 2  13.28s user 1.64s system 203% cpu 7.326 total

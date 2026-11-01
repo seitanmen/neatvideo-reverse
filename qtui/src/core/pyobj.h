@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cstdint>
+#include <exception>
 #include <map>
 #include <memory>
 #include <string>
@@ -64,7 +65,19 @@ public:
     // json.dumps(obj) (indent < 0: ", " / ": " separators on one line) or json.dump(obj, fh, indent=n);
     // sort_keys as json.dumps(sort_keys=True).
     std::string dump(int indent = -1, bool sort_keys = false) const;
-    // json.loads; throws std::runtime_error on malformed input.
+    // json.loads; throws PyObj::ParseError on malformed input or nesting deeper than MAX_DEPTH (arrays / objects;
+    // the parser recurses, so a deeper text would overflow the stack of the calling thread).
+    static constexpr int MAX_DEPTH = 256;
+    // Not std::runtime_error: destroying the first of those makes libc++abi look libstdc++ up (dlopen RTLD_NOLOAD),
+    // which the OFX plug-in's file-access monitor records; a std::string member does not.
+    class ParseError : public std::exception {
+    public:
+        explicit ParseError(std::string m) : msg_(std::move(m)) {}
+        const char* what() const noexcept override { return msg_.c_str(); }
+
+    private:
+        std::string msg_;
+    };
     static PyObj parse(const std::string& text);
 
 private:

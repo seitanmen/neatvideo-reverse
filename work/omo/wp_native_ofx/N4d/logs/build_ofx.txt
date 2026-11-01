@@ -1,0 +1,32 @@
+make: Nothing to be done for `lib'.
+[  7%] Built target nvcore_build
+[ 21%] Built target minihost
+[ 35%] Built target fsguard
+[ 50%] Built target cocoahost
+[100%] Built target MeatVideo_ofx
+[  3%] Built target nvcore_build
+[  3%] Built target nvui_autogen_timestamp_deps
+[  7%] Built target nvui_autogen
+[ 85%] Built target nvui
+[ 85%] Built target MeatVideoQt_autogen_timestamp_deps
+[ 89%] Built target MeatVideoQt_autogen
+[ 92%] Linking CXX executable MeatVideoQt.app/Contents/MacOS/MeatVideoQt
+[100%] Built target MeatVideoQt
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/Frameworks/libnvcore.dylib: replacing existing signature
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/Helpers/MeatVideoQt.app: replacing existing signature
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle: replacing existing signature
+exports:
+  _FoundryOfxAllowPluginUnload
+  _OfxGetNumberOfPlugins
+  _OfxGetPlugin
+rpaths:
+  @loader_path/../Frameworks
+libraries:
+	@rpath/libnvcore.dylib (compatibility version 0.0.0, current version 0.0.0)
+	/usr/lib/libobjc.A.dylib (compatibility version 1.0.0, current version 228.0.0)
+	/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2100.43.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)
+helper: /Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/Helpers/MeatVideoQt.app ( 50M)
+helper rpaths:
+  @executable_path/../Frameworks
+bundle: /Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle

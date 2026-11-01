@@ -1,0 +1,41 @@
+00000000001d8270	stp	x20, x19, [sp, #-0x20]!         ; Latency: 6
+00000000001d8274	stp	x29, x30, [sp, #0x10]           ; Latency: 6
+00000000001d8278	add	x29, sp, #0x10
+00000000001d827c	mov	x19, x3                         ; Latency: 2
+00000000001d8280	cmp	w1, #0xc
+00000000001d8284	b.eq	0x1d82d4
+00000000001d8288	cmp	w1, #0xa
+00000000001d828c	b.eq	0x1d8314
+00000000001d8290	cbnz	w1, 0x1d8374
+00000000001d8294	cmp	w2, #0x34
+00000000001d8298	b.hi	0x1d8374
+00000000001d829c	mov	w8, w2                          ; Latency: 2
+00000000001d82a0	adrp	x9, 3789 ; 0x10a5000
+00000000001d82a4	add	x9, x9, #0xe20
+00000000001d82a8	adr	x10, #0x10
+00000000001d82ac	ldrh	w11, [x9, x8, lsl #1]
+00000000001d82b0	add	x10, x10, x11, lsl #2           ; Latency: 2
+00000000001d82b4	br	x10
+...
+00000000001d85d8	ldp	x29, x30, [sp, #0x10]           ; Latency: 4
+00000000001d85dc	ldp	x20, x19, [sp], #0x20           ; Latency: 4
+00000000001d85e0	b	0xd630c
+00000000001d85e4	ldp	x29, x30, [sp, #0x10]           ; Latency: 4
+00000000001d85e8	ldp	x20, x19, [sp], #0x20           ; Latency: 4
+00000000001d85ec	b	0xd7430
+00000000001d85f0	ldp	x29, x30, [sp, #0x10]           ; Latency: 4
+00000000001d85f4	ldp	x20, x19, [sp], #0x20           ; Latency: 4
+00000000001d85f8	b	0xd6b3c
+00000000001d85fc	ldp	x29, x30, [sp, #0x10]           ; Latency: 4
+00000000001d8600	ldp	x20, x19, [sp], #0x20           ; Latency: 4
+00000000001d8604	b	0xd5cb0
+00000000001d8608	ldp	x29, x30, [sp, #0x10]           ; Latency: 4
+00000000001d860c	ldp	x20, x19, [sp], #0x20           ; Latency: 4
+00000000001d8610	b	0xd7434
+... slot bodies
+00000000000d7430	ret
+00000000000d7434	ret
+00000000000d7438	ldr	x8, [x0, #0x1d0]                ; Latency: 4
+00000000000d743c	ldr	x8, [x8, #0x108]                ; Latency: 4
+00000000000d7440	ldr	x0, [x8, #0x350]                ; Latency: 4
+00000000000d7444	b	0x17f224

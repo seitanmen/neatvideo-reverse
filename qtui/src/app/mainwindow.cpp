@@ -2503,7 +2503,8 @@ void MainWindow::set_ofx_mode(bool ofx) {
                             : "Apply the current filter settings to the preview");
 }
 
-void MainWindow::set_ofx_frames(std::vector<Frame>&& fr, int W, int H, double fps, int depth) {
+void MainWindow::set_ofx_frames(std::vector<Frame>&& fr, int W, int H, double fps, int depth, const std::string& mat,
+                                bool full) {
     // main.py _ofx_main: inject the host-provided frames into the UI (as the Python UI does: the viewer is drawn on
     // the first frame / profile / setting change)
     src = "<OFX host>";
@@ -2514,8 +2515,8 @@ void MainWindow::set_ofx_frames(std::vector<Frame>&& fr, int W, int H, double fp
     vi.n = static_cast<int>(fr.size());
     info = vi;
     frames = std::move(fr);
-    matrix = "bt709";
-    full_range = false;
+    matrix = mat;
+    full_range = full;
     fmt.reset();
     ofx_depth = depth;
     engine = std::make_unique<PreviewEngine>(&frames, matrix, full_range);
@@ -2525,7 +2526,8 @@ void MainWindow::set_ofx_frames(std::vector<Frame>&& fr, int W, int H, double fp
     timeline->set_count(n, fps);
     timeline->set_frame(std::min(n / 3, std::max(n - 3, 0)));
     video_lbl->setText(QString("OFX host: %1x%2 · %3 frames · %4 fps").arg(W).arg(H).arg(n).arg(Q(py_float_str(fps))));
-    depth_lbl->setText(QString("source OFX host (%1-bit 4:2:0) · processing %1-bit").arg(depth));
+    depth_lbl->setText(full ? QString("source OFX host (%1-bit float RGB) · processing %1-bit").arg(depth)
+                            : QString("source OFX host (%1-bit 4:2:0) · processing %1-bit").arg(depth));
     viewer_bar->set_frame_info(W, H, depth, depth == 32);   // --depth 32: the host sends float32 (ofx.h)
     update_performance();
     set_ofx_mode(true);

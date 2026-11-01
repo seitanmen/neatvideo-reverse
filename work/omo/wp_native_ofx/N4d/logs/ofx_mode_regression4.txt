@@ -1,0 +1,19 @@
+depth  8 close   rc 0/0 stdout 345600/345600 bytes sha 72dddfa397c4 msgs 0 -> IDENTICAL
+depth  8 apply2  rc 0/0 stdout 345600/345600 bytes sha 72dddfa397c4 msgs 2 -> IDENTICAL
+depth  8 edit    rc 0/0 stdout 1036800/1036800 bytes sha 6f5f9c969600 msgs 6 -> IDENTICAL
+depth  8 auto    rc 0/0 stdout 691200/691200 bytes sha fa53689661ee msgs 5 -> IDENTICAL
+depth  8 cancel  rc 0/0 stdout 0/0 bytes sha e3b0c44298fc msgs 0 -> IDENTICAL
+depth  8 mix     rc 0/0 stdout 345600/345600 bytes sha f8122cb22244 msgs 5 -> IDENTICAL
+depth 16 close   rc 0/0 stdout 691200/691200 bytes sha 9bdc086bae6f msgs 0 -> IDENTICAL
+depth 16 apply2  rc 0/0 stdout 691200/691200 bytes sha 9bdc086bae6f msgs 2 -> IDENTICAL
+depth 16 edit    rc 0/0 stdout 2073600/2073600 bytes sha 5cdd11ad3380 msgs 6 -> IDENTICAL
+depth 16 auto    rc 0/0 stdout 1382400/1382400 bytes sha f722c67da5d9 msgs 5 -> IDENTICAL
+depth 16 cancel  rc 0/0 stdout 0/0 bytes sha e3b0c44298fc msgs 0 -> IDENTICAL
+depth 16 mix     rc 0/0 stdout 691200/691200 bytes sha ce19c675d5dc msgs 5 -> IDENTICAL
+depth 32 close   rc 0/0 stdout 1382400/1382400 bytes sha 5a1dac713bc8 msgs 0 -> IDENTICAL
+depth 32 apply2  rc 0/0 stdout 1382400/1382400 bytes sha 5a1dac713bc8 msgs 2 -> IDENTICAL
+depth 32 edit    rc 0/0 stdout 4147200/4147200 bytes sha 7d32fff68ea7 msgs 6 -> IDENTICAL
+depth 32 auto    rc 0/0 stdout 2764800/2764800 bytes sha b76a35fa4e6d msgs 5 -> IDENTICAL
+depth 32 cancel  rc 0/0 stdout 0/0 bytes sha e3b0c44298fc msgs 0 -> IDENTICAL
+depth 32 mix     rc 0/0 stdout 1382400/1382400 bytes sha 9e8ac455090d msgs 5 -> IDENTICAL
+ALL IDENTICAL

@@ -36,7 +36,14 @@ file(GLOB NVUI_SRC CONFIGURE_DEPENDS src/core/*.cpp src/core/*.h src/widgets/*.c
 add_library(nvui STATIC ${NVUI_SRC})
 target_include_directories(nvui PUBLIC src src/core src/widgets src/app)
 target_link_libraries(nvui PUBLIC Qt6::Widgets nvcore)
-target_compile_definitions(nvui PUBLIC NV_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/..")
+# NV_SOURCE_ROOT: the checkout, a last place to find data/ref_floor.npy (and the tests' fixtures); OFF for a
+# bundled build (ofx/build_ofx.sh: the helper then names no path of the build machine)
+option(NV_EMBED_SOURCE_ROOT "compile the source checkout's path in (data/ref_floor.npy fallback, tests)" ON)
+if(NV_EMBED_SOURCE_ROOT)
+  target_compile_definitions(nvui PUBLIC NV_SOURCE_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/..")
+else()
+  target_compile_definitions(nvui PUBLIC NV_SOURCE_ROOT="")
+endif()
 
 add_executable(MeatVideoQt MACOSX_BUNDLE src/main.cpp)
 target_link_libraries(MeatVideoQt PRIVATE nvui)
@@ -83,3 +90,8 @@ set_target_properties(qtui_g1eq PROPERTIES BUILD_RPATH "${NVCORE_DIR}")
 add_executable(qtui_style_grab tests/style_grab.cpp)
 target_link_libraries(qtui_style_grab PRIVATE nvui)
 set_target_properties(qtui_style_grab PROPERTIES BUILD_RPATH "${NVCORE_DIR}")
+
+# the OFX plug-in's window (N4d, MeatVideoQt --ofx-session) driven by $NV_OFX_SESSION_SCRIPT: ofx/tools/verify_ofx.py
+add_executable(qtui_ofx_session_drv tests/ofx_session_drv.cpp)
+target_link_libraries(qtui_ofx_session_drv PRIVATE nvui)
+set_target_properties(qtui_ofx_session_drv PROPERTIES BUILD_RPATH "${NVCORE_DIR}")

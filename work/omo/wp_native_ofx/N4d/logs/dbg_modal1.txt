@@ -1,0 +1,15 @@
+== apply-10s: rc 0; press status 0, clip_params changed, wait 10.58 s, message ""
+   WindowServer unresponsive: 0/37 samples in the wait
+   input: 5 dispatched before the wait (posting works), 73 posted during it, 0 dispatched during it, 0 in the 1 s after it
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   poke press from background thread wall=1793512970.761..1793512970.761 status=0 message="OfxMessageWarning: Meat Video: a Meat Video window is already open; close it first."
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']; fsguard records 3
+   -> FAIL
+== apply-10s (control: MV_MODAL_WAIT=OFF, the blocking wait): rc 0; press status 0, clip_params changed, wait 10.03 s, message ""
+   WindowServer unresponsive: 0/35 samples in the wait
+   input: 5 dispatched before the wait (posting works), 67 posted during it, 0 dispatched during it, 53 in the 1 s after it
+   default-mode timer: 0 ticks during the wait (12 in all); main-queue block ran +0.00 s after the wait
+   poke press from background thread wall=1793512982.544..1793512982.544 status=0 message="OfxMessageWarning: Meat Video: a Meat Video window is already open; close it first."
+   plug-in trace: ['meatvideo-ofx: helper wait: blocking', 'meatvideo-ofx: helper wait: blocking']; fsguard records 3
+   -> control NOT as expected
+FAILURES: apply-10s, apply-10s-control

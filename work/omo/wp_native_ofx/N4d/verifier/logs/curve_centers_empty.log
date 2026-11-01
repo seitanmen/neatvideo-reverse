@@ -1,0 +1,8 @@
+ok   kOfxActionLoad
+ok   kOfxActionDescribe
+ok   kOfxImageEffectActionDescribeInContext (Filter)
+clip preferences: status 0 OfxImageClipPropComponents_Output=OfxImageComponentRGBA OfxImageClipPropComponents_Source=OfxImageComponentRGBA OfxImageClipPropDepth_Output=OfxBitDepthFloat OfxImageClipPropDepth_Source=OfxBitDepthFloat
+create instance: adjust_enabled=0 clip_params_bytes=10653 message="OfxMessageError: Meat Video: ClipParams: the profile curve has 0 points"
+render t=2 status=1 rod=0,0,600,64 (0) frames_needed=[] (1) fetched=[] no_image=[] declared=1 images=0 released=0 message="OfxMessageError: Meat Video: ClipParams: the profile curve has 0 points"
+suites fetched: [OfxPropertySuite v1] [OfxParameterSuite v1] [OfxImageEffectSuite v1] [OfxMessageSuite v2]
+leaked source images: 0
