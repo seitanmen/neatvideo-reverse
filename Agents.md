@@ -648,8 +648,14 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   既知正解の選択を確認 (Auto Profile 1.0000、テクスチャ領域 0.0324、白 σ8 0.0739、白 σ1 0)。
   独立検証 Round 2 APPROVE (R2-L1〜L3 は記録後回し: 取り消し直後の再押しで
   新 Auto Match が始まらない等。いずれも Low)。
-- **次**: N4c (実用化)、Resolve 実機確認の残項目 (ユーザー操作)、
-  INT-2 以降 (インターレース、INT-1 は作業中)、GPU-1 以降 (GPU-0 の監査表待ち)。
+- **INT-1 マージ (2026-10-31、int1-fields、独立検証 APPROVE)**:
+  field_order の取得と表示 (ffprobe、tt/bb/mb)、`nv_fields` の分離/再結合 (3-line offset 対応)、
+  往復バイト一致。自己試験 120/120 (+INT-1 項目)。
+  **L-1 (INT-2 前に修正必須)**: ffmpeg 8.0.1 は TFF の素材に **tb** と書く (FFV1/ProRes)。
+  フィールド順はストリームの tb/bt からではなく、最初のフレームの
+  `top_field_first` (ffprobe -read_intervals %+#1) から決めること。
+- **次**: N4e マージ済み。N4c (実用化)、Resolve 実機確認の残項目 (ユーザー操作)、
+  INT-2 以降 (L-1 修正後)、GPU-1 以降 (GPU-0 の監査表待ち)。
 
 ## 8. 共同作業ルール (複数エージェント共有)
 
