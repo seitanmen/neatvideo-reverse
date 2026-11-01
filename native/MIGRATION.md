@@ -282,9 +282,16 @@ Windows の目標は (1) C++ のクロスプラットフォーム決定論 (同�
 タスク: W1 CMake 化 + CI (N2 と並行可) → W2 libm 対策 → W3 Windows 検証 → W4 .exe 梱包 →
 W5 Windows OFX (N3 の後)。
 
-### N4 (macOS OFX プラグイン) 開始 (2026-10-31)
+### N4 (macOS OFX プラグイン) 実装完了・マージ (2026-11-01、PR #7。独立検証 Round 2/3/5 APPROVE)
 
-委託済み: `.claude/tasks/native_n4_ofx.md`。
+詳細は Agents.md と `work/omo/wp_native_ofx/` の REPORT。
+- `ofx/`: プラグイン本体・ミニホスト (ofx/tools/minihost.cpp)・fsguard・試験スクリプト・
+  OpenFX ヘッダ (BSD-3、出典は SOURCE.md)
+- qtui: `--ofx-session` / `--ofx-default` (ofx_session.{h,cpp})、PyObj 深さ制限、
+  ParseError、パラメータ範囲確認、fd 3 以上 + CLOEXEC、RAII 後始末
+- インターレース素材はエラーメッセージで拒否 (プログレッシブのみ)
+- 検証: 全体照合 163 比較 0/170,596,864 語不一致、fd 8 通りバイト一致、
+  自己試験 117/117、`--ofx` モード 29 ケース同一、make verify 11 本 + verify_bridge 全語一致
 - N4a: 3 関数エクスポート (`OfxGetPlugin` / `OfxGetNumberOfPlugins` (=1) /
   `FoundryOfxAllowPluginUnload`) の .ofx バンドル (雛形は
   reference/genuine/NeatVideo.ofx.bundle/)。pluginId = com.meatvideo.denoise

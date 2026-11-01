@@ -622,6 +622,22 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   "32-bit float" 表示、コントラスト改善)。統括が実画面で確認済み。
   自己試験 117/117 (C++)・97/97 (PySide6)、verify_bridge 全語一致。
   残った記録: nv_ndimage の asm 部分のみ x86 未保証。
+- **N4 マージ (2026-11-01、PR #7、独立検証 Round 2/3/5 APPROVE)**:
+  macOS 用 OFX プラグイン `MeatVideo.ofx` (OFX 1.4・arm64・ad hoc 署名)。
+  本家と同じ 3 関数エクスポート。素材はホストから渡された画像のみ
+  (ファイル・ffmpeg・stdin は使わない。fsguard で監視)。
+  本家どおりの 2 ボタン (Prepare Noise Profile / Adjust Filter Settings) +
+  ヘルパーウィンドウ (`Contents/Helpers/MeatVideoQt.app` を `--ofx-session` で起動)。
+  既定プロファイル/プリセット読み込み。Round 5: モーダル待ちを
+  poll + worker thread + 入力ペア破棄 + 遅延破棄に再設計 (APPROVE)。
+  検証: 全体照合 163 比較 0/170,596,864 語不一致、fd 8 通りバイト一致、
+  自己試験 117/117、`--ofx` モード 29 ケース同一。
+  インターレース素材はエラーメッセージで拒否 (プログレッシブのみ)。
+- **MOV 決定**: 復元せず、本家比較は別素材で実施 (E9)。
+- **次**: N4e (独自 Auto Match — 本家の Auto Match は空機能と解読済み。
+  「repro」表示の独自実装。計画は `.claude/tasks/native_n4_ofx.md`)、
+  N4c (実用化)、Resolve 実機確認の残項目 (ユーザー操作)、
+  INT-2 以降 (インターレース、INT-1 は作業中)、GPU-1 以降 (GPU-0 の監査表待ち)。
 
 ## 8. 共同作業ルール (複数エージェント共有)
 
