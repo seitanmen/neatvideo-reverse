@@ -26,6 +26,13 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
   ビット一致するとは限らない。§6.2〜6.4・§4 の本家比較の数値は
   「消失した旧ファイルに対する値」であり、新しい参照データを使う場合は
   本家比較 (blackbox・calibrate・compare_full) をやり直すこと。
+  - 確認済み (2026-10-31): Git LFS・git オブジェクト・Time Machine・ゴミ箱の
+    いずれにも実ファイルは無し (git 内の 101MB 級 blob は本家内部形式
+    NVLIBMLG のデータで、動画ではなかった)。
+  - **復元手順**: ユーザーが原本を `test_v02_reduce.mov` としてリポジトリの
+    ルートに置き、`git add test_v02_reduce.mov` してコミット
+    (LFS 登録済みパターン。101MB 超 = GitHub の通常上限を超えるため LFS 必須)。
+    壊れたシンボリックリンクは git から削除済みなので、そのまま置けば認識される。
 
 ### 展開・解析 (`reference/genuine/`, 71MB)
 - `NeatVideo6.ofx.bundle/` — OFX バンドル一式。主バイナリは `Contents/MacOS/NeatVideo6.ofx`
