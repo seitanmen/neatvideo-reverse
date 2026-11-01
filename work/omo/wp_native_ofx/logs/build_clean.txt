@@ -1,0 +1,26 @@
+make: Nothing to be done for `lib'.
+[ 22%] Built target nvcore_build
+[ 22%] Building CXX object CMakeFiles/minihost.dir/tools/minihost.cpp.o
+[ 33%] Building C object CMakeFiles/fsguard.dir/tools/fsguard.c.o
+[ 44%] Linking C shared library libfsguard.dylib
+[ 44%] Built target fsguard
+[ 55%] Building CXX object CMakeFiles/MeatVideo_ofx.dir/src/plugin.cpp.o
+[ 66%] Building CXX object CMakeFiles/MeatVideo_ofx.dir/src/params.cpp.o
+[ 77%] Building CXX object CMakeFiles/MeatVideo_ofx.dir/src/core.cpp.o
+[ 88%] Linking CXX executable minihost
+[ 88%] Built target minihost
+[100%] Linking CXX shared module MeatVideo.ofx
+[100%] Built target MeatVideo_ofx
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle/Contents/Frameworks/libnvcore.dylib: replacing existing signature
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle: replacing existing signature
+exports:
+  _FoundryOfxAllowPluginUnload
+  _OfxGetNumberOfPlugins
+  _OfxGetPlugin
+rpaths:
+  @loader_path/../Frameworks
+libraries:
+	@rpath/libnvcore.dylib (compatibility version 0.0.0, current version 0.0.0)
+	/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2100.43.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)
+bundle: /Users/seitan/Desktop/work/reverse/.claude/worktrees/n4-ofx/ofx/build/MeatVideo.ofx.bundle

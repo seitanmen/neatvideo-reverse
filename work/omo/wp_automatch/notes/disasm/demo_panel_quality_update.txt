@@ -1,0 +1,95 @@
+00000000000dc2a8	stp	x26, xzr, [x29, #-0xb0]         ; Latency: 6
+00000000000dc2ac	mov	w0, #0x20
+00000000000dc2b0	bl	0xe26974 ; symbol stub for: __Znwm
+00000000000dc2b4	mov	x4, x0                          ; Latency: 2
+00000000000dc2b8	str	w24, [x0]                       ; Latency: 4
+00000000000dc2bc	stp	x27, x26, [x0, #0x8]            ; Latency: 6
+00000000000dc2c0	str	xzr, [x0, #0x18]                ; Latency: 4
+00000000000dc2c4	add	x8, sp, #0x80
+00000000000dc2c8	sub	x1, x29, #0x98
+00000000000dc2cc	sub	x3, x29, #0xb0
+00000000000dc2d0	mov	x0, x21                         ; Latency: 2
+00000000000dc2d4	mov	x2, x22                         ; Latency: 2
+00000000000dc2d8	mov	w5, #0x0
+00000000000dc2dc	mov	x6, #0x0
+00000000000dc2e0	mov	x7, x20                         ; Latency: 2
+00000000000dc2e4	bl	0x465b00
+00000000000dc2e8	add	x0, sp, #0x80
+00000000000dc2ec	bl	0x461a40
+00000000000dc2f0	ldr	x20, [x19, #0x140]              ; Latency: 4
+00000000000dc2f4	adrp	x22, 315 ; 0x217000
+00000000000dc2f8	add	x22, x22, #0x664
+00000000000dc2fc	stp	x22, xzr, [x29, #-0x98]         ; Latency: 6
+00000000000dc300	adrp	x21, 323 ; 0x21f000
+00000000000dc304	add	x21, x21, #0xe84
+00000000000dc308	stp	x21, xzr, [x29, #-0xb0]         ; Latency: 6
+00000000000dc30c	mov	w0, #0x20
+00000000000dc310	bl	0xe26974 ; symbol stub for: __Znwm
+00000000000dc314	mov	x4, x0                          ; Latency: 2
+00000000000dc318	str	w24, [x0]                       ; Latency: 4
+00000000000dc31c	adr	x26, #-0x126c8
+00000000000dc320	nop
+00000000000dc324	stp	x26, x21, [x0, #0x8]            ; Latency: 6
+00000000000dc328	str	xzr, [x0, #0x18]                ; Latency: 4
+00000000000dc32c	adrp	x21, 5250 ; 0x155e000
+00000000000dc330	add	x21, x21, #0x770
+00000000000dc334	add	x8, sp, #0x78
+00000000000dc338	sub	x1, x29, #0x98
+00000000000dc33c	sub	x3, x29, #0xb0
+00000000000dc340	mov	x0, x20                         ; Latency: 2
+00000000000dc344	mov	x2, x19                         ; Latency: 2
+00000000000dc348	mov	w5, #0x0
+00000000000dc34c	mov	x6, #0x0
+00000000000dc350	mov	x7, x21                         ; Latency: 2
+00000000000dc354	bl	0x465b00
+00000000000dc358	add	x0, sp, #0x78
+00000000000dc35c	bl	0x461a40
+00000000000dc360	ldr	x20, [x19, #0x138]              ; Latency: 4
+00000000000dc364	stp	x22, xzr, [x29, #-0x98]         ; Latency: 6
+00000000000dc368	adr	x22, #-0x4a024
+00000000000dc36c	nop
+00000000000dc370	stp	x22, xzr, [x29, #-0xb0]         ; Latency: 6
+00000000000dc374	mov	w0, #0x20
+00000000000dc378	bl	0xe26974 ; symbol stub for: __Znwm
+00000000000dc37c	mov	x4, x0                          ; Latency: 2
+00000000000dc380	str	w24, [x0]                       ; Latency: 4
+00000000000dc384	stp	x26, x22, [x0, #0x8]            ; Latency: 6
+00000000000dc388	str	xzr, [x0, #0x18]                ; Latency: 4
+00000000000dc38c	add	x8, sp, #0x70
+00000000000dc390	sub	x1, x29, #0x98
+00000000000dc394	sub	x3, x29, #0xb0
+00000000000dc398	mov	x0, x20                         ; Latency: 2
+00000000000dc39c	mov	x2, x19                         ; Latency: 2
+00000000000dc3a0	mov	w5, #0x0
+00000000000dc3a4	mov	x6, #0x0
+00000000000dc3a8	mov	x7, x21                         ; Latency: 2
+00000000000dc3ac	bl	0x465b00
+00000000000dc3b0	add	x0, sp, #0x70
+00000000000dc3b4	bl	0x461a40
+00000000000dc3b8	ldr	x8, [x19, #0x130]               ; Latency: 4
+00000000000dc3bc	ldr	x21, [x8, #0x50]                ; Latency: 4
+00000000000dc3c0	adrp	x8, 317 ; 0x219000
+00000000000dc3c4	add	x8, x8, #0xa50
+00000000000dc3c8	stp	x8, xzr, [x29, #-0x98]          ; Latency: 6
+00000000000dc3cc	adr	x20, #-0xd94
+00000000000dc3d0	nop
+00000000000dc3d4	stp	x20, xzr, [x29, #-0xb0]         ; Latency: 6
+00000000000dc3d8	mov	w0, #0x20
+00000000000dc3dc	bl	0xe26974 ; symbol stub for: __Znwm
+00000000000dc3e0	mov	x4, x0                          ; Latency: 2
+00000000000dc3e4	str	w24, [x0]                       ; Latency: 4
+00000000000dc3e8	adr	x22, #0x1228
+00000000000dc3ec	nop
+00000000000dc3f0	stp	x22, x20, [x0, #0x8]            ; Latency: 6
+00000000000dc3f4	str	xzr, [x0, #0x18]                ; Latency: 4
+00000000000dc3f8	adrp	x20, 5251 ; 0x155f000
+00000000000dc3fc	add	x20, x20, #0xf18
+00000000000dc400	add	x8, sp, #0x68
+00000000000dc404	sub	x1, x29, #0x98
+00000000000dc408	sub	x3, x29, #0xb0
+00000000000dc40c	mov	x0, x21                         ; Latency: 2
+00000000000dc410	mov	x2, x19                         ; Latency: 2
+00000000000dc414	mov	w5, #0x0
+00000000000dc418	mov	x6, #0x0
+00000000000dc41c	mov	x7, x20                         ; Latency: 2
+00000000000dc420	bl	0x465b00

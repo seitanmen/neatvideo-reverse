@@ -1,0 +1,30 @@
+00000000000eb2e4	mov	w3, #0x0
+00000000000eb2e8	mov	w4, #0x1
+00000000000eb2ec	bl	0x54b098
+00000000000eb2f0	ldr	x0, [sp, #0x10]                 ; Latency: 4
+00000000000eb2f4	ldr	w8, [x0]                        ; Latency: 4
+00000000000eb2f8	cmn	w8, #0x1
+00000000000eb2fc	b.eq	0xeb324
+00000000000eb300	cbz	w8, 0xeb318
+00000000000eb304	mov	w8, #-0x1
+00000000000eb308	.long	0xb8e80008
+00000000000eb30c	cmp	w8, #0x1
+00000000000eb310	b.ne	0xeb324
+00000000000eb314	ldr	x0, [sp, #0x10]                 ; Latency: 4
+00000000000eb318	mov	w1, #0x2
+00000000000eb31c	mov	w2, #0x8
+00000000000eb320	bl	0x317354
+00000000000eb324	ldr	x0, [x20, #0x58]                ; Latency: 4
+00000000000eb328	add	x1, sp, #0x18
+00000000000eb32c	bl	0x8654f0
+00000000000eb330	ldr	x0, [x20, #0x58]                ; Latency: 4
+00000000000eb334	mov	w1, #0x1
+00000000000eb338	bl	0x865550
+00000000000eb33c	ldr	x0, [x20, #0x40]                ; Latency: 4
+00000000000eb340	ldr	x1, [x20, #0x58]                ; Latency: 4
+00000000000eb344	mov	w2, #0x0
+00000000000eb348	mov	x3, #0x0
+00000000000eb34c	bl	0x7c4530
+00000000000eb350	ldr	x0, [x20]                       ; Latency: 4
+00000000000eb354	ldr	x1, [x20, #0x38]                ; Latency: 4
+00000000000eb358	mov	w2, #0x0

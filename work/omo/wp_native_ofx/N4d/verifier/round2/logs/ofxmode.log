@@ -1,0 +1,30 @@
+t640_d8_close            SAME stdout 345600 B exit 0 msgs 0
+t640_d8_apply2           SAME stdout 345600 B exit 0 msgs 2
+t640_d8_edit             SAME stdout 1036800 B exit 0 msgs 6
+t640_d8_auto             SAME stdout 691200 B exit 0 msgs 5
+t640_d8_cancel           SAME stdout 0 B exit 0 msgs 0
+t640_d8_mix              SAME stdout 345600 B exit 0 msgs 5
+t640_d16_close           SAME stdout 691200 B exit 0 msgs 0
+t640_d16_apply2          SAME stdout 691200 B exit 0 msgs 2
+t640_d16_edit            SAME stdout 2073600 B exit 0 msgs 6
+t640_d16_auto            SAME stdout 1382400 B exit 0 msgs 5
+t640_d16_cancel          SAME stdout 0 B exit 0 msgs 0
+t640_d16_mix             SAME stdout 691200 B exit 0 msgs 5
+t640_d32_close           SAME stdout 1382400 B exit 0 msgs 0
+t640_d32_apply2          SAME stdout 1382400 B exit 0 msgs 2
+t640_d32_edit            SAME stdout 4147200 B exit 0 msgs 6
+t640_d32_auto            SAME stdout 2764800 B exit 0 msgs 5
+t640_d32_cancel          SAME stdout 0 B exit 0 msgs 0
+t640_d32_mix             SAME stdout 1382400 B exit 0 msgs 5
+t321_d8_edit             SAME stdout 260703 B exit 0 msgs 6
+t321_d8_auto             SAME stdout 173802 B exit 0 msgs 5
+t321_d16_edit            SAME stdout 521406 B exit 0 msgs 6
+t321_d16_auto            SAME stdout 347604 B exit 0 msgs 5
+t321_d32_edit            SAME stdout 1042812 B exit 0 msgs 6
+t321_d32_auto            SAME stdout 695208 B exit 0 msgs 5
+t640_d8_max3_close       SAME stdout 345600 B exit 0 msgs 0
+t640_d16_fps_close       SAME stdout 691200 B exit 0 msgs 1
+noargs                   SAME exit 1 ['usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]']
+badargs                  SAME exit 1 ['usage: --ofx W H [FPS] [MAX_FRAMES] [--depth 8|16|32]']
+noframes                 SAME exit 1 ['no frames received on stdin']
+ALL SAME

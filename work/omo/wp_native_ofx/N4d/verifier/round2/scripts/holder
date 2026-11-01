@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ "$1" = "--ofx-default" ]; then printf 'DEFAULTS 0 none none\n'; (sleep 20 2>/dev/null &); exit 0; fi
+cat > /dev/null
+printf 'APPLY 10704\n'; cat /private/tmp/claude-501/-Users-seitan-Desktop-work-reverse/040b381d-b723-4608-b0cb-2e82227f9c2d/scratchpad/verify_n4d/r2/m1/valid.json
+(sleep 20 2>/dev/null &)
+exit 0

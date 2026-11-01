@@ -241,7 +241,7 @@ const std::vector<float>& reference_floor() {
             cands.push_back(QDir(d).filePath("../Resources/data/ref_floor.npy").toStdString());
             cands.push_back(QDir(d).filePath("data/ref_floor.npy").toStdString());
         }
-        cands.push_back(std::string(NV_SOURCE_ROOT) + "/data/ref_floor.npy");
+        if (*NV_SOURCE_ROOT) cands.push_back(std::string(NV_SOURCE_ROOT) + "/data/ref_floor.npy");
         for (const auto& c : cands)
             if (QFileInfo::exists(QString::fromStdString(c)) && nvc_reference_floor(c.c_str(), 1, fl.data()) == 1)
                 return;

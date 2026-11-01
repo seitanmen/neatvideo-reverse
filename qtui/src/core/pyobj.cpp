@@ -256,10 +256,18 @@ namespace {
 struct Parser {
     const std::string& s;
     size_t i = 0;
+    int depth = 0;                         // arrays / objects open around i
 
     [[noreturn]] void fail(const char* what) {
-        throw std::runtime_error(std::string("JSON: ") + what + " at " + std::to_string(i));
+        throw PyObj::ParseError(std::string("JSON: ") + what + " at " + std::to_string(i));
     }
+    struct Nest {                          // one level of array / object nesting, at most MAX_DEPTH
+        Parser& p;
+        explicit Nest(Parser& q) : p(q) {
+            if (++p.depth > PyObj::MAX_DEPTH) p.fail("nesting deeper than 256 levels");
+        }
+        ~Nest() { --p.depth; }
+    };
     void ws() {
         while (i < s.size() && (s[i] == ' ' || s[i] == '\n' || s[i] == '\r' || s[i] == '\t')) ++i;
     }
@@ -341,6 +349,7 @@ struct Parser {
         if (i >= s.size()) fail("unexpected end");
         const char c = s[i];
         if (c == '{') {
+            Nest nest(*this);
             ++i;
             PyObj o = PyObj::dict();
             ws();
@@ -359,6 +368,7 @@ struct Parser {
             }
         }
         if (c == '[') {
+            Nest nest(*this);
             ++i;
             PyObj o = PyObj::list();
             ws();

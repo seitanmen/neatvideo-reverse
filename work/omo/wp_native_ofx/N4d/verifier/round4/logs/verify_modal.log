@@ -1,0 +1,43 @@
+== apply-10s: rc 0; press status 0, clip_params changed, wait 10.49 s, message ""
+   main thread 3 s into the session (sample, another process): 815/846 samples fetching events (ModalWait::pump -> nextEventMatchingMask), 31 polling the pipe, 0 blocked in read / write / wait4
+   main thread 6 s into the session (sample, another process): 847/849 samples fetching events (ModalWait::pump -> nextEventMatchingMask), 2 polling the pipe, 0 blocked in read / write / wait4
+   CGSEventIsAppUnresponsive: 0/26 samples flagged in the wait
+   input: 5 dispatched before the wait (posting works), 53 posted during it, 0 dispatched during it, 0 in the 1 s after it
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   poke press from background thread wall=1793514547.150..1793514547.150 status=0 message="OfxMessageWarning: Meat Video: a Meat Video window is already open; close it first."
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']; fsguard records 3
+   -> ok
+== apply-10s (control: MV_MODAL_WAIT=OFF, the blocking wait): rc 0; press status 0, clip_params changed, wait 10.04 s, message ""
+   main thread 3 s into the session (sample, another process): 0/871 samples fetching events (ModalWait::pump -> nextEventMatchingMask), 0 polling the pipe, 871 blocked in read / write / wait4
+   main thread 6 s into the session (sample, another process): 0/866 samples fetching events (ModalWait::pump -> nextEventMatchingMask), 0 polling the pipe, 866 blocked in read / write / wait4
+   CGSEventIsAppUnresponsive: 0/24 samples flagged in the wait
+   input: 5 dispatched before the wait (posting works), 48 posted during it, 0 dispatched during it, 35 in the 1 s after it
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   poke press from background thread wall=1793514559.275..1793514559.275 status=0 message="OfxMessageWarning: Meat Video: a Meat Video window is already open; close it first."
+   plug-in trace: ['meatvideo-ofx: helper wait: blocking', 'meatvideo-ofx: helper wait: blocking']; fsguard records 3
+   -> control as expected (the main thread blocked, input left queued)
+== helper-dies: rc 0; press status 1, clip_params unchanged, wait 3.32 s, message "OfxMessageError: Meat Video: the window helper was terminated by signal 9; the settings were not changed"
+   main thread 2 s into the session (sample, another process): 831/845 samples fetching events (ModalWait::pump -> nextEventMatchingMask), 14 polling the pipe, 0 blocked in read / write / wait4
+   CGSEventIsAppUnresponsive: 0/4 samples flagged in the wait
+   input: 5 dispatched before the wait (posting works), 14 posted during it, 0 dispatched during it, 0 in the 1 s after it
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']; fsguard records 3
+   -> ok
+== no-reply-eof: rc 0; press status 1, clip_params unchanged, wait 9.21 s, message "OfxMessageError: Meat Video: the window returned an unexpected reply (0 bytes); the settings were not changed"
+   main thread 3 s into the session (sample, another process): 832/847 samples fetching events (ModalWait::pump -> nextEventMatchingMask), 15 polling the pipe, 0 blocked in read / write / wait4
+   main thread 6 s into the session (sample, another process): 812/847 samples fetching events (ModalWait::pump -> nextEventMatchingMask), 35 polling the pipe, 0 blocked in read / write / wait4
+   CGSEventIsAppUnresponsive: 0/21 samples flagged in the wait
+   input: 5 dispatched before the wait (posting works), 42 posted during it, 0 dispatched during it, 0 in the 1 s after it
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']; fsguard records 3
+   -> ok
+== window-closed: rc 0; press status 0, clip_params unchanged, wait 10.35 s, message ""
+   main thread 3 s into the session (sample, another process): 830/844 samples fetching events (ModalWait::pump -> nextEventMatchingMask), 14 polling the pipe, 0 blocked in read / write / wait4
+   main thread 6 s into the session (sample, another process): 847/849 samples fetching events (ModalWait::pump -> nextEventMatchingMask), 2 polling the pipe, 0 blocked in read / write / wait4
+   CGSEventIsAppUnresponsive: 0/26 samples flagged in the wait
+   input: 5 dispatched before the wait (posting works), 51 posted during it, 0 dispatched during it, 0 in the 1 s after it
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']; fsguard records 3
+   -> ok
+== minihost (headless, no NSApp): plug-in trace ['meatvideo-ofx: helper wait: blocking', 'meatvideo-ofx: helper wait: blocking']; press prepare t=3 status=0 fetched=[3 4 5 6 7 2 1 0] no_image=[] images=8 released=8 sets= -> ok
+ALL OK

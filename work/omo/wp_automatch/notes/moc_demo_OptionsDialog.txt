@@ -1,0 +1,7 @@
+stringdata 0x142be80 metaobject 0x13c96f8 super 0x13c6720 data 0x10a9a60 metacall 0x1e31c0
+0 maxPreviewCacheSliderChange argc 0
+1 resetProfileDirButtonClick argc 0
+2 resetPresetDirButtonClick argc 0
+3 setControlsActive argc 0
+4 onHelpShortcutActivated argc 0
+5 okButtonClick argc 0

@@ -1,0 +1,8 @@
+ok   kOfxActionLoad
+ok   kOfxActionDescribe
+ok   kOfxImageEffectActionDescribeInContext (Filter)
+clip preferences: status 0 OfxImageClipPropComponents_Output=OfxImageComponentRGBA OfxImageClipPropComponents_Source=OfxImageComponentRGBA OfxImageClipPropDepth_Output=OfxBitDepthFloat OfxImageClipPropDepth_Source=OfxBitDepthFloat
+create instance: adjust_enabled=1 clip_params_bytes=10708 message=""
+render t=2 status=1 rod=0,0,600,64 (0) frames_needed=[0 4] (0) fetched=[2 1 0 3 4] no_image=[] declared=1 images=6 released=6 message="OfxMessageError: Meat Video: the frame is smaller than the motion block"
+suites fetched: [OfxPropertySuite v1] [OfxParameterSuite v1] [OfxImageEffectSuite v1] [OfxMessageSuite v2]
+leaked source images: 0

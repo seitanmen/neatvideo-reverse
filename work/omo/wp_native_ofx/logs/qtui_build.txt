@@ -1,0 +1,34 @@
+[  3%] Built target nvcore_build
+[  3%] Built target nvui_autogen_timestamp_deps
+[  7%] Automatic MOC for target nvui
+[  7%] Built target nvui_autogen
+[ 11%] Building CXX object CMakeFiles/nvui.dir/nvui_autogen/mocs_compilation.cpp.o
+[ 14%] Building CXX object CMakeFiles/nvui.dir/src/app/look.cpp.o
+[ 18%] Building CXX object CMakeFiles/nvui.dir/src/app/mainwindow.cpp.o
+[ 22%] Building CXX object CMakeFiles/nvui.dir/src/app/ofx.cpp.o
+[ 25%] Building CXX object CMakeFiles/nvui.dir/src/app/viewer.cpp.o
+[ 29%] Building CXX object CMakeFiles/nvui.dir/src/app/worker.cpp.o
+[ 33%] Building CXX object CMakeFiles/nvui.dir/src/core/depth.cpp.o
+[ 37%] Building CXX object CMakeFiles/nvui.dir/src/core/engine.cpp.o
+[ 40%] Building CXX object CMakeFiles/nvui.dir/src/core/export.cpp.o
+[ 44%] Building CXX object CMakeFiles/nvui.dir/src/core/nvcore.cpp.o
+[ 48%] Building CXX object CMakeFiles/nvui.dir/src/core/pynum.cpp.o
+[ 51%] Building CXX object CMakeFiles/nvui.dir/src/core/pyobj.cpp.o
+[ 55%] Building CXX object CMakeFiles/nvui.dir/src/core/state.cpp.o
+[ 59%] Building CXX object CMakeFiles/nvui.dir/src/core/video.cpp.o
+[ 62%] Building CXX object CMakeFiles/nvui.dir/src/widgets/curve_editor.cpp.o
+[ 66%] Building CXX object CMakeFiles/nvui.dir/src/widgets/filter_panel.cpp.o
+[ 70%] Building CXX object CMakeFiles/nvui.dir/src/widgets/noise_graph.cpp.o
+[ 74%] Building CXX object CMakeFiles/nvui.dir/src/widgets/profile_panel.cpp.o
+[ 77%] Building CXX object CMakeFiles/nvui.dir/src/widgets/rows.cpp.o
+[ 81%] Building CXX object CMakeFiles/nvui.dir/src/widgets/timeline.cpp.o
+[ 85%] Linking CXX static library libnvui.a
+[ 85%] Built target nvui
+[ 85%] Built target qtui_selftest_autogen_timestamp_deps
+[ 88%] Automatic MOC for target qtui_selftest
+[ 88%] Built target qtui_selftest_autogen
+[ 96%] Building CXX object CMakeFiles/qtui_selftest.dir/tests/selftest.cpp.o
+[ 96%] Building CXX object CMakeFiles/qtui_selftest.dir/qtui_selftest_autogen/mocs_compilation.cpp.o
+[100%] Linking CXX executable qtui_selftest
+[100%] Built target qtui_selftest
+cmake --build qtui/build_main -j 2 --target qtui_selftest  40.41s user 3.90s system 181% cpu 24.361 total

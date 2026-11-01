@@ -84,6 +84,29 @@ qtui/**
 !qtui/tools/
 !qtui/tools/*.py
 
+# ofx/ (OFX プラグイン、N4。ビルド物 (build/) は除外)
+!ofx/
+ofx/**
+!ofx/CMakeLists.txt
+!ofx/exports.txt
+!ofx/Info.plist.in
+!ofx/build_ofx.sh
+!ofx/src/
+!ofx/src/*.cpp
+!ofx/src/*.h
+!ofx/src/*.inc
+!ofx/tools/
+!ofx/tools/*.cpp
+!ofx/tools/*.c
+!ofx/tools/*.py
+!ofx/tools/*.mm
+!ofx/vendor/
+!ofx/vendor/openfx/
+!ofx/vendor/openfx/LICENSE
+!ofx/vendor/openfx/SOURCE.md
+!ofx/vendor/openfx/include/
+!ofx/vendor/openfx/include/*.h
+
 # analysis (ソースコード・ドキュメントのみ)
 !reference/genuine/
 reference/genuine/**

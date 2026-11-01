@@ -1,0 +1,129 @@
+== structure check: CHECK OK; libnvcore loaded: ['/private/tmp/claude-501/-Users-seitan-Desktop-work-reverse/040b381d-b723-4608-b0cb-2e82227f9c2d/scratchpad/vn4/build/MeatVideo.ofx.bundle/Contents/Frameworks/libnvcore.dylib']
+== A-default: clip A 640x360x8, first 0, origin [0, 0], layout pad  (plug-in 0.9 s)
+    render t=0 status=0 rod=0,0,640,360 (0) frames_needed=[0 2 0 2] (0) fetched=[0 1 2] declared=1 images=4 released=4 message=""
+    render t=1 status=0 rod=0,0,640,360 (0) frames_needed=[0 3] (0) fetched=[1 0 2 3] declared=1 images=5 released=5 message=""
+    render t=4 status=0 rod=0,0,640,360 (0) frames_needed=[2 6] (0) fetched=[4 2 3 5 6] declared=1 images=6 released=6 message=""
+    render t=6 status=0 rod=0,0,640,360 (0) frames_needed=[4 7] (0) fetched=[6 4 5 7] declared=1 images=5 released=5 message=""
+    render t=7 status=0 rod=0,0,640,360 (0) frames_needed=[5 7] (0) fetched=[7 5 6] declared=1 images=4 released=4 message=""
+    fsguard: 1 call(s) while armed: ['dlopen(/private/tmp/claude-501/-Users-seitan-Desktop-work-reverse/040b381d-b723-4608-b0cb-2e82227f9c2d/scratchpad/vn4/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+    t=0    native MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    t=1    native MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    t=4    native MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    t=6    native MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    t=7    native MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    reference native: 7.8 s
+    t=0    pure   MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    t=1    pure   MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    t=4    pure   MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    t=6    pure   MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    t=7    pure   MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    reference pure: 16.9 s
+== A-params: clip A 640x360x8, first 100, origin [10, 20], layout neg  (plug-in 1.3 s)
+    set t_radius = 1 -> InstanceChanged 0
+    set adv_threshold = 3 -> InstanceChanged 0
+    set noise_Y = 120 -> InstanceChanged 0
+    set noise_Cb = 80 -> InstanceChanged 0
+    set noise_Cr = 90 -> InstanceChanged 0
+    set amt_Y = 50 -> InstanceChanged 0
+    set amt_C = 60 -> InstanceChanged 0
+    set adv_spatial = 1.5 -> InstanceChanged 0
+    set adv_noise_level = 110 -> InstanceChanged 0
+    render t=100 status=0 rod=10,20,650,380 (0) frames_needed=[100 101 100 102] (0) fetched=[100 101 102] declared=1 images=4 released=4 message=""
+    render t=103 status=0 rod=10,20,650,380 (0) frames_needed=[102 104] (0) fetched=[103 102 104] declared=1 images=4 released=4 message=""
+    set profile_frame = 4 -> InstanceChanged 0
+    set aft = 0 -> InstanceChanged 0
+    render t=107 status=0 rod=10,20,650,380 (0) frames_needed=[106 107 104 106] (0) fetched=[107 104 105 106] declared=1 images=5 released=5 message=""
+    render t=102 status=0 rod=10,20,650,380 (0) frames_needed=[101 103] (0) fetched=[102 101 103] declared=1 images=4 released=4 message=""
+    set profile_mode = 1 -> InstanceChanged 0
+    set matrix = 1 -> InstanceChanged 0
+    set t_radius = 3 -> InstanceChanged 0
+    render t=101 status=0 rod=10,20,650,380 (0) frames_needed=[100 104 104 106] (0) fetched=[101 104 105 106 100 102 103] declared=1 images=8 released=8 message=""
+    render t=105 status=0 rod=10,20,650,380 (0) frames_needed=[102 107] (0) fetched=[105 102 103 104 106 107] declared=1 images=7 released=7 message=""
+    set mix_enable = 1 -> InstanceChanged 0
+    set mix = 30 -> InstanceChanged 0
+    set s_enable = 0 -> InstanceChanged 0
+    render t=104 status=0 rod=10,20,650,380 (0) frames_needed=[101 107] (0) fetched=[104 101 102 103 105 106 107] declared=1 images=8 released=8 message=""
+    set t_enable = 0 -> InstanceChanged 0
+    set s_enable = 1 -> InstanceChanged 0
+    set mix_enable = 0 -> InstanceChanged 0
+    set profile_mode = 2 -> InstanceChanged 0
+    set profile_frame = 6 -> InstanceChanged 0
+    render t=106 status=0 rod=10,20,650,380 (0) frames_needed=[103 107 106 107] (0) fetched=[106 107 103 104 105] declared=1 images=6 released=6 message=""
+    render t=107 status=0 rod=10,20,650,380 (0) frames_needed=[104 107] (0) fetched=[107 104 105 106] declared=1 images=5 released=5 message=""
+    set profile_frame = 50 -> InstanceChanged 0
+    set t_enable = 1 -> InstanceChanged 0
+    set t_amount = 60 -> InstanceChanged 0
+    set matrix = 2 -> InstanceChanged 0
+    render t=100 status=0 rod=10,20,650,380 (0) frames_needed=[100 103 107 107] (0) fetched=[100 107 101 102 103] declared=1 images=6 released=6 message=""
+    fsguard: 1 call(s) while armed: ['dlopen(/private/tmp/claude-501/-Users-seitan-Desktop-work-reverse/040b381d-b723-4608-b0cb-2e82227f9c2d/scratchpad/vn4/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+    t=100  native MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    t=103  native MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    t=107  native MATCH 0/921600 words differ  (profile area [0, 288, 48], flat_status 2, aft False)
+    t=102  native MATCH 0/921600 words differ  (profile area [0, 288, 48], flat_status 2, aft False)
+    t=101  native MATCH 0/921600 words differ  (profile area [0, 288, 48], flat_status 2, aft False)
+    t=105  native MATCH 0/921600 words differ  (profile area [0, 288, 48], flat_status 2, aft False)
+    t=104  native MATCH 0/921600 words differ  (profile area [0, 288, 48], flat_status 2, aft False)
+    t=106  native MATCH 0/921600 words differ  (profile area [288, 384, 48], flat_status 2, aft False)
+    t=107  native MATCH 0/921600 words differ  (profile area [288, 384, 48], flat_status 2, aft False)
+    t=100  native MATCH 0/921600 words differ  (profile area [0, 288, 48], flat_status 2, aft False)
+    reference native: 8.6 s
+    t=100  pure   MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    t=103  pure   MATCH 0/921600 words differ  (profile area [288, 416, 48], flat_status 2, aft True)
+    t=107  pure   MATCH 0/921600 words differ  (profile area [0, 288, 48], flat_status 2, aft False)
+    t=102  pure   MATCH 0/921600 words differ  (profile area [0, 288, 48], flat_status 2, aft False)
+    t=101  pure   MATCH 0/921600 words differ  (profile area [0, 288, 48], flat_status 2, aft False)
+    t=105  pure   MATCH 0/921600 words differ  (profile area [0, 288, 48], flat_status 2, aft False)
+    t=104  pure   MATCH 0/921600 words differ  (profile area [0, 288, 48], flat_status 2, aft False)
+    t=106  pure   MATCH 0/921600 words differ  (profile area [288, 384, 48], flat_status 2, aft False)
+    t=107  pure   MATCH 0/921600 words differ  (profile area [288, 384, 48], flat_status 2, aft False)
+    t=100  pure   MATCH 0/921600 words differ  (profile area [0, 288, 48], flat_status 2, aft False)
+    reference pure: 20.5 s
+== C-hdr-nan: clip C 320x184x5, first 0, origin [0, 0], layout pad  (plug-in 0.4 s)
+    render t=0 status=0 rod=0,0,320,184 (0) frames_needed=[0 2 0 2] (0) fetched=[0 1 2] declared=1 images=4 released=4 message=""
+    render t=2 status=0 rod=0,0,320,184 (0) frames_needed=[0 4] (0) fetched=[2 0 1 3 4] declared=1 images=6 released=6 message=""
+    render t=4 status=0 rod=0,0,320,184 (0) frames_needed=[2 4] (0) fetched=[4 2 3] declared=1 images=4 released=4 message=""
+    set t_radius = 4 -> InstanceChanged 0
+    set profile_mode = 2 -> InstanceChanged 0
+    render t=2 status=0 rod=0,0,320,184 (0) frames_needed=[0 4 0 2] (0) fetched=[2 0 1 3 4] declared=1 images=6 released=6 message=""
+    fsguard: 1 call(s) while armed: ['dlopen(/private/tmp/claude-501/-Users-seitan-Desktop-work-reverse/040b381d-b723-4608-b0cb-2e82227f9c2d/scratchpad/vn4/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+    t=0    native MATCH 0/235520 words differ  (profile area [120, 16, 48], flat_status 2, aft True)
+    t=2    native MATCH 0/235520 words differ  (profile area [120, 16, 48], flat_status 2, aft True)
+    t=4    native MATCH 0/235520 words differ  (profile area [120, 16, 48], flat_status 2, aft True)
+    t=2    native MATCH 0/235520 words differ  (profile area [120, 16, 48], flat_status 2, aft True)
+    reference native: 7.9 s
+    t=0    pure   MATCH 0/235520 words differ  (profile area [120, 16, 48], flat_status 2, aft True)
+    t=2    pure   MATCH 0/235520 words differ  (profile area [120, 16, 48], flat_status 2, aft True)
+    t=4    pure   MATCH 0/235520 words differ  (profile area [120, 16, 48], flat_status 2, aft True)
+    t=2    pure   MATCH 0/235520 words differ  (profile area [120, 16, 48], flat_status 2, aft True)
+    reference pure: 16.6 s
+== B-r5: clip B 512x288x7, first 0, origin [0, 0], layout pad  (plug-in 0.7 s)
+    set t_radius = 5 -> InstanceChanged 0
+    set matrix = 2 -> InstanceChanged 0
+    render t=0 status=0 rod=0,0,512,288 (0) frames_needed=[0 5 0 2] (0) fetched=[0 1 2 3 4 5] declared=1 images=7 released=7 message=""
+    render t=3 status=0 rod=0,0,512,288 (0) frames_needed=[0 6] (0) fetched=[3 0 1 2 4 5 6] declared=1 images=8 released=8 message=""
+    render t=6 status=0 rod=0,0,512,288 (0) frames_needed=[1 6] (0) fetched=[6 1 2 3 4 5] declared=1 images=7 released=7 message=""
+    fsguard: 1 call(s) while armed: ['dlopen(/private/tmp/claude-501/-Users-seitan-Desktop-work-reverse/040b381d-b723-4608-b0cb-2e82227f9c2d/scratchpad/vn4/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+    t=0    native MATCH 0/589824 words differ  (profile area [0, 120, 128], flat_status 0, aft True)
+    t=3    native MATCH 0/589824 words differ  (profile area [0, 120, 128], flat_status 0, aft True)
+    t=6    native MATCH 0/589824 words differ  (profile area [0, 120, 128], flat_status 0, aft True)
+    reference native: 7.8 s
+    t=0    pure   MATCH 0/589824 words differ  (profile area [0, 120, 128], flat_status 0, aft True)
+    t=3    pure   MATCH 0/589824 words differ  (profile area [0, 120, 128], flat_status 0, aft True)
+    t=6    pure   MATCH 0/589824 words differ  (profile area [0, 120, 128], flat_status 0, aft True)
+    reference pure: 25.6 s
+== D-1080p: clip D 1920x1080x3, first 0, origin [0, 0], layout neg  (plug-in 2.5 s)
+    render t=0 status=0 rod=0,0,1920,1080 (0) frames_needed=[0 2 0 2] (0) fetched=[0 1 2] declared=1 images=4 released=4 message=""
+    render t=1 status=0 rod=0,0,1920,1080 (0) frames_needed=[0 2] (0) fetched=[1 0 2] declared=1 images=4 released=4 message=""
+    fsguard: 1 call(s) while armed: ['dlopen(/private/tmp/claude-501/-Users-seitan-Desktop-work-reverse/040b381d-b723-4608-b0cb-2e82227f9c2d/scratchpad/vn4/build/MeatVideo.ofx.bundle/Contents/MacOS/MeatVideo.ofx)']
+    t=0    native MATCH 0/8294400 words differ  (profile area [0, 832, 128], flat_status 0, aft True)
+    t=1    native MATCH 0/8294400 words differ  (profile area [0, 832, 128], flat_status 0, aft True)
+    reference native: 10.6 s
+    t=0    pure   MATCH 0/8294400 words differ  (profile area [0, 832, 128], flat_status 0, aft True)
+    t=1    pure   MATCH 0/8294400 words differ  (profile area [0, 832, 128], flat_status 0, aft True)
+    reference pure: 60.5 s
+== A-interlaced (Source field order OfxFieldUpper): ['render t=3 status=5 rod=0,0,640,360 (0) frames_needed=[1 5 0 2] (0) fetched=[] declared=1 images=0 released=0 message="OfxMessageError: Meat Video: interlaced source clip (field order OfxFieldUpper) is not supported: progressive material only"']
+== mutation 1 (plug-in Temporal Threshold 4.0001 vs reference 4.0): 5/5 renders differ, 1048467 words
+== mutation 2 (reference input: one word of frame 0 changed by 1 ulp): 2/5 renders differ, 9 words
+
+48 comparisons, 0/66248704 words differ
+ALL MATCH

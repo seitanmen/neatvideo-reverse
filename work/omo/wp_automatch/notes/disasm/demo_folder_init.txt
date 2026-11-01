@@ -1,0 +1,170 @@
+000000000015c9f0	bl	0x317354
+000000000015c9f4	ldur	x8, [x29, #-0x60]               ; Latency: 4
+000000000015c9f8	adrp	x9, 5112 ; 0x1554000
+000000000015c9fc	ldr	x9, [x9, #0x320] ; literal pool symbol address: ___stack_chk_guard ; Latency: 4
+000000000015ca00	ldr	x9, [x9]                        ; Latency: 4
+000000000015ca04	cmp	x9, x8                          ; Latency: 2
+000000000015ca08	b.ne	0x15ca2c
+000000000015ca0c	add	sp, sp, #0x250
+000000000015ca10	ldp	x29, x30, [sp, #0x50]           ; Latency: 4
+000000000015ca14	ldp	x20, x19, [sp, #0x40]           ; Latency: 4
+000000000015ca18	ldp	x22, x21, [sp, #0x30]           ; Latency: 4
+000000000015ca1c	ldp	x24, x23, [sp, #0x20]           ; Latency: 4
+000000000015ca20	ldp	x26, x25, [sp, #0x10]           ; Latency: 4
+000000000015ca24	ldp	x28, x27, [sp], #0x60           ; Latency: 4
+000000000015ca28	ret
+000000000015ca2c	bl	0xe26ac4 ; symbol stub for: ___stack_chk_fail
+000000000015ca30	mov	x21, x0                         ; Latency: 2
+000000000015ca34	b	0x15ca80
+000000000015ca38	bl	0x3194
+000000000015ca3c	bl	0x3194
+000000000015ca40	mov	x21, x0                         ; Latency: 2
+000000000015ca44	b	0x15ca5c
+000000000015ca48	mov	x21, x0                         ; Latency: 2
+000000000015ca4c	b	0x15ca78
+000000000015ca50	mov	x21, x0                         ; Latency: 2
+000000000015ca54	ldr	x0, [sp, #0x98]                 ; Latency: 4
+000000000015ca58	bl	0xa0f0d0
+000000000015ca5c	ldrh	w8, [sp, #0x118]                ; Latency: 4
+000000000015ca60	lsr	w9, w8, #8
+000000000015cb2c	ldr	x20, [x20]                      ; Latency: 4
+000000000015cb30	cbz	x20, 0x15cb9c
+000000000015cb34	mov	x0, x20                         ; Latency: 2
+000000000015cb38	bl	0xe27880 ; symbol stub for: _strlen
+000000000015cb3c	mov	x1, x0                          ; Latency: 2
+000000000015cb40	add	x8, sp, #0x8
+000000000015cb44	mov	x0, x20                         ; Latency: 2
+000000000015cb48	bl	0x37f04c
+000000000015cb4c	add	x0, sp, #0x8
+000000000015cb50	mov	x8, x19                         ; Latency: 2
+000000000015cb54	bl	0x3cd0cc
+000000000015cb58	ldr	x0, [sp, #0x8]                  ; Latency: 4
+000000000015cb5c	ldr	w8, [x0]                        ; Latency: 4
+000000000015cb60	cmn	w8, #0x1
+000000000015cb64	b.eq	0x15cb8c
+000000000015cb68	cbz	w8, 0x15cb80
+000000000015cb6c	mov	w8, #-0x1
+000000000015cb70	.long	0xb8e80008
+000000000015cb74	cmp	w8, #0x1
+000000000015cb78	b.ne	0x15cb8c
+000000000015cb7c	ldr	x0, [sp, #0x8]                  ; Latency: 4
+000000000015cb80	mov	w1, #0x2
+000000000015cb84	mov	w2, #0x8
+000000000015cb88	bl	0x317354
+000000000015cb8c	ldp	x29, x30, [sp, #0x20]           ; Latency: 4
+000000000015cb90	ldp	x20, x19, [sp, #0x10]           ; Latency: 4
+000000000015cb94	add	sp, sp, #0x30
+000000000015cb98	ret
+000000000015cb9c	mov	w1, #-0x1
+000000000015cba0	b	0x15cb40
+000000000015cba4	mov	x19, x0                         ; Latency: 2
+000000000015cba8	ldr	x0, [sp, #0x8]                  ; Latency: 4
+000000000015cbac	ldr	w8, [x0]                        ; Latency: 4
+000000000015cbb0	cmn	w8, #0x1
+000000000015cbb4	b.eq	0x15cbdc
+000000000015cbb8	cbz	w8, 0x15cbd0
+000000000015cbbc	mov	w8, #-0x1
+000000000015cbc0	.long	0xb8e80008
+000000000015cbc4	cmp	w8, #0x1
+000000000015cbc8	b.ne	0x15cbdc
+000000000015cbcc	ldr	x0, [sp, #0x8]                  ; Latency: 4
+000000000015cbd0	mov	w1, #0x2
+000000000015cbd4	mov	w2, #0x8
+000000000015cbd8	bl	0x317354
+000000000015cbdc	mov	x0, x19                         ; Latency: 2
+000000000015cbe0	bl	0xe266c8 ; symbol stub for: __Unwind_Resume
+000000000015cbe4	brk	#0x1
+000000000015cbe8	sub	sp, sp, #0x30
+000000000015cbec	stp	x20, x19, [sp, #0x10]           ; Latency: 6
+000000000015cbf0	stp	x29, x30, [sp, #0x20]           ; Latency: 6
+000000000015cbf4	add	x29, sp, #0x20
+000000000015cbf8	mov	x1, x0                          ; Latency: 2
+000000000015cbfc	add	x0, sp, #0x8
+000000000015cc00	mov	w2, #-0x1
+000000000015cc04	bl	0x356a74
+000000000015cc08	add	x0, sp, #0x8
+000000000015cc0c	bl	0x4916f4
+000000000015cc10	mov	x19, x0                         ; Latency: 2
+000000000015cc14	ldr	x0, [sp, #0x8]                  ; Latency: 4
+000000000015cc18	ldr	w8, [x0]                        ; Latency: 4
+000000000015cc1c	cmn	w8, #0x1
+000000000015cc20	b.eq	0x15cc48
+000000000015cc24	cbz	w8, 0x15cc3c
+000000000015cc28	mov	w8, #-0x1
+000000000015d2a4	mov	w9, #0x1
+000000000015d2a8	.long	0xb8e90108
+000000000015d2ac	ldp	x8, x9, [x29, #-0x68]           ; Latency: 4
+000000000015d2b0	sub	x9, x9, x8                      ; Latency: 2
+000000000015d2b4	mov	w23, #0x1
+000000000015d2b8	adrp	x22, 5238 ; 0x15d3000
+000000000015d2bc	add	x22, x22, #0x3b0
+000000000015d2c0	cmp	x9, #0x1
+000000000015d2c4	b.lt	0x15d5d4
+000000000015d2c8	mov	x24, #0x0
+000000000015d2cc	mov	x25, #0x0
+000000000015d2d0	mov	w26, #-0x1
+000000000015d2d4	mov	x27, #-0x5555555555555556
+000000000015d2d8	movk	x27, #0xaaab
+000000000015d2dc	mov	w21, #0x1
+000000000015d2e0	adrp	x19, 4948 ; 0x14b1000
+000000000015d2e4	add	x19, x19, #0xfdb ; literal pool for: "/"
+000000000015d2e8	b	0x15d318
+000000000015d2ec	mov	w1, #0x2
+000000000015d2f0	mov	w2, #0x8
+000000000015d2f4	bl	0x317354
+000000000015d470	bl	0x3d99a8
+000000000015d474	add	x0, sp, #0x20
+000000000015d478	add	x1, sp, #0x18
+000000000015d47c	add	x2, sp, #0x10
+000000000015d480	bl	0x3d8aa0
+000000000015d484	add	x8, sp, #0x28
+000000000015d488	add	x0, sp, #0x20
+000000000015d48c	bl	0x3d8ff0
+000000000015d490	add	x0, sp, #0x20
+000000000015d494	bl	0x3d8abc
+000000000015d498	ldr	x0, [sp, #0x10]                 ; Latency: 4
+# OptionsDialog::resetProfileDirButtonClick + getter
+00000000001aeaf8	add	w9, w11, w9, lsr #12            ; Latency: 2
+00000000001aeafc	bfi	w10, w9, #8, #24
+00000000001aeb00	strh	w10, [sp, #0x492]               ; Latency: 4
+00000000001aeb04	add	x27, x27, #0x1
+00000000001aeb08	cmp	x23, #0x5
+00000000001aeb0c	csel	x10, x23, x25, lt
+00000000001aeb10	mov	x9, x23                         ; Latency: 2
+00000000001aeb14	cmp	x23, #0x0
+00000000001aeb18	b.le	0x1af684
+00000000001aeb1c	mov	w11, #-0x1
+00000000001aeb20	lsl	w11, w11, w10
+00000000001aeb24	mvn	w28, w11                        ; Latency: 2
+00000000001aeb28	sub	x23, x9, x10                    ; Latency: 2
+000000000015f778	ldr	w8, [x0]                        ; Latency: 4
+000000000015f77c	cmn	w8, #0x1
+000000000015f780	b.eq	0x15f7a8
+000000000015f784	cbz	w8, 0x15f79c
+000000000015f788	mov	w8, #-0x1
+000000000015f78c	.long	0xb8e80008
+000000000015f790	cmp	w8, #0x1
+000000000015f794	b.ne	0x15f7a8
+000000000015f798	ldr	x0, [sp, #0x40]                 ; Latency: 4
+000000000015f79c	mov	w1, #0x2
+000000000015f7a0	mov	w2, #0x8
+000000000015f7a4	bl	0x317354
+000000000015f7a8	ldur	x0, [x29, #-0x38]               ; Latency: 4
+000000000015f7ac	ldr	w8, [x0]                        ; Latency: 4
+000000000015f7b0	cmn	w8, #0x1
+000000000015f7b4	b.eq	0x15f7dc
+000000000015f7b8	cbz	w8, 0x15f7d0
+000000000015f7bc	mov	w8, #-0x1
+000000000015f7c0	.long	0xb8e80008
+000000000015f7c4	cmp	w8, #0x1
+# prefs read ProfileDir
+00000000001337f4	adrp	x0, 4988 ; 0x14af000
+00000000001337f8	add	x0, x0, #0x12e ; literal pool for: "CheckForUpdates"
+00000000001337fc	mov	w1, #0xf
+0000000000133800	bl	0x37ef78
+0000000000133804	str	x0, [sp, #0x20]                 ; Latency: 4
+0000000000133808	ldrb	w2, [x19, #0x1e0]               ; Latency: 4
+000000000013380c	add	x1, sp, #0x20
+0000000000133810	mov	x0, x21                         ; Latency: 2
+0000000000133814	bl	0x1c749c
+0000000000133818	ldr	x0, [sp, #0x20]                 ; Latency: 4

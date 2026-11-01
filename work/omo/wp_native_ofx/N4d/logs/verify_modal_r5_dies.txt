@@ -1,0 +1,8 @@
+== helper-dies: rc 0; press status 1, clip_params unchanged, wait 7.04 s, message "OfxMessageError: Meat Video: the window helper was terminated by signal 9; the settings were not changed"
+   host CPU in the wait (ps, another process): 0.030 s in 4.01 s
+   main thread 2.0 s into the session (sample): 826/843 asleep in the kernel (0 of them in read / write / wait4), 16 in the event drain
+   input: 5 dispatched before the wait, 37 posted during it, dispatched during it [] (NSEvent types), 0 in the 1 s after it; CGSEventIsAppUnresponsive 0/21
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']
+   -> ok
+ALL OK

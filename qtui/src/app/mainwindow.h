@@ -178,8 +178,10 @@ public:
     // the Python UI's displayed values (for the comparisons with it, qtui/tools/compare_ui.py)
     QString dump_state();
     // OFX host mode (ofx.cpp, main.py _ofx_main): the host's frames instead of a video, and the standalone-only
-    // controls off (main_window._set_ofx_mode)
-    void set_ofx_frames(std::vector<Frame>&& fr, int W, int H, double fps, int depth);
+    // controls off (main_window._set_ofx_mode).  The OFX plug-in's window (ofx_session.cpp) passes the matrix and
+    // full range of its RGB frames (full-range YCbCr 4:4:4); the --ofx mode keeps bt709 / limited range.
+    void set_ofx_frames(std::vector<Frame>&& fr, int W, int H, double fps, int depth, const std::string& mat = "bt709",
+                        bool full = false);
     void set_ofx_mode(bool ofx);
     std::function<void(QCloseEvent*)> close_hook;         // before the close clean-up (OFX: write the frame)
     std::function<void(QCloseEvent*)> after_close_hook;   // after it (OFX: quit the application)

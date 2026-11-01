@@ -1,0 +1,4 @@
+#!/bin/sh
+if [ "$1" = "--ofx-default" ]; then printf 'DEFAULTS 5 ok ok\n{bad}'; exit 0; fi
+cat > /dev/null
+printf 'APPLY 5\n[1,2,'

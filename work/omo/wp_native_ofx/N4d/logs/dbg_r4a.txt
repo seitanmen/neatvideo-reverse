@@ -1,0 +1,37 @@
+== apply-10s: rc 0; press status 0, clip_params changed, wait 10.05 s, message ""
+   host CPU in the wait (ps, another process): 0.020 s in 4.01 s
+   main thread 3.0 s into the session (sample): 840/853 asleep in the kernel (0 of them in read / write / wait4), 13 in the event drain
+   main thread 6.5 s into the session (sample): 850/865 asleep in the kernel (0 of them in read / write / wait4), 15 in the event drain
+   input: 5 dispatched before the wait, 45 posted during it, dispatched during it [] (NSEvent types), 0 in the 1 s after it; CGSEventIsAppUnresponsive 0/27
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   poke press from background thread wall=1793515321.376..1793515321.376 status=0 message="OfxMessageWarning: Meat Video: a Meat Video window is already open; close it first."
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']
+   -> ok
+== apply-10s (control: MV_MODAL_WAIT=OFF, the blocking wait): rc 0; press status 0, clip_params changed, wait 10.03 s, message ""
+   host CPU in the wait (ps, another process): 0.000 s in 3.99 s
+   main thread 3.0 s into the session (sample): 873/873 asleep in the kernel (873 of them in read / write / wait4), 0 in the event drain
+   main thread 6.5 s into the session (sample): 878/878 asleep in the kernel (878 of them in read / write / wait4), 0 in the event drain
+   input: 5 dispatched before the wait, 50 posted during it, dispatched during it [] (NSEvent types), 41 in the 1 s after it; CGSEventIsAppUnresponsive 0/28
+   default-mode timer: 0 ticks during the wait (12 in all); main-queue block ran +0.00 s after the wait
+   poke press from background thread wall=1793515333.246..1793515333.246 status=0 message="OfxMessageWarning: Meat Video: a Meat Video window is already open; close it first."
+   plug-in trace: ['meatvideo-ofx: helper wait: blocking', 'meatvideo-ofx: helper wait: blocking']
+   -> control as expected (the main thread blocked in read, input left queued)
+== held (left button and 's' pressed before the wait, released during it): rc 0; press status 0, clip_params changed, wait 8.04 s, message ""
+   host CPU in the wait (ps, another process): 0.010 s in 3.99 s
+   main thread 3.0 s into the session (sample): 845/859 asleep in the kernel (0 of them in read / write / wait4), 14 in the event drain
+   main thread 6.5 s into the session (sample): 844/857 asleep in the kernel (0 of them in read / write / wait4), 13 in the event drain
+   input: 2 dispatched before the wait, 9 posted during it, dispatched during it [2, 11, 12, 12] (NSEvent types), 0 in the 1 s after it; CGSEventIsAppUnresponsive 0/20
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']
+   dispatched during the wait: [2, 11, 12, 12] (want one LeftMouseUp 2, one KeyUp 11, two FlagsChanged 12; no LeftMouseDown 1 / MouseMoved 5 / KeyDown 10)
+   -> ok
+== destroy (DestroyInstance from a thread 3 s into the wait): rc 0; press status 0, clip_params unchanged, wait 8.04 s, message ""
+   host CPU in the wait (ps, another process): 0.020 s in 4.04 s
+   main thread 3.0 s into the session (sample): 847/857 asleep in the kernel (0 of them in read / write / wait4), 9 in the event drain
+   main thread 6.5 s into the session (sample): 850/859 asleep in the kernel (0 of them in read / write / wait4), 8 in the event drain
+   input: 5 dispatched before the wait, 34 posted during it, dispatched during it [] (NSEvent types), 0 in the 1 s after it; CGSEventIsAppUnresponsive 0/20
+   default-mode timer: 0 ticks during the wait (11 in all); main-queue block ran +0.00 s after the wait
+   poke destroy from background thread wall=1793515354.601..1793515354.601 status=0 message=""
+   plug-in trace: ['meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)', 'meatvideo-ofx: helper wait: host event loop (MeatVideoOFXModal)']
+   -> ok
+ALL OK

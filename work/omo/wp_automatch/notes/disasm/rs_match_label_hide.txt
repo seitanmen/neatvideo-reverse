@@ -1,0 +1,20 @@
+00000000000de4f8	ldr	x8, [x24, #0x98]                ; Latency: 4
+00000000000de4fc	ldr	x0, [x8, #0x98]                 ; Latency: 4
+00000000000de500	ldr	x8, [x0]                        ; Latency: 4
+00000000000de504	ldr	x8, [x8, #0x68]                 ; Latency: 4
+00000000000de508	mov	w1, #0x0
+00000000000de50c	blr	x8
+00000000000de510	ldr	x8, [x24, #0x98]                ; Latency: 4
+00000000000de514	ldr	x0, [x8, #0xa0]                 ; Latency: 4
+00000000000de518	ldr	x8, [x0]                        ; Latency: 4
+00000000000de51c	ldr	x8, [x8, #0x68]                 ; Latency: 4
+00000000000de520	mov	w1, #0x0
+00000000000de524	blr	x8
+00000000000de528	ldr	x8, [x24, #0x98]                ; Latency: 4
+00000000000e00f0	ldr	x8, [x19, #0xc8]                ; Latency: 4
+00000000000e00f4	ldr	x0, [x8, #0xa8]                 ; Latency: 4
+00000000000e00f8	ldr	x8, [x0]                        ; Latency: 4
+00000000000e00fc	ldr	x8, [x8, #0x68]                 ; Latency: 4
+00000000000e0100	mov	w1, #0x0
+00000000000e0104	blr	x8
+00000000000e0108	ldr	x8, [x19, #0xc8]                ; Latency: 4
