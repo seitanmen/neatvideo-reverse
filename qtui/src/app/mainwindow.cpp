@@ -287,6 +287,8 @@ MainWindow::MainWindow(const QString& video, QWidget* parent) : QMainWindow(pare
     sb->addPermanentWidget(cancel_btn);
     video_lbl = new QLabel("");
     sb->addPermanentWidget(video_lbl);
+    scan_lbl = new QLabel("");     // INT-1: the scan of the opened video (display only; frames are processed as before)
+    sb->addPermanentWidget(scan_lbl);
     depth_lbl = new QLabel("");
     sb->addPermanentWidget(depth_lbl);
     prof_lbl = new QLabel("no profile");
@@ -856,7 +858,7 @@ void MainWindow::open_video(const QString& path_in) {
     if (path.isEmpty()) return;
     VideoInfo vi;
     try {
-        vi = probe(path.toStdString());
+        vi = probe(path.toStdString(), true);
     } catch (const std::exception& e) {
         say(Q(std::string("error (load): ") + e.what()));
         return;
@@ -931,6 +933,13 @@ void MainWindow::open_video(const QString& path_in) {
                                (capped ? QString("/%1 frames (memory cap)").arg(vi.n) : QString(" frames")));
             video_lbl->setStyleSheet(capped ? "color:#f0a030" : "");
             viewer_bar->set_frame_info(vi.W, vi.H, pf.bits, pf.is_float);
+            scan_lbl->setText(Q(scan_text(vi.field_order, vi.frame_interlaced, vi.frame_tff)));
+            auto flag = [](int v) { return v < 0 ? std::string("n/a") : std::to_string(v); };
+            scan_lbl->setToolTip(Q("ffprobe: stream field_order " + (vi.field_order.empty() ? std::string("(none)") : vi.field_order) +
+                                   "; first frame interlaced_frame " + flag(vi.frame_interlaced) + ", top_field_first " +
+                                   flag(vi.frame_tff) +
+                                   "\nThe first frame's flags decide the field order (the stream's tb / bt do not).\n"
+                                   "Shown only: the frames are processed as progressive frames."));
             depth_lbl->setText(depth_text());
             say(QFileInfo(path).fileName() +
                 Q(": " + std::to_string(vi.W) + "x" + std::to_string(vi.H) + " " + std::to_string(nf) + "f " + vi.fps +
@@ -2800,6 +2809,8 @@ void MainWindow::set_ofx_frames(std::vector<Frame>&& fr, int W, int H, double fp
     video_lbl->setText(QString("OFX host: %1x%2 · %3 frames · %4 fps").arg(W).arg(H).arg(n).arg(Q(py_float_str(fps))));
     depth_lbl->setText(full ? QString("source OFX host (%1-bit float RGB) · processing %1-bit").arg(depth)
                             : QString("source OFX host (%1-bit 4:2:0) · processing %1-bit").arg(depth));
+    scan_lbl->clear();             // the host's field order is not read yet (INT-4)
+    scan_lbl->setToolTip(QString());
     viewer_bar->set_frame_info(W, H, depth, depth == 32);   // --depth 32: the host sends float32 (ofx.h)
     update_performance();
     set_ofx_mode(true);

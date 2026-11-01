@@ -119,13 +119,13 @@ double VideoInfo::fps_value() const {
     }
 }
 
-VideoInfo probe(const std::string& path) {
-    const QByteArray out = run(tool("ffprobe"),
-                               {"-v", "error", "-select_streams", "v:0", "-show_entries",
-                                "stream=width,height,r_frame_rate,nb_frames,pix_fmt,bits_per_raw_sample,color_space,"
-                                "color_primaries,color_transfer,color_range,start_time:stream_side_data=rotation:"
-                                "format=duration,start_time",
-                                "-of", "json", QString::fromStdString(path)});
+VideoInfo probe(const std::string& path, bool with_field_order) {
+    const QString entries = QString("stream=width,height,r_frame_rate,nb_frames,pix_fmt,bits_per_raw_sample,color_space,"
+                                    "color_primaries,color_transfer,color_range,start_time") +
+                            (with_field_order ? ",field_order" : "") +
+                            ":stream_side_data=rotation:format=duration,start_time";
+    const QByteArray out = run(tool("ffprobe"), {"-v", "error", "-select_streams", "v:0", "-show_entries", entries, "-of",
+                                                 "json", QString::fromStdString(path)});
     PyObj j;
     try {
         j = PyObj::parse(out.toStdString());
@@ -165,7 +165,52 @@ VideoInfo probe(const std::string& path) {
     info.pix_fmt = s.get("pix_fmt").type() == PyObj::STR ? s.get("pix_fmt").as_str() : "";
     info.bits_raw = static_cast<int>(num(s.get("bits_per_raw_sample"), 0.0));
     info.full_range = info.tags.count("color_range") && info.tags["color_range"] == "pc";
+    if (with_field_order) {
+        if (s.get("field_order").type() == PyObj::STR) info.field_order = s.get("field_order").as_str();
+        // the first decoded frame's flags (ffprobe decodes the packets of the interval and flushes the decoder)
+        try {
+            const QByteArray fo = run(tool("ffprobe"), {"-v", "error", "-select_streams", "v:0", "-read_intervals", "%+#1",
+                                                        "-show_entries", "frame=interlaced_frame,top_field_first", "-of",
+                                                        "json", QString::fromStdString(path)},
+                                      30000);
+            const PyObj fj = PyObj::parse(fo.toStdString());
+            const PyObj& fr = fj.get("frames");
+            if (fr.is_list() && fr.size() > 0) {
+                const PyObj& f0 = fr[0];
+                if (f0.get("interlaced_frame").is_num()) info.frame_interlaced = static_cast<int>(f0.get("interlaced_frame").as_int());
+                if (f0.get("top_field_first").is_num()) info.frame_tff = static_cast<int>(f0.get("top_field_first").as_int());
+            }
+        } catch (const std::exception&) {   // no frame flags: the stream's value alone
+        }
+    }
     return info;
+}
+
+Scan scan_of(const std::string& fo, int fi, int tff) {
+    if (fi == 1) return tff == 1 ? Scan::TopFirst : tff == 0 ? Scan::BottomFirst : Scan::Interlaced;
+    if (fo == "tt") return Scan::TopFirst;
+    if (fo == "bb") return Scan::BottomFirst;
+    if (fo == "tb" || fo == "bt") return Scan::Interlaced;
+    if (fo == "progressive") return Scan::Progressive;
+    return Scan::Unknown;
+}
+
+int first_field(Scan s) { return s == Scan::TopFirst ? 0 : s == Scan::BottomFirst ? 1 : -1; }
+
+std::string scan_text(const std::string& fo, int fi, int tff) {
+    const Scan s = scan_of(fo, fi, tff);
+    std::string t = s == Scan::Progressive   ? "progressive"
+                    : s == Scan::TopFirst    ? "interlaced, top field first"
+                    : s == Scan::BottomFirst ? "interlaced, bottom field first"
+                    : s == Scan::Interlaced  ? "interlaced, field order unknown"
+                                             : "scan unknown";
+    std::vector<std::string> notes;
+    const bool agrees = (fo == "progressive" && s == Scan::Progressive) || (fo == "tt" && s == Scan::TopFirst) ||
+                        (fo == "bb" && s == Scan::BottomFirst);
+    if (!fo.empty() && fo != "unknown" && !agrees) notes.push_back("stream field_order: " + fo);
+    if (fi == 0 && s != Scan::Progressive && s != Scan::Unknown) notes.push_back("first frame not flagged interlaced");
+    for (size_t i = 0; i < notes.size(); ++i) t += (i ? ", " : " (") + notes[i];
+    return notes.empty() ? t : t + ")";
 }
 
 void read_frames(const std::string& path, int W, int H, int lo, int hi, const std::string& fps,
