@@ -1,0 +1,7 @@
+combine: 500/500
+effective: 400/400
+weights: 21/21
+apply_aft: 1/1
+legacy: 10/10 (nvc_aft_combine of this and the before-G1 library)
+RESULT: ALL SAME (932/932)
+python3 native/verify_rgb_eq.py --quick --before-lib $BL  32.76s user 2.73s system 162% cpu 21.772 total

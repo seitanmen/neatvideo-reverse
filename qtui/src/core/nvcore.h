@@ -82,6 +82,9 @@ int aft_frame(const PyObj& base, size_t nframes);
 // throws Cancelled, or std::runtime_error where the Python UI would fall back to the Python AFT.
 PyObj run_aft(const PyObj& base, const Frame& frame, bool full_range, const std::string& matrix,
               const CancelFn& cancel);
+// run_aft on an RGB image (H x W x 3 float32, to_rgb clip 1) in place of a frame (fields.h run_aft_fields: the stacked
+// fields of a "Two fields" profile).  Both pass the RGB through nvc_aft_input16 (nv_aft_v5.to_internal16) first.
+PyObj run_aft_rgb(const PyObj& base, std::vector<float> rgb, int H, int W, const CancelFn& cancel);
 
 // N4e (repro Auto Match, native/nvcore_c_match.h): the match model words (faces R, G, B x 492, stats R, G, B x 51)
 // of base's area on frame (nvc_profile_build_cancel, colour mode 1, as run_aft builds the AFT's profile; no LZMA part);

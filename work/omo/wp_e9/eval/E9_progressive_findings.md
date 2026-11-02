@@ -8,6 +8,8 @@
   sintel (Sintel © Blender Foundation, CC-BY 3.0。予告編の元フレーム 571〜630。粒状 σ≈0.2。上下に黒帯)。
 - 本家: Resolve 上の Neat Video 6.1.3 Pro。統括が 25 fps・プログレッシブの 1 プロジェクトで処理した。
   frame 0 で Auto Profile → Auto Fine-Tune、フィルタは既定値。出力は 16 ビット RGB の TIFF
+  **訂正 (2026-11-02、Phase C で観測・独立検証済み)**: 本家がプロファイルと AFT に使ったのは frame 0 ではなく **frame 5** だった
+  (`work/omo/wp_aft_runtime/REPORT.md` §2・§5)。当方は frame 0 でプロファイルしているので、本家と当方でプロファイルのフレームが違う
   (`genuine/progressive/Event_バージョン 1_0001_000N/`)。
 - 当方: C++ 版 (qtui のソースを wp_e9/build に別ビルド)。UI の既定の流れ (frame 0 の Auto Profile + AFT、既定のパラメータ)
   で処理し、`--crf 0` (8 ビットの x264 で可逆) で書き出した。

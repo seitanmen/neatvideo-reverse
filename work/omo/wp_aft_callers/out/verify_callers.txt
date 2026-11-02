@@ -1,0 +1,75 @@
+lib /Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/native/libnvcore.dylib
+== pa1_s1_autoprofile  1920x1080  area (y, x, h, w) (160, 616, 128, 128)  [Phase C locate_sample]
+   C        model     0/12030  max ulp        5  0-ulp 19/27  flags 27/27  max|rel| 5.95e-07  (7.2 s)
+   Python   model     0/12030  max ulp        5  0-ulp 19/27  flags 27/27  max|rel| 5.95e-07  (46.5 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3310/12030  max ulp  2782736  0-ulp  0/27  flags 27/27  max|rel| 2.27e-01
+== pa1_s2_autoprofile_curframe  1920x1080  area (y, x, h, w) (160, 616, 128, 128)  [Phase C locate_sample]
+   C        model     0/12030  max ulp        2  0-ulp 21/27  flags 27/27  max|rel| 2.38e-07  (0.6 s)
+   Python   model     0/12030  max ulp        2  0-ulp 21/27  flags 27/27  max|rel| 2.38e-07  (46.0 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3310/12030  max ulp  2782736  0-ulp  0/27  flags 27/27  max|rel| 2.27e-01
+== pa1_s4_aft  1920x1080  area (y, x, h, w) (160, 616, 128, 128)  [Phase C locate_sample]
+   C        model     0/12030  max ulp        5  0-ulp 17/27  flags 27/27  max|rel| 5.80e-07  (0.6 s)
+   Python   model     0/12030  max ulp        5  0-ulp 17/27  flags 27/27  max|rel| 5.80e-07  (46.0 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3310/12030  max ulp  2782737  0-ulp  0/27  flags 27/27  max|rel| 2.27e-01
+== pa1_s5_aft_again  1920x1080  area (y, x, h, w) (160, 616, 128, 128)  [Phase C locate_sample]
+   C        model     0/12030  max ulp        5  0-ulp 20/27  flags 27/27  max|rel| 5.80e-07  (0.6 s)
+   Python   model     0/12030  max ulp        5  0-ulp 20/27  flags 27/27  max|rel| 5.80e-07  (45.2 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3310/12030  max ulp  2782736  0-ulp  0/27  flags 27/27  max|rel| 2.27e-01
+== e9p_sintel_p_y3  1920x1080  area (y, x, h, w) (160, 616, 128, 128)  [sample means (+0xbf28) max diff 7.6e-06]
+   C        model     0/12030  max ulp        5  0-ulp 15/27  flags 27/27  max|rel| 5.95e-07  (0.6 s)
+   Python   model     0/12030  max ulp        5  0-ulp 15/27  flags 27/27  max|rel| 5.95e-07  (45.1 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3310/12030  max ulp  2782737  0-ulp  0/27  flags 27/27  max|rel| 2.27e-01
+== e9p_sintel_p_y6  1920x1080  area (y, x, h, w) (680, 304, 128, 128)  [sample means (+0xbf28) max diff 0.0e+00]
+   C        model     0/12030  max ulp        2  0-ulp 20/27  flags 27/27  max|rel| 1.33e-07  (0.6 s)
+   Python   model     0/12030  max ulp        2  0-ulp 20/27  flags 27/27  max|rel| 1.33e-07  (55.0 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3295/12030  max ulp    23852  0-ulp  0/27  flags 27/27  max|rel| 1.45e-03
+== e9p_old_town_cross_p_y3  1920x1080  area (y, x, h, w) (0, 1568, 128, 128)  [sample means (+0xbf28) max diff 4.2e-05]
+   C        model  3105/12030  max ulp        3  0-ulp 21/27  flags 27/27  max|rel| 2.63e-07  (0.6 s)
+   Python   model  3105/12030  max ulp        3  0-ulp 21/27  flags 27/27  max|rel| 2.63e-07  (50.0 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3286/12030  max ulp    14455  0-ulp  0/27  flags 27/27  max|rel| 1.27e-03
+== e9p_old_town_cross_p_y6  1920x1080  area (y, x, h, w) (0, 1568, 128, 128)  [sample means (+0xbf28) max diff 6.5e-05]
+   C        model  3076/12030  max ulp        3  0-ulp 12/27  flags 27/27  max|rel| 3.07e-07  (0.6 s)
+   Python   model  3076/12030  max ulp        3  0-ulp 12/27  flags 27/27  max|rel| 3.07e-07  (50.5 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3285/12030  max ulp     4787  0-ulp  0/27  flags 27/27  max|rel| 3.99e-04
+== e9p_park_joy_p_y3  1920x1080  area (y, x, h, w) (720, 968, 128, 128)  [sample means (+0xbf28) max diff 0.0e+00]
+   C        model     0/12030  max ulp        2  0-ulp 11/27  flags 27/27  max|rel| 1.19e-07  (0.6 s)
+   Python   model     0/12030  max ulp        2  0-ulp 11/27  flags 27/27  max|rel| 1.19e-07  (54.1 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3278/12030  max ulp     3762  0-ulp  0/27  flags 27/27  max|rel| 4.46e-04
+== e9p_park_joy_p_y6  1920x1080  area (y, x, h, w) (984, 248, 96, 96)  [sample means (+0xbf28) max diff 1.7e-06]
+   C        model     0/12030  max ulp        3  0-ulp  8/27  flags 27/27  max|rel| 1.99e-07  (0.5 s)
+   Python   model     0/12030  max ulp        3  0-ulp  8/27  flags 27/27  max|rel| 1.99e-07  (50.4 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3341/12030  max ulp    19476  0-ulp  0/27  flags 27/27  max|rel| 2.09e-03
+== e9i_sintel_tff_y3  1920x1080  area (y, x, h, w) (656, 1784, 96, 96)  [locate_i.log: bottom field y 116 x 1784]
+   C        model     0/12030  max ulp        1  0-ulp 24/27  flags 27/27  max|rel| 1.16e-07  (0.4 s)
+   Python   model     0/12030  max ulp        1  0-ulp 24/27  flags 27/27  max|rel| 1.16e-07  (37.0 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3358/12030  max ulp    25852  0-ulp  0/27  flags 27/27  max|rel| 2.99e-03
+   rev      model     0/12030  max ulp   235969  0-ulp  0/27  flags 27/27  max|rel| 2.54e-02  (bottom field over top, area (116, 1784, 96, 96))
+== e9i_sintel_tff_y6  1920x1080  area (y, x, h, w) (88, 1792, 128, 128)  [locate_i.log: top field y 88 x 1792]
+   C        model     0/12030  max ulp        2  0-ulp 25/27  flags 27/27  max|rel| 1.29e-07  (0.6 s)
+   Python   model     0/12030  max ulp        2  0-ulp 25/27  flags 27/27  max|rel| 1.29e-07  (51.4 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3302/12030  max ulp   146825  0-ulp  0/27  flags 27/27  max|rel| 1.57e-02
+   rev      model     0/12030  max ulp   445284  0-ulp  0/27  flags 25/27  max|rel| 4.75e-02  (bottom field over top, area (628, 1792, 128, 128))
+== e9i_old_town_cross_tff_y6  1920x1080  area (y, x, h, w) (64, 328, 128, 128)  [locate_i.log: top field y 64 x 328]
+   C        model     0/12030  max ulp        3  0-ulp 21/27  flags 27/27  max|rel| 1.84e-07  (0.6 s)
+   Python   model     0/12030  max ulp        3  0-ulp 21/27  flags 27/27  max|rel| 1.84e-07  (50.6 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3285/12030  max ulp     1672  0-ulp  0/27  flags 27/27  max|rel| 1.86e-04
+   rev      model     0/12030  max ulp   540366  0-ulp  0/27  flags 27/27  max|rel| 3.23e-02  (bottom field over top, area (604, 328, 128, 128))
+== e9i_park_joy_tff_y6  1920x1080  area (y, x, h, w) (888, 720, 192, 192)  [locate_i.log: bottom field y 348 x 720]
+   C        model     0/12030  max ulp        2  0-ulp 10/27  flags 27/27  max|rel| 1.77e-07  (0.8 s)
+   Python   model     0/12030  max ulp        2  0-ulp 10/27  flags 27/27  max|rel| 1.77e-07  (61.4 s)
+   Python == C: BuildNoiseModel blob True, AFT blob True, prof dict True
+   -q16     model  3395/12030  max ulp     1777  0-ulp  0/27  flags 27/27  max|rel| 1.78e-04
+   rev      model     0/12030  max ulp  4040388  0-ulp  0/27  flags 26/27  max|rel| 3.14e-01  (bottom field over top, area (348, 720, 192, 192))

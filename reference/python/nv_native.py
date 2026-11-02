@@ -10,7 +10,8 @@ behind the same contracts as the Python functions the UI backend calls.
 
 Division of the work: the C side runs build_profile_v5 whole (nv_prof5: FindFlatArea with its noise
 curve, the band sigmas, the spatial / temporal curves; nvcore_c_prof5.h), the BuildNoiseModel profile
-(nv_profile), AutoFineTune and its colour combination (nv_aft), and the v5 temporal / spatial kernels
+(nv_profile), AutoFineTune with its 16-bit input step (nvc_aft_input16 = nv_aft_v5.to_internal16) and its
+colour combination (nv_aft), and the v5 temporal / spatial kernels
 (nv_temporal / nv_spatial); Python keeps the RGB conversion of the AFT (nvfilter.yuv_to_rgb, numpy), the dict
 building, the caches and the Mix step. native/verify_bridge.py compares both paths bit for bit.
 build_profile_v5 runs in Python for inputs the C port does not reproduce (planes that are not finite float32,
@@ -97,6 +98,7 @@ _P = ctypes.c_void_p
 _I = ctypes.c_int
 _D = ctypes.c_double
 CANCEL_FN = ctypes.CFUNCTYPE(ctypes.c_int)
+HAS_AFT_INPUT16 = False
 if AVAILABLE:
     _lib.nvc_noise_curve.argtypes = [_P, _I, _I, _I, CANCEL_FN, _P, _P]
     _lib.nvc_noise_curve.restype = _I
@@ -113,6 +115,11 @@ if AVAILABLE:
     _lib.nvc_aft.restype = _I
     _lib.nvc_aft_combine.argtypes = [_P, _P, _P, _I, _P, _D, _P, _I, _P, _P, _P, _P, _P]
     _lib.nvc_aft_combine.restype = None
+    # an addition of ABI version 3 (2026-11-02): without it apply_aft returns None (the Python AFT runs)
+    HAS_AFT_INPUT16 = hasattr(_lib, "nvc_aft_input16")
+    if HAS_AFT_INPUT16:
+        _lib.nvc_aft_input16.argtypes = [_P, ctypes.c_size_t, _P]
+        _lib.nvc_aft_input16.restype = None
     _lib.nvc_temporal.argtypes = [_I, _I, _I, _I, _I, _I, _P, _P, _P, _P, _P, _I, _P, _P, _P, _P, _P, _P]
     _lib.nvc_temporal.restype = _I
     _lib.nvc_spatial.argtypes = [_I, _I, _I, _I, _P, _P, _P, _P, _P, _P, _I, _P]
@@ -462,6 +469,12 @@ def _apply_aft(prof, rgb, mode=0, area=None, matrix="bt709", band=0, cancel=None
     aw = a[3] if len(a) == 4 else ah
     if any(type(v) not in (int, np.int64, np.int32) for v in (ay, ax, ah, aw)):
         return None
+    if not HAS_AFT_INPUT16:
+        return None
+    # nv_aft_v5.to_internal16: the BuildNoiseModel and the AFT run on the genuine's 16-bit type
+    q = np.empty_like(rgb)
+    _lib.nvc_aft_input16(_ptr(rgb), rgb.size, _ptr(q))
+    rgb = q
     if cancel is not None and cancel():
         raise Cancelled("cancelled")
     raw = profile_blob(rgb, (ax, ay, aw, ah), 1, threads, cancel)

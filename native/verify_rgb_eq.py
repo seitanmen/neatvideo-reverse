@@ -18,7 +18,8 @@
 #              frame edges, tiny areas
 #   apply_aft  nv_aft_v5.apply_aft itself (Python) on a profile of nvfilter.build_profile_v5: its curve = nvc_rgb_combine
 #              of the curve before AFT with the levels of the C AFT bytes (nvc_profile_build + nvc_aft), its colour
-#              weights = nvc_rgb_weights of the same frame and area
+#              weights = nvc_rgb_weights of the same frame and area.  apply_aft runs its BuildNoiseModel and AFT on the
+#              16-bit type (nv_aft_v5.to_internal16, 2026-11-02), so the C side here gets that RGB too
 #   legacy     the Y / Cb / Cr combination before G1 (nvc_aft_combine) on AFT bytes holding edited float32 R/G/B levels
 #              = nvc_rgb_combine of the same levels; with --before-lib (a libnvcore.dylib built from the code before
 #              G1) its nvc_aft_combine too
@@ -299,13 +300,14 @@ def main():
         fr, rgb, mat = frames[key]
         prof = nv.build_profile_v5(fr[0], False, pair=fr[1], mode="auto", more=fr[1:], matrix=mat)
         ref = nv_aft_v5.apply_aft(copy.deepcopy(prof), rgb)
+        rgbq = np.ascontiguousarray(nv_aft_v5.to_internal16(rgb))    # what apply_aft's BuildNoiseModel / AFT see
         a = prof["area"]
-        raw, aft = c_blobs(L, rgb, a)
+        raw, aft = c_blobs(L, rgbq, a)
         lv = aft_levels(aft)
         _, cc = c_combine(L, prof["curve"], prof["curve_centers"], ref["aft_color_weights"], lv)
         a4 = np.ascontiguousarray([a[0], a[1], a[2], a[3] if len(a) == 4 else a[2]], np.int32)
         c9 = np.zeros(9)
-        assert L.nvc_rgb_weights(rgb.ctypes.data, rgb.shape[0], rgb.shape[1], a4.ctypes.data, c9.ctypes.data) == 0
+        assert L.nvc_rgb_weights(rgbq.ctypes.data, rgb.shape[0], rgb.shape[1], a4.ctypes.data, c9.ctypes.data) == 0
         same = all(dbits(a_) == dbits(b_) for i, c in enumerate(NAMES) for a_, b_ in zip(ref["curve"][c], cc[i])) and \
             all(dbits(ref["aft_color_weights"][i][j]) == dbits(c9[3 * i + j]) for i in range(3) for j in range(3)) and \
             ref["aft_face_curves"] == [np.interp(np.array(prof["curve_centers"]), np.linspace(0, 256, 9),

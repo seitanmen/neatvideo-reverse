@@ -16,6 +16,8 @@
   - 走査方式: パラメータの `P["interlace"] = {first 0, mode, radius (フィールド数)}` で TFF を明示した
     (MainWindow::proc_params と同じ。y4m のフラグは使わない)。
   - プロファイル: build_profile_fields (Two fields、frame 0、最初のフィールド = top)。AFT はプロファイルのフィールド画像に掛けた
+    **訂正 (2026-11-02)**: 本家の Two fields プロファイルは frame 5 から作られ、AFT は上フィールドを下フィールドの上に積んだ画像に 1 回掛かっていた
+    (`work/omo/wp_aft_runtime/REPORT.md` §2)。当方とはフレームも AFT の入力の作り方も違う
     (UI の auto_fine_tune と同じ)。
   - 4 通りの処理 (すべて同じプロファイル):
     1. same/frames: 既定。Temporal Radius 2 → 4 フィールド、同じパリティだけ。`runs/ours_field/`

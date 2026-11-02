@@ -1,0 +1,150 @@
+== old_town_cross/p_y3 (rc 0)
+genuine: genuine/progressive/Event_バージョン 1_0001_0001 (found by file name)
+$ /opt/anaconda3/bin/python3 /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/tools/e9_eval.py old_town_cross/p_y3 --test A=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame/old_town_cross/p_y3/out.mp4 --test B=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame_f5/old_town_cross/p_y3/out.mp4 --test C=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame_f5q16/old_town_cross/p_y3/out.mp4 --test genuine=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/genuine/progressive/Event_バージョン 1_0001_0001 --out /Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/old_town_cross_p_y3.json
+old_town_cross/p_y3 input: Y 38.549 dB, RGB 36.396 dB (interior Y 38.549), alignment best +0,+0 (10.7 s)
+old_town_cross/p_y3 A: Y 36.748 dB, RGB 32.351 dB (interior Y 36.742), alignment best +0,+0 (10.5 s)
+old_town_cross/p_y3 B: Y 36.694 dB, RGB 32.314 dB (interior Y 36.69), alignment best +0,+0 (10.5 s)
+old_town_cross/p_y3 C: Y 36.693 dB, RGB 32.31 dB (interior Y 36.688), alignment best +0,+0 (10.5 s)
+old_town_cross/p_y3 genuine: Y 37.422 dB, RGB 33.601 dB (interior Y 37.413), alignment best +0,+0 (13.4 s)
+old_town_cross/p_y3 pair A~B: Y 62.329 dB, RGB 58.413 dB
+old_town_cross/p_y3 pair A~C: Y 62.234 dB, RGB 57.964 dB
+old_town_cross/p_y3 pair A~genuine: Y 43.425 dB, RGB 38.626 dB
+old_town_cross/p_y3 pair B~C: Y 78.56 dB, RGB 67.655 dB
+old_town_cross/p_y3 pair B~genuine: Y 43.268 dB, RGB 38.513 dB
+old_town_cross/p_y3 pair C~genuine: Y 43.264 dB, RGB 38.502 dB
+wrote ../../../.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/old_town_cross_p_y3.json
+== old_town_cross/p_y6 (rc 0)
+genuine: genuine/progressive/Event_バージョン 1_0001_0002 (found by file name)
+$ /opt/anaconda3/bin/python3 /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/tools/e9_eval.py old_town_cross/p_y6 --test A=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame/old_town_cross/p_y6/out.mp4 --test B=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame_f5/old_town_cross/p_y6/out.mp4 --test C=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame_f5q16/old_town_cross/p_y6/out.mp4 --test genuine=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/genuine/progressive/Event_バージョン 1_0001_0002 --out /Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/old_town_cross_p_y6.json
+old_town_cross/p_y6 input: Y 32.564 dB, RGB 30.458 dB (interior Y 32.564), alignment best +0,+0 (10.7 s)
+old_town_cross/p_y6 A: Y 35.939 dB, RGB 31.797 dB (interior Y 35.95), alignment best +0,+0 (10.4 s)
+old_town_cross/p_y6 B: Y 35.93 dB, RGB 31.793 dB (interior Y 35.941), alignment best +0,+0 (10.5 s)
+old_town_cross/p_y6 C: Y 35.93 dB, RGB 31.793 dB (interior Y 35.941), alignment best +0,+0 (10.4 s)
+old_town_cross/p_y6 genuine: Y 36.364 dB, RGB 32.924 dB (interior Y 36.371), alignment best +0,+0 (13.1 s)
+old_town_cross/p_y6 pair A~B: Y 66.629 dB, RGB 63.27 dB
+old_town_cross/p_y6 pair A~C: Y 66.628 dB, RGB 63.267 dB
+old_town_cross/p_y6 pair A~genuine: Y 41.194 dB, RGB 37.118 dB
+old_town_cross/p_y6 pair B~C: Y 95.116 dB, RGB 90.24 dB
+old_town_cross/p_y6 pair B~genuine: Y 41.17 dB, RGB 37.108 dB
+old_town_cross/p_y6 pair C~genuine: Y 41.17 dB, RGB 37.108 dB
+wrote ../../../.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/old_town_cross_p_y6.json
+== park_joy/p_y3 (rc 0)
+genuine: genuine/progressive/Event_バージョン 1_0001_0003 (found by file name)
+$ /opt/anaconda3/bin/python3 /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/tools/e9_eval.py park_joy/p_y3 --test A=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame/park_joy/p_y3/out.mp4 --test B=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame_f5/park_joy/p_y3/out.mp4 --test C=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame_f5q16/park_joy/p_y3/out.mp4 --test genuine=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/genuine/progressive/Event_バージョン 1_0001_0003 --out /Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/park_joy_p_y3.json
+park_joy/p_y3 input: Y 38.571 dB, RGB 36.457 dB (interior Y 38.572), alignment best +0,+0 (8.8 s)
+park_joy/p_y3 A: Y 32.149 dB, RGB 28.478 dB (interior Y 32.189), alignment best +0,+0 (8.4 s)
+park_joy/p_y3 B: Y 31.343 dB, RGB 27.948 dB (interior Y 31.389), alignment best +0,+0 (8.2 s)
+park_joy/p_y3 C: Y 31.342 dB, RGB 27.948 dB (interior Y 31.388), alignment best +0,+0 (8.7 s)
+park_joy/p_y3 genuine: Y 40.279 dB, RGB 37.085 dB (interior Y 40.296), alignment best +0,+0 (11.0 s)
+park_joy/p_y3 pair A~B: Y 47.958 dB, RGB 45.909 dB
+park_joy/p_y3 pair A~C: Y 47.953 dB, RGB 45.905 dB
+park_joy/p_y3 pair A~genuine: Y 32.582 dB, RGB 29.076 dB
+park_joy/p_y3 pair B~C: Y 83.336 dB, RGB 80.417 dB
+park_joy/p_y3 pair B~genuine: Y 31.708 dB, RGB 28.48 dB
+park_joy/p_y3 pair C~genuine: Y 31.708 dB, RGB 28.48 dB
+wrote ../../../.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/park_joy_p_y3.json
+== park_joy/p_y6 (rc 0)
+genuine: genuine/progressive/Event_バージョン 1_0001_0004 (found by file name)
+$ /opt/anaconda3/bin/python3 /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/tools/e9_eval.py park_joy/p_y6 --test A=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame/park_joy/p_y6/out.mp4 --test B=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame_f5/park_joy/p_y6/out.mp4 --test C=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame_f5q16/park_joy/p_y6/out.mp4 --test genuine=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/genuine/progressive/Event_バージョン 1_0001_0004 --out /Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/park_joy_p_y6.json
+park_joy/p_y6 input: Y 32.706 dB, RGB 30.722 dB (interior Y 32.711), alignment best +0,+0 (8.8 s)
+park_joy/p_y6 A: Y 31.471 dB, RGB 28.042 dB (interior Y 31.515), alignment best +0,+0 (8.5 s)
+park_joy/p_y6 B: Y 31.303 dB, RGB 27.901 dB (interior Y 31.347), alignment best +0,+0 (8.2 s)
+park_joy/p_y6 C: Y 31.303 dB, RGB 27.902 dB (interior Y 31.347), alignment best +0,+0 (8.8 s)
+park_joy/p_y6 genuine: Y 36.459 dB, RGB 33.551 dB (interior Y 36.5), alignment best +0,+0 (10.9 s)
+park_joy/p_y6 pair A~B: Y 53.957 dB, RGB 51.502 dB
+park_joy/p_y6 pair A~C: Y 53.96 dB, RGB 51.516 dB
+park_joy/p_y6 pair A~genuine: Y 32.458 dB, RGB 29.259 dB
+park_joy/p_y6 pair B~C: Y 85.0 dB, RGB 75.948 dB
+park_joy/p_y6 pair B~genuine: Y 32.257 dB, RGB 29.084 dB
+park_joy/p_y6 pair C~genuine: Y 32.258 dB, RGB 29.085 dB
+wrote ../../../.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/park_joy_p_y6.json
+== sintel/p_y3 (rc 0)
+genuine: genuine/progressive/Event_バージョン 1_0001_0005 (found by file name)
+$ /opt/anaconda3/bin/python3 /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/tools/e9_eval.py sintel/p_y3 --test A=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame/sintel/p_y3/out.mp4 --test B=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame_f5/sintel/p_y3/out.mp4 --test C=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame_f5q16/sintel/p_y3/out.mp4 --test genuine=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/genuine/progressive/Event_バージョン 1_0001_0005 --out /Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/sintel_p_y3.json
+sintel/p_y3 input: Y 39.028 dB, RGB 36.991 dB (interior Y 39.024), alignment best +0,+0 (8.5 s)
+sintel/p_y3 A: Y 43.585 dB, RGB 39.0 dB (interior Y 43.581), alignment best +0,+0 (8.0 s)
+sintel/p_y3 B: Y 43.587 dB, RGB 38.996 dB (interior Y 43.583), alignment best +0,+0 (8.0 s)
+sintel/p_y3 C: Y 43.588 dB, RGB 38.997 dB (interior Y 43.584), alignment best +0,+0 (8.1 s)
+sintel/p_y3 genuine: Y 45.477 dB, RGB 43.342 dB (interior Y 45.48), alignment best +0,+0 (10.2 s)
+sintel/p_y3 pair A~B: Y 71.279 dB, RGB 65.556 dB
+sintel/p_y3 pair A~C: Y 71.259 dB, RGB 65.696 dB
+sintel/p_y3 pair A~genuine: Y 46.05 dB, RGB 40.353 dB
+sintel/p_y3 pair B~C: Y 84.479 dB, RGB 76.469 dB
+sintel/p_y3 pair B~genuine: Y 46.057 dB, RGB 40.349 dB
+sintel/p_y3 pair C~genuine: Y 46.058 dB, RGB 40.351 dB
+wrote ../../../.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/sintel_p_y3.json
+== sintel/p_y6 (rc 0)
+genuine: genuine/progressive/Event_バージョン 1_0001_0006 (found by file name)
+$ /opt/anaconda3/bin/python3 /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/tools/e9_eval.py sintel/p_y6 --test A=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame/sintel/p_y6/out.mp4 --test B=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame_f5/sintel/p_y6/out.mp4 --test C=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_frame_f5q16/sintel/p_y6/out.mp4 --test genuine=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/genuine/progressive/Event_バージョン 1_0001_0006 --out /Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/sintel_p_y6.json
+sintel/p_y6 input: Y 33.087 dB, RGB 31.125 dB (interior Y 33.082), alignment best +0,+0 (8.5 s)
+sintel/p_y6 A: Y 39.275 dB, RGB 35.722 dB (interior Y 39.292), alignment best +0,+0 (7.9 s)
+sintel/p_y6 B: Y 39.247 dB, RGB 35.697 dB (interior Y 39.263), alignment best +0,+0 (8.2 s)
+sintel/p_y6 C: Y 39.247 dB, RGB 35.697 dB (interior Y 39.263), alignment best +0,+0 (8.2 s)
+sintel/p_y6 genuine: Y 40.41 dB, RGB 38.496 dB (interior Y 40.429), alignment best +0,+0 (10.5 s)
+sintel/p_y6 pair A~B: Y 68.854 dB, RGB 64.362 dB
+sintel/p_y6 pair A~C: Y 68.856 dB, RGB 64.365 dB
+sintel/p_y6 pair A~genuine: Y 41.975 dB, RGB 37.465 dB
+sintel/p_y6 pair B~C: Y 95.24 dB, RGB 89.381 dB
+sintel/p_y6 pair B~genuine: Y 41.927 dB, RGB 37.428 dB
+sintel/p_y6 pair C~genuine: Y 41.927 dB, RGB 37.428 dB
+wrote ../../../.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/sintel_p_y6.json
+== old_town_cross/tff_y6 (rc 0)
+genuine: genuine/interlaced_noRI/Event_バージョン 1_0001_0001 (found by file name)
+$ /opt/anaconda3/bin/python3 /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/tools/e9_eval.py old_town_cross/tff_y6 --test A=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_field/old_town_cross/tff_y6/out.mp4 --test B=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_field_f5/old_town_cross/tff_y6/out.mp4 --test C=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_field_f5q16/old_town_cross/tff_y6/out.mp4 --test genuine=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/genuine/interlaced_noRI/Event_バージョン 1_0001_0001 --out /Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/old_town_cross_tff_y6.json
+old_town_cross/tff_y6 input: Y 32.564 dB, RGB 30.46 dB (interior Y 32.564), alignment best +0,+0 (13.0 s)
+old_town_cross/tff_y6 A: Y 34.464 dB, RGB 30.622 dB (interior Y 34.465), alignment best +0,+0 (12.6 s)
+old_town_cross/tff_y6 B: Y 34.507 dB, RGB 30.661 dB (interior Y 34.507), alignment best +0,+0 (12.8 s)
+old_town_cross/tff_y6 C: Y 34.53 dB, RGB 30.674 dB (interior Y 34.53), alignment best +0,+0 (12.6 s)
+old_town_cross/tff_y6 genuine: Y 35.795 dB, RGB 32.378 dB (interior Y 35.806), alignment best +0,+0 (17.3 s)
+old_town_cross/tff_y6 pair A~B: Y 64.088 dB, RGB 59.1 dB
+old_town_cross/tff_y6 pair A~C: Y 62.37 dB, RGB 58.128 dB
+old_town_cross/tff_y6 pair A~genuine: Y 38.998 dB, RGB 35.24 dB
+old_town_cross/tff_y6 pair B~C: Y 66.968 dB, RGB 64.719 dB
+old_town_cross/tff_y6 pair B~genuine: Y 39.085 dB, RGB 35.332 dB
+old_town_cross/tff_y6 pair C~genuine: Y 39.133 dB, RGB 35.362 dB
+wrote ../../../.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/old_town_cross_tff_y6.json
+== park_joy/tff_y6 (rc 0)
+genuine: genuine/interlaced_noRI/Event_バージョン 1_0001_0002 (found by file name)
+$ /opt/anaconda3/bin/python3 /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/tools/e9_eval.py park_joy/tff_y6 --test A=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_field/park_joy/tff_y6/out.mp4 --test B=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_field_f5/park_joy/tff_y6/out.mp4 --test C=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_field_f5q16/park_joy/tff_y6/out.mp4 --test genuine=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/genuine/interlaced_noRI/Event_バージョン 1_0001_0002 --out /Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/park_joy_tff_y6.json
+park_joy/tff_y6 input: Y 32.636 dB, RGB 30.593 dB (interior Y 32.636), alignment best +0,+0 (11.2 s)
+park_joy/tff_y6 A: Y 30.932 dB, RGB 26.813 dB (interior Y 30.892), alignment best +0,+0 (10.8 s)
+park_joy/tff_y6 B: Y 31.155 dB, RGB 27.027 dB (interior Y 31.115), alignment best +0,+0 (10.9 s)
+park_joy/tff_y6 C: Y 30.183 dB, RGB 26.511 dB (interior Y 30.142), alignment best +0,+0 (10.8 s)
+park_joy/tff_y6 genuine: Y 34.166 dB, RGB 31.325 dB (interior Y 34.151), alignment best +0,+0 (14.1 s)
+park_joy/tff_y6 pair A~B: Y 56.025 dB, RGB 50.307 dB
+park_joy/tff_y6 pair A~C: Y 47.604 dB, RGB 45.405 dB
+park_joy/tff_y6 pair A~genuine: Y 33.377 dB, RGB 29.048 dB
+park_joy/tff_y6 pair B~C: Y 45.563 dB, RGB 43.886 dB
+park_joy/tff_y6 pair B~genuine: Y 33.721 dB, RGB 29.365 dB
+park_joy/tff_y6 pair C~genuine: Y 32.271 dB, RGB 28.602 dB
+wrote ../../../.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/park_joy_tff_y6.json
+== sintel/tff_y3 (rc 0)
+genuine: genuine/interlaced_noRI/Event_バージョン 1_0001_0003 (found by file name)
+$ /opt/anaconda3/bin/python3 /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/tools/e9_eval.py sintel/tff_y3 --test A=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_field/sintel/tff_y3/out.mp4 --test B=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_field_f5/sintel/tff_y3/out.mp4 --test C=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_field_f5q16/sintel/tff_y3/out.mp4 --test genuine=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/genuine/interlaced_noRI/Event_バージョン 1_0001_0003 --out /Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/sintel_tff_y3.json
+sintel/tff_y3 input: Y 39.006 dB, RGB 36.959 dB (interior Y 39.005), alignment best +0,+0 (10.9 s)
+sintel/tff_y3 A: Y 40.392 dB, RGB 36.259 dB (interior Y 40.388), alignment best +0,+0 (10.1 s)
+sintel/tff_y3 B: Y 40.044 dB, RGB 35.999 dB (interior Y 40.032), alignment best +0,+0 (10.2 s)
+sintel/tff_y3 C: Y 40.029 dB, RGB 35.987 dB (interior Y 40.017), alignment best +0,+0 (10.2 s)
+sintel/tff_y3 genuine: Y 44.827 dB, RGB 42.607 dB (interior Y 44.799), alignment best +0,+0 (13.3 s)
+sintel/tff_y3 pair A~B: Y 56.926 dB, RGB 52.332 dB
+sintel/tff_y3 pair A~C: Y 56.835 dB, RGB 52.268 dB
+sintel/tff_y3 pair A~genuine: Y 41.933 dB, RGB 37.273 dB
+sintel/tff_y3 pair B~C: Y 71.709 dB, RGB 68.206 dB
+sintel/tff_y3 pair B~genuine: Y 41.455 dB, RGB 36.954 dB
+sintel/tff_y3 pair C~genuine: Y 41.434 dB, RGB 36.939 dB
+wrote ../../../.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/sintel_tff_y3.json
+== sintel/tff_y6 (rc 0)
+genuine: genuine/interlaced_noRI/Event_バージョン 1_0001_0004 (found by file name)
+$ /opt/anaconda3/bin/python3 /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/tools/e9_eval.py sintel/tff_y6 --test A=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_field/sintel/tff_y6/out.mp4 --test B=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_field_f5/sintel/tff_y6/out.mp4 --test C=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/ours_field_f5q16/sintel/tff_y6/out.mp4 --test genuine=/Users/seitan/Desktop/work/reverse/work/omo/wp_e9/genuine/interlaced_noRI/Event_バージョン 1_0001_0004 --out /Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/sintel_tff_y6.json
+sintel/tff_y6 input: Y 33.077 dB, RGB 31.103 dB (interior Y 33.071), alignment best +0,+0 (10.6 s)
+sintel/tff_y6 A: Y 36.367 dB, RGB 33.175 dB (interior Y 36.403), alignment best +0,+0 (10.0 s)
+sintel/tff_y6 B: Y 36.449 dB, RGB 33.254 dB (interior Y 36.469), alignment best +0,+0 (10.0 s)
+sintel/tff_y6 C: Y 36.448 dB, RGB 33.251 dB (interior Y 36.468), alignment best +0,+0 (10.2 s)
+sintel/tff_y6 genuine: Y 39.815 dB, RGB 37.858 dB (interior Y 39.809), alignment best +0,+0 (13.7 s)
+sintel/tff_y6 pair A~B: Y 56.805 dB, RGB 52.082 dB
+sintel/tff_y6 pair A~C: Y 56.7 dB, RGB 52.031 dB
+sintel/tff_y6 pair A~genuine: Y 38.148 dB, RGB 34.531 dB
+sintel/tff_y6 pair B~C: Y 72.544 dB, RGB 68.915 dB
+sintel/tff_y6 pair B~genuine: Y 38.255 dB, RGB 34.628 dB
+sintel/tff_y6 pair C~genuine: Y 38.254 dB, RGB 34.626 dB
+wrote ../../../.claude/worktrees/aft2/work/omo/wp_e9/eval/rerun_f5/sintel_tff_y6.json

@@ -10,6 +10,7 @@
 #include "nv_aft.h"
 #include "nv_curve.h"
 #include "nv_flat.h"
+#include "nv_lzma.h"
 #include "nv_ndimage.h"
 #include "nv_profile.h"
 #include "nv_spatial.h"
@@ -175,6 +176,14 @@ int nvc_aft(const float* rgb, int W, int H, uint8_t* prof, int mode, int threads
         return nva::auto_fine_tune(rgb, W, H, prof, mode, nullptr, 0, threads, out3, nullptr, nullptr, cb);
     } catch (...) {
         return -1;
+    }
+}
+
+void nvc_aft_input16(const float* in, size_t n, float* out) {
+    const std::vector<uint8_t> q = nvlz::plane_int16(in, n);
+    for (size_t i = 0; i < n; ++i) {
+        const uint16_t u = static_cast<uint16_t>(q[2 * i] | (q[2 * i + 1] << 8));   // little endian ("<i2")
+        out[i] = static_cast<float>(static_cast<int16_t>(u)) / 16.0f;
     }
 }
 

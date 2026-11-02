@@ -1,7 +1,8 @@
 // e9_profile_fields - the C++ UI's (INT-3) profile and processing parameters of an interlaced clip, as MainWindow
 // builds them after loading it with the Video Scan Type set and the default Preferences: Auto Profile (Current Frame)
-// on the fields (fields.h build_profile_fields, "Profiled with" Two fields / One field), Auto Fine-Tune on the
-// profile's field image (profile_image), and MainWindow::proc_params = AppState::backend + P["interlace"].
+// on the fields (fields.h build_profile_fields, "Profiled with" Two fields / One field), Auto Fine-Tune as
+// MainWindow::auto_fine_tune does it (fields.h run_aft_fields; aft2-callers 2026-11-02: "Two fields" on both fields
+// stacked), and MainWindow::proc_params = AppState::backend + P["interlace"].
 // The frames are read as open_video reads an interlaced clip (read_filter + interlaced_vf).
 //
 //   e9_profile_fields VIDEO OUTDIR F FIRST KIND VARIANT...
@@ -63,8 +64,8 @@ int main(int argc, char** argv) {
         ps.base = base;
         st.set_profile(ps, "Auto Profile");
         const int af = aft_frame(st.profile.base, frames.size());
-        const Frame img = profile_image(st.profile.base, frames[static_cast<size_t>(af)]);
-        PyObj a = run_aft(st.profile.base, img, full_range, matrix, CancelFn());
+        // MainWindow::auto_fine_tune (aft2-callers): "Two fields" = both fields stacked, the first in time on top
+        PyObj a = run_aft_fields(st.profile.base, frames[static_cast<size_t>(af)], full_range, matrix, CancelFn());
         st.set_profile(after_aft(st.profile, a), "Auto Fine-Tune");
         write_file(out + "/ui_profile.json", st.effective()->dump(1));
         write_file(out + "/nvprof.json", st.profile.to_json().dump(1));

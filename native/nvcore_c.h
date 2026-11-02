@@ -19,6 +19,7 @@
 #ifndef NVCORE_C_H
 #define NVCORE_C_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -30,7 +31,9 @@ extern "C" {
  * argument or block changed meaning, and their only caller (qtui) links the same build of libnvcore.
  * INT-2: nvc_temporal_shift is an addition of the same kind and keeps version 3 (repro/nv_native.py requires exactly 3
  * and does not call it; a caller that needs it looks the symbol up).
- * Q1 (2026-11-02): nvc_quality_numbers_pinned (nvcore_c_ui.h) is an addition of the same kind (version 3). */
+ * Q1 (2026-11-02): nvc_quality_numbers_pinned (nvcore_c_ui.h) is an addition of the same kind (version 3).
+ * AFT callers (2026-11-02): nvc_aft_input16 is an addition of the same kind (version 3; repro/nv_native.py looks it up
+ * and runs the Python AFT when it is missing). */
 #define NVC_PROF_I 4
 #define NVC_PROF_D 82
 #define NVC_PAR_I 4
@@ -66,6 +69,11 @@ int nvc_profile_build_cancel(const float* rgb, int W, int H, int mode, int x, in
  * 2 cancelled, 3 model error). */
 int nvc_aft(const float* rgb, int W, int H, uint8_t* prof, int mode, int threads, nvc_cancel_fn cancel,
             float* out3);
+
+/* nv_aft_v5.to_internal16: the genuine's 16-bit image type FUN_009f0554 (nvlz::plane_int16: rint(x * 16) ties to even,
+ * int16 saturation, NaN -> 0) read back as x / 16, on n float32 values (out may be in).  apply_aft passes its RGB through
+ * this before nvc_profile_build / nvc_aft (Phase C: the genuine's AFT and BuildNoiseModel run on this type). */
+void nvc_aft_input16(const float* in, size_t n, float* out);
 
 /* nva::combine (the part of nv_aft_v5.apply_aft after the AFT call).  curves: Y, Cb, Cr float32 [n] each
  * (np.array(prof["curve"][c], float32)).  Outputs: cw[9], face[3 * n], curve_out[3 * n], sigma[3],

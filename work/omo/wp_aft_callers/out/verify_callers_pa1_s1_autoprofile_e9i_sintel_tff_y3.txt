@@ -1,0 +1,8 @@
+lib /Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/native/libnvcore.dylib
+== pa1_s1_autoprofile  1920x1080  area (y, x, h, w) (160, 616, 128, 128)  [Phase C locate_sample]
+   C        model     0/12030  max ulp        5  0-ulp 19/27  flags 27/27  max|rel| 5.95e-07  (7.3 s)
+   -q16     model  3310/12030  max ulp  2782736  0-ulp  0/27  flags 27/27  max|rel| 2.27e-01
+== e9i_sintel_tff_y3  1920x1080  area (y, x, h, w) (656, 1784, 96, 96)  [locate_i.log: bottom field y 116 x 1784]
+   C        model     0/12030  max ulp        1  0-ulp 24/27  flags 27/27  max|rel| 1.16e-07  (0.4 s)
+   -q16     model  3358/12030  max ulp    25852  0-ulp  0/27  flags 27/27  max|rel| 2.99e-03
+   rev      model     0/12030  max ulp   235969  0-ulp  0/27  flags 27/27  max|rel| 2.54e-02  (bottom field over top, area (116, 1784, 96, 96))

@@ -1980,19 +1980,17 @@ void MainWindow::auto_fine_tune() {
         return;
     }
     const PyObj base = state->profile.base;
-    // INT-3: a field profile is fine-tuned on its field image
+    // INT-3: a field profile is fine-tuned on its field image ("Two fields": both fields stacked, fields.h)
     const Frame* fr = &frames[static_cast<size_t>(aft_frame(base, frames.size()))];
-    std::shared_ptr<const Frame> img;
-    if (profile_parity(base) >= 0) img = std::make_shared<const Frame>(profile_image(base, *fr));
     const bool frr = full_range;
     const std::string mat = matrix;
     busy("aft", true);
     say(U("Auto Fine-Tune (static AFT port, several seconds)…"));
     runner->submit(
         "aft", QString("aft"),
-        [base, fr, img, frr, mat](Task& task) -> std::any {
+        [base, fr, frr, mat](Task& task) -> std::any {
             if (task.cancelled) throw Cancelled();
-            PyObj res = run_aft(base, img ? *img : *fr, frr, mat, [&task] { return task.cancelled.load(); });
+            PyObj res = run_aft_fields(base, *fr, frr, mat, [&task] { return task.cancelled.load(); });
             if (task.cancelled) throw Cancelled();
             return res;
         },

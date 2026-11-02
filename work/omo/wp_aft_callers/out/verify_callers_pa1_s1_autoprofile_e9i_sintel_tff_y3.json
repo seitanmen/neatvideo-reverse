@@ -1,0 +1,60 @@
+{
+ "pa1_s1_autoprofile": {
+  "area_yxhw": [
+   160,
+   616,
+   128,
+   128
+  ],
+  "area_from": "Phase C locate_sample",
+  "c": {
+   "model_diff": 0,
+   "max_ulp": 5,
+   "zero_ulp": 19,
+   "flags": 27,
+   "max_rel": 5.947794070239641e-07,
+   "measured": 19
+  },
+  "neg_float": {
+   "model_diff": 3310,
+   "max_ulp": 2782736,
+   "zero_ulp": 0,
+   "flags": 27,
+   "max_rel": 0.22718050088786773,
+   "measured": 19
+  }
+ },
+ "e9i_sintel_tff_y3": {
+  "area_yxhw": [
+   656,
+   1784,
+   96,
+   96
+  ],
+  "area_from": "locate_i.log: bottom field y 116 x 1784",
+  "c": {
+   "model_diff": 0,
+   "max_ulp": 1,
+   "zero_ulp": 24,
+   "flags": 27,
+   "max_rel": 1.1623233355704183e-07,
+   "measured": 9
+  },
+  "neg_float": {
+   "model_diff": 3358,
+   "max_ulp": 25852,
+   "zero_ulp": 0,
+   "flags": 27,
+   "max_rel": 0.002992642951024701,
+   "measured": 9
+  },
+  "neg_reversed": {
+   "model_diff": 0,
+   "max_ulp": 235969,
+   "zero_ulp": 0,
+   "flags": 27,
+   "max_rel": 0.025437937669511957,
+   "measured": 9
+  }
+ }
+}

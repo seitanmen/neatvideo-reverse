@@ -160,6 +160,20 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
 | Flicker (本家出力に全体補正なし) | 既定オフ (`--flicker R` で移動平均ゲイン) | 120f 区間平均ゲインが既定オン (継ぎ目で不連続) |
 | 色処理 (YCbCr) | ネイティブ YUV、入出力両側に色タグ | rgb24 経由 BT.601・タグなし (Y −1.7 のずれ) |
 
+- AFT の呼び出し側 (2026-11-02、Phase C `work/omo/wp_aft_runtime/REPORT.md` を受けて。記録は `work/omo/wp_aft_callers/REPORT.md`):
+  `nv_aft_v5.apply_aft`・`nv_native.apply_aft` (C ABI `nvc_aft_input16`、ABI 版 3 のまま追加)・qtui `run_aft` は、AFT 用の BuildNoiseModel と AFT に
+  渡す RGB を本家の 16 ビット型 (rint(x·16)、int16 飽和、NaN→0、/16。`nv_lzma.plane_int16` と同じ) にする (本家がこの型で AFT を動かすというのは
+  Phase C の推定、数値一致から)。v5 の曲線・FindFlatArea・`build_profile_v5` は変えていない。qtui の "Two fields" プロファイルは、先のフィールドの RGB の下にもう一方のフィールドの RGB を積んだ画像で AFT を 1 回
+  (`fields.h` `run_aft_fields`。本家の TFF で観測、BFF で先のフィールドを上にするのは推定。"One field" は従来どおりそのフィールド、本家のデータなし)。
+  本番の入口 (Python・C ABI、両者はバイト一致) で本家の .dnp 14 本と照合: 旗 27/27・曲線 ≤5 ulp、モデル 12,030 語の差は 12 本で 0 (old_town_cross のプログレッシブ 2 本は約 3,100 語。見本のない .dnp で、入力が数画素違うとみられる。曲線は ≤3 ulp)。
+  照合したのは apply_aft から先 (prof は平らな曲線の stub、領域は本家の見本を直接渡したので FindFlatArea は通っていない)。2 回目以降の AFT は従来どおり
+  AFT 前の曲線から作り直す (本家は前回の補間ビンを持ち越す。未変更)
+  - 制限: 本家の Two fields の見本は e9i の 4 本中 2 本が後のフィールドにあるが、repro の Two fields は先のフィールドでしか FindFlatArea しない。
+    本家と一致するのは領域が同じ (先のフィールドにある) ときだけ。後のフィールドの領域は今の `prof["area"]` (先のフィールドの座標) では表せない
+  - qtui の新規プロファイルは、AFT を使わなくても G1 の `ui_rgb_weights` を 16 ビットの RGB から作る (AFT 後の `aft_color_weights` と等しく保つため)。
+    このため AFT 前の R/G/B イコライザの編集の結果がわずかに変わる。編集のない処理は変わらず、旧い JSON は保存済みの重みを読む。
+    「AFT を使わない経路は不変」(変更前の libnvcore とハッシュ 8/8 一致) の範囲は Python と libnvcore (`backend.build_profile`・`process_frame`) で、qtui のこの重みは含まない
+
 ### Quality (genuine measure) (2026-10-26 統括が g を解読、2026-11-02 に欄の意味を訂正)
 - 式: `q = s11·P·(S/5)·0.5^クリップ数`、表示は `qRound(q·100) + "%"`
   (Profile Viewer は double・Simple/Advanced パネルは float の qRound。RS 0xa4acf8 / Demo 0x9bb3e0、
@@ -521,6 +535,7 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   `CHROMA_GAIN` は temporal モードの曲線にも掛かる (較正は auto モードで実施)。白色の色差ノイズの合成素材では色差をやや強く平滑化する。
 - 平坦部が全くなく静止画素も 10% 未満の素材では、帯域形状が単一フレームの事前分布頼みになる (本家も「詳細のない領域で再プロファイル」と警告する状況)。
 - 本家がノイズ除去に使う輝度別係数 (AutoFineTune) は、保護判定のためハーネスで実行できず、数値は未取得 (アルゴリズムは §6.5)。
+  2026-11-02: Phase C で本家の .dnp (Resolve 上の実行結果) と照合し、移植は入力を 16 ビット型にすれば ≤6 ulp で一致 (16 ビット型は推定、数値一致から)。呼び出し側も合わせた (§4 の表の後)。
   v5 の曲線と本家の EstimateNoiseLevelCurve の比は test_v02 で 1.04〜1.20、test.mp4 で 0.73〜1.01 (§6.5)。AutoFineTune の係数との一致は未確認 (静的移植の曲線を使う変種は区間 A / B で v5 と同等、§6.3)。
 - `find_flat_area` は、曲線・IsClip・帯域測度・候補・スコアまで、1 スレッドで動かした本家と演算順までビット一致する。照合は本家が完了する入力に限る
   (48px 未満のフレームでは本家が落ちる。§6.5)。本家の照合は FindFlatArea を 1 プロセス 1 回だけ呼んで行った
