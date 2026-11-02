@@ -2,7 +2,8 @@
 #
 #   make -C native && python3 native/verify_quality.py
 #
-# Generates structured + random profile blobs, computes Quality/Completeness with the
+# Generates structured + random profile blobs (after the 13 decoded genuine profiles of
+# native/testdata/genuine_quality.json, whose screen values are checked too), computes Quality/Completeness with the
 # Python ports (reference/python/nv_ui_qt/quality.py + quality_draft.py + repro/nv_flat.py), runs the
 # C++ binary over the same blobs, and compares the results BIT FOR BIT.
 import os
@@ -69,16 +70,23 @@ def make_blob(rng, i):
             elif r < 0.2:
                 lvl = F32(0.0)
             struct.pack_into("<6f", b, o, lvl, 1.0, 1.0, 1.0, 1.0, 1.0)
+            r = rng.random()
+            if r < 0.3:
+                struct.pack_into("<I", b, o + 0x18, 1)   # valid (measured)
+            elif r < 0.35:                               # valid as a u32: only an upper byte set
+                b[o + 0x18 + int(rng.integers(1, 4))] = int(rng.integers(1, 256))
             if rng.random() < 0.3:
                 b[o + 0x1C] = rng.integers(0, 3)         # marker (sometimes > 1)
+            if rng.random() < 0.05:
+                b[o + 0x1F] = int(rng.integers(1, 256))  # the unused byte (0x6d in genuine files)
             if rng.random() < 0.1:
                 b[o + 0x1D] = 1
             if rng.random() < 0.1:
                 b[o + 0x1E] = 1
-            if rng.random() < 0.1:
-                b[o + 0x20] = rng.integers(0, 255)       # poisons the neighbour's next-byte branch
             if rng.random() < 0.08:
-                struct.pack_into("<f", b, o + 4, 0.0)    # zero scale word
+                struct.pack_into("<f", b, o + 4, 0.0)    # zero scale word (not read)
+            if rng.random() < 0.03:
+                struct.pack_into("<f", b, o, float("nan") if rng.random() < 0.5 else -0.0)
     b[0xC2A4] = rng.integers(0, 2)
     struct.pack_into("<ii", b, 0xC2C0,
                      int(rng.integers(0, 600)), int(rng.integers(0, 600)))
@@ -126,10 +134,89 @@ def expected(blob):
     return float(q), float(g_py)
 
 
+GENUINE = os.path.join(HERE, "testdata", "genuine_quality.json")
+
+
+def genuine_blobs():
+    """The 13 decoded genuine profiles (native/testdata/genuine_quality.json) with their screen values."""
+    import json
+    doc = json.load(open(GENUINE))
+    out = []
+    for c in doc["cases"]:
+        b = bytearray(doc["blob_size"])
+        for off, hx in c["ranges"]:
+            d = bytes.fromhex(hx)
+            b[off:off + len(d)] = d
+        out.append((c["name"], c["quality"], c["completeness"], bytes(b)))
+    return out
+
+
+def pct(x):
+    """quality.profile_numbers' qRound(x * 100) (double) and the panels' float qRound(x * 100.0f)."""
+    return int(np.floor(float(x) * 100.0 + 0.5)), int(np.floor(float(F32(F32(x) * F32(100.0))) + 0.5))
+
+
+# The repro state each genuine case maps to (quality._curve_blob): the AFT run's flags as nv_aft_v5.apply_aft stores
+# them (marker = the u32 at +0x1c != 0) taken from the decoded file, Reset, or the AFT state of s5 plus the manually
+# edited bins (pinned) of s6 / s7.
+STATES = {"pa1_s3_resetft": ("reset", None, {}), "pa1_s6_manual_R4_up": ("aft", "pa1_s5_aft_again", {0: {4}}),
+          "pa1_s7_manual_G2_down": ("aft", "pa1_s5_aft_again", {0: {4}, 1: {2}})}
+
+
+def bins(blob):
+    """(valid, marker, clip, gt3) of the 27 bins, [c][k]."""
+    out = []
+    for c in range(3):
+        row = []
+        for k in range(9):
+            o = 0xBF44 + 0x120 * c + 0x20 * k
+            row.append((struct.unpack_from("<I", blob, o + 0x18)[0] != 0, blob[o + 0x1C] != 0, blob[o + 0x1D] != 0,
+                        blob[o + 0x1E] != 0))
+        out.append(row)
+    return out
+
+
+def mapping_checks(gen):
+    """quality._curve_blob writes the genuine's bin bytes (valid / marker / clip / >3.0) for the repro state of each
+    genuine case, so its g gives the genuine's Completeness.  The frame is synthetic (only the curve is compared)."""
+    from nv_ui_qt import quality as uiq
+    blobs = {name: b for name, _, _, b in gen}
+    y = np.full((64, 64), 120.0, F32) + np.random.default_rng(1).normal(0, 3, (64, 64)).astype(F32)
+    planes = [(y, np.full((32, 32), 128.0, F32), np.full((32, 32), 128.0, F32))]
+    bad = 0
+    for name, _, wc, blob in gen:
+        kind, src, pins = STATES.get(name, ("aft", name, {}))
+        base = {"area": [0, 0, 64], "aft_applied": True}
+        if kind == "reset":
+            base["aft_reset"] = True
+        else:
+            st = bins(blobs[src])
+            base["aft_bin_flags"] = {
+                "marker": [[bool(st[c][k][1] or st[c][k][2] or st[c][k][3]) for k in range(9)] for c in range(3)],
+                "clip": [[bool(st[c][k][2]) for k in range(9)] for c in range(3)],
+                "gt3": [[bool(st[c][k][3]) for k in range(9)] for c in range(3)]}
+
+        class PS:
+            pass
+        ps = PS()
+        ps.base, ps.factors, ps.tune = base, [[1.0] * 9 for _ in range(3)], {}
+        ps.pinned = [set(pins.get(c, ())) for c in range(3)]
+        mine = bytes(uiq._curve_blob(ps, planes, False, "bt709"))
+        same = bins(mine) == bins(blob)
+        cp = pct(uiq.genuine_g(mine))[0]
+        ok = same and cp == wc
+        bad += not ok
+        print(f"  mapping {name:28s} bins {'equal' if same else 'DIFFER'}  completeness {cp:3d}% (screen {wc:3d}%)  "
+              f"{'OK' if ok else 'MISMATCH'}")
+    print(f"bin mapping: {len(gen) - bad}/{len(gen)} match")
+    return bad
+
+
 def main():
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 4000
     rng = np.random.default_rng(0xC0FFEE)
-    blobs = [make_blob(rng, i) for i in range(n)]
+    gen = genuine_blobs()
+    blobs = [b for _, _, _, b in gen] + [make_blob(rng, i) for i in range(n)]
     inp = os.path.join(HERE, "tmp_blobs.bin")
     outp = os.path.join(HERE, "tmp_results.bin")
     exe = os.path.join(HERE, "nv_quality_test")
@@ -156,7 +243,22 @@ def main():
             if blob[0xBF34] != 0:
                 bad += 1
                 print(f"MISMATCH blob {i}: C++ says invalid, Python computes")
+    # the genuine screens: Python and C++ give the Quality / Completeness the genuine UI showed
+    from nv_ui_qt import quality as uiq
+    gbad = 0
+    for i, (name, wq, wc, blob) in enumerate(gen):
+        v, q, c = struct.unpack_from("<Bff", res, 9 * i)
+        pq, pg = uiq.quality_from_blob(blob), uiq.genuine_g(blob)
+        got = {pct(pq), pct(q)}, {pct(pg), pct(c)}
+        ok = v == 1 and got == ({(wq, wq)}, {(wc, wc)})
+        gbad += not ok
+        print(f"  genuine {name:28s} screen {wq:3d}% / {wc:3d}%  python {pct(pq)[0]:3d}% / {pct(pg)[0]:3d}%  "
+              f"c++ {pct(q)[0]:3d}% / {pct(c)[0]:3d}%  {'OK' if ok else 'MISMATCH'}")
+    print(f"genuine screens: {len(gen) - gbad}/{len(gen)} match")
+    gbad += mapping_checks(gen)
+    n = len(blobs)
     print(f"{n - bad}/{n} bit-exact" + ("" if bad == 0 else f"  ({bad} MISMATCHES)"))
+    bad += gbad
     for p in (inp, outp):
         os.remove(p)
     return 1 if bad else 0
@@ -167,9 +269,9 @@ if __name__ == "__main__":
 
 
 def debug_blob(i, n=4000):
-    """Regenerate blob i and dump both sides' components."""
+    """Regenerate blob i (the numbering of main: the genuine cases first) and dump both sides' components."""
     rng = np.random.default_rng(0xC0FFEE)
-    blobs = [make_blob(rng, k) for k in range(n)]
+    blobs = [b for _, _, _, b in genuine_blobs()] + [make_blob(rng, k) for k in range(n)]
     blob = blobs[i]
     p = os.path.join(HERE, "tmp_debug_blob.bin")
     open(p, "wb").write(blob)

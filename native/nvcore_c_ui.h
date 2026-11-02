@@ -45,6 +45,11 @@ void nvc_not_uniform(const float* rgb, int h, int w, int* bad3, int* clip3);
  * Returns 1 and the two percents (qRound(q * 100), qRound(g * 100)), or 0 (None). */
 int nvc_quality_numbers(const float* rgb, int H, int W, const int* area4, const double* factors27,
                         const double* tune4, int aft, int reset, const uint8_t* flags81, int* q_pct, int* c_pct);
+/* the same with pinned27 = ps.pinned ([c][k] 0 / 1, NULL = none): a manually edited bin counts as the genuine's
+ * edit writes it (valid 0, marker 1).  nvc_quality_numbers = this with NULL (an addition; NVC_ABI_VERSION stays 3). */
+int nvc_quality_numbers_pinned(const float* rgb, int H, int W, const int* area4, const double* factors27,
+                               const double* tune4, int aft, int reset, const uint8_t* flags81,
+                               const uint8_t* pinned27, int* q_pct, int* c_pct);
 
 /* backend.finish's Mix with original (nvs::mix_v5 = nvfilter.process_frame_v5's): out[c] = o + m * (src - o) on
  * the planes Y (H x W), Cb, Cr (Hc x Wc), in place; nothing for m <= 0. */

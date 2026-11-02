@@ -78,10 +78,13 @@ void np_interp(const double* xp, const double* fp, int n, const double* x, int m
 //   tune[4] = ps.tune all, Y, Cb, Cr (1.0 when missing);
 //   aft = base["aft_applied"], reset = base["aft_reset"];
 //   flags[81] = the stored bin flags marker[27], clip[27], gt3[27] ([c][k], c-major) used when aft and not reset
-//   (nullptr with aft = the older profiles without "aft_bin_flags": every marker set, no clip / gt3).
+//   (nullptr with aft = the older profiles without "aft_bin_flags": every marker set, no clip / gt3);
+//   pinned[27] = ps.pinned as 0 / 1 ([c][k], c-major; nullptr = none): the manually edited bins.
+// The curve bin bytes (valid +0x18, marker +0x1c, clip +0x1d, >3.0 +0x1e) are mapped as quality._curve_blob does.
 // Returns false when quality_from_blob gives None; else *q_pct = qRound(q * 100), *c_pct = qRound(g * 100) as
 // profile_numbers computes them (floor(x * 100 + 0.5) in double).
 bool quality_numbers(const float* rgb, int H, int W, const int area[4], const double factors[27],
-                     const double tune[4], bool aft, bool reset, const uint8_t* flags, int* q_pct, int* c_pct);
+                     const double tune[4], bool aft, bool reset, const uint8_t* flags, const uint8_t* pinned,
+                     int* q_pct, int* c_pct);
 
 }  // namespace nvu

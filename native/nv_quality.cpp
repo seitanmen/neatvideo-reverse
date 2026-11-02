@@ -50,6 +50,8 @@ float size_term(int32_t W, int32_t H, int32_t fallback) {
 
 }  // namespace
 
+// The genuine reads x1 = p + 0xbf40 + 0x20k (+0x120c) at +0x22/+0x21/+0x4/+0x1c/+0x20; the bins start at +0xbf44,
+// so these are the bin bytes +0x1e/+0x1d/+0x00/+0x18/+0x1c (corrected 2026-11-02, quality.py docstring).
 float genuine_g(const uint8_t* p, size_t len) {
     (void)len;
     float s = 0.0f;
@@ -61,17 +63,17 @@ float genuine_g(const uint8_t* p, size_t len) {
             } else if (b[0x1d] != 0) {     // clip flag
                 s = s + NEG27;
             } else {
-                float w1;
-                std::memcpy(&w1, b + 4, 4);            // word at +0x4 (first scale)
-                if (w1 == 0.0f) {
+                float lvl;
+                std::memcpy(&lvl, b, 4);               // level word (+0x00)
+                if (lvl == 0.0f) {
                     s = s + NEG81;
                 } else {
-                    uint32_t marker;
-                    std::memcpy(&marker, b + 0x1c, 4); // AFT marker word
-                    if (marker != 0) {
+                    uint32_t valid;
+                    std::memcpy(&valid, b + 0x18, 4);  // valid: measured from the tiles
+                    if (valid != 0) {
                         s = s + POS27;
-                    } else if (b[0x20] != 0) {         // next bin's level byte 0
-                        s = s + POS81;                 // (ch2 bin8 reads 0xc2a4)
+                    } else if (b[0x1c] != 0) {         // marker: filled in (ch2 bin8 reads 0xc2a0)
+                        s = s + POS81;
                     }
                 }
             }

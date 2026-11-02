@@ -556,6 +556,8 @@ def quality_checks(app, win, wait, idle, outdir):
             for wd in range(6):
                 struct.pack_into("<I", b, o + 4 * wd,
                                  struct.unpack("<I", struct.pack("<f", stv.get("scale", 1.0)))[0])
+            if "level" in stv:
+                struct.pack_into("<f", b, o, stv["level"])
             if stv.get("valid"):
                 struct.pack_into("<I", b, o + 0x18, 1)
             b[o + 0x1c] = stv.get("marker", 0)
@@ -566,31 +568,33 @@ def quality_checks(app, win, wait, idle, outdir):
     def fresh(**kw):
         return {(c, k): dict(**kw) for c in range(3) for k in range(9)}
 
+    # bin bytes from +0xbf44: level +0x00, valid u32 +0x18, marker +0x1c, clip +0x1d, >3.0 +0x1e (2026-11-02)
     g = float(genuine_g(blob(fresh())))
-    check("Quality g: fresh profile = 1/81 (LZMA flag path only)", abs(g - 1 / 81) < 1e-9, f"{g}")
+    check("Quality g: no valid / marker bin (Reset) = 0 (0xc2a4 not read)", g == 0.0, f"{g}")
     stv = fresh()
-    for key in stv:
-        stv[key]["marker"] = 1
+    for c, k in ((0, 8), (1, 7), (2, 5)):
+        stv[(c, k)]["valid"] = 1
     g = float(genuine_g(blob(stv)))
-    check("Quality g: after AFT = float32 27*(1/27)", abs(g - 0.999999762) < 1e-6, f"{g}")
-    stv = fresh()
-    for key in stv:
-        stv[key]["marker"] = 1
+    check("Quality g: fresh build (the mean's bin valid per channel) = 3/27", abs(g - 1 / 9) < 1e-7, f"{g}")
+    stv = fresh(valid=1)
+    g = float(genuine_g(blob(stv)))
+    check("Quality g: every bin measured = float32 27*(1/27)", abs(g - 0.999999762) < 1e-6, f"{g}")
+    stv = fresh(valid=1)
     stv[(1, 4)]["gt3"] = 1
     stv[(2, 7)]["gt3"] = 1
     g = float(genuine_g(blob(stv)))
     check("Quality g: two >3.0 flags -> 25*(+1/27) + 2*(-1/27) = 23/27",
           abs(g - 23 / 27) < 1e-6, f"{g}")
+    g = float(genuine_g(blob(fresh(marker=1))))
+    check("Quality g: every bin filled in (marker) = 27*(1/81)", abs(g - 1 / 3) < 1e-6, f"{g}")
     stv = fresh()
     stv[(0, 3)]["clip"] = 1
-    check("Quality g: clip flag clamps to 0 (1/81 - 1/27 < 0)", float(genuine_g(blob(stv))) == 0.0)
+    check("Quality g: clip flag clamps to 0 (-1/27)", float(genuine_g(blob(stv))) == 0.0)
     stv = fresh(scale=0.0)
-    check("Quality g: all-empty clamps to 0", float(genuine_g(blob(stv))) == 0.0)
-    stv = fresh()
-    stv[(0, 5)]["scale"] = 0.0                      # (0,5) itself -1/81
-    stv[(2, 8)]["clip"] = 1                         # -1/27, kills the 0xc2a4 +1/81 path
-    check("Quality g: zero scale word + clip flag -> -4/81 clamps to 0",
-          float(genuine_g(blob(stv))) == 0.0)
+    check("Quality g: all levels 0 clamps to 0", float(genuine_g(blob(stv))) == 0.0)
+    stv = fresh(valid=1, scale=0.0, level=1.0)
+    g = float(genuine_g(blob(stv)))
+    check("Quality g: the scale words are not read", abs(g - 0.999999762) < 1e-6, f"{g}")
 
     # the label: profile exists (auto-AFT ran), frames in memory
     st = win.state
@@ -600,9 +604,8 @@ def quality_checks(app, win, wait, idle, outdir):
     pct_aft = profile_quality(st.profile, win.frames, win.full_range, win.matrix)
     check("Quality: label matches recomputation",
           win.profile_page.panel.quality.text() == f"{pct_aft}%", f"{pct_aft}")
-    # AFT stores per-bin flags; markers only where the AFT run left them (measured bins
-    # keep 0). All-marked happens when nothing was measured (small/flat area); partial marking
-    # otherwise. The genuine fit (23/27 + exact +1/81 series) is in QUALITY.md 8.4-8.5.
+    # AFT stores per-bin flags; markers only on the bins the AFT run filled in (measured bins
+    # keep 0 and count as valid). Checked against 13 genuine screens in native/verify_quality.py.
     flags = st.profile.base.get("aft_bin_flags")
     n_marked = sum(1 for ch in flags["marker"] for v in ch) if flags else -1
     check("Quality: AFT bin flags stored (3x9 bools each)",
@@ -626,18 +629,18 @@ def quality_checks(app, win, wait, idle, outdir):
     fresh_ps.base.pop("ui_pre_aft", None)
     pct_fresh = profile_quality(fresh_ps, win.frames, win.full_range, win.matrix)
     comp_fresh = profile_completeness(fresh_ps, win.frames, win.full_range, win.matrix)
-    check("Quality: AFT raises the value (fresh s11 ~0.506 -> marked bins)", pct_fresh is not None and
+    check("Quality: AFT raises the value (fresh g = 3/27 -> measured / filled bins)", pct_fresh is not None and
           pct_fresh < pct_aft, f"fresh {pct_fresh} < aft {pct_aft}")
-    check("Completeness: fresh profile is 0-1% (unmarked bins, LZMA flag path at most)",
-          comp_fresh is not None and comp_fresh in (0, 1), f"{comp_fresh}")
-    # Reset Fine-Tuning: aft_reset clears the LZMA flag (0xc2a4) -> g = 0 -> Completeness 0%
+    check("Completeness: fresh profile is 11% (the mean's bin valid; 4 / 0% with clipped channels)",
+          comp_fresh is not None and comp_fresh in (11, 4, 0), f"{comp_fresh}")
+    # Reset Fine-Tuning: aft_reset clears every bin -> g = 0 -> Completeness 0%
     reset_ps = copy.deepcopy(st.profile)
     reset_ps.base = copy.deepcopy(st.profile.base)
     reset_ps.factors = [[1.0] * 9 for _ in range(3)]
     reset_ps.base["aft_reset"] = True
     reset_ps.base.pop("aft_bin_flags", None)
     qp_r, cp_r = profile_numbers(reset_ps, win.frames, win.full_range, win.matrix)
-    check("Completeness: after Reset the LZMA flag is cleared -> 0%",
+    check("Completeness: after Reset every bin is clear -> 0%",
           cp_r == 0, f"{cp_r}")
     check("Quality: after Reset only the curve term is gone (s11 = 0.5)",
           qp_r is not None and 0 < qp_r < pct_aft, f"{qp_r}")

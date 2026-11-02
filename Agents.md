@@ -160,34 +160,36 @@ NeatLab は特許を公開しておらず詳細は営業秘密のため、内部
 | Flicker (本家出力に全体補正なし) | 既定オフ (`--flicker R` で移動平均ゲイン) | 120f 区間平均ゲインが既定オン (継ぎ目で不連続) |
 | 色処理 (YCbCr) | ネイティブ YUV、入出力両側に色タグ | rgb24 経由 BT.601・タグなし (Y −1.7 のずれ) |
 
-### Quality (genuine measure) (2026-10-26 統括が g を解読して完成)
+### Quality (genuine measure) (2026-10-26 統括が g を解読、2026-11-02 に欄の意味を訂正)
 - 式: `q = s11·P·(S/5)·0.5^クリップ数`、表示は `qRound(q·100) + "%"`
   (Profile Viewer は double・Simple/Advanced パネルは float の qRound。RS 0xa4acf8 / Demo 0x9bb3e0、
   3 か所 (Simple/Advanced/Profile Viewer) とも同じ関数。解析と検証は `work/omo/coord/verify_quality/static/QUALITY.md`)
-- `s11 = 0.5·g + 0.5`。**g = 輝度曲線の完成度** (RS 0xa4b03c / Demo 0x9bb748。2026-10-26 に統括が解読。
-  入口・出口の難読化ブロックは大域語の記帳だけで浮動小数点の累積 s0 には触れない。RS と Demo は数値経路が
-  命令単位で一致)。27 ビン (3ch × 9) を (ビン, チャンネル) 順に float32 で加算:
-  ビンの旗 +0x1e (レベル > 3.0) → −1/27 / 旗 +0x1d (クリップ) → −1/27 / 段係数の語 (+0x4) が 0 → −1/81 /
-  AFT のマーカー (+0x1c の i32) ≠ 0 → +1/27 / 次のビンの語 0 の下位バイト ≠ 0 → +1/81
-  (ch2 のビン 8 は領域外の 0xc2a4 = LZMA 成功旗を読む) / それ以外 +0。戻り値は max(和, 0)
-- 新規プロファイルはマーカーなし → g = 1/81 (LZMA 旗の経路だけ)。AFT 後は未測定ビンにだけ
-  マーカー (測定ビンは 0 のまま)。Full frame の猫 = 23/27 (完成度 85%)、test.mp4 の auto 領域 = 19/27 (完成度 70%)。
-  完成度 = g×100 の表示も本家にあり (Simple/Advanced パネルと Profile Viewer)、UI に追加した
-- 本家観測と整合: 23% = 全面・AFT 前 (S/5 = 1.0、全面の Y 平坦度 ≈ 2.38) / 43% = 128² で Y 平坦度 ≈ 2.25
-  または ~160² / 65% = 全面 + AFT 後 (g = 23/27、Y 平坦度 ≈ 2.06)。Reset 直後は 35%/完成度 0% (g = 0。
-  新規の 1/81 とは違うので Reset ≠ 新規。機構は未解決で §8.6 に記録)。Reset 後の赤 4 ビン編集は
-  ちょうど +1/81/ビン (手動 Fine-Tune のマーカーなし書き込みが確定。+1/27 型は初段から不整合)
-- 再現側の写像: ビンのレベル語 = factors[k] × tune_all × tune_ch (未編集は 1.0)、
-  AFT 後のマーカー/クリップ/>3.0 旗は AFT ポート自身のバイトから `nv_aft_v5.apply_aft` が
-  prof["aft_bin_flags"] に保存したものを使う (フラグなしの旧保存は全マーカー代替)。
-  AFT 前の filled ビンに +0x18 = 1 と +0x1d = クリップ旗。レベル > 3.0 の手動編集には +0x1e。
-  Reset Fine-Tuning は base["aft_reset"] を立てて 0xc2a4 = 0 にする (構築直後の状態。本家の
-  コンストラクタ RS 0xa49e28 が LZMA 旗を消すため完成度 0%。新規ビルドは旗が立ったまま 1%。
-  機構は QUALITY.md §8.6 で解決済み)。次の AFT で aft_reset は消える
+- `s11 = 0.5·g + 0.5`。**g = 輝度曲線の完成度** (RS 0xa4b03c / Demo 0x9bb748。入口・出口の難読化ブロックは
+  大域語の記帳だけで浮動小数点の累積 s0 には触れない。RS と Demo は数値経路が命令単位で一致)。
+  ビン o = 0xbf44 + 0x120c + 0x20k の 27 個 (3ch × 9) を (ビン, チャンネル) 順に float32 で加算:
+  +0x1e (レベル > 3.0) ≠ 0 → −1/27 / +0x1d (クリップ) ≠ 0 → −1/27 / レベル (+0x00) = 0 → −1/81 /
+  有効 (+0x18 の u32 = タイルで測定済み) ≠ 0 → +1/27 / マーカー (+0x1c のバイト = 補間・外挿・手動で埋めた) ≠ 0 → +1/81 /
+  それ以外 +0。戻り値は max(和, 0)。0xc2a4 は読まない
+- **2026-11-02 訂正** (`work/omo/wp_genuine_capture/REPORT.md` §5、`work/omo/wp_quality_fix/REPORT.md`): 旧版は同じアドレスを
+  +0xbf40 基準で読み、レベルを「段係数 +0x4」、有効を「AFT マーカー +0x1c」、マーカーを「次のビンの語 0 / ch2 ビン 8 は 0xc2a4」と
+  4 バイトずらして名付けていた。訂正後の読みで本家の 13 画面の Quality・完成度がすべて一致する (復号した .dnp、
+  `native/testdata/genuine_quality.json`、`native/verify_quality.py`)。「新規 g = 1/81」「Reset はコンストラクタが 0xc2a4 を消す」
+  「手動 Fine-Tune はマーカーなし」は撤回
+- 状態ごとの値 (観測。.dnp の復号像): AFT 後 = 測定ビン数/27 + 埋めたビン数/81 (sintel σ3: 19 + 8 → 80%)、Reset = 全ビン有効 0・
+  マーカー 0 で 0%、手動編集 = そのビンを有効 0・マーカー 1 にしてレベルを書く (+1/27 → +1/81)。新規ビルド直後 (AFT 前) は
+  RS の UI では観測できない (Build / Auto Profile が AFT まで行う) ので、本家とビット一致の `nv_profile` から: 各チャンネルの
+  平均輝度のビンだけ有効 1 (+0x1d = クリップ旗) → g = 3/27 (完成度 11%)
+- 本家の旧い観測との整合 (QUALITY.md §0): Reset 直後 35%/0%・Reset 後の赤 4 ビン編集の +1/81 ずつは訂正後の読みどおり。
+  65%/85% は 21 測定 + 6 埋めと整合。23%/完成度 0% は g = 0 の状態 (新規ビルドではない) と整合し、どの状態かは不明
+- 再現側の写像 (`quality._curve_blob`、C++ は `native/nv_ui.cpp` の `quality_numbers`): レベル語 = factors[k] × tune_all × tune_ch
+  (未編集は 1.0)。AFT 後は prof["aft_bin_flags"] (`nv_aft_v5.apply_aft` が AFT ポートの +0x1c の u32 から作る) が偽のビンを有効、
+  真のビンをマーカー (クリップ/>3.0 旗はそのまま。旗のない旧い保存は全ビンをマーカー扱い = 33%)。AFT 前は平均のビンに有効と
+  クリップ旗。Reset (base["aft_reset"]、次の AFT で消える) は全ビン 0。手動編集のビン (ps.pinned) は有効 0・マーカー 1
+  (qtui は `nvc_quality_numbers_pinned`。追加のみで NVC_ABI_VERSION は 3 のまま)
 - UI: `reference/python/nv_ui_qt/quality.py` (`genuine_g`・`profile_quality`・`profile_completeness`・`profile_numbers`)。Device Noise Profile パネルの
   Quality / Completeness 欄と Profile Viewer の「Overall Profile Quality:」「Completeness:」行に表示。プロファイル変更 (build/AFT/
   読み込み/リセット/undo・redo/ファクター・tune) と動画オープンで再計算 (worker で実行、
-  変更がなければキャッシュ)。実装 (`nv_ui_qt/quality.py`) と照合用 (`quality_draft.genuine_g`) は
+  変更がなければキャッシュ)。実装 (`nv_ui_qt/quality.py`・`native/nv_quality.cpp`) と照合用 (`quality_draft.genuine_g`) は
   同じ解読の複製なので同期を保つこと
 
 ### 合成ベンチ (PSNR dB, σ15 ノイズ, `validate_*.py`)

@@ -749,9 +749,13 @@ std::optional<std::pair<int, int>> profile_numbers(const ProfileState& ps, const
                     flags.push_back(!rows.is_none() && rows[static_cast<size_t>(c)][static_cast<size_t>(b)].truthy());
         }
     }
+    // the manually edited bins (the genuine edit writes valid 0 / marker 1)
+    uint8_t pinned[27];
+    for (int c = 0; c < 3; ++c)
+        for (int k = 0; k < 9; ++k) pinned[9 * c + k] = ps.pinned[c].count(k) ? 1 : 0;
     int qp = 0, cp = 0;
-    const int r = nvc_quality_numbers(rgb.data(), pl.H, pl.W, area4, fac, tune, aft, reset,
-                                      flags.empty() ? nullptr : flags.data(), &qp, &cp);
+    const int r = nvc_quality_numbers_pinned(rgb.data(), pl.H, pl.W, area4, fac, tune, aft, reset,
+                                             flags.empty() ? nullptr : flags.data(), pinned, &qp, &cp);
     if (r != 1) return std::nullopt;
     return std::make_pair(qp, cp);
 }

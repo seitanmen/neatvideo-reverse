@@ -49,15 +49,18 @@ def genuine_g(blob):
     記帳だけで数値 s0 に触れない。RS と Demo で同じオフセット・同じ定数・同じ分岐構造)。
 
     x0 = p + 0xbf40、k = 0..8 (x8 = 0x20k)、チャンネル c = 0,1,2 (+0x120c) の順に 1つずつ加算する。
-    ビン (c,k) の基点 o = 0xbf44 + 0x120c + 0x20k として:
+    2026-11-02 訂正 (wp_genuine_capture/REPORT.md §5、wp_quality_fix): 命令のオフセットは x1 = x0 + 0x20k からの
+    相対 (+0x22/+0x21/+0x4/+0x1c/+0x20) で、ビンの実体は +0xbf44 から始まる。ビン (c,k) の基点
+    o = 0xbf44 + 0x120c + 0x20k として:
         byte o+0x1e != 0            -> s -= 1/27   (レベル > 3.0 の旗)
-        elif byte o+0x1d != 0       -> s -= 1/27   (クリップ旗。AFT の curve_post が 0 に戻す)
+        elif byte o+0x1d != 0       -> s -= 1/27   (クリップ旗)
         else:
-            f32 o+0x4 == 0          -> s -= 1/81   (段係数の語が 0)
-            elif i32 o+0x1c != 0    -> s += 1/27   (AFT のマーカー旗 o+0x1c)
-            elif byte o+0x20 != 0   -> s += 1/81   (次のビンの語0 の下位バイト。ch2 k=8 では 0xc2a4 = LZMA 成功旗)
+            f32 o+0x00 == 0         -> s -= 1/81   (ビンのレベル語が 0)
+            elif u32 o+0x18 != 0    -> s += 1/27   (有効 = タイルで測定済み)
+            elif byte o+0x1c != 0   -> s += 1/81   (マーカー = 補間・外挿・手動で埋めた。ch2 k=8 は 0xc2a0)
             else                    -> +0
-    戻り値 = fmax(s, 0.0)。0xbf40 のモード語は読まない。
+    戻り値 = fmax(s, 0.0)。0xbf40 の語・0xc2a4 は読まない。
+    (旧版は o+0x4 = 段係数、o+0x1c = AFT マーカー、o+0x20 = 次のビン / 0xc2a4 と 4 バイトずれて読んでいた。)
     """
     b = bytes(blob)
     NEG27 = F32(np.frombuffer(struct.pack("<I", 0xBD17B426), F32)[0])   # -1/27
@@ -74,11 +77,11 @@ def genuine_g(blob):
                 s = F32(s + NEG27)
             elif b[ob + 0x1d] != 0:
                 s = F32(s + NEG27)
-            elif f32[o + 1] == F32(0.0):                    # 語 1 = o+0x4 (段係数の先頭)
+            elif f32[o] == F32(0.0):                        # 語 0 = o+0x0 (レベル)
                 s = F32(s + NEG81)
-            elif struct.unpack_from("<I", b, ob + 0x1c)[0] != 0:
+            elif struct.unpack_from("<I", b, ob + 0x18)[0] != 0:
                 s = F32(s + POS27)
-            elif b[ob + 0x20] != 0:
+            elif b[ob + 0x1c] != 0:
                 s = F32(s + POS81)
     return F32(max(s, F32(0.0))) if s > F32(0.0) else F32(0.0)   # fmax s0, 0.0 (NaN -> 0)
 

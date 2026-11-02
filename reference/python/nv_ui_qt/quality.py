@@ -13,37 +13,45 @@
         the profile's integer size class is used instead (S = that value, not divided).
   clips = profile bytes 0xbf3c..0xbf3e (R/G/B IsClip > 0.33): q halved once per set byte.
 
-g sweeps the 27 curve bins (3 channels x 9) in (bin, channel) order, float32 accumulation:
-    byte +0x1e != 0 (level > 3.0 flag)   -> -1/27
-    elif byte +0x1d != 0 (clip flag)     -> -1/27
-    elif scale word (+0x4) == 0          -> -1/81
-    elif marker word (+0x1c) != 0 (AFT)  -> +1/27
-    elif next bin's byte 0 != 0          -> +1/81   (ch2 bin8 reads 0xc2a4 = LZMA success flag)
-    else                                 -> +0
-and returns max(sum, 0).  A fresh profile marks nothing, so g = 1/81 (only the LZMA flag path);
-after AFT the UNMEASURED bins carry the marker (measured bins keep marker 0:
-curve_post zeroes it, curve_fill write() sets it only on filled-in bins).
+g sweeps the 27 curve bins (3 channels x 9) in (bin, channel) order, float32 accumulation.
+The genuine is called with x0 = p + 0xbf40 and reads x1 = x0 + 0x20k + 0x120c at +0x22/+0x21/+0x4/+0x1c/+0x20;
+the bins themselves start at +0xbf44 (the .dnp writer/reader), so relative to the bin o = 0xbf44 + 0x120c + 0x20k:
+    byte o+0x1e != 0 (level > 3.0 flag)           -> -1/27
+    elif byte o+0x1d != 0 (clip flag)             -> -1/27
+    elif level word o+0x00 == 0                   -> -1/81
+    elif u32 o+0x18 != 0 (valid: measured)        -> +1/27
+    elif byte o+0x1c != 0 (marker: filled in)     -> +1/81   (ch2 bin8 reads 0xc2a0; 0xc2a4 is never read)
+    else                                          -> +0
+and returns max(sum, 0).  Corrected 2026-11-02 (work/omo/wp_genuine_capture/REPORT.md section 5,
+work/omo/wp_quality_fix/REPORT.md): the decode of 2026-10-26 read the same addresses but named the
+fields 4 bytes off (+0x4 "scale", +0x1c "AFT marker", +0x20 "next bin / 0xc2a4 LZMA flag").
+Checked against 13 genuine screens (Quality and Completeness, decoded .dnp files):
+native/testdata/genuine_quality.json.
 
 Completeness = g * 100, shown as qRound(g * 100) + "%" next to Quality
 (RS 0xe2e20 / 0xe437c for the panels, 0x118ef8 / 0x119038 for Profile Viewer).
 
-The repro maps its own state onto the genuine curve bytes:
+The bin states (observed in the genuine .dnp files, wp_genuine_capture/REPORT.md section 2, and the
+harness-verified BuildNoiseModel port nv_profile):
+    fresh build (BuildNoiseModel, before AFT): every bin level 1.0, valid 0, marker 0, except the bin of
+        each channel's mean: valid 1, clip = IsClip > 0.33  -> g = (3 - 2 * clipped) / 27, at least 0
+        (11% without clipping).  Not reachable in the genuine RS UI (Build / Auto Profile include AFT).
+    after AFT: bins measured from the tiles valid 1, bins interpolated / extrapolated marker 1.
+    Reset Fine-Tuning: every bin level 1.0, valid 0, marker 0  -> g = 0.
+    manual edit of a bin: its level, valid 0, marker 1.
+The repro maps its own state onto these bytes:
     bin level word = factor[bin] * tune_all * tune_channel   (1.0 exactly when untouched)
-    markers / clip / >3.0 flags after AFT: stored per bin by nv_aft_v5.apply_aft
-        (prof["aft_bin_flags"], read from the AFT port's own bytes; older saved
-        profiles without it fall back to all-marked)
-    fresh filled bin (+0x18 word = 1): byte +0x1d = clip flag of its plane
-Manual Fine-Tune writes level words without markers - confirmed by observation
-(2026-10-26, genuine 6.1.3 Pro Full frame: Reset -> Quality 35% / Completeness 0%,
-then 4 red-bin edits -> 36/36/37/37% and 1/2/4/5%: exactly +1/81 per edit;
-+1/27 per edit would jump to Completeness 4% / Quality 37% on the first edit).
-Reset resolves to the just-constructed profile: the constructor clears the LZMA
-success flag (RS 0xa499d4 profile init, 0xa49e28 strb wzr to p+0xc2a4), so
-ch2 bin8 loses its +1/81 and g = 0 / Completeness 0% (observed; the edits after
-Reset still see scales = 1.0, matching the init).  A fresh Build keeps the flag
-(g = 1/81 -> Completeness 1%).  The repro records it as base["aft_reset"],
-set by the Reset Fine-Tuning action and cleared by the next AFT.
-Static analysis and verification: sandbox/omo/coord/verify_quality/static/QUALITY.md;
+    after AFT: prof["aft_bin_flags"] (nv_aft_v5.apply_aft, the AFT port's own bytes): "marker" is the
+        u32 at +0x1c != 0 (the marker, or a clip / >3.0 flag), so valid = not marker; profiles saved
+        before the flags existed count every bin as filled in (marker, g = 1/3)
+    fresh: the bin of each channel's mean valid 1 with its clip flag
+    Reset (base["aft_reset"], cleared by the next AFT): all clear
+    pinned (manually edited) bins: valid 0, marker 1, >3.0 flag from the level (the flag rule is the AFT
+        port's write(); the genuine edit above 3.0 was not observed)
+Known gap of valid = not marker: a channel whose AFT found no usable bin (every measured bin above 3.0,
+or the fresh build's bin clipped and no bin measured) keeps unfilled bins with valid 0 and marker 0;
+they count +1/27 here instead of 0.
+Static analysis and verification: work/omo/coord/verify_quality/static/QUALITY.md;
 quality_draft.genuine_g there is the same decode - keep the two in sync.
 """
 import copy
@@ -75,11 +83,11 @@ def genuine_g(blob):
                 s = F32(s + NEG27)
             elif b[ob + 0x1d] != 0:
                 s = F32(s + NEG27)
-            elif f32[(ob // 4) + 1] == F32(0.0):                     # word at +0x4 (first scale)
+            elif f32[ob // 4] == F32(0.0):                            # level word
                 s = F32(s + NEG81)
-            elif struct.unpack_from("<I", b, ob + 0x1c)[0] != 0:
+            elif struct.unpack_from("<I", b, ob + 0x18)[0] != 0:       # valid (measured)
                 s = F32(s + POS27)
-            elif b[ob + 0x20] != 0:
+            elif b[ob + 0x1c] != 0:                                    # marker (filled in)
                 s = F32(s + POS81)
     return F32(s) if s > F32(0.0) else F32(0.0)                      # fmax s0, 0.0
 
@@ -172,20 +180,17 @@ def _curve_blob(ps, planes, full_range, matrix):
     filled = [npv.curve_bin(m) for m in means]
     aft = bool(base.get("aft_applied"))
     reset = bool(base.get("aft_reset"))
-    # Reset Fine-Tuning Results restores the just-constructed profile: all bin flags clear
-    # (levels/scales 1.0) and the LZMA success flag (0xc2a4) cleared as the profile
-    # constructor does (RS 0xa49e28 strb wzr) -> g = 0, Completeness 0% (observed).
-    # A fresh Build keeps the flag (g = 1/81 -> Completeness 1%).
-    if reset:
+    if reset:                                         # Reset Fine-Tuning: every bin clear (g = 0)
         stored = {"marker": [[False] * 9] * 3, "clip": [[False] * 9] * 3, "gt3": [[False] * 9] * 3}
     elif aft:
         stored = base.get("aft_bin_flags")            # per-bin flags from the AFT run
         if stored is None:
-            stored = {"marker": [[True] * 9] * 3}     # profiles saved before flags existed
+            stored = {"marker": [[True] * 9] * 3}     # profiles saved before the flags existed
     else:
         stored = None
-    buf[0xc2a4] = 0 if reset else 1
+    buf[0xc2a4] = 1                                   # not read by Quality (kept: the build's LZMA flag)
     tune = ps.tune or {}
+    pinned = getattr(ps, "pinned", None) or [set(), set(), set()]
     chans = ("Y", "Cr", "Cb")                            # repro channel order (the genuine: R, G, B)
     tk = [float(tune.get("all", 1.0)) * float(tune.get(c, 1.0)) for c in chans]
     for c in range(3):
@@ -195,21 +200,30 @@ def _curve_blob(ps, planes, full_range, matrix):
             f32[e // 4:e // 4 + 6] = F32(1.0)
             f32[e // 4] = lvl                                # word 0 = the bin's level
             if stored is not None:
-                # the AFT run's own flags: markers only on unmeasured bins, clip kept
-                # where the run left it, >3.0 where its level exceeded it (after Reset: all clear)
-                if stored["marker"][c][k]:
+                # the AFT run's own flags (after Reset: all clear): "marker" = the u32 at +0x1c of the
+                # port (marker, clip or >3.0), so a bin without it was measured (valid)
+                marked = bool(stored["marker"][c][k])
+                if aft and not reset and not marked:
+                    w32[(e + 0x18) // 4] = 1
+                if marked:
                     buf[e + 0x1c] = 1
                 if stored.get("clip", [[False] * 9] * 3)[c][k]:
                     buf[e + 0x1d] = 1
                 if stored.get("gt3", [[False] * 9] * 3)[c][k]:
                     buf[e + 0x1e] = 1
             elif lvl > F32(3.0):
-                buf[e + 0x1e] = 1                            # manual edit above 3.0 (genuine flag)
-        if not aft and not reset:
-            # the fresh profile's filled bin (Reset: constructed state, no filled-bin info)
+                buf[e + 0x1e] = 1                            # level above 3.0 before AFT
+        if stored is None:
+            # the fresh profile (BuildNoiseModel): the bin of the channel mean is valid, with its clip flag
             e = 0xbf44 + 0x120 * c + 0x20 * filled[c]
             w32[(e + 0x18) // 4] = 1
             buf[e + 0x1d] = clips[c]
+        for k in sorted(int(k) for k in pinned[c] if 0 <= int(k) < 9):
+            # a manual edit: the level as set, valid 0, marker 1 (observed); >3.0 from the level (inferred)
+            e = 0xbf44 + 0x120 * c + 0x20 * k
+            w32[(e + 0x18) // 4] = 0
+            buf[e + 0x1c] = 1
+            buf[e + 0x1e] = 1 if f32[e // 4] > F32(3.0) else 0
     return buf
 
 
