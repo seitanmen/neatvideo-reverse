@@ -68,6 +68,14 @@ std::string profile_fields(const PyObj& prof);
 int profile_parity(const PyObj& prof);            // 0 top / 1 bottom (-1: a frame profile)
 // the image a profile was measured on: the frame itself (frame profile) or its field of profile_parity
 Frame profile_image(const PyObj& prof, const Frame& f);
+// Auto Fine-Tune of the profile on frame f (2026-11-02, Phase C work/omo/wp_aft_runtime/REPORT.md section 2): a frame
+// profile runs on the frame and a "One field" profile on its field (profile_image; not observed in the genuine); a "Two
+// fields" profile runs once on the RGB of the first field in time (profile_parity) with the RGB of the other field
+// stacked below it, W x 2 ceil(H / 2) (the bottom field of an odd H keeps its pad row).  The genuine does this with the
+// top field first for TFF material; the first field on top for BFF is an inference.  The area (on the first field)
+// keeps its coordinates in the stacked image.
+PyObj run_aft_fields(const PyObj& prof, const Frame& f, bool full_range, const std::string& matrix,
+                     const CancelFn& cancel);
 // build_profile on fields (Prepare page, interlaced): frames = the video, f = the profile frame, kind "two" / "one",
 // parity = the field ("one": the profiled field; "two": the first field in time).  area (may be null) is in frame
 // rows and is mapped to the field's rows (y0 / 2, h / 2).

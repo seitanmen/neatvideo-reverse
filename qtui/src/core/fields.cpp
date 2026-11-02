@@ -182,6 +182,21 @@ Frame profile_image(const PyObj& prof, const Frame& f) {
     return q < 0 ? f : field_frame(f, q);
 }
 
+PyObj run_aft_fields(const PyObj& prof, const Frame& f, bool full_range, const std::string& matrix,
+                     const CancelFn& cancel) {
+    if (profile_fields(prof) != "two") return run_aft(prof, profile_image(prof, f), full_range, matrix, cancel);
+    const int q = profile_parity(prof);
+    std::vector<float> rgb;
+    int H = 0;
+    for (const int k : {q, 1 - q}) {
+        const Planes p = to_planes(field_frame(f, k));
+        const std::vector<float> r = to_rgb(p, matrix, full_range, 1);
+        rgb.insert(rgb.end(), r.begin(), r.end());
+        H += p.H;
+    }
+    return run_aft_rgb(prof, std::move(rgb), H, f.W, cancel);
+}
+
 PyObj build_profile_fields(const std::vector<Frame>& frames, int f, bool full_range, const std::string& matrix,
                            const std::string& mode, const std::vector<int>* area, const std::string& kind, int parity,
                            const CancelFn& cancel) {

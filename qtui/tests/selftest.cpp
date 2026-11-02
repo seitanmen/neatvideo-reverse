@@ -3487,6 +3487,25 @@ private slots:
         QVERIFY(b.get("aft_applied").truthy());
         QVERIFY(win->profile_panel->info->text().contains("Interlaced"));
         QVERIFY(win->profile_panel->info->text().contains("Two fields (640x180)"));
+        {   // 2026-11-02 (Phase C): Two fields is fine-tuned once on the top field's rows stacked over the bottom field's
+            // (fields.h run_aft_fields).  Rebuilt here from the stacked planes (to_rgb repeats chroma rows, so with even
+            // field heights this is the stacked field RGB); the top field alone gives another result.
+            const Frame& fr = win->frames[static_cast<size_t>(aft_frame(b, win->frames.size()))];
+            const Frame top = field_frame(fr, 0), bot = field_frame(fr, 1);
+            QVERIFY(top.H % 2 == 0 && top.H == bot.H);
+            Frame st = top;
+            st.H = top.H + bot.H;
+            st.Hc = top.Hc + bot.Hc;
+            auto cat = [](auto& a, const auto& z) { a.insert(a.end(), z.begin(), z.end()); };
+            cat(st.Y, bot.Y);
+            cat(st.Cb, bot.Cb);
+            cat(st.Cr, bot.Cr);
+            cat(st.fY, bot.fY);
+            cat(st.fCb, bot.fCb);
+            cat(st.fCr, bot.fCr);
+            QVERIFY(run_aft(b, st, win->full_range, win->matrix, CancelFn()) == b);
+            QVERIFY(!(run_aft(b, top, win->full_range, win->matrix, CancelFn()).get("aft_levels") == b.get("aft_levels")));
+        }
         const PyObj P = win->proc_params();
         // INT-4 default: the Temporal Radius in fields (R2 -> 2 fields, the genuine's reading)
         QCOMPARE(P.get("interlace").dump(), std::string("{\"first\": 0, \"mode\": \"same\", \"radius\": 2}"));

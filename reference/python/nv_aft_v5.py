@@ -56,6 +56,19 @@ def _color_weights(q99, band=0):
     return weights
 
 
+def to_internal16(rgb):
+    """本家の 16 ビット内部型 (FUN_009f0554: rint(x·16) の偶数丸め、int16 に飽和、NaN → 0) を /16 で戻した float32。
+
+    2026-11-02 (Phase C、work/omo/wp_aft_runtime/REPORT.md §2・§6): 本家の AFT と BuildNoiseModel はこの型の画像で
+    動く (推定。根拠は数値一致: q16 の入力でモデルが .dnp と 0 語差、AFT 曲線が 14 本で ≤6 ulp・旗全一致。float のままでは
+    最大 22.8% ずれる)。変換は nv_lzma.plane_int16 (LZMA の見本と同じ関数) で、C 側は nvc_aft_input16。
+    """
+    import nv_lzma
+    rgb = np.asarray(rgb, F32)
+    q = np.frombuffer(nv_lzma.plane_int16(rgb), "<i2").astype(F32) / F32(16.0)
+    return q.reshape(rgb.shape)
+
+
 def apply_aft(prof, rgb, mode=0, area=None, matrix="bt709", band=0):
     """v5 の prof dict に AFT を適用する (厳密版: カラーマトリクス結合)。
 
@@ -65,7 +78,9 @@ def apply_aft(prof, rgb, mode=0, area=None, matrix="bt709", band=0):
       f_c(lum) = √(Σ_j c_cj · f_j(lum))   (f_j = AFT の RGB 面乗数曲線)
 
     prof: build_profile_v5() の戻り値 (dict)
-    rgb:  (H, W, 3) float32 0..255
+    rgb:  (H, W, 3) float32 0..255。BuildNoiseModel と AFT には to_internal16 で本家の 16 ビット型にして渡す
+          (2026-11-02。v5 の曲線・FindFlatArea には関わらない)。インターレースの "Two fields" では、呼び出し側が
+          先のフィールドの行を後のフィールドの行の上に積んだ画像を渡す (qtui fields.h run_aft_fields → nvcore.h run_aft_rgb)
     mode: AFT モード (0=通常)
     area: (y0, x0, size) か長方形 (y0, x0, h, w) — None なら prof["area"] を使う
     band: 重みの計算に使う帯域 (0 = 最細帯域、既定)
@@ -75,7 +90,7 @@ def apply_aft(prof, rgb, mode=0, area=None, matrix="bt709", band=0):
     import nv_profile as npr
     import nv_aft
 
-    rgb = np.asarray(rgb, F32)
+    rgb = to_internal16(rgb)
     a = prof["area"] if area is None else area
     ay, ax, ah = a[:3]
     aw = a[3] if len(a) == 4 else ah           # (y0, x0, size) or a rectangle (y0, x0, h, w)

@@ -5,10 +5,15 @@
 // as float32 into the AFT bytes' curve words and combined into Y / Cb / Cr by nvc_aft_combine (the C path of
 // nv_aft_v5.apply_aft that the C++ UI's AFT used before G1); the Y / Cb / Cr curves and sigma, and the FNV-1a 64
 // hash of the frame processed with that profile (nvcore temporal + finish, default parameters).
+// 2026-11-02 (AFT callers, work/omo/wp_aft_callers): the AFT input is the genuine's 16-bit type (rint(x * 16), int16
+// saturation, NaN -> 0, / 16; written out here, not the code under test's nvc_aft_input16), so the raw profile and AFT
+// bytes come from that RGB and the curve after AFT is nvc_aft_combine of the unedited AFT bytes (what run_aft does).
 //
 //   g1_fixture VIDEO F OUT.json
 #include <QCoreApplication>
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -57,7 +62,12 @@ int main(int argc, char** argv) {
     const PyObj fresh = build_profile(fr, F, full_range, matrix, "auto", nullptr, CancelFn());
     const PyObj aftp = run_aft(fresh, fr[static_cast<size_t>(F)], full_range, matrix, CancelFn());
     const Planes pl = to_planes(fr[static_cast<size_t>(F)]);
-    const std::vector<float> rgb = to_rgb(pl, matrix, full_range, 1);
+    std::vector<float> rgb = to_rgb(pl, matrix, full_range, 1);
+    for (float& x : rgb) {
+        const float y = x * 16.0f;
+        float r = std::isnan(y) ? 0.0f : std::nearbyint(std::max(-32768.0f, std::min(32767.0f, y)));
+        x = r / 16.0f;
+    }
     const PyObj& a = fresh.get("area");
     const int ay = static_cast<int>(a[0].as_int()), ax = static_cast<int>(a[1].as_int()),
               ah = static_cast<int>(a[2].as_int()), aw = a.size() == 4 ? static_cast<int>(a[3].as_int()) : ah;
@@ -100,7 +110,7 @@ int main(int argc, char** argv) {
         tot[c] = aftp.get("tot_ratio").get(NM[c]).as_double();
     }
     PyObj out = PyObj::dict();
-    out.set("made_by", PyObj::str("qtui/tools/g1_fixture/make_g1_fixture.sh (code before G1: 5dabc1f)"));
+    out.set("made_by", PyObj::str("qtui/tools/g1_fixture/make_g1_fixture.sh (code before G1: 5dabc1f; AFT input in the 16-bit type, 2026-11-02)"));
     out.set("video", PyObj::str("test.mp4"));
     out.set("frame", PyObj::integer(F));
     PyObj lv = PyObj::list();          // the AFT levels of the run (the test's input fingerprint)
@@ -110,7 +120,17 @@ int main(int argc, char** argv) {
         lv.append(PyObj::reals(row));
     }
     out.set("aft_levels", lv);
-    out.set("curve_after_aft", aftp.get("curve"));
+    {   // the curve after AFT: run_aft's nvc_aft_combine of the unedited AFT bytes on the curve before AFT
+        std::vector<double> cw(9), face(3 * static_cast<size_t>(n)), sig(3);
+        std::vector<float> cv(3 * static_cast<size_t>(n));
+        std::vector<uint8_t> flags(81);
+        nvc_aft_combine(raw.data(), aft.data(), centers.data(), n, pre.data(), aftp.get("area_level").as_double(), tot,
+                        0, cw.data(), face.data(), cv.data(), sig.data(), flags.data());
+        PyObj curve = PyObj::dict();
+        for (int c = 0; c < 3; ++c)
+            curve.set(NM[c], PyObj::reals(std::vector<double>(cv.begin() + c * n, cv.begin() + (c + 1) * n)));
+        out.set("curve_after_aft", curve);
+    }
     PyObj ej = PyObj::list();
     for (const Edit& e : edits) {
         std::vector<uint8_t> mod = aft;

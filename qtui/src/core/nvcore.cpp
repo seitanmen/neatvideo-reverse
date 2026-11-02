@@ -195,9 +195,11 @@ PyObj build_profile_planes(const Planes& pl, const Planes* pair, const std::vect
     p.set("area_level", PyObj::real(od[67]));
     p.set("sigma", ycbcr_dict(PyObj::real(od[68]), PyObj::real(od[69]), PyObj::real(od[70])));
     p.set("ui_frame", PyObj::integer(f));
-    // G1: the colour weights of the R/G/B equalizer (nvc_rgb_weights: apply_aft's c_cj on the profile frame's RGB)
+    // G1: the colour weights of the R/G/B equalizer (nvc_rgb_weights: apply_aft's c_cj on the profile frame's RGB, in
+    // the 16-bit type the AFT's BuildNoiseModel sees: nvc_aft_input16, so that they stay apply_aft's)
     {
-        const std::vector<float> rgb = to_rgb(pl, matrix, full_range, 1);
+        std::vector<float> rgb = to_rgb(pl, matrix, full_range, 1);
+        nvc_aft_input16(rgb.data(), rgb.size(), rgb.data());
         const PyObj& a = p.get("area");
         const int area4[4] = {static_cast<int>(a[0].as_int()), static_cast<int>(a[1].as_int()),
                               static_cast<int>(a[2].as_int()),
@@ -262,6 +264,11 @@ const std::vector<float>& reference_floor() {
 
 PyObj run_aft(const PyObj& base_in, const Frame& frame, bool full_range, const std::string& matrix,
               const CancelFn& cancel) {
+    const Planes pl = to_planes(frame);
+    return run_aft_rgb(base_in, to_rgb(pl, matrix, full_range, 1), pl.H, pl.W, cancel);
+}
+
+PyObj run_aft_rgb(const PyObj& base_in, std::vector<float> rgb, int H, int W, const CancelFn& cancel) {
     // backend._run_aft
     PyObj prof = base_in;
     PyObj pre = prof.get("ui_pre_aft");
@@ -273,10 +280,8 @@ PyObj run_aft(const PyObj& base_in, const Frame& frame, bool full_range, const s
     PyObj keep = PyObj::dict();
     keep.set("curve", prof.get("curve"));
     keep.set("sigma", prof.get("sigma"));
-    const Planes pl = to_planes(frame);
-    const std::vector<float> rgb = to_rgb(pl, matrix, full_range, 1);
-    const int H = pl.H, W = pl.W;
-    // nv_native._apply_aft (mode 0, band 0)
+    // nv_native._apply_aft (mode 0, band 0); the BuildNoiseModel and the AFT see the genuine's 16-bit type
+    nvc_aft_input16(rgb.data(), rgb.size(), rgb.data());
     const PyObj& a = prof.get("area");
     const int ay = static_cast<int>(a[0].as_int()), ax = static_cast<int>(a[1].as_int()),
               ah = static_cast<int>(a[2].as_int());

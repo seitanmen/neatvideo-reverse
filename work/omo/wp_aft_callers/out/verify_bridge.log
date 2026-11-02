@@ -1,0 +1,463 @@
+[curve] OK  v02 n=310 noise_curve -j 1: 16/16 words  py 0.97s nat 0.513s
+[curve] OK  v02 n=310 noise_curve -j 3: 16/16 words  py 0.97s nat 0.214s
+[curve] OK  v02 n=310 find_flat_area -j 1 -> [0, 896, 128, 0]: 4/4 words  py 2.01s nat 0.951s
+[curve] OK  v02 n=310 find_flat_area -j 3 -> [0, 896, 128, 0]: 4/4 words  py 2.01s nat 0.408s
+[curve] OK  v02 n=313 noise_curve -j 1: 16/16 words  py 0.96s nat 0.532s
+[curve] OK  v02 n=313 noise_curve -j 3: 16/16 words  py 0.96s nat 0.241s
+[curve] OK  v02 n=313 find_flat_area -j 1 -> [0, 808, 128, 0]: 4/4 words  py 2.05s nat 0.998s
+[curve] OK  v02 n=313 find_flat_area -j 3 -> [0, 808, 128, 0]: 4/4 words  py 2.05s nat 0.425s
+[curve] OK  v02 n=316 noise_curve -j 1: 16/16 words  py 0.99s nat 0.602s
+[curve] OK  v02 n=316 noise_curve -j 3: 16/16 words  py 0.99s nat 0.232s
+[curve] OK  v02 n=316 find_flat_area -j 1 -> [0, 896, 128, 0]: 4/4 words  py 2.03s nat 1.091s
+[curve] OK  v02 n=316 find_flat_area -j 3 -> [0, 896, 128, 0]: 4/4 words  py 2.03s nat 0.423s
+[curve] OK  t n=300 noise_curve -j 1: 16/16 words  py 0.29s nat 0.057s
+[curve] OK  t n=300 noise_curve -j 3: 16/16 words  py 0.29s nat 0.019s
+[curve] OK  t n=300 find_flat_area -j 1 -> [288, 416, 48, 2]: 4/4 words  py 0.54s nat 0.135s
+[curve] OK  t n=300 find_flat_area -j 3 -> [288, 416, 48, 2]: 4/4 words  py 0.54s nat 0.067s
+[curve] OK  t n=304 noise_curve -j 1: 16/16 words  py 0.28s nat 0.054s
+[curve] OK  t n=304 noise_curve -j 3: 16/16 words  py 0.28s nat 0.020s
+[curve] OK  t n=304 find_flat_area -j 1 -> [0, 288, 48, 2]: 4/4 words  py 0.52s nat 0.139s
+[curve] OK  t n=304 find_flat_area -j 3 -> [0, 288, 48, 2]: 4/4 words  py 0.52s nat 0.066s
+[profile] OK  v02 n=310 auto -> area [0, 896, 128] status 0: 79/79 words  py 2.88s nat 0.565s
+[profile] OK  v02 n=313 auto -> area [0, 808, 128] status 0: 79/79 words  py 2.53s nat 0.571s
+[profile] OK  v02 n=316 auto -> area [0, 896, 128] status 0: 79/79 words  py 2.65s nat 0.575s
+[profile] OK  v02 n=312 spatial -> area [0, 832, 128] status 0: 78/78 words  py 2.44s nat 0.471s
+[profile] OK  v02 n=312 temporal -> area [0, 832, 128] status 0: 79/79 words  py 2.23s nat 0.480s
+[profile] OK  t n=300 auto -> area [288, 416, 48] status 2: 79/79 words  py 0.82s nat 0.091s
+[profile] OK  t n=304 auto -> area [0, 288, 48] status 2: 79/79 words  py 0.63s nat 0.091s
+[profile] OK  t n=302 temporal -> area [272, 120, 48] status 2: 79/79 words  py 0.66s nat 0.088s
+[profile] OK  v02 n=312 auto area [40, 60, 216, 512] -> area [40, 60, 216, 512] status None: 80/80 words  py 0.86s nat 0.206s
+[aft] OK  v02 n=310 run_aft mode 0 (area [0, 896, 128]): 222/222 words  py 56.52s nat 0.686s
+[aft] OK  v02 n=310 BuildNoiseModel blob 0xc300 -j 1: 49920/49920 words  py 14.15s nat 1.112s
+[aft] OK  v02 n=310 AFT blob mode 0 -j 1: 49920/49920 words  py 34.52s nat 0.796s
+[aft] OK  v02 n=310 BuildNoiseModel blob 0xc300 -j 3: 49920/49920 words  py 14.15s nat 0.448s
+[aft] OK  v02 n=310 AFT blob mode 0 -j 3: 49920/49920 words  py 34.52s nat 0.267s
+[aft] OK  v02 n=312 run_aft mode 0 (area [0, 832, 128]): 222/222 words  py 54.62s nat 0.689s
+[aft] OK  v02 n=312 BuildNoiseModel blob 0xc300 -j 1: 49920/49920 words  py 14.26s nat 1.347s
+[aft] OK  v02 n=312 AFT blob mode 0 -j 1: 49920/49920 words  py 33.02s nat 0.764s
+[aft] OK  v02 n=312 BuildNoiseModel blob 0xc300 -j 3: 49920/49920 words  py 14.26s nat 0.513s
+[aft] OK  v02 n=312 AFT blob mode 0 -j 3: 49920/49920 words  py 33.02s nat 0.257s
+[aft] OK  v02 n=313 run_aft mode 0 (area [0, 808, 128]): 222/222 words  py 56.42s nat 0.641s
+[aft] OK  v02 n=313 BuildNoiseModel blob 0xc300 -j 1: 49920/49920 words  py 15.54s nat 1.252s
+[aft] OK  v02 n=313 AFT blob mode 0 -j 1: 49920/49920 words  py 34.65s nat 0.796s
+[aft] OK  v02 n=313 BuildNoiseModel blob 0xc300 -j 3: 49920/49920 words  py 15.54s nat 0.424s
+[aft] OK  v02 n=313 AFT blob mode 0 -j 3: 49920/49920 words  py 34.65s nat 0.267s
+[aft] OK  v02 n=316 run_aft mode 0 (area [0, 896, 128]): 222/222 words  py 48.24s nat 0.642s
+[aft] OK  v02 n=316 BuildNoiseModel blob 0xc300 -j 1: 49920/49920 words  py 14.12s nat 1.126s
+[aft] OK  v02 n=316 AFT blob mode 0 -j 1: 49920/49920 words  py 33.48s nat 0.784s
+[aft] OK  v02 n=316 BuildNoiseModel blob 0xc300 -j 3: 49920/49920 words  py 14.12s nat 0.494s
+[aft] OK  v02 n=316 AFT blob mode 0 -j 3: 49920/49920 words  py 33.48s nat 0.269s
+[aft] OK  t n=302 run_aft mode 0 (area [272, 120, 48]): 222/222 words  py 8.09s nat 0.149s
+[aft] OK  t n=302 BuildNoiseModel blob 0xc300 -j 1: 49920/49920 words  py 4.48s nat 0.327s
+[aft] OK  t n=302 AFT blob mode 0 -j 1: 49920/49920 words  py 3.59s nat 0.084s
+[aft] OK  t n=302 BuildNoiseModel blob 0xc300 -j 3: 49920/49920 words  py 4.48s nat 0.125s
+[aft] OK  t n=302 AFT blob mode 0 -j 3: 49920/49920 words  py 3.59s nat 0.029s
+[aft] OK  t n=300 run_aft mode 1 (area [288, 416, 48]): 222/222 words  py 7.40s nat 0.136s
+[frame] OK  v02 n=310 process_frame default: 3110400/3110400 words  py 2.17s nat 0.564s
+[frame] OK  v02 n=310 temporal default: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=310 temporal default: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=311 process_frame default: 3110400/3110400 words  py 2.17s nat 0.563s
+[frame] OK  v02 n=311 temporal default: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=311 temporal default: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=312 process_frame default: 3110400/3110400 words  py 2.21s nat 0.560s
+[frame] OK  v02 n=312 temporal default: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=312 temporal default: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=313 process_frame default: 3110400/3110400 words  py 2.20s nat 0.570s
+[frame] OK  v02 n=313 temporal default: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=313 temporal default: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=314 process_frame default: 3110400/3110400 words  py 2.13s nat 0.571s
+[frame] OK  v02 n=314 temporal default: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=314 temporal default: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=315 process_frame default: 3110400/3110400 words  py 2.15s nat 0.563s
+[frame] OK  v02 n=315 temporal default: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=315 temporal default: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=316 process_frame default: 3110400/3110400 words  py 2.19s nat 0.566s
+[frame] OK  v02 n=316 temporal default: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=316 temporal default: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=310 process_frame noise+: 3110400/3110400 words  py 2.13s nat 0.584s
+[frame] OK  v02 n=310 process_frame noise-: 3110400/3110400 words  py 2.16s nat 0.564s
+[frame] OK  v02 n=310 process_frame pyramid: 3110400/3110400 words  py 2.34s nat 0.674s
+[frame] OK  v02 n=310 temporal pyramid: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=310 temporal pyramid: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=310 process_frame perchan: 3110400/3110400 words  py 2.48s nat 0.584s
+[frame] OK  v02 n=310 process_frame mix_r1: 3110400/3110400 words  py 1.17s nat 0.341s
+[frame] OK  v02 n=310 process_frame temporal0: 3110400/3110400 words  py 0.23s nat 0.135s
+[frame] OK  v02 n=310 process_frame int_bs8: 3110400/3110400 words  py 2.30s nat 0.577s
+[frame] OK  v02 n=310 temporal int_bs8: out, rv, flows {}: 6480000/6480000 words
+[frame] OK  v02 n=310 temporal int_bs8: pre-filled flows: 6480000/6480000 words
+[frame] OK  v02 n=313 process_frame noise+: 3110400/3110400 words  py 2.14s nat 0.587s
+[frame] OK  v02 n=313 process_frame noise-: 3110400/3110400 words  py 2.12s nat 0.564s
+[frame] OK  v02 n=313 process_frame pyramid: 3110400/3110400 words  py 2.39s nat 0.680s
+[frame] OK  v02 n=313 temporal pyramid: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=313 temporal pyramid: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=313 process_frame perchan: 3110400/3110400 words  py 2.46s nat 0.588s
+[frame] OK  v02 n=313 process_frame mix_r1: 3110400/3110400 words  py 1.15s nat 0.347s
+[frame] OK  v02 n=313 process_frame temporal0: 3110400/3110400 words  py 0.22s nat 0.124s
+[frame] OK  v02 n=313 process_frame int_bs8: 3110400/3110400 words  py 2.41s nat 0.567s
+[frame] OK  v02 n=313 temporal int_bs8: out, rv, flows {}: 6480000/6480000 words
+[frame] OK  v02 n=313 temporal int_bs8: pre-filled flows: 6480000/6480000 words
+[frame] OK  v02 n=316 process_frame noise+: 3110400/3110400 words  py 2.19s nat 0.565s
+[frame] OK  v02 n=316 process_frame noise-: 3110400/3110400 words  py 2.16s nat 0.568s
+[frame] OK  v02 n=316 process_frame pyramid: 3110400/3110400 words  py 2.28s nat 0.715s
+[frame] OK  v02 n=316 temporal pyramid: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=316 temporal pyramid: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=316 process_frame perchan: 3110400/3110400 words  py 2.48s nat 0.590s
+[frame] OK  v02 n=316 process_frame mix_r1: 3110400/3110400 words  py 1.23s nat 0.389s
+[frame] OK  v02 n=316 process_frame temporal0: 3110400/3110400 words  py 0.22s nat 0.126s
+[frame] OK  v02 n=316 process_frame int_bs8: 3110400/3110400 words  py 2.39s nat 0.572s
+[frame] OK  v02 n=316 temporal int_bs8: out, rv, flows {}: 6480000/6480000 words
+[frame] OK  v02 n=316 temporal int_bs8: pre-filled flows: 6480000/6480000 words
+[frame] OK  v02 n=313 process_frame default (tuned profile): 3110400/3110400 words  py 2.21s nat 0.573s
+[frame] OK  v02 n=313 temporal default: out, rv, flows {}: 6285120/6285120 words
+[frame] OK  v02 n=313 temporal default: pre-filled flows: 6285120/6285120 words
+[frame] OK  v02 n=312 PreviewEngine crop [270, 480, 540, 960] + full + mask + assist: 23846400/23846400 words
+[frame] OK  t n=300 process_frame default: 345600/345600 words  py 0.24s nat 0.066s
+[frame] OK  t n=300 temporal default: out, rv, flows {}: 698240/698240 words
+[frame] OK  t n=300 temporal default: pre-filled flows: 698240/698240 words
+[frame] OK  t n=300 process_frame perchan: 345600/345600 words  py 0.27s nat 0.073s
+[frame] OK  t n=302 process_frame default: 345600/345600 words  py 0.24s nat 0.065s
+[frame] OK  t n=302 temporal default: out, rv, flows {}: 698240/698240 words
+[frame] OK  t n=302 temporal default: pre-filled flows: 698240/698240 words
+[frame] OK  t n=302 process_frame perchan: 345600/345600 words  py 0.27s nat 0.064s
+[frame] OK  t n=304 process_frame default: 345600/345600 words  py 0.25s nat 0.065s
+[frame] OK  t n=304 temporal default: out, rv, flows {}: 698240/698240 words
+[frame] OK  t n=304 temporal default: pre-filled flows: 698240/698240 words
+[frame] OK  t n=304 process_frame perchan: 345600/345600 words  py 0.26s nat 0.064s
+[frame] OK  t n=302 PreviewEngine crop [90, 160, 180, 320] + full + mask + assist: 2649600/2649600 words
+[frame] OK  concurrent native calls from 4 threads: ['frame', 'frame', 'aft', 'profile']: 6221101/6221101 words
+[cancel] OK  find_flat_area cancel at query 1 -j 1: [0, 0, 0, 5], 1 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 1 -j 3: [0, 0, 0, 5], 1 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 120 -j 1: [0, 0, 0, 5], 120 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 120 -j 3: [0, 0, 0, 5], 120 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 240 -j 1: [0, 0, 0, 5], 240 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 240 -j 3: [0, 0, 0, 5], 240 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 241 -j 1: [0, 0, 0, 5], 241 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 241 -j 3: [0, 0, 0, 5], 241 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 242 -j 1: [0, 0, 0, 5], 242 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 242 -j 3: [0, 0, 0, 5], 242 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 247 -j 1: [0, 832, 128, 5], 247 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query 247 -j 3: [0, 832, 128, 5], 247 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query never -j 1: [0, 832, 128, 0], 247 queries: 5/5 words
+[cancel] OK  find_flat_area cancel at query never -j 3: [0, 832, 128, 0], 247 queries: 5/5 words
+[cancel] OK  AFT cancel at tile query 1 -j 1: Cancelled, 1 queries (Python 1; Python blob = raw with 0x2d = 0: True): 2/2 words
+[cancel] OK  AFT cancel at tile query 1 -j 3: Cancelled, 1 queries (Python 1; Python blob = raw with 0x2d = 0: True): 2/2 words
+[cancel] OK  AFT cancel at tile query 100 -j 1: Cancelled, 100 queries (Python 100; Python blob = raw with 0x2d = 0: True): 2/2 words
+[cancel] OK  AFT cancel at tile query 100 -j 3: Cancelled, 100 queries (Python 100; Python blob = raw with 0x2d = 0: True): 2/2 words
+[cancel] OK  AFT without cancel -j 1: 1980 queries (tiles 1980): 1/1 words
+[cancel] OK  AFT without cancel -j 3: 1980 queries (tiles 1980): 1/1 words
+[cancel] OK  profile_blob [832, 0, 128, 128] -j 1 with a cancel query never true: 4785 queries, bytes vs nv_profile.build_profile: 49920/49920 words
+[cancel] OK  profile_blob [832, 0, 128, 128] -j 1 cancel at query 1/4785: Cancelled after 1 queries: 2/2 words
+[cancel] OK  profile_blob [832, 0, 128, 128] -j 1 cancel at query 2/4785: Cancelled after 2 queries: 2/2 words
+[cancel] OK  profile_blob [832, 0, 128, 128] -j 1 cancel at query 1595/4785: Cancelled after 1595 queries: 2/2 words
+[cancel] OK  profile_blob [832, 0, 128, 128] -j 1 cancel at query 4784/4785: Cancelled after 4784 queries: 2/2 words
+[cancel] OK  profile_blob [832, 0, 128, 128] -j 1 cancel at query 4785/4785: Cancelled after 4785 queries: 2/2 words
+[cancel] OK  profile_blob [832, 0, 128, 128] -j 3 with a cancel query never true: 4785 queries, bytes vs nv_profile.build_profile: 49920/49920 words
+[cancel] OK  profile_blob [832, 0, 128, 128] -j 3 cancel at query 1/4785: Cancelled after 1 queries: 2/2 words
+[cancel] OK  profile_blob [832, 0, 128, 128] -j 3 cancel at query 2/4785: Cancelled after 2 queries: 2/2 words
+[cancel] OK  profile_blob [832, 0, 128, 128] -j 3 cancel at query 1595/4785: Cancelled after 1595 queries: 2/2 words
+[cancel] OK  profile_blob [832, 0, 128, 128] -j 3 cancel at query 4784/4785: Cancelled after 4784 queries: 2/2 words
+[cancel] OK  profile_blob [832, 0, 128, 128] -j 3 cancel at query 4785/4785: Cancelled after 4785 queries: 2/2 words
+[cancel] OK  profile_blob [60, 40, 216, 344] -j 1 with a cancel query never true: 16842 queries, bytes vs nvc_profile_build: 49920/49920 words
+[cancel] OK  profile_blob [60, 40, 216, 344] -j 1 cancel at query 1/16842: Cancelled after 1 queries: 2/2 words
+[cancel] OK  profile_blob [60, 40, 216, 344] -j 1 cancel at query 2/16842: Cancelled after 2 queries: 2/2 words
+[cancel] OK  profile_blob [60, 40, 216, 344] -j 1 cancel at query 5614/16842: Cancelled after 5614 queries: 2/2 words
+[cancel] OK  profile_blob [60, 40, 216, 344] -j 1 cancel at query 16841/16842: Cancelled after 16841 queries: 2/2 words
+[cancel] OK  profile_blob [60, 40, 216, 344] -j 1 cancel at query 16842/16842: Cancelled after 16842 queries: 2/2 words
+[cancel] OK  profile_blob [60, 40, 216, 344] -j 3 with a cancel query never true: 16842 queries, bytes vs nvc_profile_build: 49920/49920 words
+[cancel] OK  profile_blob [60, 40, 216, 344] -j 3 cancel at query 1/16842: Cancelled after 1 queries: 2/2 words
+[cancel] OK  profile_blob [60, 40, 216, 344] -j 3 cancel at query 2/16842: Cancelled after 2 queries: 2/2 words
+[cancel] OK  profile_blob [60, 40, 216, 344] -j 3 cancel at query 5614/16842: Cancelled after 5614 queries: 2/2 words
+[cancel] OK  profile_blob [60, 40, 216, 344] -j 3 cancel at query 16841/16842: Cancelled after 16841 queries: 2/2 words
+[cancel] OK  profile_blob [60, 40, 216, 344] -j 3 cancel at query 16842/16842: Cancelled after 16842 queries: 2/2 words
+[cancel] OK  run_in_child(task, run_aft) cancelled after 0 queries: Cancelled in 0.00 s: 1/1 words
+[cancel] OK  run_in_child(task, run_aft) cancelled after 2 queries: Cancelled in 0.02 s: 1/1 words
+[cancel] OK  run_in_child(task, run_aft) cancelled after 50 queries: Cancelled in 0.03 s: 1/1 words
+[cancel] OK  run_in_child(task, run_aft) area [40, 60, 216, 344] -j 1 cancelled at 0.05 s: Cancelled, latency 0.012 s: 2/2 words
+[cancel] OK  run_in_child(task, run_aft) area [40, 60, 216, 344] -j 1 cancelled at 0.4 s: Cancelled, latency 0.058 s: 2/2 words
+[fallback] OK  NV_NATIVE_LIB=<missing>: AVAILABLE, available, enabled, == process_frame_v5, STATS = False False False True {'native': 0, 'fallback': 0}: 1/1 words
+[fallback] OK  NV_NATIVE=0: AVAILABLE, available, enabled, == process_frame_v5, STATS = True True False True {'native': 0, 'fallback': 0}: 1/1 words
+[fallback] OK  default (library found): AVAILABLE, available, enabled, == process_frame_v5, STATS = True True True True {'native': 2, 'fallback': 0}: 1/1 words
+[fallback] OK  noise_level np.float64(1.1): Python path used (2 fallbacks), dtype float64: 345601/345601 words
+[fallback] OK  channel_noise Cb np.float32: Python path used (2 fallbacks), dtype float32: 345601/345601 words
+[fallback] OK  set_native(False) -> spawned child: native_enabled() = False: 1/1 words
+[fallback] OK  set_native(True) -> spawned child: native_enabled() = True: 1/1 words
+[fallback] OK  set_native(False) -> spawned child: native_enabled() = False: 1/1 words
+[fallback] OK  similarity 'bogus': ValueError: unknown similarity 'bogus' (expected 'v5' or 'pyramid'): 1/1 words
+[g8] OK  v02 n=120 auto area None -j 1 -> [0, 992, 128] status 0: 79/79 words  py 2.62s nat 1.410s
+[g8] OK  v02 n=120 auto area None -j 3 -> [0, 992, 128] status 0: 79/79 words  py 2.62s nat 0.668s
+[g8] OK  v02 n=120 auto area (216, 640, 200, 296) -j 1 -> [216, 640, 200, 296] status None: 80/80 words  py 0.89s nat 0.350s
+[g8] OK  v02 n=120 auto area (216, 640, 200, 296) -j 3 -> [216, 640, 200, 296] status None: 80/80 words  py 0.89s nat 0.206s
+[g8] OK  v02 n=455 spatial area None -j 1 -> [0, 880, 128] status 0: 78/78 words  py 2.36s nat 1.232s
+[g8] OK  v02 n=455 spatial area None -j 3 -> [0, 880, 128] status 0: 78/78 words  py 2.36s nat 0.563s
+[g8] OK  v02 n=455 spatial area (533, 11, 176, 176) -j 1 -> [533, 11, 176] status None: 78/78 words  py 0.60s nat 0.285s
+[g8] OK  v02 n=455 spatial area (533, 11, 176, 176) -j 3 -> [533, 11, 176] status None: 78/78 words  py 0.60s nat 0.122s
+[g8] OK  v02 n=690 temporal area None -j 1 -> [0, 808, 128] status 0: 79/79 words  py 2.21s nat 0.988s
+[g8] OK  v02 n=690 temporal area None -j 3 -> [0, 808, 128] status 0: 79/79 words  py 2.21s nat 0.558s
+[g8] OK  v02 n=690 temporal area (3, 1660, 250, 250) -j 1 -> [3, 1660, 250] status None: 79/79 words  py 0.38s nat 0.129s
+[g8] OK  v02 n=690 temporal area (3, 1660, 250, 250) -j 3 -> [3, 1660, 250] status None: 79/79 words  py 0.38s nat 0.115s
+[g8] OK  t n=40 auto area None -j 1 -> [272, 120, 48] status 2: 79/79 words  py 0.71s nat 0.207s
+[g8] OK  t n=40 auto area None -j 3 -> [272, 120, 48] status 2: 79/79 words  py 0.71s nat 0.094s
+[g8] OK  t n=40 auto area (120, 160, 96, 144) -j 1 -> [120, 160, 96, 144] status None: 80/80 words  py 0.09s nat 0.042s
+[g8] OK  t n=40 auto area (120, 160, 96, 144) -j 3 -> [120, 160, 96, 144] status None: 80/80 words  py 0.09s nat 0.025s
+[g8] OK  t n=520 spatial area None -j 1 -> [296, 400, 64] status 2: 78/78 words  py 0.66s nat 0.195s
+[g8] OK  t n=520 spatial area None -j 3 -> [296, 400, 64] status 2: 78/78 words  py 0.66s nat 0.099s
+[g8] OK  t n=520 spatial area (240, 320, 112, 300) -j 1 -> [240, 320, 112, 300] status None: 79/79 words  py 0.07s nat 0.038s
+[g8] OK  t n=520 spatial area (240, 320, 112, 300) -j 3 -> [240, 320, 112, 300] status None: 79/79 words  py 0.07s nat 0.021s
+[g8] OK  t n=860 temporal area None -j 1 -> [288, 400, 48] status 2: 79/79 words  py 0.63s nat 0.165s
+[g8] OK  t n=860 temporal area None -j 3 -> [288, 400, 48] status 2: 79/79 words  py 0.63s nat 0.091s
+[g8] OK  t n=860 temporal area (17, 23, 64, 64) -j 1 -> [17, 23, 64] status None: 79/79 words  py 0.04s nat 0.013s
+[g8] OK  t n=860 temporal area (17, 23, 64, 64) -j 3 -> [17, 23, 64] status None: 79/79 words  py 0.04s nat 0.013s
+[g8] OK  v02 n=455 10-bit read (float32 planes) auto area None (C path) -j 1: 79/79 words
+[g8] OK  v02 n=455 10-bit read (float32 planes) auto area None (C path) -j 3: 79/79 words
+[g8] OK  v02 n=455 10-bit read (float32 planes) auto area (270, 384, 152, 248) (C path) -j 1: 80/80 words
+[g8] OK  v02 n=455 10-bit read (float32 planes) auto area (270, 384, 152, 248) (C path) -j 3: 80/80 words
+[g8] OK  v02 n=455 4:4:4 auto (C path) -j 1: 83/83 words
+[g8] OK  v02 n=455 4:4:4 auto (C path) -j 3: 83/83 words
+[g8] OK  v02 n=455 4:4:4 temporal rect (C path) -j 1: 84/84 words
+[g8] OK  v02 n=455 4:4:4 temporal rect (C path) -j 3: 84/84 words
+[g8] OK  v02 n=455 odd size (1079, 1917) / (540, 959) auto (C path) -j 1: 79/79 words
+[g8] OK  v02 n=455 odd size (1079, 1917) / (540, 959) auto (C path) -j 3: 79/79 words
+[g8] OK  v02 n=455 full range spatial (C path) -j 1: 78/78 words
+[g8] OK  v02 n=455 full range spatial (C path) -j 3: 78/78 words
+[g8] OK  v02 n=455 BT.2020 auto (C path) -j 1: 79/79 words
+[g8] OK  v02 n=455 BT.2020 auto (C path) -j 3: 79/79 words
+[g8] OK  v02 n=455 pair = frame n+2, more = [n+1] temporal (C path) -j 1: 79/79 words
+[g8] OK  v02 n=455 pair = frame n+2, more = [n+1] temporal (C path) -j 3: 79/79 words
+[g8] OK  v02 n=455 no pair / more auto (spatial curve, no static fraction) (C path) -j 1: 78/78 words
+[g8] OK  v02 n=455 no pair / more auto (spatial curve, no static fraction) (C path) -j 3: 78/78 words
+[g8] OK  v02 n=455 FindFlatArea cache: first, second call (second: 0 cancel queries, cache 1): 157/157 words
+[g8] OK  v02 n=455 uint8 planes (Python path) -j 1: 79/79 words
+[g8] OK  v02 n=455 uint8 planes (Python path) -j 3: 79/79 words
+[g8] OK  v02 n=455 a NaN in Y, rect (Python path) -j 1: 80/80 words
+[g8] OK  v02 n=455 a NaN in Y, rect (Python path) -j 3: 80/80 words
+[g8] OK  v02 n=455 levels 4 (Python path) -j 1: 74/74 words
+[g8] OK  v02 n=455 levels 4 (Python path) -j 3: 74/74 words
+[g8] OK  v02 n=455 mode 'bogus' (Python path) -j 1: 79/79 words
+[g8] OK  v02 n=455 mode 'bogus' (Python path) -j 3: 79/79 words
+[g8] OK  v02 n=455 5-value area (Python path) -j 1: 79/79 words
+[g8] OK  v02 n=455 5-value area (Python path) -j 3: 79/79 words
+[g8] OK  t n=520 10-bit read (float32 planes) auto area None (C path) -j 1: 79/79 words
+[g8] OK  t n=520 10-bit read (float32 planes) auto area None (C path) -j 3: 79/79 words
+[g8] OK  t n=520 10-bit read (float32 planes) auto area (90, 128, 152, 248) (C path) -j 1: 80/80 words
+[g8] OK  t n=520 10-bit read (float32 planes) auto area (90, 128, 152, 248) (C path) -j 3: 80/80 words
+[g8] OK  t n=520 4:4:4 auto (C path) -j 1: 83/83 words
+[g8] OK  t n=520 4:4:4 auto (C path) -j 3: 83/83 words
+[g8] OK  t n=520 4:4:4 temporal rect (C path) -j 1: 84/84 words
+[g8] OK  t n=520 4:4:4 temporal rect (C path) -j 3: 84/84 words
+[g8] OK  t n=520 odd size (359, 637) / (180, 319) auto (C path) -j 1: 79/79 words
+[g8] OK  t n=520 odd size (359, 637) / (180, 319) auto (C path) -j 3: 79/79 words
+[g8] OK  t n=520 full range spatial (C path) -j 1: 78/78 words
+[g8] OK  t n=520 full range spatial (C path) -j 3: 78/78 words
+[g8] OK  t n=520 BT.2020 auto (C path) -j 1: 79/79 words
+[g8] OK  t n=520 BT.2020 auto (C path) -j 3: 79/79 words
+[g8] OK  t n=520 pair = frame n+2, more = [n+1] temporal (C path) -j 1: 79/79 words
+[g8] OK  t n=520 pair = frame n+2, more = [n+1] temporal (C path) -j 3: 79/79 words
+[g8] OK  t n=520 no pair / more auto (spatial curve, no static fraction) (C path) -j 1: 78/78 words
+[g8] OK  t n=520 no pair / more auto (spatial curve, no static fraction) (C path) -j 3: 78/78 words
+[g8] OK  t n=520 FindFlatArea cache: first, second call (second: 0 cancel queries, cache 1): 157/157 words
+[g8] OK  t n=520 uint8 planes (Python path) -j 1: 79/79 words
+[g8] OK  t n=520 uint8 planes (Python path) -j 3: 79/79 words
+[g8] OK  t n=520 a NaN in Y, rect (Python path) -j 1: 80/80 words
+[g8] OK  t n=520 a NaN in Y, rect (Python path) -j 3: 80/80 words
+[g8] OK  t n=520 levels 4 (Python path) -j 1: 74/74 words
+[g8] OK  t n=520 levels 4 (Python path) -j 3: 74/74 words
+[g8] OK  t n=520 mode 'bogus' (Python path) -j 1: 79/79 words
+[g8] OK  t n=520 mode 'bogus' (Python path) -j 3: 79/79 words
+[g8] OK  t n=520 5-value area (Python path) -j 1: 79/79 words
+[g8] OK  t n=520 5-value area (Python path) -j 3: 79/79 words
+[g8] OK  build_profile_v5 cancel at query 1 -j 1: ProfileCancelled: profiling cancelled (FindFlatArea status 5), 1 queries: 2/2 words
+[g8] OK  build_profile_v5 cancel at query 1 -j 3: ProfileCancelled: profiling cancelled (FindFlatArea status 5), 1 queries: 2/2 words
+[g8] OK  build_profile_v5 cancel at query 100 -j 1: ProfileCancelled: profiling cancelled (FindFlatArea status 5), 100 queries: 2/2 words
+[g8] OK  build_profile_v5 cancel at query 100 -j 3: ProfileCancelled: profiling cancelled (FindFlatArea status 5), 100 queries: 2/2 words
+[g8] OK  build_profile_v5 cancel at query 240 -j 1: ProfileCancelled: profiling cancelled (FindFlatArea status 5), 240 queries: 2/2 words
+[g8] OK  build_profile_v5 cancel at query 240 -j 3: ProfileCancelled: profiling cancelled (FindFlatArea status 5), 240 queries: 2/2 words
+[g8] OK  build_profile_v5 cancel at query 241 -j 1: ProfileCancelled: profiling cancelled (FindFlatArea status 5), 241 queries: 2/2 words
+[g8] OK  build_profile_v5 cancel at query 241 -j 3: ProfileCancelled: profiling cancelled (FindFlatArea status 5), 241 queries: 2/2 words
+[g8] OK  build_profile_v5 cancel at query 246 -j 1: ProfileCancelled: profiling cancelled (FindFlatArea status 5), 246 queries: 2/2 words
+[g8] OK  build_profile_v5 cancel at query 246 -j 3: ProfileCancelled: profiling cancelled (FindFlatArea status 5), 246 queries: 2/2 words
+[g8] OK  build_profile_v5 cancel at query 247 -j 1: ProfileCancelled: profiling cancelled (FindFlatArea status 5), 247 queries: 2/2 words
+[g8] OK  build_profile_v5 cancel at query 247 -j 3: ProfileCancelled: profiling cancelled (FindFlatArea status 5), 247 queries: 2/2 words
+[g8] OK  build_profile_v5 cancel at query never -j 1: dict, 247 queries: 79/79 words
+[g8] OK  build_profile_v5 cancel at query never -j 3: dict, 247 queries: 79/79 words
+[g8] OK  1x1 auto area None -j 1 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  1x1 auto area None -j 3 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  1x1 spatial area None -j 1 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  1x1 spatial area None -j 3 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  1x1 auto area (0, 0, 8) -j 1 (Python path): dict: 83/83 words
+[g8] OK  1x1 auto area (0, 0, 8) -j 3 (Python path): dict: 83/83 words
+[g8] OK  1x1 spatial area (0, 0, 8) -j 1 (Python path): dict: 82/82 words
+[g8] OK  1x1 spatial area (0, 0, 8) -j 3 (Python path): dict: 82/82 words
+[g8] OK  1x2 auto area None -j 1 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  1x2 auto area None -j 3 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  1x2 spatial area None -j 1 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  1x2 spatial area None -j 3 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  1x2 auto area (0, 0, 8) -j 1 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  1x2 auto area (0, 0, 8) -j 3 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  1x2 spatial area (0, 0, 8) -j 1 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  1x2 spatial area (0, 0, 8) -j 3 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  2x1 auto area None -j 1 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  2x1 auto area None -j 3 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  2x1 spatial area None -j 1 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  2x1 spatial area None -j 3 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  2x1 auto area (0, 0, 8) -j 1 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  2x1 auto area (0, 0, 8) -j 3 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  2x1 spatial area (0, 0, 8) -j 1 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  2x1 spatial area (0, 0, 8) -j 3 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  1x50 auto area None -j 1 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  1x50 auto area None -j 3 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  1x50 spatial area None -j 1 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  1x50 spatial area None -j 3 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  1x50 auto area (0, 0, 8) -j 1 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  1x50 auto area (0, 0, 8) -j 3 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  1x50 spatial area (0, 0, 8) -j 1 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  1x50 spatial area (0, 0, 8) -j 3 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  50x1 auto area None -j 1 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  50x1 auto area None -j 3 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  50x1 spatial area None -j 1 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  50x1 spatial area None -j 3 (Python path): ValueError: Shape of array too small to calculate a numerical gradient, at least (edge_order + 1) elements are required.: 2/2 words
+[g8] OK  50x1 auto area (0, 0, 8) -j 1 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  50x1 auto area (0, 0, 8) -j 3 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  50x1 spatial area (0, 0, 8) -j 1 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  50x1 spatial area (0, 0, 8) -j 3 (Python path): ValueError: can't extend empty axis 0 using modes other than 'constant' or 'empty': 2/2 words
+[g8] OK  2x2 auto area None -j 1 (C path): dict: 79/79 words
+[g8] OK  2x2 auto area None -j 3 (C path): dict: 79/79 words
+[g8] OK  2x2 spatial area None -j 1 (C path): dict: 78/78 words
+[g8] OK  2x2 spatial area None -j 3 (C path): dict: 78/78 words
+[g8] OK  2x2 auto area (0, 0, 8) -j 1 (C path): dict: 79/79 words
+[g8] OK  2x2 auto area (0, 0, 8) -j 3 (C path): dict: 79/79 words
+[g8] OK  2x2 spatial area (0, 0, 8) -j 1 (C path): dict: 78/78 words
+[g8] OK  2x2 spatial area (0, 0, 8) -j 3 (C path): dict: 78/78 words
+[g8] OK  2x50 auto area None -j 1 (C path): dict: 79/79 words
+[g8] OK  2x50 auto area None -j 3 (C path): dict: 79/79 words
+[g8] OK  2x50 spatial area None -j 1 (C path): dict: 78/78 words
+[g8] OK  2x50 spatial area None -j 3 (C path): dict: 78/78 words
+[g8] OK  2x50 auto area (0, 0, 8) -j 1 (C path): dict: 79/79 words
+[g8] OK  2x50 auto area (0, 0, 8) -j 3 (C path): dict: 79/79 words
+[g8] OK  2x50 spatial area (0, 0, 8) -j 1 (C path): dict: 78/78 words
+[g8] OK  2x50 spatial area (0, 0, 8) -j 3 (C path): dict: 78/78 words
+ok   prof5 profile v02 f=0 auto None: 79 words  (py 2.68 s, C 1.29 s)
+ok   prof5 profile v02 f=0 spatial None: 78 words  (py 2.30 s, C 1.19 s)
+ok   prof5 profile v02 f=0 temporal None: 79 words  (py 2.16 s, C 1.06 s)
+ok   prof5 profile v02 f=0 auto (40, 60, 216, 512): 80 words  (py 0.91 s, C 0.36 s)
+ok   prof5 profile v02 f=0 auto (100, 120, 64, 64): 79 words  (py 0.87 s, C 0.34 s)
+ok   prof5 profile v02 f=2 auto None: 79 words  (py 2.61 s, C 1.31 s)
+ok   prof5 profile v02 f=2 spatial None: 78 words  (py 2.41 s, C 1.15 s)
+ok   prof5 profile v02 f=2 temporal None: 79 words  (py 2.22 s, C 0.97 s)
+ok   prof5 profile v02 f=2 auto (40, 60, 216, 512): 80 words  (py 0.81 s, C 0.38 s)
+ok   prof5 profile v02 f=2 auto (100, 120, 64, 64): 79 words  (py 0.86 s, C 0.35 s)
+ok   prof5 profile v02 f=4 auto None: 79 words  (py 2.60 s, C 1.27 s)
+ok   prof5 profile v02 f=4 spatial None: 78 words  (py 2.20 s, C 1.24 s)
+ok   prof5 profile v02 f=4 temporal None: 79 words  (py 2.21 s, C 1.00 s)
+ok   prof5 profile v02 f=4 auto (40, 60, 216, 512): 80 words  (py 0.87 s, C 0.38 s)
+ok   prof5 profile v02 f=4 auto (100, 120, 64, 64): 79 words  (py 0.81 s, C 0.37 s)
+ok   prof5 profile v02 f=6 auto None: 79 words  (py 2.47 s, C 1.31 s)
+ok   prof5 profile v02 f=6 spatial None: 78 words  (py 2.14 s, C 1.29 s)
+ok   prof5 profile v02 f=6 temporal None: 79 words  (py 2.10 s, C 1.15 s)
+ok   prof5 profile v02 f=6 auto (40, 60, 216, 512): 80 words  (py 0.85 s, C 0.36 s)
+ok   prof5 profile v02 f=6 auto (100, 120, 64, 64): 79 words  (py 0.94 s, C 0.34 s)
+ok   prof5 profile v02 f=8 auto None: 79 words  (py 2.78 s, C 1.35 s)
+ok   prof5 profile v02 f=8 spatial None: 78 words  (py 2.26 s, C 1.16 s)
+ok   prof5 profile v02 f=8 temporal None: 79 words  (py 2.33 s, C 1.09 s)
+ok   prof5 profile v02 f=8 auto (40, 60, 216, 512): 80 words  (py 0.76 s, C 0.37 s)
+ok   prof5 profile v02 f=8 auto (100, 120, 64, 64): 79 words  (py 0.85 s, C 0.34 s)
+ok   prof5 profile v02 f=9 auto None: 79 words  (py 2.64 s, C 1.25 s)
+ok   prof5 profile v02 f=9 spatial None: 78 words  (py 2.30 s, C 1.25 s)
+ok   prof5 profile v02 f=9 temporal None: 79 words  (py 2.17 s, C 1.00 s)
+ok   prof5 profile v02 f=9 auto (40, 60, 216, 512): 80 words  (py 0.88 s, C 0.35 s)
+ok   prof5 profile v02 f=9 auto (100, 120, 64, 64): 79 words  (py 0.88 s, C 0.34 s)
+ok   prof5 profile v02 f=10 auto None: 79 words  (py 2.70 s, C 1.23 s)
+ok   prof5 profile v02 f=10 spatial None: 78 words  (py 2.52 s, C 1.24 s)
+ok   prof5 profile v02 f=10 temporal None: 79 words  (py 1.99 s, C 1.03 s)
+ok   prof5 profile v02 f=10 auto (40, 60, 216, 512): 80 words  (py 0.91 s, C 0.38 s)
+ok   prof5 profile v02 f=10 auto (100, 120, 64, 64): 79 words  (py 0.82 s, C 0.34 s)
+ok   prof5 profile t f=0 auto None: 79 words  (py 0.77 s, C 0.22 s)
+ok   prof5 profile t f=0 spatial None: 78 words  (py 0.63 s, C 0.18 s)
+ok   prof5 profile t f=0 temporal None: 79 words  (py 0.62 s, C 0.16 s)
+ok   prof5 profile t f=0 auto (40, 60, 216, 512): 80 words  (py 0.11 s, C 0.06 s)
+ok   prof5 profile t f=0 auto (100, 120, 64, 64): 79 words  (py 0.09 s, C 0.04 s)
+ok   prof5 profile t f=2 auto None: 79 words  (py 0.66 s, C 0.22 s)
+ok   prof5 profile t f=2 spatial None: 78 words  (py 0.61 s, C 0.18 s)
+ok   prof5 profile t f=2 temporal None: 79 words  (py 0.62 s, C 0.17 s)
+ok   prof5 profile t f=2 auto (40, 60, 216, 512): 80 words  (py 0.11 s, C 0.06 s)
+ok   prof5 profile t f=2 auto (100, 120, 64, 64): 79 words  (py 0.10 s, C 0.05 s)
+ok   prof5 profile t f=4 auto None: 79 words  (py 0.68 s, C 0.22 s)
+ok   prof5 profile t f=4 spatial None: 78 words  (py 0.59 s, C 0.19 s)
+ok   prof5 profile t f=4 temporal None: 79 words  (py 0.60 s, C 0.17 s)
+ok   prof5 profile t f=4 auto (40, 60, 216, 512): 80 words  (py 0.10 s, C 0.06 s)
+ok   prof5 profile t f=4 auto (100, 120, 64, 64): 79 words  (py 0.09 s, C 0.05 s)
+ok   prof5 profile t f=6 auto None: 79 words  (py 0.72 s, C 0.21 s)
+ok   prof5 profile t f=6 spatial None: 78 words  (py 0.60 s, C 0.20 s)
+ok   prof5 profile t f=6 temporal None: 79 words  (py 0.58 s, C 0.16 s)
+ok   prof5 profile t f=6 auto (40, 60, 216, 512): 80 words  (py 0.11 s, C 0.06 s)
+ok   prof5 profile t f=6 auto (100, 120, 64, 64): 79 words  (py 0.09 s, C 0.05 s)
+ok   prof5 profile t f=8 auto None: 79 words  (py 0.74 s, C 0.20 s)
+ok   prof5 profile t f=8 spatial None: 78 words  (py 0.64 s, C 0.21 s)
+ok   prof5 profile t f=8 temporal None: 79 words  (py 0.60 s, C 0.15 s)
+ok   prof5 profile t f=8 auto (40, 60, 216, 512): 80 words  (py 0.10 s, C 0.05 s)
+ok   prof5 profile t f=8 auto (100, 120, 64, 64): 79 words  (py 0.09 s, C 0.04 s)
+ok   prof5 profile t f=9 auto None: 79 words  (py 0.63 s, C 0.20 s)
+ok   prof5 profile t f=9 spatial None: 78 words  (py 0.58 s, C 0.17 s)
+ok   prof5 profile t f=9 temporal None: 79 words  (py 0.61 s, C 0.18 s)
+ok   prof5 profile t f=9 auto (40, 60, 216, 512): 80 words  (py 0.09 s, C 0.05 s)
+ok   prof5 profile t f=9 auto (100, 120, 64, 64): 79 words  (py 0.07 s, C 0.03 s)
+ok   prof5 profile t f=10 auto None: 78 words  (py 0.58 s, C 0.18 s)
+ok   prof5 profile t f=10 spatial None: 78 words  (py 0.58 s, C 0.16 s)
+ok   prof5 profile t f=10 temporal None: 78 words  (py 0.67 s, C 0.18 s)
+ok   prof5 profile t f=10 auto (40, 60, 216, 512): 79 words  (py 0.05 s, C 0.03 s)
+ok   prof5 profile t f=10 auto (100, 120, 64, 64): 78 words  (py 0.02 s, C 0.01 s)
+prof5: 110/110 cases bit-exact
+[prof5] OK  verify_bridge_prof5.run (110/110 items)
+  ui video    ('v02:306', False)           645/645  27.1s
+  ui video    ('v02:309', False)           645/645  18.9s
+  ui video    ('v02:312', False)           645/645  26.7s
+  ui video    ('v02:315', False)           645/645  22.1s
+  ui video    ('v02:318', False)           645/645  31.1s
+  ui video    ('t:298', False)             645/645  4.9s
+  ui video    ('t:301', False)             645/645  6.4s
+  ui video    ('t:304', False)             645/645  13.5s
+  ui video    ('t:307', False)             645/645  20.7s
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/reference/python/nv_ui_qt/backend.py:122: RuntimeWarning: divide by zero encountered in divide
+  return np.clip((1.0 / rv - 1.0) / (1.0 / rv_min - 1.0), 0.0, 1.0).astype(np.float32)
+/Users/seitan/Desktop/work/reverse/.claude/worktrees/aft2/reference/python/nv_ui_qt/display.py:304: RuntimeWarning: invalid value encountered in multiply
+  return np.clip((1 - w) * (i * NLC_SEPIA) + w * (i * NLC_BLUE + NLC_BLUE_OFF), 0, 255).astype(F32)
+  ui synth    1                            4644/4644  100.9s
+  ui synth    2                            4644/4644  95.3s
+  ui yuv      7                            720/720  0.0s
+  ui yuv      8                            720/720  0.1s
+  ui yuv      9                            720/720  0.0s
+  ui mix      3                            210/210  0.0s
+  ui mix      4                            210/210  0.0s
+  ui floor    0                            2/2  19.8s
+  ui nlc      10                           526/526  1.3s
+  ui nlc      11                           520/520  0.0s
+  ui interp   5                            8016/8016  0.0s
+  ui interp   6                            7918/7918  0.1s
+  ui quality  ('v02', 312, 30)             30/30  91.6s
+  ui quality  ('v02', 309, 20)             20/20  57.1s
+  ui quality  ('t', 300, 30)               30/30  15.6s
+  ui quality  ('t', 305, 20)               20/20  8.3s
+ui: 34755/34755 bit-exact
+[ui] OK  verify_bridge_ui.run (34755/34755 items)
+  depth formats  seed 1     67827098/67827098  0.7s
+  depth formats  seed 2     67826820/67826820  0.7s
+  depth formats  seed 3     67826810/67826810  0.6s
+  depth ofx      seed 11    1752305/1752305  0.0s
+  depth ofx      seed 12    1752349/1752349  0.0s
+  depth ofx      seed 13    1752365/1752365  0.0s
+  depth badfmt   seed 0     13/13  0.0s
+depth: 208737760/208737760 bit-exact
+[depth] OK  verify_bridge_depth.run (208737760/208737760 items)
+
+summary (cases ok/total, words equal/total):
+  curve     20/20 cases, 200/200 words
+  profile   9/9 cases, 711/711 words
+  aft       26/26 cases, 999732/999732 words
+  frame     72/72 cases, 306334381/306334381 words
+  cancel    49/49 cases, 199807/199807 words
+  fallback  9/9 cases, 691209/691209 words
+  g8        152/152 cases, 8488/8488 words
+  prof5     1/1 cases, 110/110 words
+  ui        1/1 cases, 34755/34755 words
+  depth     1/1 cases, 208737760/208737760 words
+ALL MATCH (707 s)
+python3 native/verify_bridge.py  1496.41s user 1361.05s system 395% cpu 12:03.32 total

@@ -1,0 +1,2 @@
+test.mp4 n=300 area [288, 416, 48]: AFT face curves max |rel| 5.204e-05 (median 4.052e-05), marker bins differ 0/27, curve Y max |rel| 1.623e-05
+test_v02 n=310 area [0, 896, 128]: AFT face curves max |rel| 2.752e-03 (median 6.948e-04), marker bins differ 0/27, curve Y max |rel| 8.411e-04
