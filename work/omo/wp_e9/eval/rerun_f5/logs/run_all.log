@@ -1,0 +1,31 @@
+old_town_cross/p_y3: profile frame 0 area [280, 248, 128] flat_status 0, profile 1 s, export 9 s
+old_town_cross/p_y6: profile frame 0 area [280, 328, 128] flat_status 0, profile 1 s, export 9 s
+park_joy/p_y3: profile frame 0 area [736, 1304, 128] flat_status 0, profile 1 s, export 9 s
+park_joy/p_y6: profile frame 0 area [984, 480, 96] flat_status 2, profile 1 s, export 9 s
+sintel/p_y3: profile frame 0 area [720, 168, 128] flat_status 0, profile 1 s, export 9 s
+sintel/p_y6: profile frame 0 area [680, 160, 192] flat_status 0, profile 1 s, export 9 s
+user settings unchanged: 45d4258c53337ee4aa60017a4a4cce72b9f4bf3dc71303406cfb5c1c7d80fcc6
+old_town_cross/p_y3: profile frame 5 area [0, 1568, 128] flat_status 0, profile 1 s, export 9 s
+old_town_cross/p_y6: profile frame 5 area [0, 1568, 128] flat_status 0, profile 1 s, export 9 s
+park_joy/p_y3: profile frame 5 area [872, 1064, 128] flat_status 0, profile 1 s, export 9 s
+park_joy/p_y6: profile frame 5 area [984, 248, 96] flat_status 2, profile 1 s, export 9 s
+sintel/p_y3: profile frame 5 area [160, 616, 128] flat_status 0, profile 1 s, export 9 s
+sintel/p_y6: profile frame 5 area [680, 304, 128] flat_status 0, profile 1 s, export 9 s
+user settings unchanged: 45d4258c53337ee4aa60017a4a4cce72b9f4bf3dc71303406cfb5c1c7d80fcc6
+old_town_cross/tff_y6 same_frames: profile Two fields field top area [64, 328, 128] mode auto flat 0; export 9 s
+park_joy/tff_y6 same_frames: profile Two fields field top area [344, 752, 192] mode spatial flat 0; export 9 s
+sintel/tff_y3 same_frames: profile Two fields field top area [104, 1792, 96] mode auto flat 2; export 9 s
+sintel/tff_y6 same_frames: profile Two fields field top area [88, 1792, 128] mode auto flat 0; export 9 s
+user settings unchanged: 45d4258c53337ee4aa60017a4a4cce72b9f4bf3dc71303406cfb5c1c7d80fcc6
+old_town_cross/p_y3: profile frame 5 area [0, 1568, 128] flat_status 0, profile 2 s, export 9 s
+old_town_cross/p_y6: profile frame 5 area [0, 1568, 128] flat_status 0, profile 1 s, export 9 s
+park_joy/p_y3: profile frame 5 area [872, 1064, 128] flat_status 0, profile 1 s, export 9 s
+park_joy/p_y6: profile frame 5 area [984, 248, 96] flat_status 2, profile 1 s, export 9 s
+sintel/p_y3: profile frame 5 area [160, 616, 128] flat_status 0, profile 1 s, export 9 s
+sintel/p_y6: profile frame 5 area [680, 304, 128] flat_status 0, profile 1 s, export 9 s
+user settings unchanged: 45d4258c53337ee4aa60017a4a4cce72b9f4bf3dc71303406cfb5c1c7d80fcc6
+old_town_cross/tff_y6 same_frames: profile Two fields field top area [64, 328, 128] mode auto flat 0; export 9 s
+park_joy/tff_y6 same_frames: profile Two fields field top area [344, 752, 192] mode spatial flat 0; export 9 s
+sintel/tff_y3 same_frames: profile Two fields field top area [104, 1792, 96] mode auto flat 2; export 9 s
+sintel/tff_y6 same_frames: profile Two fields field top area [88, 1792, 128] mode auto flat 0; export 9 s
+user settings unchanged: 45d4258c53337ee4aa60017a4a4cce72b9f4bf3dc71303406cfb5c1c7d80fcc6

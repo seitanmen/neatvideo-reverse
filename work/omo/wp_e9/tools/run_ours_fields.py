@@ -3,7 +3,7 @@ built on a scratch copy by tools/cpp_int3/CMakeLists.txt).
 
     python3 tools/run_ours_fields.py --build BUILD_DIR CLIP [CLIP ...] [--first 0] [--kind two] [--profile-frame 0]
                                      [--variants same_frames:same:4,same_fields:same:2,shift_frames:shift:4,plain_frames:plain:4]
-                                     [--jobs 4]
+                                     [--jobs 4] [--tag NAME] [--root WP_E9]
     CLIP = <src>/<layout>_<level>, e.g. sintel/tff_y3
 
 For each clip (input clips/<src>/noisy_<layout>_<level>.y4m, 8-bit 4:2:0 y4m whose header says It / Ib):
@@ -16,6 +16,9 @@ For each clip (input clips/<src>/noisy_<layout>_<level>.y4m, 8-bit 4:2:0 y4m who
      path) per variant, --crf 0 (lossless 8-bit x264; interlaced coding flags as the export sets them), --audio none
      -> the first variant (the default, same parity / radius in frames) at runs/ours_field/<src>/<clip>/out.mp4,
         the others at runs/ours_field_<variant>/<src>/<clip>/out.mp4 (eval_all.py picks up every runs/ours_field*)
+--tag NAME (added 2026-11-02 for the frame-5 rerun, eval/E9_rerun_frame5.md): the outputs go to runs/ours_field_NAME/
+(profile and first variant) and runs/ours_field_NAME_<variant>/ (others) so that the existing runs stay; --root: the
+wp_e9 folder that holds clips/ and runs/ (default: the one of this script).
 Settings: NV_UI_QT_SETTINGS=runs/settings_e9.ini; ~/.config/NeatRepro/nv_ui_qt.ini is hashed before and after.
 """
 import argparse
@@ -53,7 +56,13 @@ def main():
     ap.add_argument("--profile-frame", default="0")
     ap.add_argument("--variants", default="same_frames:same:4,same_fields:same:2,shift_frames:shift:4,plain_frames:plain:4")
     ap.add_argument("--jobs", type=int, default=4)
+    ap.add_argument("--tag", default="")
+    ap.add_argument("--root", default=None)
     a = ap.parse_args()
+    global ROOT
+    if a.root:
+        ROOT = os.path.abspath(a.root)
+    base = "ours_field" + (f"_{a.tag}" if a.tag else "")
     variants = [v.split(":") for v in a.variants.split(",")]
     ini_before = C.sha256(USER_INI) if os.path.exists(USER_INI) else None
     settings = os.path.join(ROOT, "runs", "settings_e9.ini")
@@ -64,13 +73,13 @@ def main():
         src, lv = clip.split("/")
         layout, level = lv.split("_")
         inp = os.path.join(ROOT, "clips", src, f"noisy_{layout}_{level}.y4m")
-        pdir = os.path.join(ROOT, "runs", "ours_field", src, lv)
+        pdir = os.path.join(ROOT, "runs", base, src, lv)
         os.makedirs(pdir, exist_ok=True)
         tp = run([bins["e9_profile_fields"], inp, pdir, a.profile_frame, str(a.first), a.kind] + [":".join(v) for v in variants],
                  os.path.join(pdir, "profile.log"), env)
         info = json.load(open(os.path.join(pdir, "profile_info.json")))
         for i, (name, mode, radius) in enumerate(variants):
-            out = pdir if i == 0 else os.path.join(ROOT, "runs", f"ours_field_{name}", src, lv)
+            out = pdir if i == 0 else os.path.join(ROOT, "runs", f"{base}_{name}", src, lv)
             os.makedirs(out, exist_ok=True)
             dst = os.path.join(out, "out.mp4")
             if os.path.exists(dst):

@@ -1,0 +1,15 @@
+AFT level curves (R,G,B x 9 bins): genuine .dnp vs our runs. max|log ratio| over 27 bins, markers equal count
+old_town_cross/p_y3 | A: max|ln r| 0.271 mean 0.069 markers same 25/27 | B: max|ln r| 0.001 mean 0.000 markers same 27/27 | C: max|ln r| 0.185 mean 0.015 markers same 26/27
+  genuine [[1.162, 1.162, 1.162, 1.162, 1.06, 1.026, 1.107, 1.22, 1.332], [1.169, 1.169, 1.169, 1.169, 1.044, 1.036, 1.144, 1.253, 1.361], [0.917, 0.979, 1.014, 1.103, 1.049, 1.008, 1.09, 1.17, 1.25]]
+  genuine markers [[1, 1, 1, 0, 1, 0, 0, 0, 1], [1, 1, 1, 0, 1, 0, 0, 1, 1], [1, 0, 1, 0, 1, 0, 0, 0, 1]]
+old_town_cross/p_y6 | A: max|ln r| 0.140 mean 0.030 markers same 25/27 | B: max|ln r| 0.000 mean 0.000 markers same 27/27 | C: max|ln r| 0.000 mean 0.000 markers same 27/27
+park_joy/p_y3 | A: max|ln r| 0.037 mean 0.015 markers same 27/27 | B: max|ln r| 0.049 mean 0.020 markers same 27/27 | C: max|ln r| 0.049 mean 0.020 markers same 27/27
+park_joy/p_y6 | A: max|ln r| 0.059 mean 0.024 markers same 26/27 | B: max|ln r| 0.002 mean 0.001 markers same 27/27 | C: max|ln r| 0.000 mean 0.000 markers same 27/27
+sintel/p_y3 | A: max|ln r| 0.313 mean 0.048 markers same 23/27 | B: max|ln r| 0.007 mean 0.001 markers same 27/27 | C: max|ln r| 0.258 mean 0.010 markers same 27/27
+sintel/p_y6 | A: max|ln r| 0.503 mean 0.045 markers same 23/27 | B: max|ln r| 0.001 mean 0.000 markers same 27/27 | C: max|ln r| 0.004 mean 0.000 markers same 27/27
+old_town_cross/tff_y6 | A: max|ln r| 0.062 mean 0.032 markers same 24/27 | B: max|ln r| 0.036 mean 0.010 markers same 25/27 | C: max|ln r| 0.000 mean 0.000 markers same 27/27
+park_joy/tff_y6 | A: max|ln r| 0.378 mean 0.117 markers same 26/27 | B: max|ln r| 0.386 mean 0.113 markers same 26/27 | C: max|ln r| 0.017 mean 0.014 markers same 27/27
+  genuine [[0.985, 1.069, 1.069, 1.069, 1.069, 1.069, 1.069, 1.069, 1.069], [0.972, 1.052, 1.534, 1.534, 1.534, 1.534, 1.534, 1.534, 1.534], [1.038, 1.349, 1.349, 1.349, 1.349, 1.349, 1.349, 1.349, 1.349]]
+  genuine markers [[0, 0, 1, 1, 1, 1, 1, 1, 1], [0, 0, 0, 1, 1, 1, 1, 1, 1], [0, 0, 1, 1, 1, 1, 1, 1, 1]]
+sintel/tff_y3 | A: max|ln r| 0.575 mean 0.029 markers same 25/27 | B: max|ln r| 0.022 mean 0.009 markers same 27/27 | C: max|ln r| 0.018 mean 0.009 markers same 27/27
+sintel/tff_y6 | A: max|ln r| 0.445 mean 0.034 markers same 23/27 | B: max|ln r| 0.017 mean 0.009 markers same 22/27 | C: max|ln r| 0.000 mean 0.000 markers same 27/27

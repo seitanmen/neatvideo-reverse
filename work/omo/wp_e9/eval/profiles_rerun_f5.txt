@@ -1,0 +1,42 @@
+| clip | run | profile frame | aft frame | profiled with | field | area | flat_status | mode | aft_applied | ui_frame |
+|---|---|---|---|---|---|---|---|---|---|---|
+| old_town_cross/p_y3 | A | 0 | 0 | Full frame | - | [280, 248, 128] | 0 | auto | True | 0 |
+| old_town_cross/p_y3 | B | 5 | 5 | Full frame | - | [0, 1568, 128] | 0 | auto | True | 5 |
+| old_town_cross/p_y3 | C | 5 | 5 | Full frame | - | [0, 1568, 128] | 0 | auto | True | 5 |
+|  | max rel. diff of factors C vs B: 0.203 (A vs B 0.237) |||||||||
+| old_town_cross/p_y6 | A | 0 | 0 | Full frame | - | [280, 328, 128] | 0 | auto | True | 0 |
+| old_town_cross/p_y6 | B | 5 | 5 | Full frame | - | [0, 1568, 128] | 0 | auto | True | 5 |
+| old_town_cross/p_y6 | C | 5 | 5 | Full frame | - | [0, 1568, 128] | 0 | auto | True | 5 |
+|  | max rel. diff of factors C vs B: 0.000331 (A vs B 0.131) |||||||||
+| park_joy/p_y3 | A | 0 | 0 | Full frame | - | [736, 1304, 128] | 0 | auto | True | 0 |
+| park_joy/p_y3 | B | 5 | 5 | Full frame | - | [872, 1064, 128] | 0 | auto | True | 5 |
+| park_joy/p_y3 | C | 5 | 5 | Full frame | - | [872, 1064, 128] | 0 | auto | True | 5 |
+|  | max rel. diff of factors C vs B: 0.000321 (A vs B 0.0134) |||||||||
+| park_joy/p_y6 | A | 0 | 0 | Full frame | - | [984, 480, 96] | 2 | auto | True | 0 |
+| park_joy/p_y6 | B | 5 | 5 | Full frame | - | [984, 248, 96] | 2 | auto | True | 5 |
+| park_joy/p_y6 | C | 5 | 5 | Full frame | - | [984, 248, 96] | 2 | auto | True | 5 |
+|  | max rel. diff of factors C vs B: 0.00213 (A vs B 0.0607) |||||||||
+| sintel/p_y3 | A | 0 | 0 | Full frame | - | [720, 168, 128] | 0 | auto | True | 0 |
+| sintel/p_y3 | B | 5 | 5 | Full frame | - | [160, 616, 128] | 0 | auto | True | 5 |
+| sintel/p_y3 | C | 5 | 5 | Full frame | - | [160, 616, 128] | 0 | auto | True | 5 |
+|  | max rel. diff of factors C vs B: 0.228 (A vs B 0.269) |||||||||
+| sintel/p_y6 | A | 0 | 0 | Full frame | - | [680, 160, 192] | 0 | auto | True | 0 |
+| sintel/p_y6 | B | 5 | 5 | Full frame | - | [680, 304, 128] | 0 | auto | True | 5 |
+| sintel/p_y6 | C | 5 | 5 | Full frame | - | [680, 304, 128] | 0 | auto | True | 5 |
+|  | max rel. diff of factors C vs B: 0.00406 (A vs B 0.395) |||||||||
+| old_town_cross/tff_y6 | A | 0 | 0 | Two fields | top | [72, 1216, 128] | 0 | auto | True | 0 |
+| old_town_cross/tff_y6 | B | 5 | 5 | Two fields | top | [64, 328, 128] | 0 | auto | True | 5 |
+| old_town_cross/tff_y6 | C | 5 | 5 | Two fields | top | [64, 328, 128] | 0 | auto | True | 5 |
+|  | max rel. diff of factors C vs B: 0.0349 (A vs B 0.0998) |||||||||
+| park_joy/tff_y6 | A | 0 | 0 | Two fields | top | [368, 1304, 128] | 0 | spatial | True | 0 |
+| park_joy/tff_y6 | B | 5 | 5 | Two fields | top | [344, 752, 192] | 0 | spatial | True | 5 |
+| park_joy/tff_y6 | C | 5 | 5 | Two fields | top | [344, 752, 192] | 0 | spatial | True | 5 |
+|  | max rel. diff of factors C vs B: 0.446 (A vs B 0.0484) |||||||||
+| sintel/tff_y3 | A | 0 | 0 | Two fields | top | [88, 1824, 96] | 2 | auto | True | 0 |
+| sintel/tff_y3 | B | 5 | 5 | Two fields | top | [104, 1792, 96] | 2 | auto | True | 5 |
+| sintel/tff_y3 | C | 5 | 5 | Two fields | top | [104, 1792, 96] | 2 | auto | True | 5 |
+|  | max rel. diff of factors C vs B: 0.00763 (A vs B 0.786) |||||||||
+| sintel/tff_y6 | A | 0 | 0 | Two fields | top | [96, 1448, 128] | 0 | auto | True | 0 |
+| sintel/tff_y6 | B | 5 | 5 | Two fields | top | [88, 1792, 128] | 0 | auto | True | 5 |
+| sintel/tff_y6 | C | 5 | 5 | Two fields | top | [88, 1792, 128] | 0 | auto | True | 5 |
+|  | max rel. diff of factors C vs B: 0.0166 (A vs B 0.583) |||||||||
