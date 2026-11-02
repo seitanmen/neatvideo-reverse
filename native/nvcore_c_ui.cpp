@@ -43,8 +43,15 @@ void nvc_not_uniform(const float* rgb, int h, int w, int* bad3, int* clip3) {
 
 int nvc_quality_numbers(const float* rgb, int H, int W, const int* area4, const double* factors27,
                         const double* tune4, int aft, int reset, const uint8_t* flags81, int* q_pct, int* c_pct) {
+    return nvc_quality_numbers_pinned(rgb, H, W, area4, factors27, tune4, aft, reset, flags81, nullptr, q_pct, c_pct);
+}
+
+int nvc_quality_numbers_pinned(const float* rgb, int H, int W, const int* area4, const double* factors27,
+                               const double* tune4, int aft, int reset, const uint8_t* flags81,
+                               const uint8_t* pinned27, int* q_pct, int* c_pct) {
     try {
-        return nvu::quality_numbers(rgb, H, W, area4, factors27, tune4, aft != 0, reset != 0, flags81, q_pct, c_pct)
+        return nvu::quality_numbers(rgb, H, W, area4, factors27, tune4, aft != 0, reset != 0, flags81, pinned27,
+                                    q_pct, c_pct)
                    ? 1 : 0;
     } catch (...) {
         return -1;

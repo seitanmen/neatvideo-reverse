@@ -39,6 +39,9 @@ native/lzma/**
 !native/lzma/*.c
 !native/lzma/*.h
 !native/lzma/*.md
+# Q1: the decoded genuine profiles of the Quality regression (native/verify_quality.py, qtui selftest)
+!native/testdata/
+!native/testdata/*.json
 # W2a: the libm sensitivity harness (sources only; libm_alt/bin, libm_alt/obj and libm_ulp are build outputs)
 !native/Makefile.libm_alt
 !native/openlibm/

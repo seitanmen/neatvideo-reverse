@@ -52,6 +52,8 @@ def lib():
         L.nvc_noise_level.restype = ctypes.c_double
         L.nvc_not_uniform.argtypes = [P, ctypes.c_int, ctypes.c_int, P, P]
         L.nvc_quality_numbers.argtypes = [P, ctypes.c_int, ctypes.c_int, P, P, P, ctypes.c_int, ctypes.c_int, P, P, P]
+        L.nvc_quality_numbers_pinned.argtypes = [P, ctypes.c_int, ctypes.c_int, P, P, P, ctypes.c_int, ctypes.c_int, P,
+                                                 P, P, P]
         L.nvc_yuv_to_rgb.argtypes = [P, P, P] + [ctypes.c_int] * 7 + [P]
         L.nvc_mix.argtypes = [P, P] + [ctypes.c_int] * 4 + [ctypes.c_double]
         L.nvc_reference_floor.argtypes = [ctypes.c_char_p, ctypes.c_int, P]
@@ -401,8 +403,9 @@ def case_floor(_):
 
 # ------------------------------------------------------------------------------------- quality
 class PS:
-    def __init__(self, base, factors, tune):
+    def __init__(self, base, factors, tune, pinned=None):
         self.base, self.factors, self.tune = base, factors, tune
+        self.pinned = pinned if pinned is not None else [set(), set(), set()]
 
 
 def case_quality(video, n, variants):
@@ -437,7 +440,10 @@ def case_quality(video, n, variants):
             factors = [[float(x) for x in rng.choice([1.0, 0.2, 3.0, 0.5, 2.7, 3.0000001], 9)] for _ in range(3)]
         if v % 4 == 3:
             tune = {k: float(rng.uniform(0.2, 3.0)) for k in ("all", "Y", "Cb", "Cr") if rng.random() < 0.7}
-        ps = PS(b, factors, tune)
+        pinned = [set(), set(), set()]
+        if v % 3 == 2 or v % 8 == 3:                     # manually edited bins (valid 0, marker 1)
+            pinned = [set(int(k) for k in rng.choice(9, int(rng.integers(0, 4)), replace=False)) for _ in range(3)]
+        ps = PS(b, factors, tune, pinned)
         ref = Q.profile_numbers(ps, fl, False, mat)
         a = b["area"]
         area4 = np.array([a[0], a[1], a[2], a[3] if len(a) == 4 else a[2]], np.int32)
@@ -449,15 +455,22 @@ def case_quality(video, n, variants):
             flags = np.array([bool(x) for key in ("marker", "clip", "gt3") for row in st.get(key, [[False] * 9] * 3)
                               for x in row], np.uint8)
         qp, cp = ctypes.c_int(), ctypes.c_int()
-        r = L.nvc_quality_numbers(ptr(rgb), H, W, ptr(area4), ptr(fac), ptr(tn), int(bool(b.get("aft_applied"))),
-                                  int(bool(b.get("aft_reset"))), None if flags is None else ptr(flags),
-                                  ctypes.byref(qp), ctypes.byref(cp))
+        pin = np.array([k in pinned[c] for c in range(3) for k in range(9)], np.uint8)
+        got0 = tuple(ref)
+        if not any(pinned):                              # the older entry point (no pinned bins) as well
+            r = L.nvc_quality_numbers(ptr(rgb), H, W, ptr(area4), ptr(fac), ptr(tn), int(bool(b.get("aft_applied"))),
+                                      int(bool(b.get("aft_reset"))), None if flags is None else ptr(flags),
+                                      ctypes.byref(qp), ctypes.byref(cp))
+            got0 = (qp.value, cp.value) if r == 1 else (None, None)
+        r = L.nvc_quality_numbers_pinned(ptr(rgb), H, W, ptr(area4), ptr(fac), ptr(tn), int(bool(b.get("aft_applied"))),
+                                         int(bool(b.get("aft_reset"))), None if flags is None else ptr(flags),
+                                         ptr(pin), ctypes.byref(qp), ctypes.byref(cp))
         got = (qp.value, cp.value) if r == 1 else (None, None)
         tot += 1
-        if got == tuple(ref):
+        if got == tuple(ref) and got0 == tuple(ref):
             ok += 1
         else:
-            bad.append(f"quality {video}:{n} v{v}: {ref} vs {got}")
+            bad.append(f"quality {video}:{n} v{v}: {ref} vs {got} (nvc_quality_numbers {got0})")
     return ok, tot, bad
 
 

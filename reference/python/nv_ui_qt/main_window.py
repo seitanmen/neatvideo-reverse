@@ -1334,11 +1334,10 @@ class MainWindow(QMainWindow):
         self.state.set_profile(new, "Rename device")
 
     def reset_fine_tune(self):
-        """Genuine "Reset Fine-Tuning Results": the curve back to the just-constructed state -
-        levels/scales 1.0, bin flags cleared, and the LZMA success flag (profile byte 0xc2a4)
-        cleared as the profile constructor does (RS 0xa49e28 strb wzr).  Hence g = 0 and
-        Completeness 0% (observed 2026-10-26), while a fresh Build keeps the flag (g = 1/81).
-        The repro records that with the aft_reset annotation (quality._curve_blob)."""
+        """Genuine "Reset Fine-Tuning Results": every curve bin level 1.0 with its valid and marker
+        flags cleared (observed in a decoded .dnp, wp_genuine_capture/REPORT.md section 2).  Hence
+        g = 0 and Completeness 0%, while a fresh Build keeps the valid bin of each channel mean
+        (g = 3/27).  The repro records that with the aft_reset annotation (quality._curve_blob)."""
         new = self.state.profile.clone()
         new.factors = [[1.0] * 9 for _ in CHANNELS]
         new.pinned = [set() for _ in CHANNELS]

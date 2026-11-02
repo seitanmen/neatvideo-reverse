@@ -29,7 +29,8 @@ extern "C" {
 /* N4e: nvc_match_model / nvc_match_score (nvcore_c_match.h) are additions only and keep version 3: no existing function,
  * argument or block changed meaning, and their only caller (qtui) links the same build of libnvcore.
  * INT-2: nvc_temporal_shift is an addition of the same kind and keeps version 3 (repro/nv_native.py requires exactly 3
- * and does not call it; a caller that needs it looks the symbol up). */
+ * and does not call it; a caller that needs it looks the symbol up).
+ * Q1 (2026-11-02): nvc_quality_numbers_pinned (nvcore_c_ui.h) is an addition of the same kind (version 3). */
 #define NVC_PROF_I 4
 #define NVC_PROF_D 82
 #define NVC_PAR_I 4

@@ -25,8 +25,8 @@ enum : int {
     OFF_VALID    = 0xbf34,  // u8 profile-valid flag
     OFF_SIZECLS  = 0xbf38,  // i32 sample size class (used when W or H is 0)
     OFF_CLIPS    = 0xbf3c,  // u8 R/G/B IsClip > 0.33 flags
-    OFF_CURVE    = 0xbf40,  // mode word; bins from 0xbf44
-    OFF_LZMA     = 0xc2a4,  // u8 LZMA success flag (read as ch2 bin8's next byte)
+    OFF_CURVE    = 0xbf40,  // g's argument; bins from 0xbf44 (level, 5 scales, u32 valid, marker, clip, >3.0)
+    OFF_LZMA     = 0xc2a4,  // u8 LZMA success flag (not read by Quality)
     OFF_W        = 0xc2c0,  // i32 sample width
     OFF_H        = 0xc2c4,  // i32 sample height
 };
@@ -47,7 +47,8 @@ struct QualityParts {
 };
 bool quality_parts(const uint8_t* p, size_t len, QualityParts* out);
 
-// Curve completeness (max of the 27-bin float32 sum, in (bin, channel) order).
+// Curve completeness (max of the 27-bin float32 sum, in (bin, channel) order): per bin
+// >3.0 or clip flag -1/27, else level 0 -1/81, else valid +1/27, else marker +1/81.
 float genuine_g(const uint8_t* p, size_t len);
 
 // FUN_009b096c: flatness of a model face from its words 0..54 (mean/q99/q50/cv per level).

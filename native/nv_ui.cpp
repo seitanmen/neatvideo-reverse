@@ -470,7 +470,8 @@ void not_uniform(const float* rgb, int h, int w, int bad[3], int clip[3]) {
 }
 
 bool quality_numbers(const float* rgb, int H, int W, const int area[4], const double factors[27],
-                     const double tune[4], bool aft, bool reset, const uint8_t* flags, int* q_pct, int* c_pct) {
+                     const double tune[4], bool aft, bool reset, const uint8_t* flags, const uint8_t* pinned,
+                     int* q_pct, int* c_pct) {
     const int y0 = area[0], x0 = area[1], h = area[2], w = area[3];
     // rgb[y0:y0 + h, x0:x0 + w] with numpy's slice clamping
     auto clampi = [](int v, int lo, int hi) { return v < lo ? lo : v > hi ? hi : v; };
@@ -518,7 +519,7 @@ bool quality_numbers(const float* rgb, int H, int W, const int area[4], const do
             for (int i = 0; i < 27; ++i) stored[i] = 1;
         }
     }
-    buf[0xc2a4] = reset ? 0 : 1;
+    buf[0xc2a4] = 1;                                           // not read by Quality
     // tk with the repro channel order ("Y", "Cr", "Cb") of _curve_blob (tune[] holds all, Y, Cb, Cr)
     const double tk[3] = {tune[0] * tune[1], tune[0] * tune[3], tune[0] * tune[2]};
     for (int c = 0; c < 3; ++c) {
@@ -528,17 +529,31 @@ bool quality_numbers(const float* rgb, int H, int W, const int area[4], const do
             for (int j = 0; j < 6; ++j) put_f32(e + 4 * j, 1.0f);
             put_f32(e, lvl);
             if (have_stored) {
-                if (stored[9 * c + k]) buf[e + 0x1c] = 1;
+                // "marker" = the AFT port's u32 at +0x1c (marker, clip or >3.0): a bin without it was measured
+                const bool marked = stored[9 * c + k] != 0;
+                if (aft && !reset && !marked) put_u32(e + 0x18, 1);
+                if (marked) buf[e + 0x1c] = 1;
                 if (stored[27 + 9 * c + k]) buf[e + 0x1d] = 1;
                 if (stored[54 + 9 * c + k]) buf[e + 0x1e] = 1;
             } else if (lvl > 3.0f) {
                 buf[e + 0x1e] = 1;
             }
         }
-        if (!aft && !reset) {
+        if (!have_stored) {                                    // the fresh profile: the mean's bin is valid
             const size_t e = 0xbf44 + 0x120 * c + 0x20 * filled[c];
             put_u32(e + 0x18, 1);
             buf[e + 0x1d] = clips[c];
+        }
+        if (pinned) {
+            for (int k = 0; k < 9; ++k) {
+                if (!pinned[9 * c + k]) continue;              // a manual edit: valid 0, marker 1
+                const size_t e = 0xbf44 + 0x120 * c + 0x20 * k;
+                float lvl;
+                std::memcpy(&lvl, buf.data() + e, 4);
+                put_u32(e + 0x18, 0);
+                buf[e + 0x1c] = 1;
+                buf[e + 0x1e] = lvl > 3.0f ? 1 : 0;
+            }
         }
     }
     float q, g;

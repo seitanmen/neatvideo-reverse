@@ -46,6 +46,7 @@
 #include <cstring>
 #include <fstream>
 #include <functional>
+#include <map>
 #include <sstream>
 #include <tuple>
 
@@ -525,7 +526,7 @@ private slots:
         win->profile_panel->set_completeness(win->completeness_pct);   // back to the window's value
     }
 
-    void resetFineTuneCompleteness() {   // "Completeness: after Reset the LZMA flag is cleared -> 0%"
+    void resetFineTuneCompleteness() {   // "Completeness: after Reset every bin is clear -> 0%"
         win->reset_fine_tune();
         QVERIFY(wait_until([&] { return idle(); }));
         QCOMPARE(win->profile_panel->completeness->text(), QString("0%"));
@@ -1881,7 +1882,8 @@ private slots:
         const auto qf = profile_numbers(fresh, win->frames, win->full_range, win->matrix);
         QVERIFY(qa && qf);
         QVERIFY(qa->first > qf->first);
-        QVERIFY(qf->second <= 1);
+        // the fresh build: the bin of each channel mean valid (+1/27), or its clip flag (-1/27): 3/27 -> 11%
+        QVERIFY(qf->second == 11 || qf->second == 4 || qf->second == 0);
         ProfileState reset = win->state->profile;
         reset.base.set("aft_reset", PyObj::boolean(true));
         reset.factors = unit_factors();
@@ -1894,6 +1896,68 @@ private slots:
         QCOMPARE(win->profile_panel->complete_lbl->text(), QString("n/a"));   // no profile: n/a as the genuine
         win->state->undo->undo();
         QVERIFY(wait_until([&] { return idle() && win->quality_pct.has_value(); }));
+    }
+
+    void genuineCompletenessMapping() {   // "Completeness: the 13 genuine screens through the bin mapping (Q1)"
+        // native/testdata/genuine_quality.json: decoded genuine profiles and the Completeness the genuine UI showed.
+        // The repro state of each (the AFT flags as stored from the file's bins, Reset, or s5 + the edited bins of
+        // s6 / s7) through profile_numbers gives the genuine Completeness (only the curve bins matter for it).
+        std::ifstream f(std::string(NV_SOURCE_ROOT) + "/native/testdata/genuine_quality.json", std::ios::binary);
+        std::stringstream ss;
+        ss << f.rdbuf();
+        const PyObj doc = PyObj::parse(ss.str());
+        std::map<std::string, std::vector<uint8_t>> blobs;
+        for (size_t i = 0; i < doc.get("cases").size(); ++i) {
+            const PyObj& c = doc.get("cases")[i];
+            std::vector<uint8_t> b(static_cast<size_t>(doc.get("blob_size").as_int()), 0);
+            for (size_t r = 0; r < c.get("ranges").size(); ++r) {
+                const size_t off = static_cast<size_t>(c.get("ranges")[r][0].as_int());
+                const QByteArray d = QByteArray::fromHex(QByteArray::fromStdString(c.get("ranges")[r][1].as_str()));
+                std::memcpy(b.data() + off, d.constData(), static_cast<size_t>(d.size()));
+            }
+            blobs[c.get("name").as_str()] = b;
+        }
+        QCOMPARE(static_cast<int>(blobs.size()), 13);
+        auto bin = [](const std::vector<uint8_t>& b, int c, int k) { return b.data() + 0xbf44 + 0x120 * c + 0x20 * k; };
+        for (size_t i = 0; i < doc.get("cases").size(); ++i) {
+            const PyObj& cs = doc.get("cases")[i];
+            const std::string name = cs.get("name").as_str();
+            ProfileState ps = win->state->profile;
+            ps.factors = unit_factors();
+            ps.pinned = {};
+            ps.tune = PyObj::dict();
+            ps.base.pop("aft_reset");
+            ps.base.set("aft_applied", PyObj::boolean(true));
+            const std::string src = name.rfind("pa1_s6", 0) == 0 || name.rfind("pa1_s7", 0) == 0 ? "pa1_s5_aft_again" : name;
+            if (name.rfind("pa1_s3", 0) == 0) {
+                ps.base.set("aft_reset", PyObj::boolean(true));
+            } else {
+                const std::vector<uint8_t>& b = blobs.at(src);
+                PyObj bf = PyObj::dict();
+                for (int key = 0; key < 3; ++key) {
+                    PyObj rows = PyObj::list();
+                    for (int c = 0; c < 3; ++c) {
+                        PyObj row = PyObj::list();
+                        for (int k = 0; k < 9; ++k) {
+                            const uint8_t* o = bin(b, c, k);
+                            // marker: the AFT port's u32 at +0x1c (its +0x1f is always 0; the genuine's
+                            // uninitialised +0x1f, 0x6d in these files, is left out)
+                            const bool v = key == 0 ? (o[0x1c] | o[0x1d] | o[0x1e]) != 0 : o[0x1c + key] != 0;
+                            row.append(PyObj::boolean(v));
+                        }
+                        rows.append(row);
+                    }
+                    bf.set(key == 0 ? "marker" : key == 1 ? "clip" : "gt3", rows);
+                }
+                ps.base.set("aft_bin_flags", bf);
+            }
+            if (name.rfind("pa1_s6", 0) == 0 || name.rfind("pa1_s7", 0) == 0) ps.pinned[0].insert(4);
+            if (name.rfind("pa1_s7", 0) == 0) ps.pinned[1].insert(2);
+            const auto q = profile_numbers(ps, win->frames, win->full_range, win->matrix);
+            QVERIFY(q.has_value());
+            if (q->second != cs.get("completeness").as_int()) qWarning() << name.c_str() << q->second;
+            QCOMPARE(q->second, static_cast<int>(cs.get("completeness").as_int()));
+        }
     }
 
     void profileJsonNonFiniteRejected() {   // "profile JSON with NaN / inf tune, factors or curve rejected"
