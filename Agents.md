@@ -729,6 +729,30 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   Phase D (U5 動き) → Phase E (v6 組み立てと最終比較)。
   agent-desktop 1.0.2 導入済み (`TMPDIR=/Users/seitan/.adt-tmp` で呼ぶ。
   Accessibility/画面収録権限済み。Resolve は高負荷時に snapshot TIMEOUT するのでリトライ)。
-- **次**: N4e マージ済み。N4c (実用化)、Resolve 実機確認 (agent-desktop で自動化可)、
-  Phase A、INT-2 以降 (L-1 修正後)、GPU-1 以降 (GPU-0 の監査表待ち)。
+- **PR #9/#10 マージ (2026-11-02、独立検証 2 回目で APPROVE ×2)**:
+  **Q1 (g のオフセット訂正)**: g の x2 相対読み (+0x22/+0x21/+0x04/+0x1c/+0x20) は
+  ビン基準 (0xbf44+…) から **−4** の位置を指す。正しくは
+  bin+0x1e/+0x1d/**bin+0x00 (レベル語)**/**bin+0x18 (count 語)**/**bin+0x1c (マーカー byte)**。
+  旧解読は +0x04/+0x1c/+0x20 をビン内 +0x04/+0x1c/+0x20 と誤読 (新規プロファイルでは
+  値が 1.0 で一致するため未発覚)。AFT 済みプロファイルでは
+  測定ビン (count=1) → +1/27、補間ビン (marker=1) → +1/81 が正。
+  C++ (nv_quality) を修正、gold は本家画面 13/13 と
+  native/testdata/genuine_quality.json (参考: 旧実装は本家画面で不一致)。
+  自己試験は Qt C++ 139/139・PySide6 99/99。make verify 14 本全件一致。
+  **AFT 呼び出し側 (16 ビット整合)**: AFT とそのノイズモデル作成に渡す画像を
+  本家内部の 16 ビット型に揃えた (nv_aft_v5・libnvcore・qtui)。
+  Two fields は先のフィールドを行として積んだ画像に AFT を 1 回。
+  本家 .dnp 14 本でビン旗 27/27・曲線 5 ulp 以内 (修正前は最大数百万 ulp)。
+  Python 版と C++ 版はバイト一致。
+  **E9 再比較 (フレーム 5)**: 見本位置はフレーム 5 で 10 本中 7 本が本家と同じ
+  (フレーム 0 では 0 本)。ただし本家との差はほぼ縮まず (10 本中 2 本のみ縮小)。
+  AFT 修正の効果 (C−B) は 10 本中 9 本で ±0.02 dB 以内
+  (自動選択プロファイルでは AFT 曲線が出力にほとんど効かない)。
+  例外: spatial の park_joy tff_y6 は 0.97 dB 下がった (再計算で確認済み)。
+  推定: 残りの差はノイズ除去本体 (空間・時間の処理と較正値) にある。
+- **次**: Phase B (U1/U2/U3 = 空間の方向経路・適応経路・σ_k の静的解読 — 統括)、
+  N4c (実用化)、Resolve 実機確認 (agent-desktop で自動化可)、
+  INT の残る Low 項目、GPU-1 以降、Windows (.dll は W5)。
+- **ディスク**: cpu_only_run2 (4.2GB)・wp_e9 のビルド/出力を削除済み
+  (.dnp 18 本・nfp・eval・manifest は保持)。空き 32GB。
 

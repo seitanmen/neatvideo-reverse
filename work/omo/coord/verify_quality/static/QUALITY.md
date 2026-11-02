@@ -235,3 +235,15 @@ Reset 後に編集すると +1/81 ずつ増えるのは、コンストラクタ�
 イコライザの reset ボタンは `1resetEqualizer()` スロット (RS 0xe4cfc の接続)。
 repro: Reset Fine-Tuning アクションが base["aft_reset"] を立て、`quality._curve_blob` が
 0xc2a4 = 0 を書く。次の AFT で消える (backend.run_aft)。
+
+
+## 9. 訂正 (2026-11-02、PR #9)
+
+g の x2 相対読みはビン基準から **−4** ずれている (x2 = 0xbf40+0x20k = ビン基準 −4)。
+正しい対応: x2+0x22 = bin+0x1e / x2+0x21 = bin+0x1d / x2+0x04 = **bin+0x00 (レベル語)** /
+x2+0x1c = **bin+0x18 (count 語)** / x2+0x20 = **bin+0x1c (マーカー byte)**。
+旧解読の「+0x4 は段係数の語」「+0x1c はマーカー i32」「+0x20 は次の語の下位バイト」は誤り。
+数値への影響: 新規プロファイル (全語 1.0・マーカー 0) では一致していたが、
+AFT 済みプロファイルでは測定ビン (count=1) が +1/81、補間ビン (marker=1) が +1/27 と
+**逆に評価されていた**。C++ (nv_quality) を修正し、本家画面 13/13 と一致
+(native/testdata/genuine_quality.json が gold)。
