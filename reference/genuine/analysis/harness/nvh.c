@@ -809,6 +809,19 @@ int main(int argc, char **argv) {
     long frames = atol(argv[9]);
     if (nblocks < 1 || nblocks > 100000 || frames < 1 || frames > 64) { fprintf(stderr, "c90c: bad nblocks/frames\n"); return 1; }
     float *fa = load(argv[4], W * H), *fb = load(argv[5], W * H);
+    // the measurement planes are in the mode's element format (DAT_01247820 = 1/2/4 bytes,
+    // int16 = the x16 fixed point): convert the f32 inputs for mode 1/2
+    long elemsz = mode == 0 ? 1 : (mode == 1 ? 2 : 4);
+    void *pa = fa, *pb = fb;
+    if (elemsz == 2) {
+        short *a16 = malloc((size_t)W * H * 2), *b16 = malloc((size_t)W * H * 2);
+        for (long i = 0; i < W * H; i++) {
+            long va = (long)(fa[i] * 16.0f + 0.5f), vb = (long)(fb[i] * 16.0f + 0.5f);
+            a16[i] = (short)(va < -32768 ? -32768 : va > 32767 ? 32767 : va);
+            b16[i] = (short)(vb < -32768 ? -32768 : vb > 32767 ? 32767 : vb);
+        }
+        pa = a16; pb = b16;
+    }
     long recsz = 0x44;
     unsigned char *rec = malloc((size_t)recsz * nblocks);
     FILE *f = fopen(argv[6], "rb");
@@ -836,6 +849,19 @@ int main(int argc, char **argv) {
     long *rowtab = calloc(1, 0x40 + (size_t)frames * 8 + (size_t)frames * (1 << 20));
     for (long fr = 0; fr < frames; fr++)
       *(long *)((char *)rowtab + 0x40 + fr * 8) = (long)((char *)rowtab + 0x40 + frames * 8 + fr * (1 << 20));
+    // the measurement weights table: no static writer (host-provided, like the token tables).
+    // The /4096 normalisation of mode 1 implies weight 4 per int16 sample of a 32x32 window
+    // (4 * 1024 = 4096); mode 2's /256 implies weight 1 per float sample of a 16x16 window.
+    // Build a table of 2-byte weights, 128 bytes per 8-row group, 1 MB, and inject the pointer.
+    {
+      unsigned short *wt = calloc(1, 1 << 20);
+      unsigned short wval = mode == 1 ? 4 : 1;
+      for (long i = 0; i < (1 << 20) / 2; i++) wt[i] = wval;
+      // 0x1561d40 is a __common address of the bundle image: base + 0x1561d40
+      fprintf(stderr, "c90c: weights table %p injected at base+0x1561d40 (was %p)\n",
+              (void *)wt, *(void **)FN(0x1561d40));
+      *(unsigned long *)((char *)FN(0x1561d40)) = (unsigned long)wt;
+    }
     long stack_args[6];
     stack_args[0] = frames;        // [x29+0x10] the frame count
     stack_args[1] = (long)fb;      // [x29+0x18] the plane for the internal descriptor
@@ -846,7 +872,7 @@ int main(int argc, char **argv) {
     long sa6 = 0;
     unsigned long ret = ((unsigned long (*)(void *, void *, void *, long, long, long, void *, void *,
                                             long, long, long, long, long, long))
-        FN(0x98c90c))(inst, fa, fb, W, H, mode, rec, (void *)(long)nblocks,
+        FN(0x98c90c))(inst, pa, pb, W, H, mode, rec, (void *)(long)nblocks,
                       stack_args[0], stack_args[1], stack_args[2], stack_args[3], stack_args[4], sa6);
     char outp[512];
     snprintf(outp, sizeof outp, "%s.out.bin", argv[6]);
