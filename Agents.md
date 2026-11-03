@@ -764,4 +764,18 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   INT の残る Low 項目、GPU-1 以降、Windows (.dll は W5)。
 - **ディスク**: cpu_only_run2 (4.2GB)・wp_e9 のビルド/出力を削除済み
   (.dnp 18 本・nfp・eval・manifest は保持)。空き 32GB。
-
+- **v6 空間マージ (2026-11-03、PR #11、独立検証 Round 2 APPROVE)**:
+  `native/nv_spatial6.{h,cpp}` — 本家 FUN_0098edb0 の C++ 移植 (Phase B の解読にもとづく)。
+  葉 26 種・plane_filter (白色化・縮小核・方向経路 組 1〜3・量の通常/適応経路)・
+  Guard (改ざん検知の状態語)・Recorder。nv_spatial6_test CLI (nvh と同じ引数形式)。
+  検証: 葉 26 種すべて本家とビット一致 (NaN ビット列まで)、
+  Python 移植 (wp_spatial/src/nv_spatial.py) との比較 94/94 件全語一致、
+  本家の葉での呼び出しの再生 20,683 回不一致 0、変異 9 種すべて検出。
+  統括再確認: verify_leaves (seed 777) 全件一致、compare_python 6/6 OK、
+  make verify 14 本 + verify_bridge 全語一致、自己試験 139/139。
+  nvh.c の本家バンドルのパスを新レイアウトに修正 (reference/genuine/)。
+  未実施: 本家の本体 FUN_0098edb0 との照合 (改ざん検知の安全性分析が未完了 —
+  統括が実施予定)。組 4 と var 出力は未移植。
+- **次**: (b) E9 素材での v6 vs v5 vs 本家の PSNR 比較 → (a) 外側の C++ 化 →
+  (c) 組 4 移植 → (d) x86 照合。v5 の空間段の置き換えは E9 比較の結果を見てから。
+  本家の本体との照合は統括が改ざん検知の安全性分析をしてから。

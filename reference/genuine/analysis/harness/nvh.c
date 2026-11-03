@@ -332,7 +332,7 @@ static void probe(void) {   // read-only: dumps the full protection state (no ca
 
 int main(int argc, char **argv) {
   const char *lib = getenv("NV_BUNDLE") ? getenv("NV_BUNDLE") :
-    "/Users/seitan/Desktop/work/reverse/neatvideo_ofx_614/NeatVideo6.ofx.bundle/Contents/MacOS/NeatVideo6.ofx";
+    "/Users/seitan/Desktop/work/reverse/reference/genuine/NeatVideo6.ofx.bundle/Contents/MacOS/NeatVideo6.ofx";
   nvh_guard_preload();                      // must precede dlopen (initialisers run inside it)
   if (!dlopen(lib, RTLD_NOW | RTLD_LOCAL)) { fprintf(stderr, "dlopen: %s\n", dlerror()); return 1; }
   base = nvh_guard_check();
