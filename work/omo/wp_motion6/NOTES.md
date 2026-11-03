@@ -222,3 +222,69 @@ La lecture « 16 个に 1 個 » des notes (issue du décompilateur) était faus
 3. Port C++ (nv_motion6) avec la structure corrigée (32×32 sur chaque bloc, candidats entrelacés).
 4. **Conséquence pour nv_motion.py** : `refine32_every=16` est structurellement faux (le 32×32
    tourne sur chaque bloc) — à corriger dans le port v6.
+
+## 7. FUN_0098adbc : transcription bit-exacte (2026-11-03, suite)
+
+### Ce qui a été épinglé cette session
+
+1. **FUN_0097f894 = fetch-and-add atomique** (retourne l'ancienne valeur, avance de `chunk`) :
+   vérifié empiriquement (x1=5 → +5, x1=100 → +100). Un seul appel de FUN_0098adbc traite donc
+   tous les blocs [0, nblocks) en mono-thread ; la fonction re-saisit un chunk à la fin de chaque
+   chunk et sort quand l'index atteint `total`.
+
+2. **Indirection des settings confirmée** : settings = *([this+8] + 0x3d00) — un POINTEUR stocké
+   dans l'image (SIGSEGV à 0x140 = lecture settings+0x140 sur un pointeur NULL).
+
+3. **Arithmétique corrigée** : la constante de la table image est `mov w9, #0xd390; movk w9, #0x1, lsl #16`
+   = **0x0001D390** (119 952) et NON 0x15bd390. Donc :
+   - s11 (facteur d'acceptation) = *(image + bits(settings+0x150) + 0x1D390)
+   - s9 (facteur de slack 32×32) = *(image + bits(settings+0x150) + 0x1D390 + 0x40)
+   Confirmé par sondage : image remplie de 1.0 → slack = s0 (= s8·s10) ; settings+0x140 = 2.0 →
+   slack ×2 (bits 0x80) ; sslack = 1e30 dans la table → slack = s0·1e30 (bits 2a49f2ca).
+
+4. **Le SAD 32×32 compare la fenêtre ref au départ avec la fenêtre cur à l'ANCRE**
+   (clamp(bloc−8, 0, W−32) / clamp(bloc−8, 0, H−32)), pas au bloc lui-même (0x98b8a0 :
+   `add x2, x8, x20` avec x8 = origine_cur + ancre_y·stride et x20 = ancre_x). Conséquence :
+   pas de débordement du plan paddé, les fenêtres 32×32 tiennent toujours.
+
+5. **slvl (settings+0x150) est utilisé deux fois** : comme multiplicateur float (s10 dans
+   s0 = s8·s10) et comme offset entier dans la table image (l'aliasing x10/s10 : `ldr s10, [x9]`
+   écrit les 32 bits bas de x10). Le harnais prend donc slvl comme MOTIF DE BITS (décimal ou 0x hex)
+   pour garantir la cohérence des deux usages.
+
+### Chaîne complète des coefficients (définitif)
+
+```
+s8   = settings[+0x140]            (× settings[+0xd4] si settings[+0x168] != 1)
+s10  = float_bits(settings[+0x150])          (bs >= 4 ; pour bs < 4 : settings[+0x144 + bs*4])
+s11  = image[bits(s10) + 0x1D390]            (facteur d'acceptation)
+s9i  = image[bits(s10) + 0x1D390 + 0x40]     (facteur de slack 32×32)
+s0   = s8 * s10
+s8a  = s11 * s0        # acceptation : 2 * (s8a * weight) + best < SAD_first
+s9r  = s0 * s9i        # slack = s9r * weight ; thr32 = slack * 1.1
+```
+
+### Harnais
+
+```
+nvh adbc W H ref.f32 cur.f32 rec.bin nblocks [s140 s168 sd4 slvlbits sslack s11 chunkdiv [weights.f32]]
+```
+- records : nblocks × 0x44 octets {i32 x0, i32 y0, f32 vx, f32 vy, f32 c[8] entrelacés
+  (4 X à +0x10..+0x1c, 4 Y à +0x20..+0x2c), f32 sx, sy, slack, i32 sad, u8 flag32, u8 flag41}
+- écrit rec.bin.out.bin ; affiche l'index final et this+0x5a8.
+
+### Vérification
+
+- Transcription Python (`tools/verify_adbc.py`) vs `nvh adbc` :
+  seed 1, 3 cas : **0 écart** ; seed 42, 12 cas (W 48..512, blocs de bord inclus) : **0 écart**.
+  Records comparés champ par champ (x0, y0, vx, vy, candidats, slack, sad, flag32).
+- Bugs corrigés en route (tous côté transcription) : conversion (unsigned char)(v+0.5f),
+  offset +8 du padding dans le SAD, layout entrelacé des candidats, SAD 32×32 (pas 16×16),
+  fenêtre cur à l'ancre, sortie anticipée du 32×32 hors bornes.
+
+## 8. Prochaines étapes
+
+1. FUN_0098a94c / FUN_0098a79c (lissage niveau 0) puis FUN_0098c90c (régression + warp) — même méthode.
+2. Valeurs réelles de settings+0x140/0x150 et de la table image (+0x1D390) : à décoder dans
+   l'initialisation ou à calibrer sur E9 (comme les coefficients de v5).
+3. Port C++ (nv_motion6) puis v6 temporel (compensation + similarité) et comparaison E9.

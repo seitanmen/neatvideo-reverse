@@ -639,9 +639,11 @@ int main(int argc, char **argv) {
     // adbc W H ref.f32 cur.f32 rec.bin nblocks [s140] [s168] [sd4] [slvl] [simg] [s11] [chunkdiv] [weights.f32]
     //   rec.bin: nblocks * 0x44 bytes {i32 x0, i32 y0, f32 vx, f32 vy, f32 c[8], f32 sx, f32 sy, f32 slack,
     //            i32 sad, u8 flag32, u8 flag41}; updated in place and written back to rec.out.bin
-    //   settings: s140 (+0x140), s168 (+0x168, int), sd4 (+0xd4, used when s168 != 1), slvl (+0x150 for bs=16),
-    //             s11 = the acceptance factor (image + 0x15bd390 + bs*4), sslack = the 32x32 slack factor
-    //             (image + 0x15bd390 + bs*4 + 0x40), chunkdiv (this+0x540)
+    //   settings: s140 (+0x140), s168 (+0x168, int), sd4 (+0xd4, used when s168 != 1),
+    //             slvlbits = the raw 32-bit value at +0x150 (float multiplier AND image offset),
+    //             s11 = the acceptance factor (image + bits(slvl) + 0x1D390), sslack = the 32x32 slack factor
+    //             (image + bits(slvl) + 0x1D390 + 0x40); slvlbits (arg 17) overrides the bit pattern of slvl
+    //             used as the image offset; chunkdiv (this+0x540)
     long W = atol(argv[2]), H = atol(argv[3]);
     if (W < 32 || H < 32 || W > 512 || H > 512) { fprintf(stderr, "adbc: 32 <= W, H <= 512\n"); return 1; }
     long nblocks = atol(argv[7]);
@@ -655,13 +657,16 @@ int main(int argc, char **argv) {
     float s140 = argc > 8 ? strtof(argv[8], NULL) : 1.0f;
     long s168 = argc > 9 ? atol(argv[9]) : 1;
     float sd4 = argc > 10 ? strtof(argv[10], NULL) : 1.0f;
-    float slvl = argc > 11 ? strtof(argv[11], NULL) : 1.0f;
+    // slvl is given as a BIT PATTERN (decimal or 0x hex): the genuine reads settings+0x150 once as a
+    // float multiplier and once as an integer offset into the image (the x10/s10 aliasing), so the two
+    // uses must stay consistent - the bit pattern IS the value
+    unsigned slvlbits = argc > 11 ? (unsigned)strtoul(argv[11], NULL, 0) : 0;
     float sslack = argc > 12 ? strtof(argv[12], NULL) : 1.0f;
     float s11 = argc > 13 ? strtof(argv[13], NULL) : 1.0f;
     long chunkdiv = argc > 14 ? atol(argv[14]) : 1;
     float *weights = NULL;
-    if (argc > 15) {
-      weights = load(argv[15], nblocks);
+    if (argc > 16) {
+      weights = load(argv[16], nblocks);
     } else {
       weights = malloc((size_t)nblocks * 4);
       for (long i = 0; i < nblocks; i++) weights[i] = 1.0f;
@@ -701,10 +706,13 @@ int main(int argc, char **argv) {
     set[0x140 / 4] = s140;
     *(long *)((char *)set + 0x168) = s168;
     set[0xd4 / 4] = sd4;
-    set[0x150 / 4] = slvl;
-    // the acceptance factor (s11) and the 32x32 slack factor (s9) both come from the image table
-    *(float *)(image + 0x15bd390 + 16 * 4) = s11;
-    *(float *)(image + 0x15bd390 + 16 * 4 + 0x40) = sslack;
+    *(unsigned int *)((char *)set + 0x150) = slvlbits;   // the bit pattern IS the value
+    // the acceptance factor (s11) and the 32x32 slack factor (s9) both come from the image table at
+    // image + bits(settings+0x150) + 0x1D390 (+0x40); the harness passes slvl as a BIT PATTERN via
+    // slvlbits so the offset is exact (the genuine reads settings+0x150 once as a float multiplier and
+    // once as an integer offset - the x10/s10 register aliasing)
+    *(float *)(image + slvlbits + 0x1D390) = s11;
+    *(float *)(image + slvlbits + 0x1D390 + 0x40) = sslack;
     long shared_idx = 0;
     ((unsigned long (*)(void *, long *, long *, long, long, long *, float *, unsigned char *))
         FN(0x98adbc))(thisp, desc_r, desc_c, 16, nblocks, &shared_idx, weights, rec);
@@ -877,7 +885,7 @@ int main(int argc, char **argv) {
             "pixnoise W H luma.f32 out | cand W H luma.f32 rx ry step [nb per_bin] | reduce W H rgb.f32 s out | "
             "xform W H rgb.f32 mode out | flatness W H plane.f32 | quantile n v.f32 qbits flag div | "
             "ramp t in.f32 n out | wmul t r.f32 prev.f32 n out | pairw a.f32 b.f32 c.f32 n out | down2 W H plane.f32 out | "
-            "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr | b9a4 W H ref.f32 cur.f32 cx cy vx vy [rounds] | adbc W H ref.f32 cur.f32 rec.bin nblocks [s140 s168 sd4 slvl simg s11 chunkdiv weights.f32] | aftshuffle N | interp n x.. y.. q.. | "
+            "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr | b9a4 W H ref.f32 cur.f32 cx cy vx vy [rounds] | adbc W H ref.f32 cur.f32 rec.bin nblocks [s140 s168 sd4 slvl sslack s11 chunkdiv slvlbits [weights.f32]] | aftshuffle N | interp n x.. y.. q.. | "
             "elem NAME n out s0 s1 s2 s3 in1 [in2 [in3]] | strip3 W H plane.f32 box|sq mode sbits out | "
             "sigfuse n r g b tab coef out | ixform n y a b out | sel2 n flag stride a b i3 i4 best src wt out [full] | "
             "argmax n count stride maps out | gather n stride idx.u8 maps out\n");

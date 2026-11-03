@@ -49,12 +49,18 @@ def pad8(plane):
     return out
 
 
-def sad16(ref, cur, ay, ax, cy, cx):
-    """SAD of the 16x16 ref block at plane (ax, ay) and the cur block at plane (cx, cy).
+def sad_block(ref, cur, ay, ax, cy, cx, bs):
+    """Byte SAD of a bs x bs ref block at plane (ax, ay) and the cur block at plane (cx, cy)
+    (FUN_009f862c for bs=16, FUN_009f9290 for bs=32 - both read raw bytes).
     The coordinates are plane coordinates; the padded arrays carry an 8px margin."""
-    a = ref[ay + 8:ay + 24, ax + 8:ax + 24].astype(np.int32)
-    b = cur[cy + 8:cy + 24, cx + 8:cx + 24].astype(np.int32)
+    h = bs // 2
+    a = ref[ay + 8:ay + 8 + bs, ax + 8:ax + 8 + bs].astype(np.int32)
+    b = cur[cy + 8:cy + 8 + bs, cx + 8:cx + 8 + bs].astype(np.int32)
     return int(np.abs(a - b).sum())
+
+
+def sad16(ref, cur, ay, ax, cy, cx):
+    return sad_block(ref, cur, ay, ax, cy, cx, 16)
 
 
 def pattern_search(ref, cur, W, H, cx, cy, x, y, rounds=2):
@@ -87,20 +93,20 @@ def pattern_search(ref, cur, W, H, cx, cy, x, y, rounds=2):
 
 def refine32(ref, cur, W, H, cx, cy, x, y, thr):
     """FUN_0098bf18: the 32x32 search with the SAD weighted centroid subpixel correction.
-    Returns (ret, out_x, out_y, out_sad)."""
+    Returns (ret, out_x, out_y, out_sad).  The SADs are 32x32 byte SADs (FUN_009f9290)."""
     offs = NB
-    base = sad16(ref, cur, y, x, cy, cx)
     fast = -7 <= x < W - 24 and -7 <= y < H - 24
+    if not fast and not (0 <= x + 8 <= W - 16 and 0 <= y + 8 <= H - 16):
+        return 0x7FFFFFFF, x, y, 0x7FFFFFFF
+    base = sad_block(ref, cur, y, x, cy, cx, 32)
     sads = []
     for dx, dy in offs:
         tx, ty = x + dx, y + dy
         if not fast and not (0 <= tx + 8 <= W - 16 and 0 <= ty + 8 <= H - 16):
             sads.append(0x7FFFFFFF)
         else:
-            sads.append(sad16(ref, cur, ty, tx, cy, cx))
+            sads.append(sad_block(ref, cur, ty, tx, cy, cx, 32))
     best = min([base] + sads)
-    if best == 0x7FFFFFFF or not (0 <= x + 8 <= W - 16 and 0 <= y + 8 <= H - 16):
-        return base, x, y, 0x7FFFFFFF
     inv = f32(1.0) / f32(f32(thr) + f32(0.01))
     num_x = f32(0.0)
     num_y = f32(0.0)
@@ -120,17 +126,23 @@ def refine32(ref, cur, W, H, cx, cy, x, y, thr):
     return base, out_x, out_y, best
 
 
-def adbc(ref, cur, W, H, records, weights, s140, s168, sd4, slvl, simg, s11, chunkdiv=1):
+def adbc(ref, cur, W, H, records, weights, s140, s168, sd4, slvlbits, s11, s9img, chunkdiv=1):
     """Transcription of FUN_0098adbc.  records is a numpy structured array (REC), mutated in place.
-    The chunking does not influence the result: the 1-in-16 test only gates the (inert) obfuscation trap."""
+    The chunking does not influence the result: the 1-in-16 test only gates the (inert) obfuscation trap.
+
+    slvlbits is the raw 32-bit value at settings+0x150: it is read once as a float multiplier (s10) and
+    once as an integer offset into the image table (the x10/s10 register aliasing), where
+    s11 = image[slvlbits + 0x1D390] (the acceptance factor) and s9img = image[slvlbits + 0x1D3D0]
+    (the 32x32 slack factor)."""
     bs = 16
+    slvl = F32(struct.unpack("<f", struct.pack("<I", slvlbits & 0xFFFFFFFF))[0])
     # the weight products, in the order of the instructions (0x98b2f0..0x98b2fc)
     s8 = f32(s140)
     if s168 != 1:
         s8 = f32(s8 * f32(sd4))
-    s0 = f32(s8 * f32(slvl))
+    s0 = f32(s8 * slvl)
     s8 = f32(s11 * s0)
-    s9 = f32(s0 * f32(simg))
+    s9 = f32(s0 * f32(s9img))
     for block in range(len(records)):
         r = records[block]
         r["sad"] = MAX_SAD
@@ -181,7 +193,8 @@ def adbc(ref, cur, W, H, records, weights, s140, s168, sd4, slvl, simg, s11, chu
                 slack = f32(s9 * F32(weights[block]))
                 r["slack"] = slack
                 thr = f32(slack * f32(1.1))
-                _, ox, oy, osad = refine32(ref, cur, W, H, cx=x0, cy=y0,
+                # the 32x32 SAD compares the ref window at the start with the cur window at the ANCHOR
+                _, ox, oy, osad = refine32(ref, cur, W, H, cx=anchor_x, cy=anchor_y,
                                            x=anchor_x + int(np.rint(F32(r["vx"]))),
                                            y=anchor_y + int(np.rint(F32(r["vy"]))), thr=thr)
                 if osad != MAX_SAD:
@@ -196,8 +209,9 @@ def run_case(nvh, tmp, ref, cur, rec_path, nblocks, settings):
     ref.tofile(rf)
     cur.tofile(cf)
     args = [nvh, "adbc", str(settings["W"]), str(settings["H"]), rf, cf, rec_path, str(nblocks)]
-    args += [repr(float(v)) for v in (settings["s140"], settings["s168"], settings["sd4"], settings["slvl"],
-                                      settings["simg"], settings["s11"], settings["chunkdiv"])]
+    args += [repr(float(v)) for v in (settings["s140"], settings["s168"], settings["sd4"])]
+    args += [str(settings["slvlbits"]), repr(float(settings["s9img"])), repr(float(settings["s11"])),
+             str(settings["chunkdiv"]), str(settings["slvlbits"])]
     r = subprocess.run(args, capture_output=True, text=True, env=ENV)
     if r.returncode != 0:
         raise RuntimeError(r.stderr[-400:])
@@ -244,19 +258,21 @@ def main():
         rec["vy"] = vy0
         rec_path = os.path.join(tmp, f"rec{i}.bin")
         rec.tofile(rec_path)
-        settings = {"W": W, "H": H, "s140": 1.0, "s168": 1, "sd4": 1.0, "slvl": 1.0, "simg": 1.0,
-                    "s11": 1.0, "chunkdiv": 1}
+        settings = {"W": W, "H": H, "s140": 1.0, "s168": 1, "sd4": 1.0, "slvlbits": 64,
+                    "s11": 7.0, "s9img": 1.0, "chunkdiv": 1}
         got = run_case(NVH, tmp, ref.reshape(-1), cur.reshape(-1), rec_path, nblocks, settings)
         want = rec.copy()
         adbc(pad8(np.floor(ref + 0.5).astype(np.uint8)), pad8(np.floor(cur + 0.5).astype(np.uint8)),
              W, H, want, np.ones(nblocks, np.float32),
-             settings["s140"], settings["s168"], settings["sd4"], settings["slvl"],
-             settings["simg"], settings["s11"], settings["chunkdiv"])
-        if not np.array_equal(got, want):
+             settings["s140"], settings["s168"], settings["sd4"], settings["slvlbits"],
+             settings["s11"], settings["s9img"], settings["chunkdiv"])
+        ok = np.array_equal(got, want)
+        if not ok:
             bad += 1
-            diffs = np.argmax(got != want)
-            msg = (f"case {i}: W={W} H={H} n={nblocks}: mismatch at record {diffs} "
-                   f"genuine {got[diffs]} != transcription {want[diffs]}")
+            diffs = np.where(got != want)[0]
+            d0 = int(diffs[0]) if len(diffs) else -1
+            msg = (f"case {i}: W={W} H={H} n={nblocks}: mismatch at record {d0} "
+                   f"genuine {got[d0]} != transcription {want[d0]}" if d0 >= 0 else f"case {i}: mismatch")
             print(msg)
             if log:
                 log.write(msg + "\n")
