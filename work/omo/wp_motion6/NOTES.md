@@ -656,3 +656,21 @@ c90c(instance, planeA, planeB_raw, W, H, mode, records, count,
 [sp+0xd8] = 重み表配列 + frame·8
 [sp+0x38b8] = フレーム内レコード処理の状態
 ```
+
+## 20. 行テーブル領域の構造が判明 (2026-11-04、c90c 続き)
+
+- [sp+0xc0] = **rowtab + 0x40** (stack arg 3 = 行テーブル基底 + 0x40; 0x98cc4c/0x98cc50)。
+- [sp+0xd8] = (rowtab + 0x40) + frame·8 — **フレームごとのポインタが行テーブル領域に格納される**。
+  ハーネスでゼロ初期化の rowtab を渡したため NULL 参照で mode 1/2 がクラッシュ (mode 0 は通る)。
+- 行テーブルの構築: フレーム 0/1 だけ (0x98cd10: `cmp x21, #1; b.hi skip`)、
+  レコードの y0+24 行まで FUN_009f13bc で拡張 (0x98cd40 ループ: ポインタ配列 [sp+0x18] +
+  行·8、9f13bc(ptr − x9·8, &counter, x2, x9))。
+- [sp+0xb8] = elem_size (DAT_01247820[mode])、[sp+0xf0] = elem_size·W (計測面ストライド)。
+
+### ハーネスの次の修正
+
+1. rowtab 領域に +0x40 + frame·8 の有効なポインタを設定 (9f13bc が作る構造のサイズを
+   観測するか、十分なゼロ バッファを割り当ててそのポインタを格納)。
+2. 9f13bc の引数 (ptr, &counter, x2=[sp+0x128] の第 1, x9=第 2) の意味の確定。
+3. 計測面 (arg2) はモードの要素形式 (int8/int16/float32) — ハーネスでは int16 面を
+   用意して mode 1 で照合するのが自然。
