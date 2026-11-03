@@ -526,6 +526,14 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   old_town_cross は **本家を上回る** (37.42 vs 37.41)。動き推定の差し替え (nv_motion) と
   時間しきい値の変更は無効果 → 動き推定は gap の主因ではない。残差は色差の較正
   (sintel Cb −2.9) と時間段の補償品質 (c90c) に集中。
+- **pyramid 類似度の追加 (2026-11-04)**: 時間類似度を本家構造の pyramid (§6.4) に替えると
+  park_joy Y 38.80 → **39.75** (本家差 0.55 dB)、RGB 37.16 (本家超え)、Y静 42.01 (本家超え)。
+  old_town_cross も微改善 (37.55、本家超え)。ただし **sintel では崩壊** (Y −8.6 dB) —
+  pyramid_scale 1.5 は test_v02 較正値で、本家の σ_k (モデル面の段統計、U4) の確定が前提。
+  素材別最良: park_joy/old_town_cross は pyramid、sintel は v5 類似度。
+  luma amount (0.6〜0.85) は無効果、v6dir は v6set0 より劣 (モデル語が仮定値のため)。
+  道具: `work/omo/wp_motion6/tools/e9_nvm.py` (--variant nvm|v5、--spatial-variant、
+  --profile-file、--noise-level、--chroma-noise、--set KEY=値)。
 - 平坦部が全くなく静止画素も 10% 未満の素材では、帯域形状が単一フレームの事前分布頼みになる (本家も「詳細のない領域で再プロファイル」と警告する状況)。
 - 本家がノイズ除去に使う輝度別係数 (AutoFineTune) は、保護判定のためハーネスで実行できず、数値は未取得 (アルゴリズムは §6.5)。
   v5 の曲線と本家の EstimateNoiseLevelCurve の比は test_v02 で 1.04〜1.20、test.mp4 で 0.73〜1.01 (§6.5)。AutoFineTune の係数との一致は未確認 (静的移植の曲線を使う変種は区間 A / B で v5 と同等、§6.3)。

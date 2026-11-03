@@ -92,7 +92,10 @@ def main():
     P = json.load(open(params_p))
     for kv in a.set:
         k, v = kv.split("=", 1)
-        P[k] = json.loads(v)
+        try:
+            P[k] = json.loads(v)
+        except json.JSONDecodeError:
+            P[k] = v
     if a.chroma_noise is not None:
         P["channel_noise"] = {**P.get("channel_noise", {}), "Cb": a.chroma_noise, "Cr": a.chroma_noise}
     if a.noise_level is not None:
