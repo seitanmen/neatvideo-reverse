@@ -44,6 +44,79 @@ def install(variant):
             return nvm.flow_for_v5(ref, cur, bs, search)
 
         nv.estimate_flow_v5 = _flow
+    elif variant == "sim3":
+        # the genuine's mode-2 similarity: one weight from the 3-plane normalized difference
+        _DF, _WP, _TG = nv.dense_flow, nv.warp_plane, nv._to_grid
+        _UF, _GF, _CS = nv.uniform_filter, nv.gaussian_filter, nv.curve_sigma
+        _NBVAR = nv.NEIGHBOUR_VAR
+
+        def _tv(window, ci, prof, P, flows=None):
+            cur = [np.asarray(p, np.float32) for p in window[ci]]
+            Y = cur[0]
+            a = float(P["temporal"])
+            thr = max(P["threshold"], 1e-3)
+            den = {}
+            for c, name in enumerate(("Y", "Cb", "Cr")):
+                plane = cur[c] if c == 0 else _TG(cur[c], Y.shape)
+                st = (_CS(prof, name, _GF(plane, 1.0)) * prof["tot_ratio"][name]
+                      * P["noise_level"] * P["channel_noise"][name])
+                den[c] = 2.0 * st * st + 1e-6
+            acc = [p.copy() for p in cur]
+            sw = [np.ones(p.shape, np.float32) for p in cur]
+            sf = [np.zeros(p.shape, np.float32) for p in cur]
+            for k, nb in enumerate(window):
+                if k == ci or a <= 0:
+                    continue
+                if flows is not None and (k - ci) in flows:
+                    vy, vx = flows[k - ci]
+                else:
+                    vy, vx = nv.estimate_flow_v5(nb[0], Y, P["bs"], P["search"])
+                    if flows is not None:
+                        flows[k - ci] = (vy, vx)
+                FY, FX = _DF(vy, vx, Y.shape, P["bs"])
+                warped = [nb[0]]
+                wmaps = []
+                D = _UF((warped[0] - Y) ** 2, 5) / den[0]
+                for c in (1, 2):
+                    p = nb[c]
+                    if p.shape == Y.shape:
+                        wp = _WP(p, FY, FX)
+                        curs = cur[c]
+                        dc = _UF((wp - curs) ** 2, 5) / den[c]
+                    else:
+                        wp = _WP(p, _TG(FY, p.shape) / 2, _TG(FX, p.shape) / 2)
+                        curs = cur[c]
+                        dc = _UF((wp - curs) ** 2, 5) / _TG(den[c], p.shape)
+                    warped.append(wp)
+                    D = D + (_TG(dc, Y.shape) if dc.shape != Y.shape else dc)
+                w = np.exp(-np.maximum(D / 3.0 - 1.0, 0.0) / thr)
+                for c, p in enumerate(nb):
+                    wp = warped[c] if c == 0 or warped[c].shape == p.shape else \
+                        _WP(p, _TG(FY, p.shape) / 2, _TG(FX, p.shape) / 2)
+                    wc = w if c == 0 or w.shape == p.shape else _TG(w, p.shape)
+                    acc[c] += wc * wp
+                    sw[c] += wc
+                    sf[c] += _NBVAR * wc * wc
+            out, rv = [], []
+            for c, p in enumerate(cur):
+                out.append(p + a * (acc[c] / sw[c] - p))
+                rv.append(((1 - a) + a / sw[c]) ** 2 + a * a * sf[c] / (sw[c] * sw[c]))
+            return out, rv
+
+        nv.temporal_v5 = _tv
+    elif variant == "nocrt":
+        # diagnostic: keep the temporal stage for Y/Cb but pass Cr through untouched
+        _orig = nv.temporal_v5
+
+        def _tv(window, ci, prof, P, flows=None):
+            out, rv = _orig(window, ci, prof, P, flows)
+            out = list(out)
+            rv = list(rv)
+            out[2] = np.asarray(window[ci][2], np.float32)
+            rv[2] = np.float32(1.0)
+            return out, rv
+
+        nv.temporal_v5 = _tv
     elif variant == "pyrgen":
         sk = json.load(open(os.environ["NV6_SIGMA_K"]))
 
@@ -90,7 +163,7 @@ def main():
     ap.add_argument("--tag", default="nvm")
     ap.add_argument("--set", action="append", default=[],
                     help="override a ui_params value, e.g. --set threshold=8")
-    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5", "pyrgen"),
+    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5", "pyrgen", "nocrt", "sim3"),
                     help="nvm = the nv_motion flow, v5 = the built-in flow (for threshold sweeps)")
     ap.add_argument("--profile-file", default=None,
                     help="use this profile JSON instead of runs/ours_frame_f5 ui_profile.json")
