@@ -161,3 +161,64 @@ La lecture « 16 个に 1 個 » des notes (issue du décompilateur) était faus
 2. Puis a94c/a79c (lissage) et c90c (régression + warp).
 3. Valeurs d'exécution : coef de niveau (+0x144/+0x150/+0x184/+0x190), s11, nombre de niveaux —
    à observer sur le produit réel ou à décoder dans l'initialisation (FUN_00987f88/988470).
+
+## 5. FUN_0098adbc : structure complète décodée + harnais opérationnel (2026-11-03, suite)
+
+### Corrections majeures issues de la confrontation harnais ↔ transcription
+
+1. **Disposition des candidats dans l'enregistrement (entrelacée)** : les notes (+0x10,+0x20 = candidat 0)
+   étaient correctes et le port les lisait mal. Layout réel :
+   - candidat k.x = +0x10 + 4k, candidat k.y = +0x20 + 4k
+   - soit : les 4 X à +0x10..+0x1c, les 4 Y à +0x20..+0x2c
+   Preuve : avec le layout par paires adjacentes, la transcription divergeait dès le bloc 0
+   (le genuine convergeait vers (3,−7) avec SAD 20428, inexplicable) ; avec le layout entrelacé,
+   cand2 = (2,−4) → second pattern search → (3,−7) SAD 20428 = exactement la sortie du genuine.
+
+2. **Le raffinement 32×32 tourne sur CHAQUE bloc** (dès que W > 31 et H > 31), pas 1 sur 16.
+   Preuve empirique : 704/704 flags +0x40 montés sur plans identiques ; 128/704 avec mouvement réel
+   (les autres ont été acceptés avant, l'acceptation réussie court-circuite le 32×32).
+   Le `tst x19, #0xf` ne contrôle que l'évaluation du piège tv_usec.
+
+3. **L'acceptation réussie court-circuite le 32×32** : accepté → écriture vecteur+SAD → bloc suivant ;
+   refusé → SAD = SAD_first, puis 32×32 (ancre = clamp(bloc−8, 0, W−32), thr = s9·weight·1.1,
+   succès → vecteur = out − ancre, SAD = out_sad>>2, flag32 = 1).
+
+4. **L'indirection des settings** : settings = *([this+8] + 0x3d00) — un POINTEUR stocké dans l'image,
+   pas les settings en ligne (découvert par le SIGSEGV à 0x140 = lecture settings+0x140 sur NULL).
+
+5. **Les facteurs s11/s9 viennent de la table image** : s11 = *(image + bs·4 + 0x15bd390),
+   s9 = *(image + bs·4 + 0x15bd390 + 0x40). Subtilité d'aliasing : `add x8, x8, x10` réutilise x10
+   dont les 32 bits bas viennent d'être écrasés par `ldr s10, [x9]` (x10/s10 aliasent le même
+   registre physique) — le coefficient de niveau settings+0x150 sert donc AUSSI d'offset entier
+   dans l'image. Avec slvl = 1.0 (bits 0x3f800000), l'offset est ~1 Go → lecture hors bornes (0).
+   Dans l'instance réelle, settings+0x150 doit contenir une valeur dont le motif de bits est un
+   petit offset (dénominal ≈ 0 comme float → les produits s0 = s8·s10 ≈ 0, d'où slack = 0 observé
+   et facteur d'acceptation ≈ 0).
+
+6. **Le planificateur FUN_0097f894 = fetch-and-add** (retourne l'ancienne valeur, avance de chunk) :
+   un seul appel traite tous les blocs en mono-thread. Le chunking n'influence pas la sortie
+   (le test 1/16 ne contrôle que le piège inerte).
+
+### État du harnais
+
+- `nvh adbc W H ref.f32 cur.f32 rec.bin nblocks [s140 s168 sd4 slvl sslack s11 chunkdiv weights.f32]`
+  fonctionne de bout en bout (704 blocs, plans identiques et mouvement réel testés).
+  Écrit rec.out.bin. Instance minimale : image 22 Mo + settings séparés (indirection) + table image.
+- Transcription Python : `tools/verify_adbc.py` — les 20 premiers enregistrements du cas 0 correspondent
+  bit à bit ; les écarts restants viennent des valeurs de settings (slack/thr) dont l'adresse exacte
+  de lecture reste à épingler (voir §6).
+
+### Comportement observé (mouvement réel, 2 images de test.mp4)
+
+- 576/704 blocs acceptés (v ≠ 0, flag32 = 0), 128/704 en 32×32 (flag32 = 1, dont 96 à vecteur nul),
+  0 bloc sans vecteur ni 32×32. Cohérent avec le modèle décodé.
+
+## 6. Prochaines étapes (mises à jour)
+
+1. **Épingler les valeurs de settings** par sondage avec le harnais (varier une valeur à la fois,
+   observer acceptation/slack) — ou décoder l'initialisation (qui écrit settings+0x140/0x150
+   et la table image +0x15bd390 ?). Une fois épinglées : fuzz bit-exact complet de la transcription.
+2. Puis a94c/a79c (lissage) et c90c (régression + warp).
+3. Port C++ (nv_motion6) avec la structure corrigée (32×32 sur chaque bloc, candidats entrelacés).
+4. **Conséquence pour nv_motion.py** : `refine32_every=16` est structurellement faux (le 32×32
+   tourne sur chaque bloc) — à corriger dans le port v6.

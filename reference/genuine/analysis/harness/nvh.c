@@ -640,7 +640,8 @@ int main(int argc, char **argv) {
     //   rec.bin: nblocks * 0x44 bytes {i32 x0, i32 y0, f32 vx, f32 vy, f32 c[8], f32 sx, f32 sy, f32 slack,
     //            i32 sad, u8 flag32, u8 flag41}; updated in place and written back to rec.out.bin
     //   settings: s140 (+0x140), s168 (+0x168, int), sd4 (+0xd4, used when s168 != 1), slvl (+0x150 for bs=16),
-    //             simg (+0x190 for bs=16), s11 (the image table at +0x15bd390 + bs*4), chunkdiv (this+0x540)
+    //             s11 = the acceptance factor (image + 0x15bd390 + bs*4), sslack = the 32x32 slack factor
+    //             (image + 0x15bd390 + bs*4 + 0x40), chunkdiv (this+0x540)
     long W = atol(argv[2]), H = atol(argv[3]);
     if (W < 32 || H < 32 || W > 512 || H > 512) { fprintf(stderr, "adbc: 32 <= W, H <= 512\n"); return 1; }
     long nblocks = atol(argv[7]);
@@ -655,7 +656,7 @@ int main(int argc, char **argv) {
     long s168 = argc > 9 ? atol(argv[9]) : 1;
     float sd4 = argc > 10 ? strtof(argv[10], NULL) : 1.0f;
     float slvl = argc > 11 ? strtof(argv[11], NULL) : 1.0f;
-    float simg = argc > 12 ? strtof(argv[12], NULL) : 1.0f;
+    float sslack = argc > 12 ? strtof(argv[12], NULL) : 1.0f;
     float s11 = argc > 13 ? strtof(argv[13], NULL) : 1.0f;
     long chunkdiv = argc > 14 ? atol(argv[14]) : 1;
     float *weights = NULL;
@@ -701,8 +702,9 @@ int main(int argc, char **argv) {
     *(long *)((char *)set + 0x168) = s168;
     set[0xd4 / 4] = sd4;
     set[0x150 / 4] = slvl;
-    set[0x190 / 4] = simg;
-    *(float *)(image + 0x15bd390 + 16 * 4) = s11;   // bs = 16
+    // the acceptance factor (s11) and the 32x32 slack factor (s9) both come from the image table
+    *(float *)(image + 0x15bd390 + 16 * 4) = s11;
+    *(float *)(image + 0x15bd390 + 16 * 4 + 0x40) = sslack;
     long shared_idx = 0;
     ((unsigned long (*)(void *, long *, long *, long, long, long *, float *, unsigned char *))
         FN(0x98adbc))(thisp, desc_r, desc_c, 16, nblocks, &shared_idx, weights, rec);
