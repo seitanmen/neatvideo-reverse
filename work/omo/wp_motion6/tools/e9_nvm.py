@@ -227,6 +227,32 @@ def install(variant):
             return out, rv
 
         nv.temporal_v5 = _tv
+    elif variant == "pyrgen2":
+        # the genuine structure per NOTES.md §14-§18: threshold t = 1.3*|model word 3| (constant
+        # across levels, negative word 3 = the level is skipped), normalization X = band/(sigma_k+1e-4)
+        # with sigma_k = the model word 5+k, R = sqrt(3x3 box mean of X^2), coarse-to-fine 4 levels,
+        # w_k = clamp(2 - R/t, 0, 1) * w_{k-1}
+        import struct as _st
+        sk_path = os.environ["NV6_SIGMA_K"]
+        sk = json.load(open(sk_path))            # [word3, ?, ?, ?, ?, q99_0..q99_4] — computed in main
+        word3 = sk[0]
+        q99 = sk[5:10]
+        t = 1.3 * abs(word3)
+
+        def _pw(d, s1, ratios, scale=1.0):
+            b = nv.atrous(d, 4)                   # b[0] = the finest ... b[3] = the coarsest
+            w = np.ones(d.shape, np.float32)
+            for k in (3, 2, 1, 0):                # coarse -> fine
+                sig = q99[k] if k < len(q99) else q99[-1]
+                if sig <= 0:
+                    sig = abs(q99[k - 1]) * 0.5 if k > 0 and q99[k - 1] > 0 else 1.0
+                x = b[k] / (sig + 1e-4)
+                r = np.sqrt(nv.uniform_filter(x * x, 3))   # the 3x3 box
+                if t > 0:
+                    w = w * np.clip((2.0 * t - r) / t, 0.0, 1.0)
+            return w.astype(np.float32)
+
+        nv.pyramid_weight = _pw
     elif variant == "pyrgen":
         sk = json.load(open(os.environ["NV6_SIGMA_K"]))
 
@@ -273,7 +299,7 @@ def main():
     ap.add_argument("--tag", default="nvm")
     ap.add_argument("--set", action="append", default=[],
                     help="override a ui_params value, e.g. --set threshold=8")
-    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5", "pyrgen", "nocrt", "sim3", "sim3b", "sim3c"),
+    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5", "pyrgen", "pyrgen2", "nocrt", "sim3", "sim3b", "sim3c"),
                     help="nvm = the nv_motion flow, v5 = the built-in flow (for threshold sweeps)")
     ap.add_argument("--profile-file", default=None,
                     help="use this profile JSON instead of runs/ours_frame_f5 ui_profile.json")
@@ -310,7 +336,7 @@ def main():
         prof_p = a.profile_file
     prof = json.load(open(prof_p))
     info = json.load(open(os.path.join(ref, "profile_info.json")))
-    if a.variant == "pyrgen":
+    if a.variant in ("pyrgen", "pyrgen2"):
         # U4: the genuine per-level sigma = the model q99 (words 5+k) of the profile region's Y plane
         import nv_model
         raw = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", src,
@@ -323,7 +349,7 @@ def main():
                  ar[1]:ar[1]+(ar[2] if len(ar) == 3 else ar[3])] if len(ar) == 3 else \
               y_[ar[0]:ar[0]+ar[2], ar[1]:ar[1]+ar[3]]
         m = nv_model.model_full(reg, set_=-1, levels=5)
-        sk = [struct.unpack("<f", struct.pack("<I", int(m[5 + k]) & 0xFFFFFFFF))[0] for k in range(5)]
+        sk = [struct.unpack("<f", struct.pack("<I", int(m[k]) & 0xFFFFFFFF))[0] for k in range(10)]
         skf = os.path.join(out, "sigma_k.json")
         json.dump(sk, open(skf, "w"))
         os.environ["NV6_SIGMA_K"] = skf
