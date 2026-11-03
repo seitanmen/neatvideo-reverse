@@ -1,0 +1,108 @@
+old_town_cross/p_y3 input: Y 38.549 dB, RGB 36.396 dB (interior Y 38.549), alignment best +0,+0 (10.0 s)
+old_town_cross/p_y3 v5: Y 36.694 dB, RGB 32.314 dB (interior Y 36.69), alignment best +0,+0 (10.0 s)
+old_town_cross/p_y3 v6set0: Y 37.18 dB, RGB 32.624 dB (interior Y 37.163), alignment best +0,+0 (10.2 s)
+old_town_cross/p_y3 v6set0m: Y 36.884 dB, RGB 33.093 dB (interior Y 36.879), alignment best +0,+0 (10.2 s)
+old_town_cross/p_y3 v6dir: Y 36.978 dB, RGB 33.229 dB (interior Y 36.965), alignment best +0,+0 (10.1 s)
+old_town_cross/p_y3 genuine: Y 37.422 dB, RGB 33.601 dB (interior Y 37.413), alignment best +0,+0 (12.8 s)
+old_town_cross/p_y3 pair v5~v6set0: Y 50.005 dB, RGB 46.13 dB
+old_town_cross/p_y3 pair v5~v6set0m: Y 51.2 dB, RGB 42.101 dB
+old_town_cross/p_y3 pair v5~v6dir: Y 49.969 dB, RGB 41.267 dB
+old_town_cross/p_y3 pair v5~genuine: Y 43.268 dB, RGB 38.513 dB
+old_town_cross/p_y3 pair v6set0~v6set0m: Y 52.218 dB, RGB 43.104 dB
+old_town_cross/p_y3 pair v6set0~v6dir: Y 50.694 dB, RGB 42.018 dB
+old_town_cross/p_y3 pair v6set0~genuine: Y 44.477 dB, RGB 39.329 dB
+old_town_cross/p_y3 pair v6set0m~v6dir: Y 49.783 dB, RGB 45.665 dB
+old_town_cross/p_y3 pair v6set0m~genuine: Y 43.705 dB, RGB 40.75 dB
+old_town_cross/p_y3 pair v6dir~genuine: Y 44.453 dB, RGB 41.598 dB
+wrote runs/sp6_eval/old_town_cross_p_y3.json
+== old_town_cross/p_y3 eval 117 s
+old_town_cross/p_y6 input: Y 32.564 dB, RGB 30.458 dB (interior Y 32.564), alignment best +0,+0 (10.1 s)
+old_town_cross/p_y6 v5: Y 35.93 dB, RGB 31.793 dB (interior Y 35.941), alignment best +0,+0 (10.0 s)
+old_town_cross/p_y6 v6set0: Y 36.526 dB, RGB 32.149 dB (interior Y 36.529), alignment best +0,+0 (10.1 s)
+old_town_cross/p_y6 v6set0m: Y 35.992 dB, RGB 32.418 dB (interior Y 36.008), alignment best +0,+0 (10.1 s)
+old_town_cross/p_y6 v6dir: Y 36.37 dB, RGB 32.767 dB (interior Y 36.371), alignment best +0,+0 (10.1 s)
+old_town_cross/p_y6 genuine: Y 36.364 dB, RGB 32.924 dB (interior Y 36.371), alignment best +0,+0 (12.8 s)
+old_town_cross/p_y6 pair v5~v6set0: Y 47.047 dB, RGB 44.258 dB
+old_town_cross/p_y6 pair v5~v6set0m: Y 49.274 dB, RGB 41.928 dB
+old_town_cross/p_y6 pair v5~v6dir: Y 47.424 dB, RGB 40.356 dB
+old_town_cross/p_y6 pair v5~genuine: Y 41.17 dB, RGB 37.108 dB
+old_town_cross/p_y6 pair v6set0~v6set0m: Y 47.676 dB, RGB 42.137 dB
+old_town_cross/p_y6 pair v6set0~v6dir: Y 47.706 dB, RGB 40.948 dB
+old_town_cross/p_y6 pair v6set0~genuine: Y 42.58 dB, RGB 38.027 dB
+old_town_cross/p_y6 pair v6set0m~v6dir: Y 46.466 dB, RGB 43.208 dB
+old_town_cross/p_y6 pair v6set0m~genuine: Y 41.171 dB, RGB 38.656 dB
+old_town_cross/p_y6 pair v6dir~genuine: Y 42.486 dB, RGB 40.011 dB
+wrote runs/sp6_eval/old_town_cross_p_y6.json
+== old_town_cross/p_y6 eval 118 s
+park_joy/p_y3 input: Y 38.571 dB, RGB 36.457 dB (interior Y 38.572), alignment best +0,+0 (7.9 s)
+park_joy/p_y3 v5: Y 31.343 dB, RGB 27.948 dB (interior Y 31.389), alignment best +0,+0 (7.7 s)
+park_joy/p_y3 v6set0: Y 32.33 dB, RGB 28.977 dB (interior Y 32.356), alignment best +0,+0 (7.9 s)
+park_joy/p_y3 v6set0m: Y 32.02 dB, RGB 29.847 dB (interior Y 32.055), alignment best +0,+0 (7.9 s)
+park_joy/p_y3 v6dir: Y 32.263 dB, RGB 30.118 dB (interior Y 32.29), alignment best +0,+0 (7.9 s)
+park_joy/p_y3 genuine: Y 40.279 dB, RGB 37.085 dB (interior Y 40.296), alignment best +0,+0 (10.1 s)
+park_joy/p_y3 pair v5~v6set0: Y 43.813 dB, RGB 38.816 dB
+park_joy/p_y3 pair v5~v6set0m: Y 45.165 dB, RGB 35.203 dB
+park_joy/p_y3 pair v5~v6dir: Y 43.712 dB, RGB 34.76 dB
+park_joy/p_y3 pair v5~genuine: Y 31.708 dB, RGB 28.48 dB
+park_joy/p_y3 pair v6set0~v6set0m: Y 48.693 dB, RGB 37.656 dB
+park_joy/p_y3 pair v6set0~v6dir: Y 48.905 dB, RGB 37.275 dB
+park_joy/p_y3 pair v6set0~genuine: Y 32.734 dB, RGB 29.601 dB
+park_joy/p_y3 pair v6set0m~v6dir: Y 47.471 dB, RGB 44.093 dB
+park_joy/p_y3 pair v6set0m~genuine: Y 32.423 dB, RGB 30.475 dB
+park_joy/p_y3 pair v6dir~genuine: Y 32.673 dB, RGB 30.756 dB
+wrote runs/sp6_eval/park_joy_p_y3.json
+== park_joy/p_y3 eval 104 s
+park_joy/p_y6 input: Y 32.706 dB, RGB 30.722 dB (interior Y 32.711), alignment best +0,+0 (8.0 s)
+park_joy/p_y6 v5: Y 31.303 dB, RGB 27.901 dB (interior Y 31.347), alignment best +0,+0 (7.9 s)
+park_joy/p_y6 v6set0: Y 32.215 dB, RGB 28.818 dB (interior Y 32.244), alignment best +0,+0 (8.0 s)
+park_joy/p_y6 v6set0m: Y 31.851 dB, RGB 29.624 dB (interior Y 31.889), alignment best +0,+0 (8.0 s)
+park_joy/p_y6 v6dir: Y 32.153 dB, RGB 29.945 dB (interior Y 32.182), alignment best +0,+0 (8.0 s)
+park_joy/p_y6 genuine: Y 36.459 dB, RGB 33.551 dB (interior Y 36.5), alignment best +0,+0 (10.1 s)
+park_joy/p_y6 pair v5~v6set0: Y 43.676 dB, RGB 38.962 dB
+park_joy/p_y6 pair v5~v6set0m: Y 45.457 dB, RGB 35.363 dB
+park_joy/p_y6 pair v5~v6dir: Y 43.639 dB, RGB 34.807 dB
+park_joy/p_y6 pair v5~genuine: Y 32.257 dB, RGB 29.084 dB
+park_joy/p_y6 pair v6set0~v6set0m: Y 47.193 dB, RGB 37.415 dB
+park_joy/p_y6 pair v6set0~v6dir: Y 47.724 dB, RGB 37.003 dB
+park_joy/p_y6 pair v6set0~genuine: Y 33.271 dB, RGB 30.173 dB
+park_joy/p_y6 pair v6set0m~v6dir: Y 46.123 dB, RGB 42.972 dB
+park_joy/p_y6 pair v6set0m~genuine: Y 32.878 dB, RGB 30.97 dB
+park_joy/p_y6 pair v6dir~genuine: Y 33.238 dB, RGB 31.348 dB
+wrote runs/sp6_eval/park_joy_p_y6.json
+== park_joy/p_y6 eval 105 s
+sintel/p_y3 input: Y 39.028 dB, RGB 36.991 dB (interior Y 39.024), alignment best +0,+0 (7.7 s)
+sintel/p_y3 v5: Y 43.587 dB, RGB 38.996 dB (interior Y 43.583), alignment best +0,+0 (7.8 s)
+sintel/p_y3 v6set0: Y 43.817 dB, RGB 39.352 dB (interior Y 43.825), alignment best +0,+0 (7.9 s)
+sintel/p_y3 v6set0m: Y 43.627 dB, RGB 39.698 dB (interior Y 43.623), alignment best +0,+0 (7.8 s)
+sintel/p_y3 v6dir: Y 43.974 dB, RGB 39.937 dB (interior Y 43.974), alignment best +0,+0 (7.9 s)
+sintel/p_y3 genuine: Y 45.477 dB, RGB 43.342 dB (interior Y 45.48), alignment best +0,+0 (10.0 s)
+sintel/p_y3 pair v5~v6set0: Y 54.573 dB, RGB 49.333 dB
+sintel/p_y3 pair v5~v6set0m: Y 56.905 dB, RGB 46.945 dB
+sintel/p_y3 pair v5~v6dir: Y 54.351 dB, RGB 45.981 dB
+sintel/p_y3 pair v5~genuine: Y 46.057 dB, RGB 40.349 dB
+sintel/p_y3 pair v6set0~v6set0m: Y 55.317 dB, RGB 48.446 dB
+sintel/p_y3 pair v6set0~v6dir: Y 54.623 dB, RGB 47.42 dB
+sintel/p_y3 pair v6set0~genuine: Y 46.346 dB, RGB 40.796 dB
+sintel/p_y3 pair v6set0m~v6dir: Y 54.145 dB, RGB 50.11 dB
+sintel/p_y3 pair v6set0m~genuine: Y 46.039 dB, RGB 41.129 dB
+sintel/p_y3 pair v6dir~genuine: Y 46.595 dB, RGB 41.401 dB
+wrote runs/sp6_eval/sintel_p_y3.json
+== sintel/p_y3 eval 104 s
+sintel/p_y6 input: Y 33.087 dB, RGB 31.125 dB (interior Y 33.082), alignment best +0,+0 (7.8 s)
+sintel/p_y6 v5: Y 39.247 dB, RGB 35.697 dB (interior Y 39.263), alignment best +0,+0 (7.6 s)
+sintel/p_y6 v6set0: Y 39.331 dB, RGB 35.881 dB (interior Y 39.357), alignment best +0,+0 (7.7 s)
+sintel/p_y6 v6set0m: Y 39.181 dB, RGB 36.056 dB (interior Y 39.195), alignment best +0,+0 (7.7 s)
+sintel/p_y6 v6dir: Y 39.549 dB, RGB 36.366 dB (interior Y 39.567), alignment best +0,+0 (7.7 s)
+sintel/p_y6 genuine: Y 40.41 dB, RGB 38.496 dB (interior Y 40.429), alignment best +0,+0 (9.7 s)
+sintel/p_y6 pair v5~v6set0: Y 52.27 dB, RGB 48.141 dB
+sintel/p_y6 pair v5~v6set0m: Y 55.605 dB, RGB 46.79 dB
+sintel/p_y6 pair v5~v6dir: Y 52.954 dB, RGB 44.957 dB
+sintel/p_y6 pair v5~genuine: Y 41.927 dB, RGB 37.428 dB
+sintel/p_y6 pair v6set0~v6set0m: Y 51.302 dB, RGB 47.139 dB
+sintel/p_y6 pair v6set0~v6dir: Y 51.808 dB, RGB 45.758 dB
+sintel/p_y6 pair v6set0~genuine: Y 42.084 dB, RGB 37.709 dB
+sintel/p_y6 pair v6set0m~v6dir: Y 51.697 dB, RGB 47.784 dB
+sintel/p_y6 pair v6set0m~genuine: Y 41.796 dB, RGB 37.883 dB
+sintel/p_y6 pair v6dir~genuine: Y 42.312 dB, RGB 38.233 dB
+wrote runs/sp6_eval/sintel_p_y6.json
+== sintel/p_y6 eval 103 s

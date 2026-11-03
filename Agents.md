@@ -705,8 +705,11 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   複数 API × 複数デバイス管理、GPUBufPool/GPURenderMemEstimator/SplitTuner、
   NVBenchmark (splitFrame/joinFrame の実測でデバイス選定)。Demo 版は GPU 1 基制限。
 - GPU 処理カーネル本体は未解読 (保護コードと絡む)。
-- Meat Video: CPU 専用 (1080p まで実用速度)。本家の正解データが CPU/GPU どちらの
-  経路か不明 — **最優先の調査項目は「本家の GPU 有効/無効 A/B 処理で出力差の有無を確認」**。
+- Meat Video: CPU 専用 (1080p まで実用速度)。
+- **本家の GPU 有効/無効の A/B は実施済み** (2026-11-03 追記。`work/omo/wp_genuine_capture/REPORT.md` §3): E9 のプログレッシブ 6 本で、
+  画素はビット一致しない (GPU vs CPU のみ 0/360 フレーム) が、正解に対する PSNR の差は最大 0.005 dB。
+  E9 の本家の数値は CPU 経路でも同じと扱ってよく、GPU 対応は速度だけの問題。本家とのビット一致の照合には CPU のみの出力を使う。
+  インターレースと、消失した test_v02 の旧い正解データ (区間 A/B) は CPU/GPU どちらか未確認。旧記載「最優先・未実施」は古い記述だった
 - GPU 実装は 4K/8K の実用速度が必要になった時点で検討 (Metal バックエンド案あり)。
 
 ## 10. インターレース / プログレッシブ (2026-10-31 記録。詳細は docs/INTERLACE_PROGRESSIVE.md)

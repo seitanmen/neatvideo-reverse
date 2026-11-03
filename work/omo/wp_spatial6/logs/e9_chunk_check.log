@@ -1,0 +1,6 @@
+sintel/p_y3 frame 30 Y: set0 whole vs chunked: 805 / 2073600 words differ, max |d| 1.526e-05, mean |d| 1.36e-09, 8-bit MSE 0;  v6set0m C++ vs Python: 0 mismatching
+sintel/p_y3 frame 30 Cb: set0 whole vs chunked: 15633 / 518400 words differ, max |d| 0.1012, mean |d| 3.38e-05, 8-bit MSE 2.894e-05;  v6set0m C++ vs Python: 0 mismatching
+sintel/p_y3 frame 30 Cr: set0 whole vs chunked: 15008 / 518400 words differ, max |d| 0.09489, mean |d| 3.74e-05, 8-bit MSE 1.929e-05;  v6set0m C++ vs Python: 0 mismatching
+park_joy/p_y6 frame 30 Y: set0 whole vs chunked: 1720 / 2073600 words differ, max |d| 3.815e-05, mean |d| 3.95e-09, 8-bit MSE 0;  v6set0m C++ vs Python: 0 mismatching
+park_joy/p_y6 frame 30 Cb: set0 whole vs chunked: 14656 / 518400 words differ, max |d| 0.09054, mean |d| 5.21e-05, 8-bit MSE 5.401e-05;  v6set0m C++ vs Python: 0 mismatching
+park_joy/p_y6 frame 30 Cr: set0 whole vs chunked: 26668 / 518400 words differ, max |d| 0.06462, mean |d| 8.83e-05, 8-bit MSE 9.066e-05;  v6set0m C++ vs Python: 0 mismatching

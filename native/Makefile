@@ -112,6 +112,11 @@ nv_aft_test: $(AFT_SRC) $(AFT_HDR)
 nv_spatial6_test: nv_spatial6_main.cpp nv_spatial6.cpp nv_spatial6.h nv_band.cpp nv_band.h $(LK) $(PT)
 	$(CXX) $(CXXFLAGS) $(MUTFLAGS) -o $@ nv_spatial6_main.cpp nv_spatial6.cpp nv_band.cpp nv_linekernel.cpp nv_portable.cpp
 
+# the C ABI of nvs6::plane_filter for ctypes (work/omo/wp_spatial6/tools/e9_v6_spatial.py; not part of libnvcore)
+libnvspatial6.dylib: nv_spatial6_c.cpp nv_spatial6.cpp nv_spatial6.h nv_band.cpp nv_band.h $(LK) $(PT)
+	$(CXX) $(CXXFLAGS) -dynamiclib -install_name @rpath/libnvspatial6.dylib -o $@ nv_spatial6_c.cpp nv_spatial6.cpp \
+	    nv_band.cpp nv_linekernel.cpp nv_portable.cpp
+
 # the sensitivity mutants of the leaves (MUT=1..9, see NV6_MUT in nv_spatial6.cpp): nv_spatial6_mut<MUT>
 nv_spatial6_mut: nv_spatial6_main.cpp nv_spatial6.cpp nv_spatial6.h nv_band.cpp nv_band.h $(LK) $(PT)
 	$(CXX) $(CXXFLAGS) -DNV6_MUT=$(MUT) -o nv_spatial6_mut$(MUT) nv_spatial6_main.cpp nv_spatial6.cpp nv_band.cpp \

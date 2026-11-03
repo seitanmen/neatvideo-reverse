@@ -87,6 +87,10 @@ struct Guard {
     // back edges 0x98f754 / 0x9902c4) 0x98f77c..0x98f788 writes 0 to cfg[k] (the sigma word +4k of the caller's cfg)
     // before level k whenever popcount != 16, i.e. every level L-1..0 is processed with cfg[k] = 0
     int cfg_popcount = 16;
+    // Not a genuine value: true lets a level wider than 512 run when it takes the fast path (no directional kernel),
+    // as the v5-compatible whole-plane entry nv_spatial.spatial_genuine does (guard_w=False).  The genuine itself
+    // only sees chunk-sized planes (its width >= 513 block 0x9915c0.. is not reached then).  Default false.
+    bool allow_wide = false;
 };
 
 // Optional call log for the replay against the genuine leaves (work/omo/wp_spatial6/tools/replay.py): every leaf call

@@ -807,7 +807,9 @@ Vec shrink(const Vec& Wb, const Vec& inv, const Cfg& cfg, const float* model, in
            bool useB, int h, int w, const Guard& guard) {
     const SetDef sd = set_def(cfg.set);
     const size_t n = static_cast<size_t>(h) * w;
-    if (w >= 0x201) throw NotImpl{};
+    const float a_word0 = sd.nd ? model[80 + 80 * cfg.set + 16 * k] : NEG_1E6;
+    const bool dir0 = sd.nd && a_word0 != NEG_1E6 && 2 * sd.rA < h && 2 * sd.rA < w;
+    if (w >= 0x201 && !(guard.allow_wide && !dir0)) throw NotImpl{};
     const Vec R = Rms3(Wb, w, h, 1, C1);                                            // 0x9915a4
     const float s13 = A(cfg.sigma[k], C_1E6);                                       // 0x991638
     const float t = M(s13, M(FABS(model[5 + k]), C_1P1));                           // 0x991688..0x99168c
