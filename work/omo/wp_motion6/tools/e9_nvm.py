@@ -104,6 +104,116 @@ def install(variant):
             return out, rv
 
         nv.temporal_v5 = _tv
+    elif variant == "sim3b":
+        # mode 2 decoded (FUN_0097bbb0): the difference = (dY + dCb + dCr) / 3 with NO per-channel
+        # normalization; the similarity normalizes by the COMBINED noise variance of the mean
+        _DF, _WP, _TG = nv.dense_flow, nv.warp_plane, nv._to_grid
+        _UF, _GF, _CS = nv.uniform_filter, nv.gaussian_filter, nv.curve_sigma
+
+        def _tv(window, ci, prof, P, flows=None):
+            cur = [np.asarray(p, np.float32) for p in window[ci]]
+            Y = cur[0]
+            a = float(P["temporal"])
+            thr = max(P["threshold"], 1e-3)
+            # the combined noise variance of the 3-plane mean: (sY^2 + sCb^2 + sCr^2) / 9
+            var = None
+            for c, name in enumerate(("Y", "Cb", "Cr")):
+                plane = cur[c] if c == 0 else _TG(cur[c], Y.shape)
+                st = (_CS(prof, name, _GF(plane, 1.0)) * prof["tot_ratio"][name]
+                      * P["noise_level"] * P["channel_noise"][name])
+                v = st * st
+                var = v if var is None else var + (_TG(v, Y.shape) if v.shape != Y.shape else v)
+            den = var / 9.0 * 2.0 + 1e-6
+            acc = [p.copy() for p in cur]
+            sw = [np.ones(p.shape, np.float32) for p in cur]
+            sf = [np.zeros(p.shape, np.float32) for p in cur]
+            for k, nb in enumerate(window):
+                if k == ci or a <= 0:
+                    continue
+                if flows is not None and (k - ci) in flows:
+                    vy, vx = flows[k - ci]
+                else:
+                    vy, vx = nv.estimate_flow_v5(nb[0], Y, P["bs"], P["search"])
+                    if flows is not None:
+                        flows[k - ci] = (vy, vx)
+                FY, FX = _DF(vy, vx, Y.shape, P["bs"])
+                warped = [_WP(nb[0], FY, FX)]
+                diffs = [warped[0] - Y]
+                for c in (1, 2):
+                    p = nb[c]
+                    if p.shape == Y.shape:
+                        wp = _WP(p, FY, FX)
+                    else:
+                        wp = _WP(p, _TG(FY, p.shape) / 2, _TG(FX, p.shape) / 2)
+                    warped.append(wp)
+                    dwp = wp - cur[c]                    # at the channel's own resolution
+                    diffs.append(_TG(dwp, Y.shape) if dwp.shape != Y.shape else dwp)
+                d = (diffs[0] + diffs[1] + diffs[2]) * np.float32(1.0 / 3.0)
+                w = np.exp(-np.maximum(_UF(d * d, 5) / den - 1.0, 0.0) / thr)
+                for c, p in enumerate(nb):
+                    wp = warped[c] if warped[c].shape == p.shape else \
+                        _WP(p, _TG(FY, p.shape) / 2, _TG(FX, p.shape) / 2)
+                    wc = w if w.shape == p.shape else _TG(w, p.shape)
+                    acc[c] += wc * wp
+                    sw[c] += wc
+                    sf[c] += nv.NEIGHBOUR_VAR * wc * wc
+            out, rv = [], []
+            for c, p in enumerate(cur):
+                out.append(p + a * (acc[c] / sw[c] - p))
+                rv.append(((1 - a) + a / sw[c]) ** 2 + a * a * sf[c] / (sw[c] * sw[c]))
+            return out, rv
+
+        nv.temporal_v5 = _tv
+    elif variant == "sim3c":
+        # per-channel similarity: each plane is averaged with its own weight from its own warped
+        # difference normalized by its own sigma (the Cr flicker no longer drags Y and vice versa)
+        _DF, _WP, _TG = nv.dense_flow, nv.warp_plane, nv._to_grid
+        _UF, _GF, _CS = nv.uniform_filter, nv.gaussian_filter, nv.curve_sigma
+
+        def _tv(window, ci, prof, P, flows=None):
+            cur = [np.asarray(p, np.float32) for p in window[ci]]
+            Y = cur[0]
+            a = float(P["temporal"])
+            thr = max(P["threshold"], 1e-3)
+            den = {}
+            for c, name in enumerate(("Y", "Cb", "Cr")):
+                plane = cur[c]
+                st = (_CS(prof, name, _GF(plane, 1.0)) * prof["tot_ratio"][name]
+                      * P["noise_level"] * P["channel_noise"][name])
+                den[c] = 2.0 * st * st + 1e-6
+            acc = [p.copy() for p in cur]
+            sw = [np.ones(p.shape, np.float32) for p in cur]
+            sf = [np.zeros(p.shape, np.float32) for p in cur]
+            for k, nb in enumerate(window):
+                if k == ci or a <= 0:
+                    continue
+                if flows is not None and (k - ci) in flows:
+                    vy, vx = flows[k - ci]
+                else:
+                    vy, vx = nv.estimate_flow_v5(nb[0], Y, P["bs"], P["search"])
+                    if flows is not None:
+                        flows[k - ci] = (vy, vx)
+                FY, FX = _DF(vy, vx, Y.shape, P["bs"])
+                for c in range(3):
+                    p = nb[c]
+                    if p.shape == Y.shape:
+                        wp = _WP(p, FY, FX) if c == 0 else _WP(p, FY, FX)
+                        wc_shape = None
+                    else:
+                        wp = _WP(p, _TG(FY, p.shape) / 2, _TG(FX, p.shape) / 2)
+                    d = wp - cur[c]
+                    dmap = _TG(den[c], p.shape) if den[c].shape != p.shape else den[c]
+                    w = np.exp(-np.maximum(_UF(d * d, 5) / dmap - 1.0, 0.0) / thr)
+                    acc[c] += w * wp
+                    sw[c] += w
+                    sf[c] += nv.NEIGHBOUR_VAR * w * w
+            out, rv = [], []
+            for c, p in enumerate(cur):
+                out.append(p + a * (acc[c] / sw[c] - p))
+                rv.append(((1 - a) + a / sw[c]) ** 2 + a * a * sf[c] / (sw[c] * sw[c]))
+            return out, rv
+
+        nv.temporal_v5 = _tv
     elif variant == "nocrt":
         # diagnostic: keep the temporal stage for Y/Cb but pass Cr through untouched
         _orig = nv.temporal_v5
@@ -163,7 +273,7 @@ def main():
     ap.add_argument("--tag", default="nvm")
     ap.add_argument("--set", action="append", default=[],
                     help="override a ui_params value, e.g. --set threshold=8")
-    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5", "pyrgen", "nocrt", "sim3"),
+    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5", "pyrgen", "nocrt", "sim3", "sim3b", "sim3c"),
                     help="nvm = the nv_motion flow, v5 = the built-in flow (for threshold sweeps)")
     ap.add_argument("--profile-file", default=None,
                     help="use this profile JSON instead of runs/ours_frame_f5 ui_profile.json")
