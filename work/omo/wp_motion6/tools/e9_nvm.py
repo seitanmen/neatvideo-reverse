@@ -243,7 +243,71 @@ def install(variant):
                         flows[k - ci] = (vy, vx)
                 FY, FX = _DF(vy, vx, Y.shape, P["bs"])
                 warped = [_WP(nb[0], FY, FX)]
-                # the (a,b) regression per channel on the warped plane vs the centre
+                # the (a,b) regression per channel: centre = a*warped + b, sampled at the blocks
+                # with ZERO displacement (the planes are already compensated)
+                gains = []
+                for c in range(3):
+                    zy = (vy * 0)
+                    zx = (vx * 0)
+                    if c == 0:
+                        g = nvm.gain_offset(warped[0], cur[0], zy, zx)
+                    else:
+                        p = nb[c]
+                        if p.shape == Y.shape:
+                            wp = _WP(p, FY, FX)
+                        else:
+                            wp = _WP(p, _TG(FY, p.shape) / 2, _TG(FX, p.shape) / 2)
+                        warped.append(wp)
+                        rows = max((p.shape[0] - 15) // 16, 1)
+                        cols = max((p.shape[1] - 15) // 16, 1)
+                        g = nvm.gain_offset(wp, cur[c], zy[:rows, :cols], zx[:rows, :cols])
+                    gains.append(g)
+                corrected = [warped[c] * np.float32(gains[c]["a"]) + np.float32(gains[c]["b"])
+                             for c in range(3)]
+                w = np.exp(-np.maximum(_UF((corrected[0] - Y) ** 2, 5) / den - 1.0, 0.0) / thr)
+                for c, p in enumerate(nb):
+                    wp = corrected[c] if corrected[c].shape == p.shape else \
+                        _TG(corrected[c], p.shape)
+                    wc = w if w.shape == p.shape else _TG(w, p.shape)
+                    acc[c] += wc * wp
+                    sw[c] += wc
+                    sf[c] += nv.NEIGHBOUR_VAR * wc * wc
+            out, rv = [], []
+            for c, p in enumerate(cur):
+                out.append(p + a * (acc[c] / sw[c] - p))
+                rv.append(((1 - a) + a / sw[c]) ** 2 + a * a * sf[c] / (sw[c] * sw[c]))
+            return out, rv
+
+        nv.temporal_v5 = _tv
+    elif variant == "gainab2":
+        # gainab with the nv_motion flow (the grid gain_offset expects) and the (a,b) correction
+        _DF, _WP, _TG = nv.dense_flow, nv.warp_plane, nv._to_grid
+        _UF, _GF, _CS = nv.uniform_filter, nv.gaussian_filter, nv.curve_sigma
+        import nv_motion as nvm
+
+        def _tv(window, ci, prof, P, flows=None):
+            cur = [np.asarray(p, np.float32) for p in window[ci]]
+            Y = cur[0]
+            a = float(P["temporal"])
+            st = (_CS(prof, "Y", _GF(Y, 1.0)) * prof["tot_ratio"]["Y"]
+                  * P["noise_level"] * P["channel_noise"]["Y"])
+            den = 2.0 * st * st + 1e-6
+            thr = max(P["threshold"], 1e-3)
+            acc = [p.copy() for p in cur]
+            sw = [np.ones(p.shape, np.float32) for p in cur]
+            sf = [np.zeros(p.shape, np.float32) for p in cur]
+            for k, nb in enumerate(window):
+                if k == ci or a <= 0:
+                    continue
+                key = (k - ci, "nvm")
+                if flows is not None and key in flows:
+                    vy, vx = flows[key]
+                else:
+                    vy, vx, _ = nvm.estimate_motion(nb[0], Y)
+                    if flows is not None:
+                        flows[key] = (vy, vx)
+                FY, FX = _DF(vy, vx, Y.shape, 16)
+                warped = [_WP(nb[0], FY, FX)]
                 gains = []
                 for c in range(3):
                     if c == 0:
@@ -255,22 +319,18 @@ def install(variant):
                             vyc, vxc = vy, vx
                         else:
                             wp = _WP(p, _TG(FY, p.shape) / 2, _TG(FX, p.shape) / 2)
-                            # the chroma block grid, cropped so the 16px block positions stay
-                            # inside the block-mean table (gain_offset does not clip m_cur)
-                            rows = max((p.shape[0] - 15) // 16, 1)
-                            cols = max((p.shape[1] - 15) // 16, 1)
-                            vyc = (vy[::2, ::2] / 2)[:rows, :cols]
-                            vxc = (vx[::2, ::2] / 2)[:rows, :cols]
+                            vyc = (vy[::2, ::2] / 2)[:max((p.shape[0] - 15) // 16, 1),
+                                                     :max((p.shape[1] - 15) // 16, 1)]
+                            vxc = (vx[::2, ::2] / 2)[:max((p.shape[0] - 15) // 16, 1),
+                                                     :max((p.shape[1] - 15) // 16, 1)]
                         warped.append(wp)
-                        curs = cur[c]
-                        g = nvm.gain_offset(curs, wp, vyc, vxc)
+                        g = nvm.gain_offset(cur[c], wp, vyc, vxc)
                     gains.append(g)
                 corrected = [warped[c] * np.float32(gains[c]["a"]) + np.float32(gains[c]["b"])
                              for c in range(3)]
                 w = np.exp(-np.maximum(_UF((corrected[0] - Y) ** 2, 5) / den - 1.0, 0.0) / thr)
                 for c, p in enumerate(nb):
-                    wp = corrected[c] if corrected[c].shape == p.shape else \
-                        _TG(corrected[c], p.shape)
+                    wp = corrected[c] if corrected[c].shape == p.shape else _TG(corrected[c], p.shape)
                     wc = w if w.shape == p.shape else _TG(w, p.shape)
                     acc[c] += wc * wp
                     sw[c] += wc
@@ -367,7 +427,7 @@ def main():
     ap.add_argument("--tag", default="nvm")
     ap.add_argument("--set", action="append", default=[],
                     help="override a ui_params value, e.g. --set threshold=8")
-    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5", "pyrgen", "pyrgen2", "nocrt", "sim3", "sim3b", "sim3c", "gainab"),
+    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5", "pyrgen", "pyrgen2", "nocrt", "sim3", "sim3b", "sim3c", "gainab", "gainab2"),
                     help="nvm = the nv_motion flow, v5 = the built-in flow (for threshold sweeps)")
     ap.add_argument("--profile-file", default=None,
                     help="use this profile JSON instead of runs/ours_frame_f5 ui_profile.json")
