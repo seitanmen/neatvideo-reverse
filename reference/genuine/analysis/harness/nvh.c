@@ -725,6 +725,96 @@ int main(int argc, char **argv) {
     printf("adbc idx=%ld this5a8=%ld\n", shared_idx, *(long *)(thisp + 0x5a8));
     return 0;
   }
+  // ---- 2026-11-03 (wp_motion6): FUN_0098a94c (the level-0 smoothing pass) and FUN_0098ab5c (the full
+  // extra path: smooth(1.0) -> copy smoothed into the vector fields -> smooth(2.0)).  FUN_0098a79c (the
+  // 5x5 neighbour average) is called from a94c and verified with it.  The 32x32 SAD of the validation
+  // compares the ref window at (anchor + rint(smoothed)) with the cur window at the anchor, like the
+  // refinement in adbc; the adoption test is slack*scale + (sad << 2) > SAD32.
+  if ((!strcmp(argv[1], "smooth") || !strcmp(argv[1], "smoothfull")) && argc > 7) {
+    // smooth[full] W H ref.f32 cur.f32 rec.bin nblocks [scale]  (scale ignored for smoothfull)
+    long W = atol(argv[2]), H = atol(argv[3]);
+    if (W < 32 || H < 32 || W > 512 || H > 512) { fprintf(stderr, "smooth: 32 <= W, H <= 512\n"); return 1; }
+    long nblocks = atol(argv[7]);
+    if (nblocks < 1 || nblocks > 100000) { fprintf(stderr, "smooth: 1 <= nblocks <= 100000\n"); return 1; }
+    float *fa = load(argv[4], W * H), *fb = load(argv[5], W * H);
+    long recsz = 0x44;
+    unsigned char *rec = malloc((size_t)recsz * nblocks);
+    FILE *f = fopen(argv[6], "rb");
+    if (!f || fread(rec, 1, (size_t)recsz * nblocks, f) != (size_t)recsz * nblocks) { fprintf(stderr, "smooth: read %s failed\n", argv[6]); return 1; }
+    fclose(f);
+    float scale = !strcmp(argv[1], "smoothfull") ? 1.0f : (argc > 8 ? strtof(argv[8], NULL) : 1.0f);
+    long desc_r[16] = {0}, desc_c[16] = {0};
+    ((void (*)(long *, long, long, long, long, long))FN(0x97eebc))(desc_r, W, H, 8, 1, 16);
+    ((void (*)(long *, long, long, long, long, long))FN(0x97eebc))(desc_c, W, H, 8, 1, 16);
+    long stride = desc_r[6];
+    if (stride < W + 16 || desc_r[1] < stride * (H + 16)) { fprintf(stderr, "smooth: unexpected descriptor\n"); return 1; }
+    unsigned char *mem[2];
+    float *src[2] = {fa, fb};
+    long *descs[2] = {desc_r, desc_c};
+    for (int k = 0; k < 2; k++) {
+      mem[k] = calloc(1, desc_r[1] + 64);
+      ((void (*)(long *, void *))FN(0x97eef8))(descs[k], mem[k]);
+      unsigned char *p = (unsigned char *)descs[k][2];
+      for (long y = -8; y < H + 8; y++)
+        for (long x = -8; x < W + 8; x++) {
+          long sy = y < 0 ? 0 : y >= H ? H - 1 : y, sx = x < 0 ? 0 : x >= W ? W - 1 : x;
+          p[y * stride + x] = (unsigned char)(int)(src[k][sy * W + sx] + 0.5f);
+        }
+      src[k] = (float *)p;
+    }
+    ((void (*)(long *, void *))FN(0x97eef8))(desc_r, mem[0]);
+    // the chunk state: [0] = barrier pointer (its [8] must be 0 so the spin exits), [8] = rows per
+    // pass (ny: one pass), [0x10] = the start row (0)
+    long barrier[4] = {0};
+    long chunk[4] = {0};
+    chunk[0] = (long)barrier;
+    chunk[1] = 1;        // the row advance per pass: the loop processes ONE grid row, then jumps to the
+                         // chunk end which adds [x5+8] to the row counter (so 1 = all rows sequentially)
+    chunk[2] = 0;
+    if (!strcmp(argv[1], "smoothfull")) {
+      // FUN_0098ab5c = smooth(1.0) -> copy sx/sy into vx/vy -> smooth(2.0); the copy is trivial and the
+      // barrier inside ab5c is parallel bookkeeping, so the harness replicates the three steps directly
+      ((void (*)(float, void *, void *, void *, long, long, void *))
+          FN(0x98a94c))(1.0f, desc_r, desc_c, rec, W / 16, H / 16, chunk);
+      for (long i = 0; i < nblocks; i++) {
+        float sx = *(float *)(rec + i * 0x44 + 0x30), sy = *(float *)(rec + i * 0x44 + 0x34);
+        *(float *)(rec + i * 0x44 + 0x08) = sx;
+        *(float *)(rec + i * 0x44 + 0x0c) = sy;
+      }
+      ((void (*)(float, void *, void *, void *, long, long, void *))
+          FN(0x98a94c))(2.0f, desc_r, desc_c, rec, W / 16, H / 16, chunk);
+    } else {
+      ((void (*)(float, void *, void *, void *, long, long, void *))
+          FN(0x98a94c))(scale, desc_r, desc_c, rec, W / 16, H / 16, chunk);
+    }
+    char outp[512];
+    snprintf(outp, sizeof outp, "%s.out.bin", argv[6]);
+    FILE *g = fopen(outp, "wb");
+    if (!g) { fprintf(stderr, "smooth: write %s failed\n", outp); return 1; }
+    fwrite(rec, 1, (size_t)recsz * nblocks, g);
+    fclose(g);
+    printf("smooth done\n");
+    return 0;
+  }
+  // ---- 2026-11-03 (wp_motion6): FUN_0098a79c alone (the 5x5 neighbour average)
+  if (!strcmp(argv[1], "a79c") && argc > 7) {
+    // a79c W H rec.bin nblocks col row  -> prints ok, smx, smy
+    long W = atol(argv[2]), H = atol(argv[3]);
+    long nblocks = atol(argv[5]);
+    long col = atol(argv[6]), row = atol(argv[7]);
+    long nx = W / 16, ny = H / 16;
+    if (nblocks != nx * ny) { fprintf(stderr, "a79c: nblocks != nx*ny\n"); return 1; }
+    long recsz = 0x44;
+    unsigned char *rec = malloc((size_t)recsz * nblocks);
+    FILE *f = fopen(argv[4], "rb");
+    if (!f || fread(rec, 1, (size_t)recsz * nblocks, f) != (size_t)recsz * nblocks) { fprintf(stderr, "a79c: read failed\n"); return 1; }
+    fclose(f);
+    float smx = -1, smy = -1;
+    long ok = ((long (*)(void *, long, long, long, long, float *, float *))
+        FN(0x98a79c))(rec, nx, ny, col, row, &smx, &smy);
+    printf("a79c ok=%ld smx=%.9g smy=%.9g bits=%08x %08x\n", ok, smx, smy, bits32(smx), bits32(smy));
+    return 0;
+  }
   // ---- 2026-10-21 (sandbox/omo/wp_spatial, align_plan.md): leaf helpers of the spatial filter FUN_0098edb0 / FUN_009aae90 /
   // FUN_009ae918 and of the directional path of FUN_00990f74. Each was checked on the arm64 slice to call nothing outside itself
   // and to read no global except the NEON dispatch byte 0x14a67a8 (strip3: the single zero float at __TEXT 0x12504a0 instead;

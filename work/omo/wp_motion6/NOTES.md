@@ -288,3 +288,62 @@ nvh adbc W H ref.f32 cur.f32 rec.bin nblocks [s140 s168 sd4 slvlbits sslack s11 
 2. Valeurs réelles de settings+0x140/0x150 et de la table image (+0x1D390) : à décoder dans
    l'initialisation ou à calibrer sur E9 (comme les coefficients de v5).
 3. Port C++ (nv_motion6) puis v6 temporel (compensation + similarité) et comparaison E9.
+
+## 9. FUN_0098a79c / FUN_0098a94c / FUN_0098ab5c (平滑化) : bit-exact (2026-11-03)
+
+### FUN_0098a79c (5×5 近傍平均) — 完全解読
+
+```
+a79c(records, nx, ny, col, row, &out_x, &out_y) -> 0/1
+```
+- 5×5 ボックス: cols [max(col−2,0), min(col+2,nx−1)], rows [max(row−2,0), min(row+2,ny−1)]。
+  **注意: 0x98a894 の `sub x17, x17, #0x1` で列カウンタ x21 は c0−1 から始まり、
+  ループ入口の x21++ で c0 に揃う** (これを見落とすと方向カウンタが 1 ずれで常に失敗になる)。
+- 各近傍の条件: SAD (+0x3c, i32) != 0x7fffffff、|vx − 自身のvx| ≤ 2.0、|vy − 自身のvy| ≤ 2.0
+  (x20 = record+8 基点なので [x20+0x34] = +0x3c = SAD)。
+- 方向カウンタ: left (c < col), right (c > col), up (r < row), down (r > row)。
+- 受理条件: **up ≥ 4 && down ≥ 4 && left ≥ 4 && right > 3** (4 方向すべて)。
+- 出力: out_x = Σvx/count, out_y = Σvy/count (float32 の除算)。失敗時は書かない。
+
+### FUN_0098a94c (平滑化 1 パス) — 完全解読
+
+```
+a94c(s0=scale, x0=descA, x1=descB, x2=records, x3=nx, x4=ny, x5=chunk)
+```
+- チャンク状態: [x5+0x10] = 開始行, **[x5+8] = 1 パスの行進幅 (1 = 全行を順に)**。
+  ループは 1 グリッド行を処理するとチャンク末尾に飛び、行カウンタに [x5+8] を足す
+  (ハーネスで [x5+8] = ny にすると 1 行だけ処理して残りがスキップされる — 経験的に確定)。
+  [x5+0] = バリアオブジェクトへのポインタ (その +8 が 0 ならスピン即退出)。
+- 各レコード: (1) (sx,sy) = (vx,vy) (64 ビット複製、flag32 に関係なく全レコード);
+  (2) flag32 == 0 → 次へ; (3) a79c → 失敗なら次へ;
+  (4) rint(vx)==rint(smx) && rint(vy)==rint(smy) → 採用 (sx=smx, sy=smy);
+  (5) それ以外: アンカー = clamp(ブロック−8, 0, W−32)/(…H−32)、候補位置 = アンカー + rint(smx/smy)、
+  範囲 [−8, W−24]×[−8, H−24]、SAD32(ref[候補], cur[アンカー]) ≤ slack·scale + (SAD<<2) なら採用。
+- SAD32 は 9f9290 (32×32 バイト SAD)。descA = 候補位置でサンプルされる面 (ref)、
+  descB = アンカー位置の面 (cur) — adbc の 32×32 と同じ規約。
+
+### FUN_0098ab5c (レベル 0 の追加パス)
+
+smooth(scale=1.0) → **全レコードで (vx,vy) = (sx,sy)** → smooth(scale=2.0)。
+内部のバリア (97f8e0) は並列処理の帳簿なので、ハーネスは 3 ステップを直接再現。
+
+### ハーネス
+
+```
+nvh smooth     W H ref.f32 cur.f32 rec.bin nblocks [scale]   # a94c 1 回
+nvh smoothfull W H ref.f32 cur.f32 rec.bin nblocks           # ab5c 相当 (1.0 → 複製 → 2.0)
+nvh a79c       W H rec.bin nblocks col row                    # a79c 単体
+```
+
+### 検証
+
+- 転写 (`tools/verify_smooth.py`) vs `nvh smooth`/`nvh smoothfull`:
+  seed 1, 2 ケース不一致 0 / seed 42, 6 ケース不一致 0 (smoothfull と scale 1.0/2.0 の両方)。
+- 過程で判明したこと: a79c が 5×5 ボックスの平均を正しく返すことの単体確認
+  (`nvh a79c`: vx=100/vy=50 の一様レコードで ok=1 smx=100 smy=50)。
+
+## 10. 残タスク
+
+1. FUN_0098c90c (ゲイン/オフセット回帰 + ワープ) の照合 — 最大の未検証部品。
+2. settings/テーブルの実行時値 (adbc の s11/s9i、a94c の scale 1.0/2.0 は観測済み)。
+3. C++ ポート (nv_motion6) → v6 時間段 → E9。
