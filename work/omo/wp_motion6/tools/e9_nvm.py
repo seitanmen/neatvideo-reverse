@@ -342,6 +342,85 @@ def install(variant):
             return out, rv
 
         nv.temporal_v5 = _tv
+    elif variant == "hybrid":
+        # Y: the pyramid weight (the genuine structure), Cb/Cr: the per-channel exp weights
+        # (sim3c) — combines the park_joy Y gain with the sintel chroma gain
+        sk = json.load(open(os.environ["NV6_SIGMA_K"])) if os.environ.get("NV6_SIGMA_K") else None
+        _DF, _WP, _TG = nv.dense_flow, nv.warp_plane, nv._to_grid
+        _UF, _GF, _CS = nv.uniform_filter, nv.gaussian_filter, nv.curve_sigma
+
+        def _pw_y(d, s1, ratios, scale=1.0):
+            if sk is not None:
+                word3 = sk[0]; q99 = sk[5:10]
+                t = 1.3 * abs(word3)
+                b = nv.atrous(d, 4)
+                w = np.ones(d.shape, np.float32)
+                for k in (3, 2, 1, 0):
+                    sig = q99[k] if k < len(q99) else q99[-1]
+                    if sig <= 0:
+                        sig = abs(q99[k - 1]) * 0.5 if k > 0 and q99[k - 1] > 0 else 1.0
+                    x = b[k] / (sig + 1e-3)
+                    r = np.sqrt(nv.uniform_filter(x * x, 2 ** (k + 1) + 1))
+                    t2 = max(scale, 1e-3) * nv._PYR_C[k] * nv._PYR_K
+                    w *= np.clip((2.0 * t2 - r) / t2, 0.0, 1.0)
+                return w.astype(np.float32)
+            return nv.pyramid_weight(d, s1, ratios, scale)
+
+        def _tv(window, ci, prof, P, flows=None):
+            cur = [np.asarray(p, np.float32) for p in window[ci]]
+            Y = cur[0]
+            a = float(P["temporal"])
+            thr = max(P["threshold"], 1e-3)
+            den_c = {}
+            for c, name in enumerate(("Y", "Cb", "Cr")):
+                if c == 0: continue
+                st = (_CS(prof, name, _GF(cur[c], 1.0)) * prof["tot_ratio"][name]
+                      * P["noise_level"] * P["channel_noise"][name])
+                den_c[c] = 2.0 * st * st + 1e-6
+            st_y = (_CS(prof, "Y", _GF(Y, 1.0)) * prof["tot_ratio"]["Y"]
+                    * P["noise_level"] * P["channel_noise"]["Y"])
+            den_y = 2.0 * st_y * st_y + 1e-6
+            s1_map = st_y / max(prof["tot_ratio"]["Y"], 1e-6)
+            acc = [p.copy() for p in cur]
+            sw = [np.ones(p.shape, np.float32) for p in cur]
+            sf = [np.zeros(p.shape, np.float32) for p in cur]
+            for k, nb in enumerate(window):
+                if k == ci or a <= 0:
+                    continue
+                if flows is not None and (k - ci) in flows:
+                    vy, vx = flows[k - ci]
+                else:
+                    vy, vx = nv.estimate_flow_v5(nb[0], Y, P["bs"], P["search"])
+                    if flows is not None:
+                        flows[k - ci] = (vy, vx)
+                FY, FX = _DF(vy, vx, Y.shape, P["bs"])
+                wy = _WP(nb[0], FY, FX)
+                w_y = _pw_y(Y - wy, s1_map, prof["band_ratio"]["Y"], P.get("pyramid_scale", 1.5))
+                warped = [wy]
+                w_ch = [w_y]
+                for c in (1, 2):
+                    p = nb[c]
+                    if p.shape == Y.shape:
+                        wp = _WP(p, FY, FX)
+                    else:
+                        wp = _WP(p, _TG(FY, p.shape) / 2, _TG(FX, p.shape) / 2)
+                    warped.append(wp)
+                    d = wp - cur[c]
+                    w_c = np.exp(-np.maximum(_UF(d * d, 5) / den_c[c] - 1.0, 0.0) / thr)
+                    w_ch.append(w_c)
+                for c, p in enumerate(nb):
+                    wp = warped[c] if warped[c].shape == p.shape else _TG(warped[c], p.shape)
+                    wc = w_ch[c] if w_ch[c].shape == p.shape else _TG(w_ch[c], p.shape)
+                    acc[c] += wc * wp
+                    sw[c] += wc
+                    sf[c] += nv.NEIGHBOUR_VAR * wc * wc
+            out, rv = [], []
+            for c, p in enumerate(cur):
+                out.append(p + a * (acc[c] / sw[c] - p))
+                rv.append(((1 - a) + a / sw[c]) ** 2 + a * a * sf[c] / (sw[c] * sw[c]))
+            return out, rv
+
+        nv.temporal_v5 = _tv
     elif variant == "nocrt":
         # diagnostic: keep the temporal stage for Y/Cb but pass Cr through untouched
         _orig = nv.temporal_v5
@@ -427,7 +506,7 @@ def main():
     ap.add_argument("--tag", default="nvm")
     ap.add_argument("--set", action="append", default=[],
                     help="override a ui_params value, e.g. --set threshold=8")
-    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5", "pyrgen", "pyrgen2", "nocrt", "sim3", "sim3b", "sim3c", "gainab", "gainab2"),
+    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5", "pyrgen", "pyrgen2", "nocrt", "sim3", "sim3b", "sim3c", "gainab", "gainab2", "hybrid"),
                     help="nvm = the nv_motion flow, v5 = the built-in flow (for threshold sweeps)")
     ap.add_argument("--profile-file", default=None,
                     help="use this profile JSON instead of runs/ours_frame_f5 ui_profile.json")
