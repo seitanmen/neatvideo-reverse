@@ -628,3 +628,31 @@ s0 = 1e-4 (0x38d1b717)
 3. **実装順**: まず方向経路なし (t = 1.3·word3、正規化 = σ_k スカラー近似) で
    E9 の 3 素材を再評価 → sintel の pyramid 崩壊が直るかを確認 →
    直れば方向経路を追加してビット照合 (nvh の葉で可能)。
+
+## 19. `nvh c90c` ハーネス: mode 0 で動作、mode 1/2 は重み表が未構築 (2026-11-04)
+
+### 実装したもの
+
+- 最小 MotionCompensator インスタンス (+0x8→image、+0x48→ワークキュー (ゼロ初期化)、
+  +0x540、+0x2f8=0、+0x5a8=0)、参照/測定配列 (nblocks·frames float)、ワープ行テーブル。
+- スタック引数 6 個: frame_count、planeB、rowtab、ref_array、meas_array、0。
+- **mode 0 (計測なし) は正常終了** — 入口〜記述子構築〜回帰/ワープの骨格が通る。
+
+### mode 1/2 がクラッシュする理由 (解読の進捗)
+
+- 計測面のストライド [sp+0xf0] = x12 = **elem_size·W** (DAT_01247820[mode] = 1/2/4 →
+  int8/int16/float32 の面)。arg2 = 計測面の基底 (モードの要素形式)。
+- 計測の重み表: [sp+0xd8] = [sp+0xc0] + frame·8 — フレームごとの重み表配列。
+  [sp+0xc0] は大域ポインタ由来 (0x1561d40 など) で、ハーネスでの構築方法が未確定。
+- 次の作業: 重み表の初期化を辿る (0x98ca8c 付近の x12 = [sp+0x108] − x11·8 の
+  バッファ計算と、FUN_009f13bc の呼び出し 0x98cd54 = 重み表の填充とみられる)。
+
+### 引数マップ (確定分)
+
+```
+c90c(instance, planeA, planeB_raw, W, H, mode, records, count,
+     stack: frame_count, plane_for_desc, rowtab, ref_array, meas_array, extra)
+[sp+0xf0] = elem_size·W (計測面ストライド)
+[sp+0xd8] = 重み表配列 + frame·8
+[sp+0x38b8] = フレーム内レコード処理の状態
+```

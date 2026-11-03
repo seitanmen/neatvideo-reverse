@@ -796,6 +796,68 @@ int main(int argc, char **argv) {
     printf("smooth done\n");
     return 0;
   }
+  // ---- 2026-11-04 (wp_motion6): FUN_0098c90c, the apply-side compensation of the block matching
+  // (the per-block window means, the (a,b) regression and the warp row tables).  The work-queue
+  // integration (the lock at [instance+0x48]+0xda60 and the fetch-add chunk counter at +0xda58) is
+  // replicated with zeroed state so a single call processes everything.
+  if (!strcmp(argv[1], "c90c") && argc > 9) {
+    // c90c W H ref.f32 nb.f32 rec.bin nblocks mode frames
+    long W = atol(argv[2]), H = atol(argv[3]);
+    if (W < 32 || H < 32 || W > 512 || H > 512) { fprintf(stderr, "c90c: 32 <= W, H <= 512\n"); return 1; }
+    long nblocks = atol(argv[7]);
+    long mode = atol(argv[8]);
+    long frames = atol(argv[9]);
+    if (nblocks < 1 || nblocks > 100000 || frames < 1 || frames > 64) { fprintf(stderr, "c90c: bad nblocks/frames\n"); return 1; }
+    float *fa = load(argv[4], W * H), *fb = load(argv[5], W * H);
+    long recsz = 0x44;
+    unsigned char *rec = malloc((size_t)recsz * nblocks);
+    FILE *f = fopen(argv[6], "rb");
+    if (!f || fread(rec, 1, (size_t)recsz * nblocks, f) != (size_t)recsz * nblocks) { fprintf(stderr, "c90c: read %s failed\n", argv[6]); return 1; }
+    fclose(f);
+    // the minimal MotionCompensator instance: +8 = the image base (the settings pointer at image+0x3d00),
+    // +0x48 = the work queue (the lock at queue+0xda60, the counter at queue+0xda58), +0x538 = 0 (flag),
+    // +0x540 = the chunk divisor, +0x2f8 = 0 (the tv_usec gate), +0x5a8 = 0
+    unsigned char *image = calloc(1, 0x15bd400 + 64);
+    unsigned char *setmem = calloc(1, 0x400);
+    *(unsigned char **)(image + 0x3d00) = setmem;
+    unsigned char *queue = calloc(1, 0x10000);
+    unsigned char *inst = calloc(1, 0x10000);
+    *(unsigned char **)(inst + 0x8) = image;
+    *(unsigned char **)(inst + 0x48) = queue;
+    *(long *)(inst + 0x540) = 1;
+    *(long *)(inst + 0x2f8) = 0;
+    *(long *)(inst + 0x5a8) = 0;
+    // the reference and measurement arrays: nblocks * frames floats each
+    float *refarr = calloc(1, (size_t)nblocks * frames * 4);
+    float *measarr = calloc(1, (size_t)nblocks * frames * 4);
+    for (long i = 0; i < nblocks * frames; i++) refarr[i] = -1.0f;   // an invalid marker distinct from 0xff800001
+    // the warp row tables: 2 tables x frames x 8 bytes
+    long *rowtab = calloc(1, (size_t)frames * 2 * 8);
+    long stack_args[6];
+    stack_args[0] = frames;        // [x29+0x10] the frame count
+    stack_args[1] = (long)fb;      // [x29+0x18] the plane for the internal descriptor
+    stack_args[2] = (long)rowtab;  // [x29+0x20] the row table base
+    stack_args[3] = (long)refarr;  // [x29+0x28] the reference array
+    stack_args[4] = (long)measarr; // [x29+0x2c] hmm — the pair is (x26, x11) = (ref, meas)
+    stack_args[5] = 0;             // [x29+0x30]
+    long sa6 = 0;
+    unsigned long ret = ((unsigned long (*)(void *, void *, void *, long, long, long, void *, void *,
+                                            long, long, long, long, long, long))
+        FN(0x98c90c))(inst, fa, fb, W, H, mode, rec, (void *)(long)nblocks,
+                      stack_args[0], stack_args[1], stack_args[2], stack_args[3], stack_args[4], sa6);
+    char outp[512];
+    snprintf(outp, sizeof outp, "%s.out.bin", argv[6]);
+    FILE *g = fopen(outp, "wb");
+    if (!g) { fprintf(stderr, "c90c: write failed\n"); return 1; }
+    fwrite(rec, 1, (size_t)recsz * nblocks, g);
+    fclose(g);
+    char abp[512];
+    snprintf(abp, sizeof abp, "%s.ab.bin", argv[6]);
+    g = fopen(abp, "wb");
+    if (g) { fwrite(stack_args + 3, 1, 64, g); fclose(g); }   // hmm — the (a,b) output location TBD
+    printf("c90c ret=%lu meas0=%.9g ref0=%.9g rowtab0=%ld rowtab1=%ld\n", ret, measarr[0], refarr[0], rowtab[0], rowtab[1]);
+    return 0;
+  }
   // ---- 2026-11-03 (wp_motion6): FUN_0098a79c alone (the 5x5 neighbour average)
   if (!strcmp(argv[1], "a79c") && argc > 7) {
     // a79c W H rec.bin nblocks col row  -> prints ok, smx, smy
@@ -975,7 +1037,7 @@ int main(int argc, char **argv) {
             "pixnoise W H luma.f32 out | cand W H luma.f32 rx ry step [nb per_bin] | reduce W H rgb.f32 s out | "
             "xform W H rgb.f32 mode out | flatness W H plane.f32 | quantile n v.f32 qbits flag div | "
             "ramp t in.f32 n out | wmul t r.f32 prev.f32 n out | pairw a.f32 b.f32 c.f32 n out | down2 W H plane.f32 out | "
-            "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr | b9a4 W H ref.f32 cur.f32 cx cy vx vy [rounds] | adbc W H ref.f32 cur.f32 rec.bin nblocks [s140 s168 sd4 slvl sslack s11 chunkdiv slvlbits [weights.f32]] | aftshuffle N | interp n x.. y.. q.. | "
+            "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr | b9a4 W H ref.f32 cur.f32 cx cy vx vy [rounds] | adbc W H ref.f32 cur.f32 rec.bin nblocks [s140 s168 sd4 slvl sslack s11 chunkdiv slvlbits [weights.f32]] | c90c W H ref.f32 nb.f32 rec.bin nblocks mode frames | aftshuffle N | interp n x.. y.. q.. | "
             "elem NAME n out s0 s1 s2 s3 in1 [in2 [in3]] | strip3 W H plane.f32 box|sq mode sbits out | "
             "sigfuse n r g b tab coef out | ixform n y a b out | sel2 n flag stride a b i3 i4 best src wt out [full] | "
             "argmax n count stride maps out | gather n stride idx.u8 maps out\n");
