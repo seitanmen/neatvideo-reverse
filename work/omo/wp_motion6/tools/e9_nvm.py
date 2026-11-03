@@ -11,6 +11,7 @@ Output: wp_e9/runs/mtn_<tag>/<clip>/out.mp4 + run.json.
 """
 import argparse
 import hashlib
+import struct
 import json
 import os
 import subprocess
@@ -31,16 +32,35 @@ _STATE = {}
 
 
 def install(variant):
-    """Patch nvfilter.estimate_flow_v5 with the nv_motion port in this process (variant='nvm')."""
-    if _STATE.get("installed") or variant != "nvm":
+    """Patch nvfilter in this process: variant='nvm' swaps the flow, 'pyrgen' swaps pyramid_weight
+    for the genuine structure (normalize by the model q99 per level instead of s1*ratios)."""
+    if _STATE.get("installed"):
         return
     import nvfilter as nv
-    import nv_motion as nvm
+    if variant == "nvm":
+        import nv_motion as nvm
 
-    def _flow(ref, cur, bs=16, search=16):
-        return nvm.flow_for_v5(ref, cur, bs, search)
+        def _flow(ref, cur, bs=16, search=16):
+            return nvm.flow_for_v5(ref, cur, bs, search)
 
-    nv.estimate_flow_v5 = _flow
+        nv.estimate_flow_v5 = _flow
+    elif variant == "pyrgen":
+        sk = json.load(open(os.environ["NV6_SIGMA_K"]))
+
+        def _pw(d, s1, ratios, scale=1.0):
+            b = nv.atrous(d, len(nv._PYR_C))
+            w = np.ones(d.shape, np.float32)
+            for j, c in enumerate(nv._PYR_C):
+                v = sk[j] if j < len(sk) else sk[-1]
+                if v <= 0:                     # the "level too small" marker: reuse the previous level
+                    v = abs(sk[j - 1]) * 0.5 if j > 0 and sk[j - 1] > 0 else 1.0
+                x = b[j] / (v + 1e-3)
+                r = np.sqrt(nv.uniform_filter(x * x, 2 ** (j + 1) + 1))
+                t = max(scale, 1e-3) * c * nv._PYR_K
+                w *= np.clip((2.0 * t - r) / t, 0.0, 1.0)
+            return w
+
+        nv.pyramid_weight = _pw
     _STATE["installed"] = True
 
 
@@ -70,7 +90,7 @@ def main():
     ap.add_argument("--tag", default="nvm")
     ap.add_argument("--set", action="append", default=[],
                     help="override a ui_params value, e.g. --set threshold=8")
-    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5"),
+    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5", "pyrgen"),
                     help="nvm = the nv_motion flow, v5 = the built-in flow (for threshold sweeps)")
     ap.add_argument("--profile-file", default=None,
                     help="use this profile JSON instead of runs/ours_frame_f5 ui_profile.json")
@@ -107,6 +127,23 @@ def main():
         prof_p = a.profile_file
     prof = json.load(open(prof_p))
     info = json.load(open(os.path.join(ref, "profile_info.json")))
+    if a.variant == "pyrgen":
+        # U4: the genuine per-level sigma = the model q99 (words 5+k) of the profile region's Y plane
+        import nv_model
+        raw = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-i", src,
+                              "-vf", "select=eq(n\\,%d)" % int(info["profile_frame"]), "-frames:v", "1",
+                              "-f", "rawvideo", "-pix_fmt", "yuv420p", "-"], capture_output=True, check=True).stdout
+        W_, H_ = 1920, 1080
+        y_ = np.frombuffer(raw[:W_*H_], np.uint8).reshape(H_, W_).astype(np.float32)
+        ar = prof["area"]
+        reg = y_[ar[0]:ar[0]+(ar[2] if len(ar) == 3 else ar[2]),
+                 ar[1]:ar[1]+(ar[2] if len(ar) == 3 else ar[3])] if len(ar) == 3 else \
+              y_[ar[0]:ar[0]+ar[2], ar[1]:ar[1]+ar[3]]
+        m = nv_model.model_full(reg, set_=-1, levels=5)
+        sk = [struct.unpack("<f", struct.pack("<I", int(m[5 + k]) & 0xFFFFFFFF))[0] for k in range(5)]
+        skf = os.path.join(out, "sigma_k.json")
+        json.dump(sk, open(skf, "w"))
+        os.environ["NV6_SIGMA_K"] = skf
     rec = {"clip": a.clip, "variant": a.variant, "overrides": dict(kv.split("=", 1) for kv in a.set),
            "input": src, "input_sha256": sha256(src),
            "profile": prof_p, "params": params_p, "profile_info": info, "start": a.start,
