@@ -1,0 +1,567 @@
+== FUN_0098edb0 size 5656: calls 990da8 990f74 993df0 994338 9944c0 99ba54 99bf40 99c3a4 99c694 9c80d4 9d8290 9ed014 9ed2f0 9ed3e0 9ed5f8 9ed710 9ed844 9ed978 9edc38 9edeb8 9ee04c 9ee304 9ee3fc 9f13bc 9f14e4 9f15b4
+   EXT  000000000098f724 bl 0xc8fcc4 ; symbol stub for: _pow
+   IND  000000000098ede4 blr x16
+   IND  000000000098fbac blr x8
+   REF  000000000098eddc 0x13b4000 ldr x16, [x16, #0x308]
+   REF  000000000098ede0 x16, [x16, #0x308] ; literal pool symbol address: ___chkstk_darwin ; Latency: 4 
+   REF  000000000098ee20 0x1487000 add x8, x8, #0xa80
+   REF  000000000098ee50 0x1487000 ldr x9, [x9, #0xb90]
+   REF  000000000098ee68 0x1487000 str w8, [x9, #0xa80]
+   REF  000000000098ef20 0x1243000 add x12, x12, #0x700
+   REF  000000000098ef38 0x1487000 add x14, x14, #0xa84
+   REF  000000000098ef80 0x1487000 ldr x13, [x13, #0xba0]
+   REF  000000000098efa8 0x1561000 add x8, x8, #0xf68
+   REF  000000000098efc4 0x1487000 str w9, [x8, #0xa84]
+   REF  000000000098f048 0x1487000 add x8, x8, #0xa88
+   REF  000000000098f084 0x1487000 ldr x9, [x9, #0xbb8]
+   REF  000000000098f0c4 0x1487000 add x8, x8, #0xa8c
+   REF  000000000098f100 0x1487000 ldr x8, [x8, #0xbc8]
+   REF  000000000098f1d4 0x1487000 ldr x8, [x8, #0xbd0]
+   REF  000000000098f204 0x1487000 ldr x9, [x9, #0xbd8]
+   REF  000000000098f220 0x14a6000 add x8, x8, #0x7a8
+   REF  000000000098f318 0x1487000 add x11, x11, #0xa90
+   REF  000000000098f354 0x1487000 ldr x9, [x9, #0xbe8]
+   REF  000000000098f3d4 0x1487000 add x9, x9, #0xa94
+   REF  000000000098f40c 0x1487000 ldr x10, [x10, #0xbf8]
+   REF  000000000098f420 0x1561000 add x10, x10, #0xf68
+   REF  000000000098f440 0x1487000 str w9, [x10, #0xa94]
+   REF  000000000098f51c 0x1487000 add x8, x8, #0xa98
+   REF  000000000098f554 0x1243000 add x9, x9, #0x700
+   REF  000000000098f7a0 0x1243000 add x9, x9, #0x700
+   REF  000000000098fb90 0x1487000 ldr xzr, [x8, #0xc08]
+   REF  000000000098fd00 0x1487000 add x9, x9, #0xa9c
+   REF  000000000098fd30 0x1487000 ldr x8, [x8, #0xc18]
+   REF  000000000098fd44 0x1487000 str w19, [x8, #0xa9c]
+   REF  0000000000990070 0x1487000 ldr x8, [x8, #0xc20]
+   REF  00000000009900a4 0x1487000 ldr x9, [x9, #0xc28]
+   REF  00000000009900b8 0x1487000 str w8, [x9, #0xaa0]
+   REF  0000000000990320 0x1487000 add x8, x8, #0xc30
+   REF  000000000099033c 0x1561000 add x9, x9, #0xf68
+   REF  0000000000990358 0x1487000 str w8, [x9, #0xaa4]
+== FUN_009ee3fc size 272: calls 
+   REF  00000000009ee3fc 0x14a6000 add x8, x8, #0x7a8
+== FUN_009ed5f8 size 280: calls 
+   REF  00000000009ed5f8 0x14a6000 add x8, x8, #0x7a8
+== FUN_00990f74 size 11692: calls 98eba8 98ed34 990448 9944c0 9950f4 99ba54 99bf40 9c80d4 9d8290 9ed014 9ed2f0 9ed3e0 9ed4e0 9ed710 9ed844 9ed978 9edc38 9edeb8 9ee04c 9ee1a4 9ee304 9ee3fc 9ee50c 9ee5fc 9ee7bc 9ee93c 9eebf8 9eef5c 9ef0d0 9ef260 9efb1c 9f11fc 9f13bc 9f14e4 ad06ec ad0800 ad2964 ad42b8
+   EXT  0000000000993d1c bl 0xc8f4cc ; symbol stub for: ___stack_chk_fail
+   IND  0000000000990fac blr x16
+   IND  00000000009917d8 blr x8
+   IND  0000000000992ca0 blr x8
+   IND  000000000099329c blr x8
+   IND  0000000000993930 blr x8
+   IND  000000000099395c blr x8
+   REF  0000000000990fa4 0x13b4000 ldr x16, [x16, #0x308]
+   REF  0000000000990fa8 x16, [x16, #0x308] ; literal pool symbol address: ___chkstk_darwin ; Latency: 4 
+   REF  0000000000990fd0 0x13b4000 ldr x8, [x8, #0x320]
+   REF  0000000000990fd4 x8, [x8, #0x320] ; literal pool symbol address: ___stack_chk_guard ; Latency: 4 
+   REF  0000000000990ffc 0x1243000 add x9, x9, #0x700
+   REF  0000000000991014 0x1487000 ldr x8, [x8, #0xc40]
+   REF  0000000000991044 0x1487000 ldr x8, [x8, #0xc48]
+   REF  000000000099106c 0x1561000 add x20, x20, #0xf68
+   REF  0000000000991184 0x1487000 add x8, x8, #0xaa8
+   REF  0000000000991348 0x1243000 add x10, x10, #0x700
+   REF  00000000009913bc 0x1487000 ldr w8, [x24, #0xaac]
+   REF  00000000009913ec 0x1487000 add x8, x8, #0xab0
+   REF  000000000099141c 0x1487000 ldr x10, [x10, #0xc60]
+   REF  0000000000991444 0x1243000 add x10, x10, #0x700
+   REF  00000000009914f8 0x1487000 ldr x8, [x8, #0xc68]
+   REF  000000000099152c 0x1487000 ldr x8, [x8, #0xc70]
+   REF  0000000000991554 0x1487000 str w23, [x8, #0xab4]
+   REF  00000000009915c8 0x1487000 add x8, x8, #0xc78
+   REF  00000000009916b0 0x1243000 add x9, x9, #0x700
+   REF  00000000009916f0 0x1487000 ldr x8, [x8, #0xd70]
+   REF  0000000000991724 0x1487000 ldr x8, [x8, #0xd78]
+   REF  0000000000991738 0x1487000 str w19, [x8, #0xad4]
+   REF  00000000009917e4 0x1487000 add x9, x9, #0xd80
+   REF  000000000099183c 0x1487000 ldr x9, [x9, #0xd88]
+   REF  0000000000991850 0x1487000 str w26, [x8, #0xad8]
+   REF  0000000000991894 0x14a6000 add x24, x24, #0x7a8
+   REF  0000000000991ae8 0x1487000 add x8, x8, #0xab8
+   REF  0000000000991b24 0x1243000 add x8, x8, #0x700
+   REF  0000000000991c38 0x1243000 add x8, x8, #0x700
+   REF  0000000000991c84 0x1243000 add x8, x8, #0x700
+   REF  0000000000991ce8 0x14a6000 add x8, x8, #0x7a8
+   REF  0000000000991db0 0x14a6000 add x8, x8, #0x7a8
+   REF  0000000000991ef4 0x1243000 add x8, x8, #0x700
+   REF  0000000000991f80 0x1487000 add x9, x9, #0xc98
+   REF  0000000000991fd4 0x1487000 ldr x9, [x9, #0xca0]
+   REF  0000000000992014 0x1243000 add x9, x9, #0x700
+   REF  0000000000992058 0x1487000 add x9, x9, #0xcb0
+   REF  00000000009920b0 0x1487000 ldr x9, [x9, #0xcb8]
+   REF  0000000000992218 0x1487000 add x8, x8, #0xadc
+   REF  0000000000992610 0x1487000 add x9, x9, #0xda0
+   REF  0000000000992668 0x1487000 ldr x9, [x9, #0xda8]
+   REF  0000000000992698 0x1487000 add x8, x8, #0xabc
+   REF  00000000009926c8 0x1487000 ldr x8, [x8, #0xcd0]
+   REF  0000000000992728 0x1487000 add x9, x9, #0xac0
+   REF  0000000000992754 0x1487000 ldr x9, [x9, #0xce0]
+   REF  00000000009927bc 0x1243000 add x9, x9, #0x700
+   REF  0000000000992804 0x1243000 add x9, x9, #0x700
+   REF  00000000009928d4 0x14a6000 add x8, x8, #0x7a8
+   REF  0000000000992988 0x14a6000 add x8, x8, #0x7a8
+   REF  0000000000992a4c 0x1487000 ldr x8, [x8, #0xce8]
+   REF  0000000000992a64 0x1487000 ldr x9, [x9, #0xcf0]
+   REF  0000000000992abc 0x1487000 add x9, x9, #0xac4
+   REF  0000000000992af0 0x1487000 ldr x9, [x9, #0xd00]
+   REF  0000000000992ccc 0x14a6000 add x8, x8, #0x7a8
+   REF  0000000000992dc4 0x1487000 add x8, x8, #0xac8
+   REF  0000000000992df4 0x1487000 ldr x8, [x8, #0xd10]
+   REF  0000000000992e08 0x1487000 str w19, [x8, #0xac8]
+   REF  0000000000992e44 0x1243000 add x9, x9, #0x700
+   REF  0000000000993110 0x1487000 add x8, x8, #0xacc
+   REF  0000000000993144 0x1487000 ldr x8, [x8, #0xd20]
+   REF  00000000009931ec 0x1243000 add x9, x9, #0x700
+   REF  0000000000993234 0x1243000 add x9, x9, #0x700
+   REF  00000000009932d0 0x14a6000 add x8, x8, #0x7a8
+   REF  00000000009933c8 0x1487000 ldr x8, [x8, #0xd28]
+   REF  000000000099340c 0x1487000 ldr x9, [x9, #0xd30]
+   REF  0000000000993444 0x1243000 add x9, x9, #0x700
+   REF  0000000000993650 0x1487000 ldr x8, [x8, #0xd38]
+   REF  0000000000993694 0x1487000 ldr x9, [x9, #0xd40]
+   REF  0000000000993748 0x1243000 add x9, x9, #0x700
+   REF  0000000000993790 0x1243000 add x9, x9, #0x700
+   REF  00000000009937e4 0x1487000 add x8, x8, #0xad0
+   REF  0000000000993820 0x1487000 ldr x9, [x9, #0xd50]
+   REF  0000000000993834 0x1487000 str w23, [x8, #0xad0]
+   REF  000000000099383c 0x1243000 add x8, x8, #0x700
+   REF  0000000000993990 0x13b4000 ldr x9, [x9, #0x320]
+   REF  0000000000993994 x9, [x9, #0x320] ; literal pool symbol address: ___stack_chk_guard ; Latency: 4 
+   REF  0000000000993a10 0x1243000 add x8, x8, #0x700
+   REF  0000000000993ad0 0x1243000 add x8, x8, #0x700
+   REF  0000000000993b28 0x1487000 add x9, x9, #0xd58
+   REF  0000000000993b7c 0x1487000 ldr x9, [x9, #0xd60]
+== FUN_009ee5fc size 448: calls 
+   REF  00000000009ee5fc 0x14a6000 add x8, x8, #0x7a8
+== FUN_009eebf8 size 868: calls 
+   REF  00000000009eec60 0x14a6000 add x8, x8, #0x7a8
+== FUN_009950f4 size 348: calls 99ba54 99bf40 9ed164 9ed2f0 9ed4e0
+   REF  0000000000995134 0x14a6000 add x8, x8, #0x7a8
+== FUN_0099ba54 size 1260: calls 9eca14 9ecbcc 9ece90
+   REF  000000000099ba88 0x14a6000 add x8, x8, #0x7a8
+== FUN_009eca14 size 440: calls 
+== FUN_009ecbcc size 708: calls 
+== FUN_009ece90 size 388: calls 
+== FUN_009ed2f0 size 240: calls 
+   REF  00000000009ed2f0 0x14a6000 add x8, x8, #0x7a8
+== FUN_009ed164 size 396: calls 
+   REF  00000000009ed178 0x1250000 add x12, x12, #0x4a0
+== FUN_009ed4e0 size 280: calls 
+   REF  00000000009ed4e0 0x14a6000 add x8, x8, #0x7a8
+== FUN_0099bf40 size 1124: calls 9ec484 9ec638 9ec86c
+   REF  000000000099bf68 0x14a6000 add x8, x8, #0x7a8
+== FUN_009ec484 size 436: calls 
+== FUN_009ec86c size 424: calls 
+== FUN_009ec638 size 564: calls 
+== FUN_00ad06ec size 128: calls 97ee84 acfc68
+   EXT  0000000000ad071c bl 0xc8f37c ; symbol stub for: __Znwm
+== FUN_0097ee84 size 20: calls 
+== FUN_00acfc68 size 2692: calls 97eebc 97eef8 9c80d4 9ee304 ad076c af4a8c
+   EXT  0000000000acfdb4 bl 0xc8f5d4 ; symbol stub for: _bzero
+   IND  0000000000acff3c blr x23
+   IND  0000000000ad0060 blr x24
+   IND  0000000000ad0094 blr x24
+   IND  0000000000ad00c8 blr x24
+   IND  0000000000ad00fc blr x24
+   IND  0000000000ad0130 blr x24
+   IND  0000000000ad0208 blr x24
+   IND  0000000000ad0320 blr x23
+   IND  0000000000ad0370 blr x23
+   IND  0000000000ad03a8 blr x23
+   IND  0000000000ad03e4 blr x23
+   IND  0000000000ad04f0 blr x24
+   IND  0000000000ad0548 blr x24
+   IND  0000000000ad058c blr x24
+   IND  0000000000ad05d0 blr x24
+   REF  0000000000acfcfc 0x1400000 add x9, x9, #0xf88
+   REF  0000000000acfdc8 0x156b000 ldr w8, [x8, #0xdb0]
+   REF  0000000000acfdd8 0x156b000 add x0, x0, #0xda8
+   REF  0000000000acfde8 0x156b000 add x10, x10, #0xdb0
+   REF  0000000000acfe2c 0x156b000 add x19, x19, #0xda8
+   REF  0000000000acfea0 0x1400000 add x10, x10, #0xf88
+   REF  0000000000acff80 0x1400000 add x9, x9, #0xf88
+   REF  0000000000ad018c 0x1400000 add x9, x9, #0xf88
+   REF  0000000000ad025c 0x1400000 add x9, x9, #0xf88
+   REF  0000000000ad0414 0x1400000 add x9, x9, #0xf88
+   REF  0000000000ad05f8 0x1400000 add x9, x9, #0xf88
+== FUN_0097eebc size 60: calls 
+== FUN_0097eef8 size 48: calls 
+== FUN_009c80d4 size 72: calls 9d8114
+== FUN_009d8114 size 236: calls 9d7f6c
+== FUN_009d7f6c size 424: calls 97f8b0 9d7200 9d7558 9d7910 9d7d5c
+   REF  00000000009d7fc8 0x1561000 add x0, x0, #0xec0
+== FUN_009d7d5c size 528: calls 
+   EXT  00000000009d7d9c bl 0xc8f364 ; symbol stub for: __Znam
+   EXT  00000000009d7da8 bl 0xc8f364 ; symbol stub for: __Znam
+   EXT  00000000009d7dc4 bl 0xc8facc ; symbol stub for: _memcpy
+   EXT  00000000009d7dd8 bl 0xc8facc ; symbol stub for: _memcpy
+   EXT  00000000009d7dec bl 0xc8f5d4 ; symbol stub for: _bzero
+   EXT  00000000009d7df8 bl 0xc8f5d4 ; symbol stub for: _bzero
+   EXT  00000000009d7e04 bl 0xc8f340 ; symbol stub for: __ZdaPv
+   EXT  00000000009d7e14 bl 0xc8f340 ; symbol stub for: __ZdaPv
+   EXT  00000000009d7e24 bl 0xc8f364 ; symbol stub for: __Znam
+   EXT  00000000009d7e30 bl 0xc8f364 ; symbol stub for: __Znam
+   EXT  00000000009d7e50 bl 0xc8facc ; symbol stub for: _memcpy
+   EXT  00000000009d7e64 bl 0xc8facc ; symbol stub for: _memcpy
+   EXT  00000000009d7e80 bl 0xc8f5d4 ; symbol stub for: _bzero
+   EXT  00000000009d7e8c bl 0xc8f5d4 ; symbol stub for: _bzero
+   EXT  00000000009d7e98 bl 0xc8f340 ; symbol stub for: __ZdaPv
+   EXT  00000000009d7ea8 bl 0xc8f340 ; symbol stub for: __ZdaPv
+   EXT  00000000009d7ec0 bl 0xc8f364 ; symbol stub for: __Znam
+   EXT  00000000009d7ecc bl 0xc8f364 ; symbol stub for: __Znam
+   EXT  00000000009d7ee8 bl 0xc8facc ; symbol stub for: _memcpy
+   EXT  00000000009d7f00 bl 0xc8facc ; symbol stub for: _memcpy
+   EXT  00000000009d7f14 bl 0xc8f5d4 ; symbol stub for: _bzero
+   EXT  00000000009d7f24 bl 0xc8f5d4 ; symbol stub for: _bzero
+   EXT  00000000009d7f30 bl 0xc8f340 ; symbol stub for: __ZdaPv
+   EXT  00000000009d7f40 bl 0xc8f340 ; symbol stub for: __ZdaPv
+== FUN_009d7558 size 952: calls 97f894 97f8b0 97f9e8 97fb60 9d7200 9ec008 af4a8c
+   EXT  00000000009d78d8 bl 0xc8f418 ; symbol stub for: ___cxa_guard_acquire
+   EXT  00000000009d7908 bl 0xc8f424 ; symbol stub for: ___cxa_guard_release
+   IND  00000000009d7698 blr x8
+   IND  00000000009d7748 blr x8
+   IND  00000000009d7808 blr x8
+   REF  00000000009d7578 0x156a000 add x24, x24, #0x4d0
+   REF  00000000009d759c 0x13b4000 ldr x23, [x23, #0x6f8]
+   REF  00000000009d75a0 x23, [x23, #0x6f8] ; literal pool symbol address: _vm_page_size ; Latency: 4 
+   REF  00000000009d75d8 0x1489000 ldr x8, [x27, #0xe58]
+   REF  00000000009d75f4 0x1558000 add x8, x8, #0x820
+   REF  00000000009d7604 0x1558000 ldr w8, [x25, #0x830]
+   REF  00000000009d7614 0x1558000 add x0, x0, #0x828
+   REF  00000000009d7620 0x1558000 ldr x0, [x26, #0x840]
+   REF  00000000009d7640 0x1489000 ldr x8, [x9, #0xe40]
+   REF  00000000009d7650 0x1489000 ldr x8, [x8, #0xe28]
+   REF  00000000009d7670 0x1561000 ldr x9, [x9, #0xef0]
+   REF  00000000009d76b4 0x1561000 add x0, x0, #0xed8
+   REF  00000000009d76c0 0x1561000 add x0, x0, #0xef0
+   REF  00000000009d76d4 0x1561000 add x0, x0, #0xf08
+   REF  00000000009d76e0 0x1561000 add x0, x0, #0xf20
+   REF  00000000009d76f0 0x1489000 ldr x8, [x9, #0xe48]
+   REF  00000000009d7700 0x1489000 ldr x8, [x8, #0xe30]
+   REF  00000000009d7720 0x1561000 ldr x9, [x9, #0xef8]
+   REF  00000000009d7764 0x1561000 add x0, x0, #0xee0
+   REF  00000000009d7770 0x1561000 add x0, x0, #0xef8
+   REF  00000000009d7784 0x1561000 add x0, x0, #0xf10
+   REF  00000000009d7790 0x1561000 add x0, x0, #0xf28
+   REF  00000000009d77a0 0x1489000 ldr x8, [x9, #0xe50]
+   REF  00000000009d77b0 0x1489000 ldr x8, [x8, #0xe38]
+   REF  00000000009d77e0 0x1561000 ldr x9, [x9, #0xf00]
+   REF  00000000009d7824 0x1561000 add x0, x0, #0xee8
+   REF  00000000009d7830 0x1561000 add x0, x0, #0xf00
+   REF  00000000009d7844 0x1561000 add x0, x0, #0xf18
+   REF  00000000009d7850 0x1561000 add x0, x0, #0xf30
+   REF  00000000009d786c 0x1558000 add x0, x0, #0x828
+   REF  00000000009d7880 0x1561000 ldr x8, [x8, #0xf38]
+   REF  00000000009d78cc 0x1558000 add x22, x22, #0x820
+   REF  00000000009d78f8 0x13b4000 add x8, x8, #0xd30
+== FUN_0097f894 size 8: calls 
+== FUN_0097f8b0 size 8: calls 
+== FUN_00af4a8c size 556: calls 97f9e8 97fb60 9d95a4
+   IND  0000000000af4bd4 blr x8
+   REF  0000000000af4aa0 0x158a000 ldr w8, [x20, #0x668]
+   REF  0000000000af4ab4 0x12f2000 add x20, x20, #0xa88
+   REF  0000000000af4abc 0x133d000 add x21, x21, #0xfd6
+   REF  0000000000af4aec 0x158a000 add x0, x0, #0x670
+   REF  0000000000af4b04 0x12f2000 add x20, x20, #0xa88
+   REF  0000000000af4b0c 0x133d000 add x21, x21, #0xf9d
+   REF  0000000000af4b44 0x158a000 add x0, x0, #0x670
+   REF  0000000000af4b70 0x158a000 add x9, x9, #0x668
+   REF  0000000000af4b90 0x12f2000 add x20, x20, #0xa88
+   REF  0000000000af4b98 0x133e000 add x21, x21, #0xf
+   REF  0000000000af4bdc 0x158a000 ldr x9, [x8, #0x888]
+   REF  0000000000af4bec 0x12f2000 add x20, x20, #0xa88
+   REF  0000000000af4bf4 0x133d000 add x21, x21, #0xfbd
+   REF  0000000000af4c24 0x12f2000 add x20, x20, #0xa88
+   REF  0000000000af4c2c 0x133d000 add x21, x21, #0xff6
+   REF  0000000000af4c60 0x158a000 add x8, x8, #0x668
+== FUN_009d95a4 size 544: calls 9ebfa4
+   EXT  00000000009d9638 bl 0xc90060 ; symbol stub for: _snprintf
+   EXT  00000000009d967c bl 0xc90060 ; symbol stub for: _snprintf
+   EXT  00000000009d968c bl 0xc90108 ; symbol stub for: _strncat
+   EXT  00000000009d96b4 bl 0xc90108 ; symbol stub for: _strncat
+   EXT  00000000009d96fc bl 0xc90060 ; symbol stub for: _snprintf
+   EXT  00000000009d970c bl 0xc90108 ; symbol stub for: _strncat
+   EXT  00000000009d9720 bl 0xc8e29c ; symbol stub for: _CFStringGetSystemEncoding
+   EXT  00000000009d9730 bl 0xc8e1f4 ; symbol stub for: _CFStringCreateWithCString
+   EXT  00000000009d9738 bl 0xc8e29c ; symbol stub for: _CFStringGetSystemEncoding
+   EXT  00000000009d9748 bl 0xc8e1f4 ; symbol stub for: _CFStringCreateWithCString
+   EXT  00000000009d9778 bl 0xc8e35c ; symbol stub for: _CFUserNotificationDisplayAlert
+   EXT  00000000009d9780 bl 0xc8e044 ; symbol stub for: _CFRelease
+   EXT  00000000009d9788 bl 0xc8e044 ; symbol stub for: _CFRelease
+   EXT  00000000009d97c0 bl 0xc8f4cc ; symbol stub for: ___stack_chk_fail
+   REF  00000000009d95c4 0x13b4000 ldr x8, [x8, #0x320]
+   REF  00000000009d95c8 x8, [x8, #0x320] ; literal pool symbol address: ___stack_chk_guard ; Latency: 4 
+   REF  00000000009d9600 0x133b000 add x8, x8, #0xfd4
+   REF  00000000009d9628 0x133c000 add x2, x2, #0x21
+   REF  00000000009d966c 0x133c000 add x2, x2, #0x4f
+   REF  00000000009d9690 0x133c000 add x8, x8, #0x66
+   REF  00000000009d96c8 0x133c000 add x20, x20, #0x74
+   REF  00000000009d9790 0x13b4000 ldr x9, [x9, #0x320]
+   REF  00000000009d9794 x9, [x9, #0x320] ; literal pool symbol address: ___stack_chk_guard ; Latency: 4 
+== FUN_009ebfa4 size 100: calls 
+   EXT  00000000009ebfd0 bl 0xc8f6f4 ; symbol stub for: _dladdr
+   EXT  00000000009ebfec bl 0xc8f5a4 ; symbol stub for: _backtrace
+   REF  00000000009ebfc4 x0, #-0x304 
+== FUN_0097fb60 size 36: calls 
+== FUN_0097f9e8 size 156: calls 9ec0f4 9ec264
+== FUN_009ec0f4 size 136: calls 
+   EXT  00000000009ec108 bl 0xc8ff64 ; symbol stub for: _sched_yield
+   EXT  00000000009ec114 bl 0xc8f994 ; symbol stub for: _gettimeofday
+   EXT  00000000009ec144 bl 0xc8f994 ; symbol stub for: _gettimeofday
+== FUN_009ec264 size 4: calls 
+   EXT  00000000009ec264 b 0xc8fe44 ; symbol stub for: _pthread_self
+== FUN_009ec008 size 80: calls 
+   EXT  00000000009ec044 bl 0xc90174 ; symbol stub for: _sysctl
+== FUN_009d7200 size 856: calls 97f894 97f8b0 97f9e8 97fb60 9d95a4 af4a8c
+   EXT  00000000009d72fc bl 0xc8fa9c ; symbol stub for: _malloc
+   EXT  00000000009d733c bl 0xc90078 ; symbol stub for: _sprintf
+   EXT  00000000009d7444 bl 0xc90078 ; symbol stub for: _sprintf
+   EXT  00000000009d7554 bl 0xc8f4cc ; symbol stub for: ___stack_chk_fail
+   IND  00000000009d72a8 blr x8
+   IND  00000000009d7400 blr x8
+   REF  00000000009d7220 0x13b4000 ldr x8, [x8, #0x320]
+   REF  00000000009d7224 x8, [x8, #0x320] ; literal pool symbol address: ___stack_chk_guard ; Latency: 4 
+   REF  00000000009d724c 0x1558000 adrp x22, 2954
+   REF  00000000009d7250 0x1561000 add x22, x22, #0xe58
+   REF  00000000009d7258 0x1561000 adrp x24, 2404
+   REF  00000000009d725c 0x133b000 add x24, x24, #0xf24
+   REF  00000000009d7264 0x1561000 add x25, x25, #0xe50
+   REF  00000000009d726c 0x1561000 add x23, x23, #0xe30
+   REF  00000000009d727c 0x1561000 ldr w8, [x8, #0xe30]
+   REF  00000000009d728c 0x1561000 add x0, x0, #0xe28
+   REF  00000000009d72bc 0x1561000 add x0, x0, #0xe28
+   REF  00000000009d72c8 0x1561000 ldr x0, [x8, #0xe40]
+   REF  00000000009d72d8 0x1561000 ldr w8, [x8, #0xe58]
+   REF  00000000009d732c 0x1489000 ldr x1, [x8, #0xe20]
+   REF  00000000009d7344 0x12f9000 add x0, x0, #0xa53
+   REF  00000000009d734c 0x133b000 add x2, x2, #0xf0c
+   REF  00000000009d7374 0x12f2000 add x19, x19, #0xa88
+   REF  00000000009d73a4 0x1558000 adrp x28, 2738
+   REF  00000000009d73a8 0x1489000 adrp x22, 2338
+   REF  00000000009d73ac 0x12f9000 add x22, x22, #0xa53
+   REF  00000000009d73b4 0x133b000 add x23, x23, #0xf0c
+   REF  00000000009d73bc 0x133b000 add x24, x24, #0xf24
+   REF  00000000009d73c4 0x1561000 add x25, x25, #0xe30
+   REF  00000000009d73d4 0x1561000 ldr w8, [x8, #0xe30]
+   REF  00000000009d73e4 0x1561000 add x0, x0, #0xe28
+   REF  00000000009d7414 0x1561000 add x0, x0, #0xe28
+   REF  00000000009d7420 0x1561000 ldr x0, [x8, #0xe40]
+   REF  00000000009d74a0 0x1561000 add x0, x0, #0xe80
+   REF  00000000009d74ac 0x1561000 add x0, x0, #0xe98
+   REF  00000000009d74c0 0x1561000 add x0, x0, #0xeb0
+   REF  00000000009d74e0 0x1561000 add x0, x0, #0xe78
+   REF  00000000009d74f0 0x1561000 add x0, x0, #0xe90
+   REF  00000000009d7504 0x1561000 add x0, x0, #0xea8
+   REF  00000000009d7510 0x1561000 ldr x8, [x8, #0xf38]
+   REF  00000000009d7520 0x13b4000 ldr x9, [x9, #0x320]
+   REF  00000000009d7524 x9, [x9, #0x320] ; literal pool symbol address: ___stack_chk_guard ; Latency: 4 
+== FUN_009d7910 size 692: calls 97f894 97f8b0 97f9e8 97fb60 af4a8c
+   EXT  00000000009d7b28 bl 0xc8f814 ; symbol stub for: _free
+   IND  00000000009d794c blr x8
+   IND  00000000009d79c4 blr x8
+   IND  00000000009d7a38 blr x8
+   IND  00000000009d7b7c blr x8
+   REF  00000000009d7928 0x156a000 add x21, x21, #0x4d0
+   REF  00000000009d7968 0x1561000 add x0, x0, #0xed8
+   REF  00000000009d7974 0x1561000 add x0, x0, #0xef0
+   REF  00000000009d7988 0x1561000 add x0, x0, #0xf08
+   REF  00000000009d7994 0x1561000 add x0, x0, #0xf20
+   REF  00000000009d79e0 0x1561000 add x0, x0, #0xee0
+   REF  00000000009d79ec 0x1561000 add x0, x0, #0xef8
+   REF  00000000009d7a00 0x1561000 add x0, x0, #0xf10
+   REF  00000000009d7a0c 0x1561000 add x0, x0, #0xf28
+   REF  00000000009d7a54 0x1561000 add x0, x0, #0xee8
+   REF  00000000009d7a60 0x1561000 add x0, x0, #0xf00
+   REF  00000000009d7a74 0x1561000 add x0, x0, #0xf18
+   REF  00000000009d7a80 0x1561000 add x0, x0, #0xf30
+   REF  00000000009d7aa0 0x1561000 add x8, x8, #0xe78
+   REF  00000000009d7abc 0x1561000 add x8, x8, #0xe90
+   REF  00000000009d7ad0 0x1561000 add x8, x8, #0xea8
+   REF  00000000009d7af8 0x1561000 ldr w8, [x21, #0xe58]
+   REF  00000000009d7b08 0x1561000 add x0, x0, #0xe50
+   REF  00000000009d7b14 0x1561000 add x20, x20, #0xe58
+   REF  00000000009d7b38 0x1561000 add x19, x19, #0xe50
+   REF  00000000009d7b44 0x1561000 ldr w8, [x21, #0xe30]
+   REF  00000000009d7b54 0x1561000 add x0, x0, #0xe28
+   REF  00000000009d7b60 0x1561000 add x20, x20, #0xe30
+   REF  00000000009d7b70 0x1558000 ldr x8, [x8, #0x818]
+   REF  00000000009d7b8c 0x1561000 add x19, x19, #0xe28
+== FUN_00ad076c size 144: calls 97ee84 9d8290
+   EXT  0000000000ad07d4 bl 0xc8f34c ; symbol stub for: __ZdlPv
+   EXT  0000000000ad07dc bl 0xc8f37c ; symbol stub for: __Znwm
+== FUN_009d8290 size 140: calls 9d95a4
+   REF  00000000009d82ac 0x12f2000 add x0, x0, #0xa88
+   REF  00000000009d82b4 0x133b000 add x1, x1, #0xf2d
+== FUN_009ee304 size 248: calls 
+   REF  00000000009ee304 0x14a6000 add x8, x8, #0x7a8
+== FUN_00ad2964 size 1996: calls 97eebc 97eef8 97ef28 97f508 97f574 990c0c 9950c0 9950c4 9c80d4 9d8290 9ed710 9ed844 9ee1a4 9efdd4 9f1110 9f14e4 ad15f0 ad20f0 ad2348
+   EXT  0000000000ad2c8c bl 0xc8fae4 ; symbol stub for: _memset
+   EXT  0000000000ad2e14 bl 0xc8fae4 ; symbol stub for: _memset
+   IND  0000000000ad2994 blr x16
+   IND  0000000000ad2d50 blr x8
+   IND  0000000000ad2e98 blr x8
+   IND  0000000000ad2f08 blr x8
+   IND  0000000000ad2f7c blr x8
+   IND  0000000000ad2fd0 blr x8
+   REF  0000000000ad298c 0x13b4000 ldr x16, [x16, #0x308]
+   REF  0000000000ad2990 x16, [x16, #0x308] ; literal pool symbol address: ___chkstk_darwin ; Latency: 4 
+   REF  0000000000ad2d10 0x1400000 add x8, x8, #0xf88
+   REF  0000000000ad2d58 0x1400000 add x8, x8, #0xf88
+   REF  0000000000ad2d98 0x1400000 add x8, x8, #0xf88
+   REF  0000000000ad2e3c 0x1400000 add x8, x8, #0xf88
+   REF  0000000000ad2ec0 0x1400000 add x8, x8, #0xf88
+== FUN_0097f574 size 108: calls 9f14e4
+== FUN_009f14e4 size 208: calls 
+   EXT  00000000009f15a0 b 0xc8facc ; symbol stub for: _memcpy
+   REF  00000000009f14f0 0x14a6000 add x9, x9, #0x7a8
+== FUN_00ad15f0 size 956: calls 9edc38 af4a8c
+   EXT  0000000000ad1638 bl 0xc8f5d4 ; symbol stub for: _bzero
+   IND  0000000000ad17f8 blr x28
+   IND  0000000000ad18e8 blr x20
+   REF  0000000000ad17cc 0x156b000 ldr x8, [x8, #0xdc0]
+   REF  0000000000ad1820 0x156b000 ldr w8, [x8, #0xdb0]
+   REF  0000000000ad1830 0x156b000 add x0, x0, #0xda8
+   REF  0000000000ad18bc 0x156b000 ldr x8, [x8, #0xdc0]
+   REF  0000000000ad1910 0x156b000 ldr w8, [x8, #0xdb0]
+   REF  0000000000ad1920 0x156b000 add x0, x0, #0xda8
+== FUN_009edc38 size 308: calls 
+   REF  00000000009edc38 0x14a6000 add x8, x8, #0x7a8
+== FUN_00ad20f0 size 524: calls 97ef28 9c80d4 9d8290 ad086c ad11b0 af4a8c
+   REF  0000000000ad2128 0x156b000 ldr w8, [x8, #0xdb0]
+   REF  0000000000ad2138 0x156b000 add x0, x0, #0xda8
+   REF  0000000000ad2144 0x156b000 ldr x8, [x8, #0xdc0]
+== FUN_00ad11b0 size 1016: calls 9c80d4 9d4a2c 9d8290 af4a8c
+   REF  0000000000ad11ec 0x156b000 ldr w8, [x8, #0xdb0]
+   REF  0000000000ad11fc 0x156b000 add x0, x0, #0xda8
+   REF  0000000000ad1208 0x156b000 ldr x8, [x8, #0xdc0]
+== FUN_009d4a2c size 216: calls 9ef9f4 9f0050
+== FUN_009ef9f4 size 296: calls 
+   REF  00000000009ef9f4 0x14a6000 add x8, x8, #0x7a8
+== FUN_009f0050 size 208: calls 
+   REF  00000000009f0050 0x14a6000 add x8, x8, #0x7a8
+== FUN_00ad086c size 796: calls 
+   IND  0000000000ad092c blr x26
+   IND  0000000000ad09b0 blr x8
+   IND  0000000000ad0a40 blr x8
+   IND  0000000000ad0a74 blr x8
+   IND  0000000000ad0abc blr x25
+   IND  0000000000ad0b24 blr x24
+== FUN_0097ef28 size 44: calls 97ef54 97f020
+== FUN_0097ef54 size 204: calls 9f14e4
+== FUN_0097f020 size 1156: calls 
+== FUN_009efdd4 size 220: calls 
+   REF  00000000009efdd4 0x14a6000 add x8, x8, #0x7a8
+== FUN_00ad2348 size 1468: calls 97ef28 9c80d4 9d8290 9edc38 9ee93c 9efc94 ad086c ad0b88 af4a8c
+   REF  0000000000ad2398 0x156b000 ldr w8, [x8, #0xdb0]
+   REF  0000000000ad23a8 0x156b000 add x0, x0, #0xda8
+   REF  0000000000ad23b4 0x156b000 ldr x8, [x8, #0xdc0]
+== FUN_009ee93c size 700: calls 
+   REF  00000000009ee9a4 0x14a6000 add x8, x8, #0x7a8
+== FUN_009efc94 size 320: calls 
+   REF  00000000009efc94 0x14a6000 add x8, x8, #0x7a8
+== FUN_00ad0b88 size 1500: calls 9c80d4 9d4a2c 9d8290
+   EXT  0000000000ad0c6c bl 0xc8f5d4 ; symbol stub for: _bzero
+   EXT  0000000000ad0d94 bl 0xc8fae4 ; symbol stub for: _memset
+   EXT  0000000000ad1150 bl 0xc8fae4 ; symbol stub for: _memset
+== FUN_009ed844 size 308: calls 
+   REF  00000000009ed844 0x14a6000 add x8, x8, #0x7a8
+== FUN_009950c4 size 48: calls 990448
+== FUN_00990448 size 1988: calls 
+   EXT  000000000099055c bl 0xc9018c ; symbol stub for: _tanf
+   EXT  00000000009906d4 bl 0xc9018c ; symbol stub for: _tanf
+   EXT  0000000000990c08 bl 0xc8f4cc ; symbol stub for: ___stack_chk_fail
+   IND  000000000099046c blr x16
+   REF  0000000000990464 0x13b4000 ldr x16, [x16, #0x308]
+   REF  0000000000990468 x16, [x16, #0x308] ; literal pool symbol address: ___chkstk_darwin ; Latency: 4 
+   REF  000000000099047c 0x13b4000 ldr x8, [x8, #0x320]
+   REF  0000000000990480 x8, [x8, #0x320] ; literal pool symbol address: ___stack_chk_guard ; Latency: 4 
+   REF  00000000009904c4 0x1561000 ldr x22, [x9, #0xd58]
+   REF  000000000099053c 0x1243000 ldr d2, [x8, #0x6d0]
+   REF  0000000000990668 0x1487000 add x8, x8, #0xb64
+   REF  000000000099069c 0x1488000 ldr x8, [x8, #0x98]
+   REF  00000000009906b0 0x1561000 add x8, x8, #0xf68
+   REF  00000000009906cc 0x1487000 str w23, [x8, #0xb64]
+   REF  00000000009907bc 0x1487000 add x9, x9, #0xb68
+   REF  00000000009907ec 0x1488000 ldr x9, [x9, #0xa8]
+   REF  0000000000990874 0xc95000 ldr q2, [x11, #0x950]
+   REF  000000000099095c 0xc95000 mov w11, #0x2
+   REF  0000000000990a40 0xc95000 ldr q1, [x11, #0x950]
+   REF  0000000000990b1c 0xc95000 mov.d x11, v0[1]
+   REF  0000000000990bd4 0x13b4000 ldr x9, [x9, #0x320]
+   REF  0000000000990bd8 x9, [x9, #0x320] ; literal pool symbol address: ___stack_chk_guard ; Latency: 4 
+== FUN_009950c0 size 4: calls 
+== FUN_009ee1a4 size 352: calls 
+   REF  00000000009ee1a4 0x14a6000 add x8, x8, #0x7a8
+== FUN_009f1110 size 236: calls 
+   REF  00000000009f1110 0x14a6000 add x8, x8, #0x7a8
+== FUN_009ed710 size 308: calls 
+   REF  00000000009ed710 0x14a6000 add x8, x8, #0x7a8
+== FUN_00990c0c size 288: calls 99ba54 99bf40 9ed014
+   REF  0000000000990c44 0x14a6000 add x8, x8, #0x7a8
+== FUN_009ed014 size 336: calls 
+   REF  00000000009ed02c 0x1250000 add x13, x13, #0x4a0
+== FUN_0097f508 size 108: calls 9f14e4
+== FUN_009ed3e0 size 256: calls 
+   REF  00000000009ed3e0 0x14a6000 add x8, x8, #0x7a8
+== FUN_009ef260 size 412: calls 
+   REF  00000000009ef264 0x14a6000 add x8, x8, #0x7a8
+== FUN_009eef5c size 372: calls 
+   REF  00000000009eef60 0x14a6000 add x8, x8, #0x7a8
+== FUN_009ef0d0 size 400: calls 
+   REF  00000000009ef0d4 0x14a6000 add x8, x8, #0x7a8
+== FUN_009ee04c size 344: calls 
+   REF  00000000009ee04c 0x14a6000 add x8, x8, #0x7a8
+== FUN_009944c0 size 3072: calls 99ba54 99bf40 9f14e4
+== FUN_009f13bc size 296: calls 
+   EXT  00000000009f14bc bl 0xc8facc ; symbol stub for: _memcpy
+   REF  00000000009f13e4 0x14a6000 add x8, x8, #0x7a8
+== FUN_009ee7bc size 384: calls 
+   REF  00000000009ee7bc 0x14a6000 add x8, x8, #0x7a8
+== FUN_00ad42b8 size 552: calls 9f14e4 ad3c88
+   EXT  0000000000ad4308 bl 0xc8f5d4 ; symbol stub for: _bzero
+== FUN_00ad3c88 size 1492: calls 9c80d4 9d8290 9ed710 9ed844 9ee04c 9ee304 9eebf8 ad19ac
+   EXT  0000000000ad3d08 bl 0xc8f5d4 ; symbol stub for: _bzero
+== FUN_00ad19ac size 224: calls 9950c0 9950c4 9950f4 9c80d4 9d8290
+   IND  0000000000ad19c8 blr x16
+   REF  0000000000ad19c0 0x13b4000 ldr x16, [x16, #0x308]
+   REF  0000000000ad19c4 x16, [x16, #0x308] ; literal pool symbol address: ___chkstk_darwin ; Latency: 4 
+== FUN_009edeb8 size 404: calls 
+   REF  00000000009edeb8 0x14a6000 add x8, x8, #0x7a8
+== FUN_0098ed34 size 124: calls 
+== FUN_009f11fc size 448: calls 
+   REF  00000000009f11fc 0x14a6000 add x8, x8, #0x7a8
+== FUN_0098eba8 size 396: calls 9f19cc
+   REF  000000000098ebf0 0x14a6000 add x8, x8, #0x7a8
+== FUN_009f19cc size 688: calls 
+== FUN_009ed978 size 356: calls 
+   REF  00000000009ed978 0x14a6000 add x8, x8, #0x7a8
+== FUN_009efb1c size 376: calls 
+   REF  00000000009efb1c 0x14a6000 add x8, x8, #0x7a8
+== FUN_009ee50c size 240: calls 
+   REF  00000000009ee50c 0x14a6000 add x8, x8, #0x7a8
+== FUN_00ad0800 size 100: calls 9d8290 ad076c
+   EXT  0000000000ad084c bl 0xc8f34c ; symbol stub for: __ZdlPv
+== FUN_00993df0 size 1352: calls 9f14e4 9f173c
+   REF  0000000000993e40 0x14a6000 add x8, x8, #0x7a8
+== FUN_009f173c size 292: calls 
+== FUN_00994338 size 392: calls 9f13bc 9f14e4
+== FUN_009f15b4 size 392: calls 
+   REF  00000000009f15b8 0x14a6000 add x9, x9, #0x7a8
+== FUN_00990da8 size 460: calls 993df0 9ed710 9ed844 9f1860
+   REF  0000000000990e00 0x14a6000 add x8, x8, #0x7a8
+== FUN_009f1860 size 364: calls 
+== FUN_0099c3a4 size 752: calls 
+   REF  000000000099c3a4 0x1488000 ldr x8, [x8, #0xb0]
+   REF  000000000099c3d4 0x1488000 ldr x8, [x8, #0xb8]
+   REF  000000000099c3e8 0x1487000 add x8, x8, #0xb6c
+   REF  000000000099c43c 0x1488000 cbz w9, 0x99c454
+   REF  000000000099c454 0x1487000 add x9, x9, #0xb70
+   REF  000000000099c688 0x1487000 str w9, [x8, #0xb70]
+== FUN_0099c694 size 1044: calls 
+   REF  000000000099c694 0x1488000 add x9, x9, #0xd0
+   REF  000000000099c6d8 0x1488000 ldr x9, [x9, #0xd8]
+   REF  000000000099c6f8 0x1487000 add x14, x14, #0xb7c
+   REF  000000000099c758 0x1487000 add x15, x15, #0xb74
+   REF  000000000099c7b4 0x1488000 ldr x16, [x16, #0x100]
+   REF  000000000099c7c8 0x1487000 str w15, [x14, #0xb74]
+   REF  000000000099ca54 0x1487000 add x8, x8, #0xb78
+TOTAL functions 100
