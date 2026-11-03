@@ -1,0 +1,29 @@
+case018: 1525 calls, 0 mismatching
+  acc            ok     15  mismatch 0
+  add            ok    100  mismatch 0
+  affine         ok      9  mismatch 0
+  argmax         ok      6  mismatch 0
+  bladd          ok      3  mismatch 0
+  blend          ok      1  mismatch 0
+  down2          ok      3  mismatch 0
+  gather         ok      2  mismatch 0
+  gather-chunked ok      1  mismatch 0
+  linefilt       ok    750  mismatch 0
+  mul            ok      9  mismatch 0
+  pairw          ok      3  mismatch 0
+  ramp4          ok     15  mismatch 0
+  ratio          ok      3  mismatch 0
+  recip          ok      3  mismatch 0
+  rinv           ok      3  mismatch 0
+  robust         ok     54  mismatch 0
+  scale          ok      3  mismatch 0
+  sel2           ok      2  mismatch 0
+  sel2-chunked   ok      1  mismatch 0
+  sqr            ok    102  mismatch 0
+  sqrtabs        ok      6  mismatch 0
+  sqrtk          ok     96  mismatch 0
+  strip3-box     ok    116  mismatch 0
+  strip3-sq      ok     51  mismatch 0
+  sub            ok    153  mismatch 0
+  wmul4          ok     15  mismatch 0
+TOTAL calls 1525, mismatching 0, errors 0, skipped 0 (85 s)

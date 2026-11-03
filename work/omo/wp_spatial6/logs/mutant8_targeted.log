@@ -1,0 +1,6 @@
+mutant 8 (scale: tail s*x instead of x*s) - targeted case, 2026-11-03
+input n=7: x = [1,2,3,4, 5, qNaN 0x7fc12345, 7] (elements 4..6 are the scalar tail), s = qNaN 0xffd54321
+nvh elem scale            out[4..6] = 0xffd54321 0x7fc12345 0xffd54321   (genuine: tail picks x's NaN = fmul x, s)
+nv_spatial6_test          out[4..6] = 0xffd54321 0x7fc12345 0xffd54321   (same)
+nv_spatial6_mut8          out[4..6] = 0xffd54321 0xffd54321 0xffd54321   -> DETECTED (word 5 differs)
+The random run (400 calls) missed it: it needs a NaN scalar and a NaN of another payload in a tail element at once.
