@@ -831,8 +831,11 @@ int main(int argc, char **argv) {
     float *refarr = calloc(1, (size_t)nblocks * frames * 4);
     float *measarr = calloc(1, (size_t)nblocks * frames * 4);
     for (long i = 0; i < nblocks * frames; i++) refarr[i] = -1.0f;   // an invalid marker distinct from 0xff800001
-    // the warp row tables: 2 tables x frames x 8 bytes
-    long *rowtab = calloc(1, (size_t)frames * 2 * 8);
+    // the row table area: the per-frame pointers live at +0x40 + frame*8; give each frame a
+    // scratch buffer (zeroed) and store its pointer — FUN_009f13bc grows these for frames 0/1
+    long *rowtab = calloc(1, 0x40 + (size_t)frames * 8 + (size_t)frames * (1 << 20));
+    for (long fr = 0; fr < frames; fr++)
+      *(long *)((char *)rowtab + 0x40 + fr * 8) = (long)((char *)rowtab + 0x40 + frames * 8 + fr * (1 << 20));
     long stack_args[6];
     stack_args[0] = frames;        // [x29+0x10] the frame count
     stack_args[1] = (long)fb;      // [x29+0x18] the plane for the internal descriptor
