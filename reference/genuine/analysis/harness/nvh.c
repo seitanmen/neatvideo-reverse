@@ -630,6 +630,91 @@ int main(int argc, char **argv) {
     printf("b9a4 ret=%lu out_x=%ld out_y=%ld sad=%lu\n", ret, ox, oy, osad);
     return 0;
   }
+  // ---- 2026-11-03 (wp_motion6): FUN_0098adbc, the per-block candidate verification and acceptance of the block
+  // matching.  The obfuscation gates are inert here: this+0x2f8 = 0 keeps the tv_usec trap from firing (the gate
+  // only gates a pointer-corrupting write to this+0x5a8, see work/omo/wp_motion6/NOTES.md §1), and the hash
+  // blocks only write bookkeeping words in __DATA.  The chunk scheduler FUN_0097f894 is a fetch-and-add, so one
+  // call processes every block [0, nblocks) single-threaded.
+  if (!strcmp(argv[1], "adbc") && argc > 7) {
+    // adbc W H ref.f32 cur.f32 rec.bin nblocks [s140] [s168] [sd4] [slvl] [simg] [s11] [chunkdiv] [weights.f32]
+    //   rec.bin: nblocks * 0x44 bytes {i32 x0, i32 y0, f32 vx, f32 vy, f32 c[8], f32 sx, f32 sy, f32 slack,
+    //            i32 sad, u8 flag32, u8 flag41}; updated in place and written back to rec.out.bin
+    //   settings: s140 (+0x140), s168 (+0x168, int), sd4 (+0xd4, used when s168 != 1), slvl (+0x150 for bs=16),
+    //             simg (+0x190 for bs=16), s11 (the image table at +0x15bd390 + bs*4), chunkdiv (this+0x540)
+    long W = atol(argv[2]), H = atol(argv[3]);
+    if (W < 32 || H < 32 || W > 512 || H > 512) { fprintf(stderr, "adbc: 32 <= W, H <= 512\n"); return 1; }
+    long nblocks = atol(argv[7]);
+    if (nblocks < 1 || nblocks > 100000) { fprintf(stderr, "adbc: 1 <= nblocks <= 100000\n"); return 1; }
+    float *fa = load(argv[4], W * H), *fb = load(argv[5], W * H);
+    long recsz = 0x44;
+    unsigned char *rec = malloc((size_t)recsz * nblocks);
+    FILE *f = fopen(argv[6], "rb");
+    if (!f || fread(rec, 1, (size_t)recsz * nblocks, f) != (size_t)recsz * nblocks) { fprintf(stderr, "adbc: read %s failed\n", argv[6]); return 1; }
+    fclose(f);
+    float s140 = argc > 8 ? strtof(argv[8], NULL) : 1.0f;
+    long s168 = argc > 9 ? atol(argv[9]) : 1;
+    float sd4 = argc > 10 ? strtof(argv[10], NULL) : 1.0f;
+    float slvl = argc > 11 ? strtof(argv[11], NULL) : 1.0f;
+    float simg = argc > 12 ? strtof(argv[12], NULL) : 1.0f;
+    float s11 = argc > 13 ? strtof(argv[13], NULL) : 1.0f;
+    long chunkdiv = argc > 14 ? atol(argv[14]) : 1;
+    float *weights = NULL;
+    if (argc > 15) {
+      weights = load(argv[15], nblocks);
+    } else {
+      weights = malloc((size_t)nblocks * 4);
+      for (long i = 0; i < nblocks; i++) weights[i] = 1.0f;
+    }
+    long desc_r[16] = {0}, desc_c[16] = {0};
+    ((void (*)(long *, long, long, long, long, long))FN(0x97eebc))(desc_r, W, H, 8, 1, 16);
+    ((void (*)(long *, long, long, long, long, long))FN(0x97eebc))(desc_c, W, H, 8, 1, 16);
+    long stride = desc_r[6], rows = H + 16;
+    if (stride < W + 16 || desc_r[1] < stride * rows) { fprintf(stderr, "adbc: unexpected descriptor\n"); return 1; }
+    unsigned char *mem[2];
+    float *src[2] = {fa, fb};
+    long *descs[2] = {desc_r, desc_c};
+    for (int k = 0; k < 2; k++) {
+      mem[k] = calloc(1, desc_r[1] + 64);
+      ((void (*)(long *, void *))FN(0x97eef8))(descs[k], mem[k]);
+      unsigned char *p = (unsigned char *)descs[k][2];
+      if (p < mem[k] + 8 * stride + 8 || p + (H + 7) * stride + (W + 8) > mem[k] + desc_r[1]) { fprintf(stderr, "adbc: layout\n"); return 1; }
+      for (long y = -8; y < H + 8; y++)
+        for (long x = -8; x < W + 8; x++) {
+          long sy = y < 0 ? 0 : y >= H ? H - 1 : y, sx = x < 0 ? 0 : x >= W ? W - 1 : x;
+          p[y * stride + x] = (unsigned char)(int)(src[k][sy * W + sx] + 0.5f);
+        }
+      src[k] = (float *)p;
+    }
+    ((void (*)(long *, void *))FN(0x97eef8))(desc_r, mem[0]);   // desc_r describes ref again
+    // the minimal MotionCompensator instance: +8 = the image base, +0x540 chunk divisor, +0x2f8 gate (0),
+    // +0x5a8 the trap write target; settings live at image + 0x3d00
+    unsigned char *image = calloc(1, 0x15bd400 + 64);
+    unsigned char *setmem = calloc(1, 0x400);
+    *(unsigned char **)(image + 0x3d00) = setmem;   // settings = *([this+8] + 0x3d00) (a pointer, not inline)
+    unsigned char *thisp = calloc(1, 0x800);
+    *(unsigned char **)(thisp + 0x8) = image;
+    *(long *)(thisp + 0x540) = chunkdiv;
+    *(long *)(thisp + 0x2f8) = 0;
+    *(long *)(thisp + 0x5a8) = 0;
+    float *set = (float *)setmem;
+    set[0x140 / 4] = s140;
+    *(long *)((char *)set + 0x168) = s168;
+    set[0xd4 / 4] = sd4;
+    set[0x150 / 4] = slvl;
+    set[0x190 / 4] = simg;
+    *(float *)(image + 0x15bd390 + 16 * 4) = s11;   // bs = 16
+    long shared_idx = 0;
+    ((unsigned long (*)(void *, long *, long *, long, long, long *, float *, unsigned char *))
+        FN(0x98adbc))(thisp, desc_r, desc_c, 16, nblocks, &shared_idx, weights, rec);
+    char outp[512];
+    snprintf(outp, sizeof outp, "%s.out.bin", argv[6]);
+    FILE *g = fopen(outp, "wb");
+    if (!g) { fprintf(stderr, "adbc: write %s failed\n", outp); return 1; }
+    fwrite(rec, 1, (size_t)recsz * nblocks, g);
+    fclose(g);
+    printf("adbc idx=%ld this5a8=%ld\n", shared_idx, *(long *)(thisp + 0x5a8));
+    return 0;
+  }
   // ---- 2026-10-21 (sandbox/omo/wp_spatial, align_plan.md): leaf helpers of the spatial filter FUN_0098edb0 / FUN_009aae90 /
   // FUN_009ae918 and of the directional path of FUN_00990f74. Each was checked on the arm64 slice to call nothing outside itself
   // and to read no global except the NEON dispatch byte 0x14a67a8 (strip3: the single zero float at __TEXT 0x12504a0 instead;
@@ -790,7 +875,7 @@ int main(int argc, char **argv) {
             "pixnoise W H luma.f32 out | cand W H luma.f32 rx ry step [nb per_bin] | reduce W H rgb.f32 s out | "
             "xform W H rgb.f32 mode out | flatness W H plane.f32 | quantile n v.f32 qbits flag div | "
             "ramp t in.f32 n out | wmul t r.f32 prev.f32 n out | pairw a.f32 b.f32 c.f32 n out | down2 W H plane.f32 out | "
-            "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr | b9a4 W H ref.f32 cur.f32 cx cy vx vy [rounds] | aftshuffle N | interp n x.. y.. q.. | "
+            "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr | b9a4 W H ref.f32 cur.f32 cx cy vx vy [rounds] | adbc W H ref.f32 cur.f32 rec.bin nblocks [s140 s168 sd4 slvl simg s11 chunkdiv weights.f32] | aftshuffle N | interp n x.. y.. q.. | "
             "elem NAME n out s0 s1 s2 s3 in1 [in2 [in3]] | strip3 W H plane.f32 box|sq mode sbits out | "
             "sigfuse n r g b tab coef out | ixform n y a b out | sel2 n flag stride a b i3 i4 best src wt out [full] | "
             "argmax n count stride maps out | gather n stride idx.u8 maps out\n");

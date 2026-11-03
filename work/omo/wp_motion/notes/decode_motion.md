@@ -111,9 +111,14 @@
    `weight = settings+0x140 ×(settings+0x168 != 1 なら settings+0xd4)× レベル係数 × settings+0xd0系 × 記録の重み`
    (`settings` = `(this+8)+0x3d00`)。 (O)
    そうでなければ `SAD = SAD_first` のまま。 (O)
-5. 条件付き 32×32: 画像が 32 より大きく、かつ (16 個に 1 個のブロック) のとき `FUN_0098bf18(thr = weight*1.1, ..., 32×32 窓)`
-   を実行し、見つかれば位置をその 32×32 窓基準の相対位置で上書きし、**SAD は `>>2`** (16×16 換算) して `+0x40 = 1` を立てる。
-   `+0x38` にそのときの重み項を書く。 (O)
+5. 条件付き 32×32: **訂正 majeure (2026-11-03、照合ハーネスで観測)** : la recherche 32×32
+   `FUN_0098bf18(thr = weight*1.1, ..., 32×32 窓)` s'exécute sur **CHAQUE bloc** dès que W > 31 et H > 31 —
+   pas « 1 bloc sur 16 ». Le test `tst x19, #0xf` (1/16) ne contrôle que l'évaluation du piège d'obfuscation
+   (tv_usec), pas la recherche. Preuve empirique : sur 704 blocs (512×360, plans identiques), le flag +0x40
+   est monté sur 704/704. En cas de succès : position écrasée en relatif à l'ancre 32×32
+   (ancre = clamp(bloc − 8, 0, W−32) / clamp(bloc − 8, 0, H−32)), **SAD `>>2`** (16×16 équivalent), `+0x40 = 1`,
+   `+0x38` = terme de marge (slack). Conséquence : le port `nv_motion.py` (`refine32_every=16`) est structurellement
+   faux sur ce point — à corriger dans le port v6.
    - **訂正 (2026-11-03、統括が逆アセンブルで解読。詳細は work/omo/wp_motion6/NOTES.md §1)**:
      難読化された判定 (`*(short*)(this+0x2f8) == 1`) は 32×32 探索の実行可否ではなく、
      `*(this+0x5a8) = 0x400` という**記帳の可否**だけを制御する。探索自体は必ず実行される。
