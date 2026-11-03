@@ -562,6 +562,9 @@ int main(int argc, char **argv) {
     float thr = strtof(argv[8], NULL);
     if (cx < 1 || cy < 1 || cx + 33 > W || cy + 33 > H) { fprintf(stderr, "b32: 1 <= cx, cy and cx, cy + 33 <= W, H\n"); return 1; }
     ((void (*)(long *, void *))FN(0x97eef8))(desc, mem[0]);   // the descriptor describes ref
+    if (getenv("NVH_DBG_PAD"))
+      fprintf(stderr, "b9a4 dbg: stride=%ld desc1=%ld origin-mem0=%ld origin-mem1=%ld\n",
+              stride, desc[1], (long)((unsigned char *)desc[2] - mem[0]), (long)((unsigned char *)src[1] - mem[1]));
     static const signed char nb[16] = {-1, -1, 0, -1, 1, -1, -1, 0, 1, 0, -1, 1, 0, 1, 1, 1};
     struct { int off; short dx, dy; } offs[8];
     for (int i = 0; i < 8; i++) { offs[i].dx = nb[2 * i]; offs[i].dy = nb[2 * i + 1]; offs[i].off = (int)(offs[i].dy * stride + offs[i].dx); }
@@ -570,6 +573,61 @@ int main(int argc, char **argv) {
     unsigned long ret = ((unsigned long (*)(float, void *, long *, const void *, long, long, long, void *, float *, float *, unsigned long *))
         FN(0x98bf18))(thr, NULL, desc, pb + cy * stride + cx, 32, cx, cy, offs, &ox, &oy, &osad);
     printf("b32 ret=%lu out_x=%.9g out_y=%.9g sad=%lu bits=%08x %08x\n", ret, ox, oy, osad, bits32(ox), bits32(oy));
+    return 0;
+  }
+  // ---- 2026-11-03 (wp_motion6): FUN_0098b9a4, the 16x16 pattern search of the block matching. Checked on the arm64
+  // slice to call nothing outside itself (only 0x9f862c / 0x9f8ddc, both verified leaves) and to read no global except
+  // __stack_chk_guard; x0 (the MotionCompensator this) is never read. The offset table is the one FUN_0098adbc builds on
+  // its stack: page 0 = the 8 neighbours of DAT_014877f8 scaled by 2, page 1 = scaled by 1, entries
+  // {int byte offset, short dx, short dy}; the callee walks one page (0x40 bytes) per round and moves to the strict
+  // improvement (unsigned >, ties keep the earlier candidate).
+  if (!strcmp(argv[1], "b9a4") && argc > 9) {
+    // b9a4 W H ref.f32 cur.f32 cx cy vx vy [rounds]: start = (cx + rint(vx), cy + rint(vy)) (frintn + fcvtzs, as the
+    // caller does), bs = 16, rounds default 2. out_x / out_y are absolute positions in the ref plane.
+    long W = atol(argv[2]), H = atol(argv[3]);
+    if (W < 16 || H < 16 || W > 512 || H > 512) { fprintf(stderr, "b9a4: 16 <= W, H <= 512\n"); return 1; }
+    float *fa = load(argv[4], W * H), *fb = load(argv[5], W * H);
+    long desc[16] = {0};
+    ((void (*)(long *, long, long, long, long, long))FN(0x97eebc))(desc, W, H, 8, 1, 16);
+    long stride = desc[6], rows = H + 16;
+    if (stride < W + 16 || desc[1] < stride * rows) { fprintf(stderr, "b9a4: unexpected descriptor\n"); return 1; }
+    unsigned char *mem[2];
+    float *src[2] = {fa, fb};
+    for (int k = 0; k < 2; k++) {
+      mem[k] = calloc(1, desc[1] + 64);
+      ((void (*)(long *, void *))FN(0x97eef8))(desc, mem[k]);
+      unsigned char *p = (unsigned char *)desc[2];
+      if (p < mem[k] + 8 * stride + 8 || p + (H + 7) * stride + (W + 8) > mem[k] + desc[1]) { fprintf(stderr, "b9a4: layout\n"); return 1; }
+      for (long y = -8; y < H + 8; y++)
+        for (long x = -8; x < W + 8; x++) {
+          long sy = y < 0 ? 0 : y >= H ? H - 1 : y, sx = x < 0 ? 0 : x >= W ? W - 1 : x;
+          p[y * stride + x] = (unsigned char)(int)(src[k][sy * W + sx] + 0.5f);
+        }
+      src[k] = (float *)p;   // reuse as the origin pointer
+    }
+    long cx = atol(argv[6]), cy = atol(argv[7]);
+    float vx = strtof(argv[8], NULL), vy = strtof(argv[9], NULL);
+    long rounds = argc > 10 ? atol(argv[10]) : 2;
+    if (cx < 0 || cy < 0 || cx + 16 > W || cy + 16 > H) { fprintf(stderr, "b9a4: 0 <= cx, cy and cx + 16 <= W, cy + 16 <= H\n"); return 1; }
+    if (rounds < 1 || rounds > 4) { fprintf(stderr, "b9a4: 1 <= rounds <= 4\n"); return 1; }
+    ((void (*)(long *, void *))FN(0x97eef8))(desc, mem[0]);   // the descriptor describes ref
+    if (getenv("NVH_DBG_PAD"))
+      fprintf(stderr, "b9a4 dbg: stride=%ld desc1=%ld origin-mem0=%ld origin-mem1=%ld\n",
+              stride, desc[1], (long)((unsigned char *)desc[2] - mem[0]), (long)((unsigned char *)src[1] - mem[1]));
+    static const signed char nb[16] = {-1, -1, 0, -1, 1, -1, -1, 0, 1, 0, -1, 1, 0, 1, 1, 1};
+    struct { int off; short dx, dy; } tbl[16];
+    for (int i = 0; i < 8; i++) {
+      short dx2 = (short)(nb[2 * i] * 2), dy2 = (short)(nb[2 * i + 1] * 2);
+      tbl[i].off = (int)(dx2 + (int)dy2 * stride); tbl[i].dx = dx2; tbl[i].dy = dy2;
+      tbl[8 + i].off = (int)(nb[2 * i] + (int)nb[2 * i + 1] * stride);
+      tbl[8 + i].dx = (short)nb[2 * i]; tbl[8 + i].dy = (short)nb[2 * i + 1];
+    }
+    long ox = -1, oy = -1;
+    unsigned long osad = 0;
+    unsigned long ret = ((unsigned long (*)(void *, long *, const void *, long, long, long, long, void *, long *, long *, unsigned long *))
+        FN(0x98b9a4))(NULL, desc, (unsigned char *)src[1] + cy * stride + cx, 16, cx + (long)rintf(vx), cy + (long)rintf(vy),
+                      rounds, tbl, &ox, &oy, &osad);
+    printf("b9a4 ret=%lu out_x=%ld out_y=%ld sad=%lu\n", ret, ox, oy, osad);
     return 0;
   }
   // ---- 2026-10-21 (sandbox/omo/wp_spatial, align_plan.md): leaf helpers of the spatial filter FUN_0098edb0 / FUN_009aae90 /
@@ -732,7 +790,7 @@ int main(int argc, char **argv) {
             "pixnoise W H luma.f32 out | cand W H luma.f32 rx ry step [nb per_bin] | reduce W H rgb.f32 s out | "
             "xform W H rgb.f32 mode out | flatness W H plane.f32 | quantile n v.f32 qbits flag div | "
             "ramp t in.f32 n out | wmul t r.f32 prev.f32 n out | pairw a.f32 b.f32 c.f32 n out | down2 W H plane.f32 out | "
-            "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr | aftshuffle N | interp n x.. y.. q.. | "
+            "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr | b9a4 W H ref.f32 cur.f32 cx cy vx vy [rounds] | aftshuffle N | interp n x.. y.. q.. | "
             "elem NAME n out s0 s1 s2 s3 in1 [in2 [in3]] | strip3 W H plane.f32 box|sq mode sbits out | "
             "sigfuse n r g b tab coef out | ixform n y a b out | sel2 n flag stride a b i3 i4 best src wt out [full] | "
             "argmax n count stride maps out | gather n stride idx.u8 maps out\n");
