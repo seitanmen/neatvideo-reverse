@@ -249,7 +249,7 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
     空間フィルタの葉 (2026-10-21 追加、work/omo/wp_spatial の要求を統括が逆アセンブルで確認: 22 関数とも外への分岐・呼び出しなし、大域は 0x14a67a8 か __TEXT `__const` の 0x12504a0 (値 0) だけ、または大域なし): `nvh elem NAME n out s0 s1 s2 s3 in1 [in2 [in3]]` (要素ごとの 17 関数。recip `0x9ed5f8`・mul `0x9edc38`・add `0x9ed844`・sub `0x9ed710`・acc `0x9edeb8`・scale `0x9ee304`・affine `0x9ee3fc`・clampmul `0x9ee7bc`・blend `0x9ee1a4`・mulk `0x9edd6c`・u8 `0x9f02b4`・sqr `0x9ed2f0`・sqrtabs `0x9ed3e0`・sqrtk `0x9ed4e0`・fabs `0x9ee50c`・rstep `0x9ef260`・rinv `0x9eef5c`。スカラーは float32 の 16 進ビット)・`nvh strip3 W H plane box|sq mode sbits out` (`FUN_009ed014`・`FUN_009ed164` を呼び出し元と同じ 4 列帯のループで)・`nvh sigfuse` (`FUN_009f1d8c`)・`nvh ixform` (`FUN_009f1d0c`)・`nvh sel2` (`FUN_009f19cc`。末尾に `full` を付けると呼び出し元 `FUN_0098eba8` を呼んで端数部まで処理する。`FUN_0098eba8` は葉ではないが、呼ぶのは `FUN_009f19cc` だけで大域は 0x14a67a8 だけであることを統括が確認)。
     `FUN_00990f74` (空間の縮小核)・`FUN_0099c3a4`・`FUN_0099afb4`/`FUN_0099a76c` は難読化された読み書きや係数を含むので、ハーネスでは呼ばない
     (2026-10-22 に統括が保護区画の解析をユーザーから一任されて機構を読んだ。確定した式は §6.4・§7 に反映、詳細は
-    `work/omo/wp_spatial/notes/lead_static_20261021.md` と `coord/verify_protect/VERDICT.md`。ハーネスで呼ばない方針は変わらない)
+    `work/omo/wp_spatial/notes/lead_static_20261021.md` と `coord/verify_protect/VERDICT.md`。ハーネスで呼ばない方針は変わらない。2026-11-03 にユーザーが `FUN_0098edb0` をハーネスで呼ぶことを承認したが、作業者側の安全性の判定で保護区画の解決が止まり、未実施。§10 の v6 空間の項)
   - 入力は 0〜255 の float の平面 (RGB は R,G,B の順に連結)。照合は `analysis/noise/verify_*.py` で、
     共通部 `nvh_common.py` が最初に `nvh selftest` の終了コード 3 を確かめてから本家を呼ぶ
   - 安全装置 (`nvh_guard.h`): 本家のアサーションはシステムのダイアログを出し、出し続ける箇所もある。
@@ -750,7 +750,16 @@ noisy 24.54 → v1 33.23 → v2 36.07 → v3 37.3 → v4 36.13 → **v5 38.70** 
   (自動選択プロファイルでは AFT 曲線が出力にほとんど効かない)。
   例外: spatial の park_joy tff_y6 は 0.97 dB 下がった (再計算で確認済み)。
   推定: 残りの差はノイズ除去本体 (空間・時間の処理と較正値) にある。
-- **次**: Phase B (U1/U2/U3 = 空間の方向経路・適応経路・σ_k の静的解読 — 統括)、
+- **v6 空間フィルタの C++ 移植 (2026-11-03、ブランチ v6-spatial、独立検証 Round 2 APPROVE)**:
+  `native/nv_spatial6.{h,cpp}` (名前空間 nvs6) に面ごとの `FUN_0098edb0` を移植 (白色化・縮小核の高速経路・
+  方向経路の組 1〜3・量の通常/適応経路・再構成)。葉 26 種は本家の葉と全ビット一致 (nvh elem / argmax / gather を追加)、
+  Python 移植 `wp_spatial/src/nv_spatial.py` と 94/94 件全語一致、本家の葉での呼び出しの再生 20,683 回で不一致 0、
+  変異 9/9 検出。改ざん検知の状態語に依存する 2 値は `nvs6::Guard` (既定 popcount 16)。popcount ≠ 16 では
+  全段の cfg[k] を呼び出し側の cfg に 0 で書く (0x98f774〜0x98f788)。**本体との照合は未実施** (C++ と Python は同じ読み
+  なので両者の一致は本家の本体との一致を示さない)。組 4・var 出力は未移植、段の高さ < 2・拡大の幅 < 2・幅 ≥ 513 は
+  NOT_IMPLEMENTED。報告は `work/omo/wp_spatial6/REPORT.md`。`make verify` (14 本) は変更なし
+- **次**: v6 空間の外側 (σ マップ・cfg・フレームのループ) の C++ 化と E9 での比較、
+  Phase B の残り (U2/U3 — 統括)、
   N4c (実用化)、Resolve 実機確認 (agent-desktop で自動化可)、
   INT の残る Low 項目、GPU-1 以降、Windows (.dll は W5)。
 - **ディスク**: cpu_only_run2 (4.2GB)・wp_e9 のビルド/出力を削除済み

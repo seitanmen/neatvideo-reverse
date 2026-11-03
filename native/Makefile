@@ -107,6 +107,16 @@ AFT_HDR = nv_aft.h nv_band.h nv_curve.h nv_model.h nv_ndimage.h nv_linekernel.h 
 nv_aft_test: $(AFT_SRC) $(AFT_HDR)
 	$(CXX) $(CXXFLAGS) $(MUTFLAGS) -o $@ $(AFT_SRC) -lpthread
 
+# v6 spatial (work/omo/wp_spatial6): the genuine per-plane spatial filter FUN_0098edb0 and its leaves (nv_spatial6.h);
+# checked against the genuine leaves by work/omo/wp_spatial6/tools (not part of `all` / `verify`)
+nv_spatial6_test: nv_spatial6_main.cpp nv_spatial6.cpp nv_spatial6.h nv_band.cpp nv_band.h $(LK) $(PT)
+	$(CXX) $(CXXFLAGS) $(MUTFLAGS) -o $@ nv_spatial6_main.cpp nv_spatial6.cpp nv_band.cpp nv_linekernel.cpp nv_portable.cpp
+
+# the sensitivity mutants of the leaves (MUT=1..9, see NV6_MUT in nv_spatial6.cpp): nv_spatial6_mut<MUT>
+nv_spatial6_mut: nv_spatial6_main.cpp nv_spatial6.cpp nv_spatial6.h nv_band.cpp nv_band.h $(LK) $(PT)
+	$(CXX) $(CXXFLAGS) -DNV6_MUT=$(MUT) -o nv_spatial6_mut$(MUT) nv_spatial6_main.cpp nv_spatial6.cpp nv_band.cpp \
+	    nv_linekernel.cpp nv_portable.cpp
+
 # INT-1: the field split / join of interlaced frames (nv_fields.h; only bytes move, no arithmetic)
 nv_fields_test: nv_fields_main.cpp nv_fields.cpp nv_fields.h
 	$(CXX) $(CXXFLAGS) $(MUTFLAGS) -o $@ nv_fields_main.cpp nv_fields.cpp

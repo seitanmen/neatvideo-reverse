@@ -1,0 +1,27 @@
+recip     calls  153  elements   274965  tail calls  150  mismatching words 0
+mul       calls  153  elements   174332  tail calls  150  mismatching words 0
+sqr       calls  153  elements   117367  tail calls  150  mismatching words 0
+sub       calls  153  elements   190644  tail calls  150  mismatching words 0
+sqrtk     calls  153  elements   191204  tail calls  150  mismatching words 0
+rstep     calls  153  elements   205037  tail calls  150  mismatching words 0
+robust    calls  153  elements   169289  tail calls  150  mismatching words 0
+scale     calls  153  elements   125684  tail calls  150  mismatching words 0
+clampmul  calls  153  elements    78356  tail calls  150  mismatching words 0
+add       calls  153  elements   190778  tail calls  150  mismatching words 0
+sqrtabs   calls  153  elements   241438  tail calls  150  mismatching words 0
+rinv      calls  153  elements   253831  tail calls  150  mismatching words 0
+affine    calls  153  elements   322572  tail calls  150  mismatching words 0
+acc       calls  153  elements   132529  tail calls  150  mismatching words 0
+blend     calls  153  elements   189359  tail calls  150  mismatching words 0
+bladd     calls  153  elements   218142  tail calls  150  mismatching words 0
+ratio     calls  153  elements   136417  tail calls  150  mismatching words 0
+ramp4     calls  153  elements   191783  tail calls  150  mismatching words 0
+wmul4     calls  153  elements   157457  tail calls  150  mismatching words 0
+fabs      calls  153  elements   237741  tail calls  150  mismatching words 0
+pairw     calls  153  elements   114785  tail calls  150  mismatching words 0
+argmax    calls  153  elements   187218  tail calls  150  mismatching words 0
+gather    calls  153  elements    62927  tail calls  150  mismatching words 0
+sel2      calls  153  elements    54081  tail calls  150  mismatching words 0
+strip3    calls   75  elements   942787  tail calls    0  mismatching words 0
+down2     calls   75  elements   422698  tail calls    0  mismatching words 0
+TOTAL mismatching words 0 (174 s)

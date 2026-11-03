@@ -583,7 +583,13 @@ int main(int argc, char **argv) {
       {"sqr", 0x9ed2f0, 0, 1, 0}, {"sqrtabs", 0x9ed3e0, 0, 1, 0}, {"sqrtk", 0x9ed4e0, 1, 1, 0}, {"u8", 0x9f02b4, 0, 1, 1},
       {"mul", 0x9edc38, 0, 2, 0}, {"add", 0x9ed844, 0, 2, 0}, {"sub", 0x9ed710, 0, 2, 0}, {"mulk", 0x9edd6c, 1, 2, 0},
       {"blend", 0x9ee1a4, 2, 2, 0}, {"rstep", 0x9ef260, 1, 2, 0}, {"rinv", 0x9eef5c, 1, 2, 0}, {"clampmul", 0x9ee7bc, 4, 2, 0},
-      {"acc", 0x9edeb8, 1, 3, 0}};
+      {"acc", 0x9edeb8, 1, 3, 0},
+      // 2026-11-03 (work/omo/wp_spatial6, tools/leafcheck.py on the arm64 slice): FUN_009ef0d0 (robust), FUN_009ee04c (ratio
+      // = a * 1/(eps + b)), FUN_009ed978 (bladd = A + fma(B, c, d)) and the general-scalar forms of the already used
+      // FUN_009ee93c (ramp4 = ramp(a, b, c, d)) / FUN_009eebf8 (wmul4): no branch leaves the function, the only page
+      // reference is the NEON byte 0x14a67a8, no stack guard.
+      {"robust", 0x9ef0d0, 1, 2, 0}, {"ratio", 0x9ee04c, 1, 2, 0}, {"bladd", 0x9ed978, 2, 2, 0},
+      {"ramp4", 0x9ee93c, 4, 1, 0}, {"wmul4", 0x9eebf8, 4, 2, 0}};
     int t = -1;
     for (int i = 0; i < (int)(sizeof T / sizeof T[0]); i++) if (!strcmp(argv[2], T[i].nm)) t = i;
     long n = atol(argv[3]);
@@ -601,6 +607,7 @@ int main(int argc, char **argv) {
       case 2: ((void (*)(const float *, const float *, float *, long))f)(in[0], in[1], out, n); break;
       case 12: ((void (*)(float, const float *, const float *, float *, long))f)(s[0], in[0], in[1], out, n); break;
       case 22: ((void (*)(float, float, const float *, const float *, float *, long))f)(s[0], s[1], in[0], in[1], out, n); break;
+      case 41: ((void (*)(float, float, float, float, const float *, float *, long))f)(s[0], s[1], s[2], s[3], in[0], out, n); break;
       case 42: ((void (*)(float, float, float, float, const float *, const float *, float *, long))f)(
           s[0], s[1], s[2], s[3], in[0], in[1], out, n); break;
       case 13: ((void (*)(float, const float *, const float *, const float *, float *, long))f)(s[0], in[0], in[1], in[2], out, n); break;
@@ -611,6 +618,36 @@ int main(int argc, char **argv) {
     fwrite(out, T[t].u8out ? 1 : 4, n, fo);
     fclose(fo);
     printf("elem %s %ld\n", argv[2], n);
+    return 0;
+  }
+  if (argc > 6 && !strcmp(argv[1], "argmax")) {
+    // argmax n count stride maps.f32 out (2026-11-03, wp_spatial6): FUN_009ee5fc(maps, idx, max, n, stride, count) (leaf: no
+    // branch leaves it, only the NEON byte 0x14a67a8); maps.f32 holds count * stride floats; writes out.idx (n bytes) and
+    // out.max.f32
+    long n = atol(argv[2]), count = atol(argv[3]), stride = atol(argv[4]);
+    if (n < 1 || stride < n || count < 0 || count > 64 || stride > (1L << 22)) { fprintf(stderr, "argmax: 1 <= n <= stride, 0 <= count <= 64\n"); return 1; }
+    float *maps = load(argv[5], count ? count * stride : 1), *mx = calloc(n + 4, 4);
+    unsigned char *idx = calloc(n + 4, 1);
+    ((void (*)(const float *, unsigned char *, float *, long, long, long))FN(0x9ee5fc))(maps, idx, mx, n, stride, count);
+    dump_f32(argv[6], ".max.f32", mx, n);
+    char nm[1024]; snprintf(nm, sizeof nm, "%s.idx", argv[6]);
+    FILE *fo = fopen(nm, "wb"); if (!fo) { perror(nm); return 1; } fwrite(idx, 1, n, fo); fclose(fo);
+    printf("argmax %ld\n", n);
+    return 0;
+  }
+  if (argc > 6 && !strcmp(argv[1], "gather")) {
+    // gather n stride idx.u8 maps.f32 out.f32 (2026-11-03, wp_spatial6): FUN_0098ed34(idx, maps, out, stride, n), out[i] =
+    // maps[idx[i] * stride + i] (leaf: no branch leaves it, no page reference); maps.f32 holds 256 * stride floats
+    long n = atol(argv[2]), stride = atol(argv[3]);
+    if (n < 1 || stride < n || stride > (1L << 16)) { fprintf(stderr, "gather: 1 <= n <= stride <= 65536\n"); return 1; }
+    unsigned char *idx = calloc(n + 4, 1);
+    FILE *fi = fopen(argv[4], "rb");
+    if (!fi || fread(idx, 1, n, fi) != (size_t)n) { fprintf(stderr, "gather: read u8 failed\n"); return 1; }
+    fclose(fi);
+    float *maps = load(argv[5], 256 * stride), *out = calloc(n + 4, 4);
+    ((void (*)(const unsigned char *, const float *, float *, long, long))FN(0x98ed34))(idx, maps, out, stride, n);
+    dump_f32(argv[6], "", out, n);
+    printf("gather %ld\n", n);
     return 0;
   }
   if (argc > 8 && !strcmp(argv[1], "strip3")) {
@@ -697,7 +734,8 @@ int main(int argc, char **argv) {
             "ramp t in.f32 n out | wmul t r.f32 prev.f32 n out | pairw a.f32 b.f32 c.f32 n out | down2 W H plane.f32 out | "
             "sad W H a.f32 b.f32 ax ay bx by [elem] | b32 W H ref.f32 cur.f32 cx cy thr | aftshuffle N | interp n x.. y.. q.. | "
             "elem NAME n out s0 s1 s2 s3 in1 [in2 [in3]] | strip3 W H plane.f32 box|sq mode sbits out | "
-            "sigfuse n r g b tab coef out | ixform n y a b out | sel2 n flag stride a b i3 i4 best src wt out [full]\n");
+            "sigfuse n r g b tab coef out | ixform n y a b out | sel2 n flag stride a b i3 i4 best src wt out [full] | "
+            "argmax n count stride maps out | gather n stride idx.u8 maps out\n");
     return 1;
   }
   long W = atol(argv[2]), H = atol(argv[3]);

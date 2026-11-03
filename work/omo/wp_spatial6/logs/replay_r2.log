@@ -1,0 +1,53 @@
+case000: 2208 calls, 0 mismatching, 0 skipped
+case001: 277 calls, 0 mismatching, 0 skipped
+case002: 458 calls, 0 mismatching, 0 skipped
+case003: 463 calls, 0 mismatching, 0 skipped
+case004: 1778 calls, 0 mismatching, 0 skipped
+case005: 1018 calls, 0 mismatching, 0 skipped
+case006: 406 calls, 0 mismatching, 0 skipped
+case007: 1735 calls, 0 mismatching, 0 skipped
+case008: 1500 calls, 0 mismatching, 0 skipped
+case009: 1541 calls, 0 mismatching, 0 skipped
+case010: 1813 calls, 0 mismatching, 0 skipped
+case011: 335 calls, 0 mismatching, 0 skipped
+case012: 0 calls, 0 mismatching, 0 skipped
+case013: 1464 calls, 0 mismatching, 0 skipped
+case014: 2056 calls, 0 mismatching, 0 skipped
+case015: 148 calls, 0 mismatching, 0 skipped
+case016: 689 calls, 0 mismatching, 0 skipped
+case017: 463 calls, 0 mismatching, 0 skipped
+case018: 271 calls, 0 mismatching, 0 skipped
+case019: 217 calls, 0 mismatching, 0 skipped
+case020: 298 calls, 0 mismatching, 0 skipped
+case021: 350 calls, 0 mismatching, 0 skipped
+case022: 342 calls, 0 mismatching, 0 skipped
+case023: 853 calls, 0 mismatching, 0 skipped
+  acc            ok   1586  mismatch 0
+  add            ok    835  mismatch 0
+  affine         ok   1516  mismatch 0
+  argmax         ok     97  mismatch 0
+  bladd          ok     24  mismatch 0
+  blend          ok      8  mismatch 0
+  clampmul       ok     12  mismatch 0
+  down2          ok     85  mismatch 0
+  fabs           ok     48  mismatch 0
+  gather         ok     23  mismatch 0
+  linefilt       ok   6812  mismatch 0
+  mul            ok   1546  mismatch 0
+  pairw          ok     44  mismatch 0
+  ramp4          ok    270  mismatch 0
+  ratio          ok     42  mismatch 0
+  recip          ok   1439  mismatch 0
+  rinv           ok     92  mismatch 0
+  robust         ok    481  mismatch 0
+  rstep          ok    320  mismatch 0
+  scale          ok     73  mismatch 0
+  sel2           ok     74  mismatch 0
+  sqr            ok    898  mismatch 0
+  sqrtabs        ok    130  mismatch 0
+  sqrtk          ok    768  mismatch 0
+  strip3-box     ok   1171  mismatch 0
+  strip3-sq      ok    805  mismatch 0
+  sub            ok   1290  mismatch 0
+  wmul4          ok    194  mismatch 0
+TOTAL calls 20683, mismatching 0, errors 0, skipped 0 (854 s)

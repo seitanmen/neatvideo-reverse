@@ -1,0 +1,26 @@
+recip     calls  508  elements   567283  tail calls  500  mismatching words 0
+mul       calls  508  elements   671518  tail calls  500  mismatching words 0
+sqr       calls  508  elements   545539  tail calls  500  mismatching words 0
+sub       calls  508  elements   281265  tail calls  500  mismatching words 0
+sqrtk     calls  508  elements   613357  tail calls  500  mismatching words 0
+rstep     calls  508  elements   572805  tail calls  500  mismatching words 0
+robust    calls  508  elements   286272  tail calls  500  mismatching words 0
+scale     calls  508  elements   435761  tail calls  500  mismatching words 0
+clampmul  calls  508  elements   431636  tail calls  500  mismatching words 0
+add       calls  508  elements   685321  tail calls  500  mismatching words 0
+sqrtabs   calls  508  elements   561293  tail calls  500  mismatching words 0
+rinv      calls  508  elements   625906  tail calls  500  mismatching words 0
+affine    calls  508  elements   506091  tail calls  500  mismatching words 0
+acc       calls  508  elements   672471  tail calls  500  mismatching words 0
+blend     calls  508  elements   612389  tail calls  500  mismatching words 0
+bladd     calls  508  elements   511515  tail calls  500  mismatching words 0
+ratio     calls  508  elements   450690  tail calls  500  mismatching words 0
+ramp4     calls  508  elements   391160  tail calls  500  mismatching words 0
+wmul4     calls  508  elements   456641  tail calls  500  mismatching words 0
+pairw     calls  508  elements   421093  tail calls  500  mismatching words 0
+argmax    calls  508  elements   666349  tail calls  500  mismatching words 0
+gather    calls  508  elements   153056  tail calls  500  mismatching words 0
+sel2      calls  508  elements   156635  tail calls  500  mismatching words 0
+strip3    calls  250  elements  4492539  tail calls    0  mismatching words 0
+down2     calls  250  elements  1262829  tail calls    0  mismatching words 0
+TOTAL mismatching words 0 (726 s)
