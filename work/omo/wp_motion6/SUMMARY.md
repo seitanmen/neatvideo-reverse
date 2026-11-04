@@ -29,6 +29,13 @@
 4. **本家しきい値は我々の補償では機能しない** (pyrgen2 実験: 棄却が増えて悪化) →
    **補償品質 (c90c) が最後のボトルネック**。
 5. (a,b) の単体近似は逆効果 (gainab 実験: Y静 が悪化) — 本家の計測経路込みで実装が必要。
+6. **c90c の近似 (均等重み + 本家どおりの回帰) も逆効果** (2026-11-04、
+   `REPORT_v6temporal.md`、独立検証 APPROVE): park_joy Y 39.75 → 39.35・
+   sintel RGB 42.16 → 41.03・old_town_cross は全ペア不適用でバイト一致。
+   回帰式は本家どおり実装した (b は clamp 前の a_f から、有効率は float32 —
+   0x98d218〜0x98d2b4 を統括が再確認)。(a,b) はノイズではなく補償に失敗した
+   ブロックの偏りで決まり (クリーン素材でも同じ値)、均等重みの計測では
+   本家の重み表 0x1561d40 の近似にならない。**素材別ベスト構成は不変。**
 
 ## 次のタスク (順番)
 
@@ -46,11 +53,14 @@
 - image 表 +0x1D390 = 受理係数 (nv_motion のフロー品質向上に必要)
 これらが手に入れば → c90c bit-exact → v6 時間段 → 全素材で本家構造の既定化。
 
-### 2b. ユーザー操作なしでできること
-- nv_motion のフロー品質: v5 の全探索 (19.93 dB) が nv_motion のパターン探索 (19.27) を上回る。
-  本家の settings 値がなくても、v5 フロー + c90c の (a,b) 回帰 + pyramid しきい値の
-  組み合わせで近似できる可能性 (要実験)。
-- 色差の σ 推定精度の改善 (sintel Cb −2.9/Cr −2.3 の残差)。
+### 2b. ユーザー操作なしでできること — c90c 近似は閉じた
+- **v5 フロー + c90c の (a,b) 回帰の組み合わせ → 実施して逆効果**
+  (`REPORT_v6temporal.md` §0/§4、variant `c90c`、独立検証 APPROVE)。
+  (a,b) を生かすには本家の重み表の観測 (上の 01) が前提。
+- nv_motion のフロー品質: v5 の全探索 (19.93 dB) が nv_motion のパターン探索 (19.27) を
+  上回る (既知)。本家の settings 値 (image 表 +0x1D390) が要。
+- 色差の σ 推定精度の改善 (sintel Cb −2.9/Cr −2.3 の残差) — 未実施。
+- σ6・インターレース素材での c90c 検証 — 未実施 (σ3 で逆効果のため優先度 low)。
 
 ### 3. 補助課題
 - sintel の色差: sim3c (チャンネル別重み) で RGB +1.37 — 本家 mode 2 は RGB 内部処理なので
@@ -59,8 +69,11 @@
 
 ## 道具
 
-- `tools/e9_nvm.py` — E9 実行 (--variant nvm|v5|pyrgen|pyrgen2|nocrt|sim3|sim3b|sim3c|gainab、
+- `tools/e9_nvm.py` — E9 実行 (--variant nvm|v5|pyrgen|pyrgen2|nocrt|sim3|sim3b|sim3c|gainab|gainab2|hybrid|c90c、
   --spatial-variant、--profile-file、--noise-level、--chroma-noise、--set KEY=値)。
   **NV_NATIVE=0 が必要** (ネイティブコアは C++ 側でフローを計算するため)。
+  c90c 変種の環境変数: NV6_C90C_BASE (builtin|sim3c) / NV6_C90C_GATE / NV6_C90C_MEAS (warped|shift) /
+  NV6_C90C_EXCL_SCALE / NV6_C90C_LOG (ディレクトリは事前に作る)。
 - `tools/verify_b9a4.py` / `verify_adbc.py` / `verify_smooth.py` — ビット照合。
-- 詳細は NOTES.md (§1-§18) と E9_CALIBRATION_FINDINGS.md。
+- 詳細は NOTES.md (§1-§21。§1-§20 は e5951ae で誤って削除されたため 002b6a7 から復元済み) と
+  E9_CALIBRATION_FINDINGS.md、c90c 近似の結果は REPORT_v6temporal.md と eval_v6temporal/。
