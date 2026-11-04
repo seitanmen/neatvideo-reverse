@@ -1,0 +1,16 @@
+plane0 sintel t=20 off=-2 noisy: a=0.980 b=+0.88 |a,b on best-half blocks| a=1.000 b=+0.02 mean|d|=2.00 psnr=28.09
+plane0                  clean: a=0.981 b=+0.86 |a,b on best-half blocks| a=1.000 b=+0.02 mean|d|=1.99 psnr=28.58
+plane0 sintel t=20 off=-1 noisy: a=0.983 b=+0.64 |a,b on best-half blocks| a=1.000 b=+0.01 mean|d|=1.18 psnr=29.67
+plane0                  clean: a=0.983 b=+0.63 |a,b on best-half blocks| a=1.000 b=+0.01 mean|d|=1.15 psnr=30.42
+plane0 sintel t=20 off=+1 noisy: a=0.989 b=+0.65 |a,b on best-half blocks| a=1.000 b=-0.01 mean|d|=1.60 psnr=28.19
+plane0                  clean: a=0.989 b=+0.65 |a,b on best-half blocks| a=1.000 b=-0.01 mean|d|=1.57 psnr=28.70
+plane0 sintel t=20 off=+2 noisy: a=0.999 b=+0.72 |a,b on best-half blocks| a=1.000 b=-0.04 mean|d|=3.18 psnr=25.22
+plane0                  clean: a=0.999 b=+0.72 |a,b on best-half blocks| a=1.000 b=-0.03 mean|d|=3.17 psnr=25.47
+plane1 sintel t=20 off=-2 noisy: a=0.978 b=+3.32 |a,b on best-half blocks| a=1.000 b=-0.01 mean|d|=1.09 psnr=34.17
+plane1                  clean: a=0.979 b=+3.18 |a,b on best-half blocks| a=1.000 b=-0.04 mean|d|=1.06 psnr=34.60
+plane1 sintel t=20 off=-1 noisy: a=0.987 b=+2.08 |a,b on best-half blocks| a=1.000 b=+0.02 mean|d|=0.81 psnr=34.78
+plane1                  clean: a=0.987 b=+1.96 |a,b on best-half blocks| a=1.000 b=+0.00 mean|d|=0.77 psnr=35.27
+plane1 sintel t=20 off=+1 noisy: a=0.914 b=+11.98 |a,b on best-half blocks| a=1.000 b=+0.02 mean|d|=0.97 psnr=33.98
+plane1                  clean: a=0.914 b=+11.94 |a,b on best-half blocks| a=1.000 b=+0.03 mean|d|=0.92 psnr=34.38
+plane1 sintel t=20 off=+2 noisy: a=0.881 b=+16.44 |a,b on best-half blocks| a=0.999 b=+0.13 mean|d|=1.29 psnr=33.14
+plane1                  clean: a=0.881 b=+16.48 |a,b on best-half blocks| a=0.999 b=+0.06 mean|d|=1.27 psnr=33.46

@@ -1,0 +1,8 @@
+1920x1080 24/1 frames~60 rotation=0 out=[0,60) tags={'color_space': None, 'color_primaries': None, 'color_transfer': None, 'color_range': None}
+source yuv420p (8-bit 4:2:0) -> processing yuv420p · 8-bit 4:2:0, codec x264
+profile frame 30: mode=spatial area=[480, 624, 96] (small square (< 128 px)) sigma={'Y': 2.947, 'Cb': 4.304, 'Cr': 5.763}
+frame 24/60 34s
+frame 48/60 68s
+frame 60/60 84s
+wrote /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/mtn_c90c_nogate/sintel/p_y3/out.mp4 (60 frames, 83.8s)
+sintel/p_y3 nvm: 84 s -> /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/mtn_c90c_nogate/sintel/p_y3/out.mp4

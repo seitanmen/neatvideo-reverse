@@ -1,0 +1,16 @@
+park_joy t=10 off=-2 noisy: a=0.894 b=+7.07 |a,b on best-half blocks| a=1.003 b=-0.17 mean|d|=8.44 psnr=19.85
+                   clean: a=0.894 b=+7.08 |a,b on best-half blocks| a=1.002 b=-0.13 mean|d|=8.45 psnr=19.93
+park_joy t=10 off=-1 noisy: a=0.977 b=+1.72 |a,b on best-half blocks| a=0.999 b=+0.06 mean|d|=3.09 psnr=24.55
+                   clean: a=0.977 b=+1.73 |a,b on best-half blocks| a=0.999 b=+0.04 mean|d|=3.09 psnr=24.80
+park_joy t=10 off=+1 noisy: a=0.971 b=+1.67 |a,b on best-half blocks| a=0.999 b=+0.01 mean|d|=3.25 psnr=24.44
+                   clean: a=0.971 b=+1.67 |a,b on best-half blocks| a=0.999 b=+0.01 mean|d|=3.24 psnr=24.69
+park_joy t=10 off=+2 noisy: a=0.884 b=+6.52 |a,b on best-half blocks| a=0.995 b=+0.20 mean|d|=8.52 psnr=19.93
+                   clean: a=0.883 b=+6.53 |a,b on best-half blocks| a=0.995 b=+0.22 mean|d|=8.52 psnr=20.01
+park_joy t=30 off=-2 noisy: a=0.917 b=+6.92 |a,b on best-half blocks| a=1.000 b=+0.08 mean|d|=5.33 psnr=21.03
+                   clean: a=0.917 b=+6.92 |a,b on best-half blocks| a=1.000 b=+0.07 mean|d|=5.33 psnr=21.14
+park_joy t=30 off=-1 noisy: a=0.978 b=+1.82 |a,b on best-half blocks| a=1.000 b=+0.05 mean|d|=1.94 psnr=25.20
+                   clean: a=0.978 b=+1.80 |a,b on best-half blocks| a=1.000 b=+0.05 mean|d|=1.93 psnr=25.49
+park_joy t=30 off=+1 noisy: a=0.996 b=+0.06 |a,b on best-half blocks| a=1.000 b=-0.03 mean|d|=1.96 psnr=25.41
+                   clean: a=0.996 b=+0.05 |a,b on best-half blocks| a=1.000 b=-0.04 mean|d|=1.95 psnr=25.72
+park_joy t=30 off=+2 noisy: a=0.952 b=+2.67 |a,b on best-half blocks| a=0.999 b=+0.01 mean|d|=5.18 psnr=21.21
+                   clean: a=0.952 b=+2.66 |a,b on best-half blocks| a=0.999 b=-0.01 mean|d|=5.18 psnr=21.32

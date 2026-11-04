@@ -1,0 +1,8 @@
+1920x1080 25/1 frames~60 rotation=0 out=[0,60) tags={'color_space': None, 'color_primaries': None, 'color_transfer': None, 'color_range': None}
+source yuv420p (8-bit 4:2:0) -> processing yuv420p · 8-bit 4:2:0, codec x264
+profile frame 30: mode=spatial area=[808, 848, 128] (ok) sigma={'Y': 3.866, 'Cb': 5.051, 'Cr': 6.507}
+frame 24/60 37s
+frame 48/60 73s
+frame 60/60 88s
+wrote /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/mtn_c90c_nogate/park_joy/p_y3/out.mp4 (60 frames, 87.8s)
+park_joy/p_y3 nvm: 88 s -> /Users/seitan/Desktop/work/reverse/work/omo/wp_e9/runs/mtn_c90c_nogate/park_joy/p_y3/out.mp4

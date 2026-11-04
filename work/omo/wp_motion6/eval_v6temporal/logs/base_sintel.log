@@ -1,0 +1,4 @@
+sintel/p_y3 input: Y 39.028 dB, RGB 36.991 dB (interior Y 39.024), alignment best +0,+0 (8.6 s)
+sintel/p_y3 base_sim3c: Y 44.395 dB, RGB 42.137 dB (interior Y 44.415), alignment best +0,+0 (8.4 s)
+sintel/p_y3 genuine: Y 45.477 dB, RGB 43.342 dB (interior Y 45.48), alignment best +0,+0 (10.5 s)
+wrote ../wp_motion6/eval_v6temporal/base_sintel_p_y3.json

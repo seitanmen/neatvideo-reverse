@@ -1,0 +1,5 @@
+park_joy/p_y3 input: Y 38.571 dB, RGB 36.457 dB (interior Y 38.572), alignment best +0,+0 (9.4 s)
+park_joy/p_y3 base_pyr15: Y 39.735 dB, RGB 37.145 dB (interior Y 39.75), alignment best +0,+0 (9.6 s)
+park_joy/p_y3 c90c: Y 39.35 dB, RGB 36.896 dB (interior Y 39.345), alignment best +0,+0 (9.6 s)
+park_joy/p_y3 genuine: Y 40.279 dB, RGB 37.085 dB (interior Y 40.296), alignment best +0,+0 (11.8 s)
+wrote ../wp_motion6/eval_v6temporal/c90c_park_joy_p_y3.json

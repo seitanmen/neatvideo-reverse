@@ -1,0 +1,5 @@
+old_town_cross/p_y3 input: Y 38.549 dB, RGB 36.396 dB (interior Y 38.549), alignment best +0,+0 (11.9 s)
+old_town_cross/p_y3 base_pyr15: Y 37.575 dB, RGB 33.976 dB (interior Y 37.551), alignment best +0,+0 (11.7 s)
+old_town_cross/p_y3 c90c: Y 37.575 dB, RGB 33.976 dB (interior Y 37.551), alignment best +0,+0 (11.8 s)
+old_town_cross/p_y3 genuine: Y 37.422 dB, RGB 33.601 dB (interior Y 37.413), alignment best +0,+0 (13.6 s)
+wrote ../wp_motion6/eval_v6temporal/c90c_old_town_cross_p_y3.json

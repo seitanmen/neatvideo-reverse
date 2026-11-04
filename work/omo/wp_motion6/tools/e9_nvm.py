@@ -477,6 +477,107 @@ def install(variant):
             return w
 
         nv.pyramid_weight = _pw
+    elif variant == "c90c":
+        # approximation of the FUN_0098c90c compensation (NOTES 002b6a7 §11-§13): per neighbour and per channel,
+        # the (a,b) regression ref ~ a*meas + b over the record grid, ref = centre-frame window mean, meas =
+        # warped-neighbour window mean at the same position (uniform weights stand in for the host weights table
+        # 0x1561d40); the neighbour becomes a*neighbour + b, then the base similarity (NV6_C90C_BASE: "builtin" =
+        # nv.temporal_v5 with P["similarity"], "sim3c") runs on the corrected window with the same flows
+        base = os.environ.get("NV6_C90C_BASE", "builtin")
+        if base == "sim3c":
+            install("sim3c")
+        _base_tv = nv.temporal_v5
+        _DF, _WP, _TG = nv.dense_flow, nv.warp_plane, nv._to_grid
+        gate = os.environ.get("NV6_C90C_GATE", "1") == "1"       # reproduction heuristic, not the genuine
+        excl = float(os.environ.get("NV6_C90C_EXCL_SCALE", "0"))  # 2048 exclusion, internal scale unknown
+        log_dir = os.environ.get("NV6_C90C_LOG")
+        # "warped": meas on the warped neighbour at the record (zero displacement, default); "shift": meas on the
+        # unwarped neighbour at the record + rint(v) (the genuine's window position, NOTES §11)
+        meas_mode = os.environ.get("NV6_C90C_MEAS", "warped")
+
+        def _wmeans(p, ys, xs, win):
+            # window sums from the integral image (double), windows [y, y+win) x [x, x+win); ys, xs broadcast
+            S = np.zeros((p.shape[0] + 1, p.shape[1] + 1), np.float64)
+            S[1:, 1:] = np.cumsum(np.cumsum(p, 0, dtype=np.float64), 1)
+            y0, x0 = np.broadcast_arrays(np.atleast_2d(ys).reshape(-1, 1) if np.ndim(ys) == 1 else ys,
+                                         np.atleast_2d(xs) if np.ndim(xs) == 1 else xs)
+            return (S[y0 + win, x0 + win] - S[y0, x0 + win] - S[y0 + win, x0] + S[y0, x0]) / (win * win)
+
+        def _regress(ref_p, meas_p, vy, vx, g):
+            # records at (i*g, j*g), window 2g x 2g from (i*g - g/2, j*g - g/2); invalid (0xff800001) when the
+            # window or the window displaced by rint(v) leaves the plane
+            H, W = ref_p.shape
+            m, win = g // 2, 2 * g
+            ny, nx = vy.shape
+            ys = np.arange(ny) * g - m
+            xs = np.arange(nx) * g - m
+            ok_y = (ys >= 0) & (ys + win <= H)
+            ok_x = (xs >= 0) & (xs + win <= W)
+            dy = ys[:, None] + np.rint(vy).astype(np.int64)
+            dx = xs[None, :] + np.rint(vx).astype(np.int64)
+            valid = (ok_y[:, None] & ok_x[None, :] & (dy >= 0) & (dy + win <= H) & (dx >= 0) & (dx + win <= W))
+            yc, xc = np.clip(ys, 0, H - win), np.clip(xs, 0, W - win)
+            x = _wmeans(ref_p, yc, xc, win)[valid]
+            if meas_mode == "shift":
+                y = _wmeans(meas_p, np.clip(dy, 0, H - win), np.clip(dx, 0, W - win), win)[valid]
+            else:
+                y = _wmeans(meas_p, yc, xc, win)[valid]
+            if excl > 0:
+                keep = np.maximum(np.abs(x), np.abs(y)) * excl < 2048.0
+                x, y = x[keep], y[keep]
+            n, total = x.size, ny * nx
+            pct = float(np.float32(n) / np.float32(total) * np.float32(100))   # float32 as the genuine
+            res = {"a": 1.0, "b": 0.0, "d2": 0.0, "d3": 0.0, "valid": pct, "n": int(n), "total": int(total)}
+            if pct <= 30.0:
+                return res
+            sx, sy, sxy, syy = x.sum(), y.sum(), (x * y).sum(), (y * y).sum()
+            den = n * syy - sy * sy
+            if den == 0:
+                return res
+            # 0x98d264..0x98d2b4: b from the float32 a BEFORE the clamp, then a and b clamped separately
+            af = np.float32((n * sxy - sy * sx) / den)
+            gb = float(np.float32((sx - float(af) * sy) / n))
+            ga = float(min(max(af, np.float32(0.66)), np.float32(1.5)))
+            gb = min(max(gb, -64.0), 64.0)
+            res.update(a=ga, b=gb, d2=float(np.abs(y - x).mean()), d3=float(np.abs(gb + ga * y - x).mean()))
+            return res
+
+        def _tv(window, ci, prof, P, flows=None):
+            if flows is None:
+                flows = {}
+            cur = [np.asarray(p, np.float32) for p in window[ci]]
+            Y = cur[0]
+            bs = int(P["bs"])
+            win2 = list(window)
+            recs = []
+            for k, nb in enumerate(window):
+                if k == ci or float(P["temporal"]) <= 0:
+                    continue
+                if (k - ci) not in flows:
+                    flows[k - ci] = nv.estimate_flow_v5(nb[0], Y, P["bs"], P["search"])
+                vy, vx = flows[k - ci]
+                FY, FX = _DF(vy, vx, Y.shape, bs)
+                new = []
+                for c, p in enumerate(nb):
+                    p = np.asarray(p, np.float32)
+                    if p.shape == Y.shape:
+                        wp, s = _WP(p, FY, FX), 1
+                    else:
+                        wp, s = _WP(p, _TG(FY, p.shape) / 2, _TG(FX, p.shape) / 2), 2
+                    r = _regress(cur[c], p if meas_mode == "shift" else wp, vy / s, vx / s, bs // s)
+                    r["applied"] = not (gate and abs(r["a"] - 1.0) < 0.05 and abs(r["b"]) < 2.0) and \
+                        (r["a"], r["b"]) != (1.0, 0.0)
+                    # warp_plane is a convex bilinear combination, so a*warp(p) + b = warp(a*p + b)
+                    new.append(p * np.float32(r["a"]) + np.float32(r["b"]) if r["applied"] else p)
+                    recs.append(dict(r, frame=_STATE.get("idx"), off=k - ci, ch=c))
+                win2[k] = tuple(new)
+            if log_dir:
+                with open(os.path.join(log_dir, "c90c_%d.jsonl" % os.getpid()), "a") as f:
+                    for r in recs:
+                        f.write(json.dumps(r) + "\n")
+            return _base_tv(win2, ci, prof, P, flows)
+
+        nv.temporal_v5 = _tv
     _STATE["installed"] = True
 
 
@@ -487,6 +588,13 @@ def worker_init(prof, P):
         ev.install()
     from nv_ui_qt import backend
     backend._init(prof, P)
+    _work = backend._work
+
+    def _work_idx(job):
+        _STATE["idx"] = int(job[0])          # the output frame index, for the c90c log
+        return _work(job)
+
+    backend._work = _work_idx
 
 
 def sha256(p):
@@ -506,7 +614,7 @@ def main():
     ap.add_argument("--tag", default="nvm")
     ap.add_argument("--set", action="append", default=[],
                     help="override a ui_params value, e.g. --set threshold=8")
-    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5", "pyrgen", "pyrgen2", "nocrt", "sim3", "sim3b", "sim3c", "gainab", "gainab2", "hybrid"),
+    ap.add_argument("--variant", default="nvm", choices=("nvm", "v5", "pyrgen", "pyrgen2", "nocrt", "sim3", "sim3b", "sim3c", "gainab", "gainab2", "hybrid", "c90c"),
                     help="nvm = the nv_motion flow, v5 = the built-in flow (for threshold sweeps)")
     ap.add_argument("--profile-file", default=None,
                     help="use this profile JSON instead of runs/ours_frame_f5 ui_profile.json")
@@ -563,7 +671,8 @@ def main():
     rec = {"clip": a.clip, "variant": a.variant, "overrides": dict(kv.split("=", 1) for kv in a.set),
            "input": src, "input_sha256": sha256(src),
            "profile": prof_p, "params": params_p, "profile_info": info, "start": a.start,
-           "frames": a.frames, "jobs": a.jobs}
+           "frames": a.frames, "jobs": a.jobs, "spatial_variant": a.spatial_variant,
+           "env": {k: v for k, v in os.environ.items() if k.startswith("NV6_") or k == "NV_NATIVE"}}
     import e9_v6_spatial as ev  # for worker_init compatibility (no spatial patch: NV6_E9_VARIANT=v5)
     os.environ["NV6_E9_VARIANT"] = a.spatial_variant or "v5"
     if a.spatial_variant in ("v6dir", "v6set0m"):
